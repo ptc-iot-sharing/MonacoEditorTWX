@@ -1,25 +1,29 @@
 TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
     var thisPlugin = this;
-    var line = thisPlugin.monacoEditor.getSelection();
-    var range = new monaco.Range(line.lineNumber, 1, line.lineNumber, 1);
-    var id = {
-        major: 1,
-        minor: 1
-    };
     var op = {
-        identifier: id,
-        range: line,
+        identifier: {
+            major: 1,
+            minor: 1
+        },
+        range: thisPlugin.monacoEditor.getSelection(),
         text: code,
         forceMoveMarkers: true
     };
     thisPlugin.monacoEditor.executeEdits("my-source", [op]);
+};
+TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
+    var thisPlugin = this;
+    var jqEl = thisPlugin.jqElement;
+    var container = jqEl.find('.editor-container');
+    container.height(height);
+    thisPlugin.monacoEditor.layout();
 };
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
     jqEl.find('.btn-toolbar').hide();
-    codeTextareaElem.height("365px");
+    codeTextareaElem.height("100%");
 
     if (thisPlugin.myCodeMirror !== undefined) {
         // already done
@@ -61,13 +65,15 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var editor = monaco.editor.create(codeTextareaElem[0], {
                 language: 'javascript',
                 readOnly: !thisPlugin.properties.editMode,
-                value: jqEl.find('.actual-code').val()
+                value: jqEl.find('.actual-code').val(),
+                folding: true
             });
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
                 thisPlugin.properties.code = editor.getValue();
                 thisPlugin.properties.change(thisPlugin.properties.code);
             });
+            editor.layout();
         }
     });
     //			thisPlugin.myCodeMirror.on('cursorActivity',function() {
