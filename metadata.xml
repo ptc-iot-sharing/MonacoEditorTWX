@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><Entities>
+  <ExtensionPackages>
+    <ExtensionPackage name="MonacoScriptEditor" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.0.0" minimumThingWorxVersion="6.0.0"/>
+  </ExtensionPackages>
+  <Widgets>
+    <Widget name="MonacoScriptEditor">
+      <UIResources>
+        <FileResource type="JS" file="monacoEditor.js" description="" isDevelopment="true" isRuntime="false"/>
+        <FileResource type="JS" url="/ThingWorx/" description="" isDevelopment="false" isRuntime="true" />
+
+      </UIResources>
+    </Widget>
+  </Widgets>
+</Entities>
