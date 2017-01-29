@@ -23,7 +23,7 @@ project.ext {
     configDir = "${baseDir}/metadata.xml"
     zipDir = "${baseDir}/zip"
     packageVendor = "ThingWorx Customer Service"
-    thingworxServerRoot = "http://localhost:8011"
+    thingworxServerRoot = "http://localhost:8001"
     thingworxUser = "Administrator"
     thingworxPass = "admin"
 }
