@@ -52,11 +52,17 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
     require(['vs/editor/editor.main'], function () {
         if (thisPlugin.properties) {
+            // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
             var editor = monaco.editor.create(codeTextareaElem[0], {
                 language: mode,
                 readOnly: !thisPlugin.properties.editMode,
                 value: jqEl.find('.actual-code').val(),
-                folding: true
+                folding: true,
+                fontSize: 12,
+                fontFamily: "Fira Code,Monaco,monospace",
+                fontLigatures: true,
+                mouseWheelZoom: true,
+                theme: "vs"
             });
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
