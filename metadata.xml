@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><Entities>
   <ExtensionPackages>
-    <ExtensionPackage name="MonacoScriptEditor" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.0.38" minimumThingWorxVersion="6.0.0"/>
+    <ExtensionPackage name="MonacoScriptEditor" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.0.48" minimumThingWorxVersion="6.0.0"/>
   </ExtensionPackages>
   <Widgets>
     <Widget name="monacoScriptEditor">
       <UIResources>
         <FileResource type="JS" file="monacoEditor.js" description="" isDevelopment="true" isRuntime="false"/>
+        <FileResource type="CSS" file="monacoEditor.css" description="" isDevelopment="true" isRuntime="false"/>
         <FileResource type="JS" url="/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs/loader.js" description="" isDevelopment="true" isRuntime="false"/>
       </UIResources>
     </Widget>
