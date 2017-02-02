@@ -1,3 +1,11 @@
 .monaco-icon-label {
     margin-left: 20px;
 }
+
+.popover-property>.inline-body {
+    overflow: visible !important;
+}
+
+#twServices td {
+    overflow: visible !important;
+}
