@@ -1,3 +1,4 @@
+TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
 TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
     var thisPlugin = this;
     var op = {
@@ -25,11 +26,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
     var vsRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs';
+    // hide the toolbar since we have all the toolbar functionality in the editor
     jqEl.find('.btn-toolbar').hide();
+    // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
     codeTextareaElem.css("min-height", "365px");
     if (thisPlugin.monacoEditor !== undefined) {
-        // already done
+        // already done, don't init the editor again
         return;
     }
     var mode = 'javascript';
@@ -53,6 +56,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
     require(['vs/editor/editor.main'], function () {
         if (thisPlugin.properties) {
+            // if this is the first initalization attempt, then set the compiler optios
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
                 // compiler options
                 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -92,19 +96,18 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 ].join('\n'), 'thingworx/logger.d.ts');
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
-            var thingModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties").model;
-            var meClass = "declare class me {";
-            var propertyDefs = thingModel.attributes.thingShape.propertyDefinitions;
-            for (var key in propertyDefs) {
-                // skip loop if the property is from prototype
-                if (!propertyDefs.hasOwnProperty(key)) continue;
-
-                var obj = propertyDefs[key];
-                meClass += "/** \n * " + obj.description + " \n */" + "\n static " + obj.name + ":" + obj.baseType + ";\n";
+            // remove the previous definitions
+            for (var i = 0; i < TW.jqPlugins.twCodeEditor.monacoEditorLibs.length; i++) {
+                TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
             }
-            meClass = meClass + "\n}";
+            TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
 
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(meClass, 'thingworx/me.d.ts');
+            var meThingModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties").model;
+
+            var fileName = 'thingworx/' + meThingModel.entityType + '/' + meThingModel.id + '.d.ts';
+            TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
+                .addExtraLib(generateTypeScriptDefinitions(meThingModel), fileName));
+
             // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
             var editor = monaco.editor.create(codeTextareaElem[0], {
                 language: mode,
@@ -125,4 +128,36 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             editor.layout();
         }
     });
+
+    function generateTypeScriptDefinitions(metadata) {
+        var definiton = "export as namespace me;\n";
+        var propertyDefs = metadata.attributes.effectiveShape.propertyDefinitions;
+        for (var key in propertyDefs) {
+            // skip loop if the property is from prototype
+            if (!propertyDefs.hasOwnProperty(key)) continue;
+
+            var property = propertyDefs[key];
+            definiton += "/** \n * " + property.description + " \n */" + "\n export " + property.name + ":" + property.baseType + ";\n";
+        }
+        var serviceDefs = metadata.attributes.effectiveShape.serviceDefinitions;
+        for (var key in serviceDefs) {
+            // skip loop if the property is from prototype
+            if (!serviceDefs.hasOwnProperty(key)) continue;
+
+            var service = serviceDefs[key];
+            definiton += "interface " + service.name + "Params\n {";
+            for (var parameterDef in service.parameterDefinitions) {
+                if (!service.parameterDefinitions.hasOwnProperty(parameterDef)) continue;
+                var inputDef = service.parameterDefinitions[parameterDef];
+
+                definiton += "/** \n * " + inputDef.description + " \n */ \n " +
+                    inputDef.name + ":" + inputDef.baseType + ";\n";
+            }
+            definiton += "}\n";
+            definiton += "/** \n * Category: " + service.category + "\n * " + service.description + " \n */" + "\n export function " +
+                service.name + "(params:" + service.name + "Params):" + service.resultType.baseType + ";\n";
+        }
+        definiton = definiton + "\n";
+        return definiton;
+    }
 }
