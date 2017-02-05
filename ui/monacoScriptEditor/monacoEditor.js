@@ -130,20 +130,22 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
 
     function generateTypeScriptDefinitions(metadata) {
+        // this is me
         var definiton = "export as namespace me;\n";
+        // we handle property definitions first
         var propertyDefs = metadata.attributes.effectiveShape.propertyDefinitions;
         for (var key in propertyDefs) {
-            // skip loop if the property is from prototype
             if (!propertyDefs.hasOwnProperty(key)) continue;
 
             var property = propertyDefs[key];
+            // generate an export for each property
             definiton += "/** \n * " + property.description + " \n */" + "\n export " + property.name + ":" + property.baseType + ";\n";
         }
+        // generate service definitions
         var serviceDefs = metadata.attributes.effectiveShape.serviceDefinitions;
         for (var key in serviceDefs) {
-            // skip loop if the property is from prototype
             if (!serviceDefs.hasOwnProperty(key)) continue;
-
+            // first create an interface for service params
             var service = serviceDefs[key];
             definiton += "interface " + service.name + "Params\n {";
             for (var parameterDef in service.parameterDefinitions) {
@@ -153,6 +155,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 definiton += "/** \n * " + inputDef.description + " \n */ \n " +
                     inputDef.name + ":" + inputDef.baseType + ";\n";
             }
+            // now define the service
             definiton += "}\n";
             definiton += "/** \n * Category: " + service.category + "\n * " + service.description + " \n */" + "\n export function " +
                 service.name + "(params:" + service.name + "Params):" + service.resultType.baseType + ";\n";
