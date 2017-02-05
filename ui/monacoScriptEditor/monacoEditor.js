@@ -52,6 +52,47 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
     require(['vs/editor/editor.main'], function () {
         if (thisPlugin.properties) {
+
+            // compiler options
+            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ES5,
+                allowNonTsExtensions: true
+            });
+
+            // extra libraries
+            monaco.languages.typescript.javascriptDefaults.addExtraLib([
+                'declare class logger {',
+                '    /**',
+                '     * Log a debug warning',
+                '     */',
+                '    static debug(message:string)',
+                '    /**',
+                '     * Log a error warning',
+                '     */',
+                '    static error(message:string)',
+                '    /**',
+                '     * Log a warn warning',
+                '     */',
+                '    static warn(message:string)',
+                '    /**',
+                '     * Log a info warning',
+                '     */',
+                '    static info(message:string)',
+                '}',
+            ].join('\n'), 'thingworx/logger.d.ts');
+            var thingModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties").model;
+            var meClass = "declare class me {";
+            var propertyDefs = thingModel.attributes.thingShape.propertyDefinitions;
+            for (var key in propertyDefs) {
+                // skip loop if the property is from prototype
+                if (!propertyDefs.hasOwnProperty(key)) continue;
+
+                var obj = propertyDefs[key];
+                meClass += "/** \n * " + obj.description + " \n */" + "\n static " + obj.name + ":" + obj.baseType +";\n";
+            }
+            meClass = meClass +  "\n}";
+            
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(meClass, 'thingworx/me.d.ts');
             // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
             var editor = monaco.editor.create(codeTextareaElem[0], {
                 language: mode,
