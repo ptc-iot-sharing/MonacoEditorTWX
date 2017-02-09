@@ -25,6 +25,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
+    codeTextareaElem.on("keydown keypress keyup", function (e) {
+        e.stopPropagation();
+    })
     var vsRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs';
     // hide the toolbar since we have all the toolbar functionality in the editor
     jqEl.find('.btn-toolbar').hide();
@@ -131,18 +134,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
 
     function generateTypeScriptDefinitions(metadata) {
-        // this is me
-        var definiton = "export as namespace me;\n";
-        // we handle property definitions first
-        var propertyDefs = metadata.attributes.effectiveShape.propertyDefinitions;
-        for (var key in propertyDefs) {
-            if (!propertyDefs.hasOwnProperty(key)) continue;
+        // based on a module class declaration
+        // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
+        var entityName = metadata.entityType + '' + metadata.id;
+        var namespaceDefinition = "declare namespace " + entityName + " {\n";
+        var classDefinition = "declare class " + entityName + " {\n constructor(); \n";
 
-            var property = propertyDefs[key];
-            // generate an export for each property
-            definiton += "/** \n * " + property.description + " \n */" + "\n export " + property.name + ":" + property.baseType + ";\n";
-        }
-        // generate service definitions
+        // generate info retated to services
         var serviceDefs = metadata.attributes.effectiveShape.serviceDefinitions;
         for (var key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
@@ -150,27 +148,37 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var service = serviceDefs[key];
             var serviceParamDefinition = "";
             if (service.parameterDefinitions && Object.keys(service.parameterDefinitions).length > 0) {
-                definiton += "interface " + service.name + "Params {\n";
+                namespaceDefinition += "export interface " + service.name + "Params {\n";
                 for (var parameterDef in service.parameterDefinitions) {
                     if (!service.parameterDefinitions.hasOwnProperty(parameterDef)) continue;
                     var inputDef = service.parameterDefinitions[parameterDef];
 
-                    definiton += "/** \n * " + inputDef.description +
+                    namespaceDefinition += "/** \n * " + inputDef.description +
                         (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
                         inputDef.name + ":" + inputDef.baseType + ";\n";
                     // generate a nice description of the service params
                     serviceParamDefinition += "*     " + inputDef.name + ": " + inputDef.baseType +
                         (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
                 }
-                definiton += "}\n";
+                namespaceDefinition += "}\n";
             }
             // now generate the definition
-            definiton += "/** \n * Category: " + service.category + "\n * " + service.description +
-                "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition ) : "\n") + " **/ \n export function " +
-                service.name + "(params:" + service.name + "Params):" + service.resultType.baseType + ";\n";
+            classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
+                "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition) : "\n") + " **/ \n " +
+                service.name + "(params:" + entityName + "." + service.name + "Params):" + service.resultType.baseType + ";\n";
         }
-        definiton = definiton + "\n";
-        debugger;
-        return definiton;
+        namespaceDefinition = namespaceDefinition + "}\n";
+
+        // we handle property definitions here
+        var propertyDefs = metadata.attributes.effectiveShape.propertyDefinitions;
+        for (var key in propertyDefs) {
+            if (!propertyDefs.hasOwnProperty(key)) continue;
+
+            var property = propertyDefs[key];
+            // generate an export for each property
+            classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + property.baseType + ";\n";
+        }
+        classDefinition = classDefinition + "}\n";
+        return "export as namespace " + entityName + ";\n" + namespaceDefinition + classDefinition;
     }
 }
