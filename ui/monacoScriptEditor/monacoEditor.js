@@ -86,7 +86,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
             var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
             var meThingModel = serviceModel.model;
-            var entityName = meThingModel.entityType + '' + meThingModel.id;
+            
+            var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g,'');
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
