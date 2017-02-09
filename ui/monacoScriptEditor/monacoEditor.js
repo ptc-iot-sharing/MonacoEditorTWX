@@ -75,28 +75,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         coreDefsName
                     );
                 });
+                loadStandardTypescriptDefs();
 
-                // extra libraries
-                monaco.languages.typescript.javascriptDefaults.addExtraLib([
-                    'declare class logger {',
-                    '    /**',
-                    '     * Log a debug warning',
-                    '     */',
-                    '    static debug(message:string)',
-                    '    /**',
-                    '     * Log a error warning',
-                    '     */',
-                    '    static error(message:string)',
-                    '    /**',
-                    '     * Log a warn warning',
-                    '     */',
-                    '    static warn(message:string)',
-                    '    /**',
-                    '     * Log a info warning',
-                    '     */',
-                    '    static info(message:string)',
-                    '}',
-                ].join('\n'), 'thingworx/logger.d.ts');
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
             // remove the previous definitions
@@ -126,7 +106,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             });
             var range = new monaco.Range(4, 1, 99999, 100);
             editor.getModel().setEditableRange(range);
-            
+
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
                 thisPlugin.properties.code = editor.getValue();
@@ -192,5 +172,58 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         }
         classDefinition = classDefinition + "}\n";
         return "export as namespace " + entityName + ";\n" + namespaceDefinition + classDefinition;
+    }
+
+    function loadStandardTypescriptDefs() {
+        // extra libraries
+        monaco.languages.typescript.javascriptDefaults.addExtraLib([
+            'declare class logger {',
+            '    /**',
+            '     * Log a debug warning',
+            '     */',
+            '    static debug(message:string)',
+            '    /**',
+            '     * Log a error warning',
+            '     */',
+            '    static error(message:string)',
+            '    /**',
+            '     * Log a warn warning',
+            '     */',
+            '    static warn(message:string)',
+            '    /**',
+            '     * Log a info warning',
+            '     */',
+            '    static info(message:string)',
+            '}',
+        ].join('\n'), 'thingworx/logger.d.ts');
+
+        // extra libraries
+        monaco.languages.typescript.javascriptDefaults.addExtraLib([
+            'interface STRING extends String{}',
+            'interface LOCATION {',
+            '   latitude: number',
+            '   longitude: number',
+            '   elevation: number',
+            '   units: string',
+            '}',
+            'interface NUMBER extends Number{}',
+            'interface INTEGER extends Number{}',
+            'interface LONG extends Number{}',
+            'interface BOOLEAN extends boolean{}',
+            'interface DASHBOADNAME extends String{}',
+            'interface GROUPNAME extends String{}',
+            'interface GUID extends String{}',
+            'interface HTML extends String{}',
+            'interface HYPERLINK extends String{}',
+            'interface IMAGELINK extends String{}',
+            'interface MASHUPNAME extends String{}',
+            'interface MENUNAME extends String{}',
+            'interface PASSWORD extends String{}',
+            'interface TEXT extends String{}',
+            'interface THINGCODE extends String{}',
+            'interface THINGNAME extends String{}',
+            'interface USERNAME extends String{}',
+            'interface DATETIME extends Date{}',
+        ].join('\n'), 'thingworx/baseTypes.d.ts');
     }
 }
