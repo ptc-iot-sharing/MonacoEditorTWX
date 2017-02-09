@@ -104,12 +104,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 formatOnPaste: true,
                 theme: "vs"
             });
-            var range = new monaco.Range(4, 1, 99999, 100);
-            editor.getModel().setEditableRange(range);
+            var editableRange = new monaco.Range(4, 1, 99999, 99999);
+            editor.getModel().setEditableRange(editableRange);
 
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
-                thisPlugin.properties.code = editor.getValue();
+                thisPlugin.properties.code = editor.getModel.getValueInRange(editableRange);
                 thisPlugin.properties.change(thisPlugin.properties.code);
             });
             editor.layout();
