@@ -148,20 +148,29 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             if (!serviceDefs.hasOwnProperty(key)) continue;
             // first create an interface for service params
             var service = serviceDefs[key];
-            definiton += "interface " + service.name + "Params\n {";
-            for (var parameterDef in service.parameterDefinitions) {
-                if (!service.parameterDefinitions.hasOwnProperty(parameterDef)) continue;
-                var inputDef = service.parameterDefinitions[parameterDef];
+            var serviceParamDefinition = "";
+            if (service.parameterDefinitions && Object.keys(service.parameterDefinitions).length > 0) {
+                definiton += "interface " + service.name + "Params {\n";
+                for (var parameterDef in service.parameterDefinitions) {
+                    if (!service.parameterDefinitions.hasOwnProperty(parameterDef)) continue;
+                    var inputDef = service.parameterDefinitions[parameterDef];
 
-                definiton += "/** \n * " + inputDef.description + " \n */ \n " +
-                    inputDef.name + ":" + inputDef.baseType + ";\n";
+                    definiton += "/** \n * " + inputDef.description +
+                        (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
+                        inputDef.name + ":" + inputDef.baseType + ";\n";
+                    // generate a nice description of the service params
+                    serviceParamDefinition += "*     " + inputDef.name + ": " + inputDef.baseType +
+                        (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
+                }
+                definiton += "}\n";
             }
-            // now define the service
-            definiton += "}\n";
-            definiton += "/** \n * Category: " + service.category + "\n * " + service.description + " \n */" + "\n export function " +
+            // now generate the definition
+            definiton += "/** \n * Category: " + service.category + "\n * " + service.description +
+                "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition ) : "\n") + " **/ \n export function " +
                 service.name + "(params:" + service.name + "Params):" + service.resultType.baseType + ";\n";
         }
         definiton = definiton + "\n";
+        debugger;
         return definiton;
     }
 }
