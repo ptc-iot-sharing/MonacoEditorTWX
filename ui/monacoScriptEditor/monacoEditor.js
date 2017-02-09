@@ -101,8 +101,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
             }
             TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
-
-            var meThingModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties").model;
+            var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
+            var meThingModel = serviceModel.model;
 
             var fileName = 'thingworx/' + meThingModel.entityType + '/' + meThingModel.id + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
@@ -118,6 +118,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 fontFamily: "Fira Code,Monaco,monospace",
                 fontLigatures: true,
                 mouseWheelZoom: true,
+                formatOnPaste: true,
                 theme: "vs"
             });
             thisPlugin.monacoEditor = editor;
