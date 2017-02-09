@@ -106,16 +106,16 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
             var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
             var meThingModel = serviceModel.model;
-
-            var fileName = 'thingworx/' + meThingModel.entityType + '/' + meThingModel.id + '.d.ts';
+            var entityName = meThingModel.entityType + '' + meThingModel.id;
+            var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
-                .addExtraLib(generateTypeScriptDefinitions(meThingModel), fileName));
+                .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
 
             // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
             var editor = monaco.editor.create(codeTextareaElem[0], {
                 language: mode,
                 readOnly: !thisPlugin.properties.editMode,
-                value: jqEl.find('.actual-code').val(),
+                value: generateServiceFirstLine(serviceModel.serviceDefinition, entityName) + "\n" + jqEl.find('.actual-code').val(),
                 folding: true,
                 fontSize: 12,
                 fontFamily: "Fira Code,Monaco,monospace",
@@ -124,6 +124,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 formatOnPaste: true,
                 theme: "vs"
             });
+            var range = new monaco.Range(4, 1, 99999, 100);
+            editor.getModel().setEditableRange(range);
+            
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
                 thisPlugin.properties.code = editor.getValue();
@@ -133,10 +136,19 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         }
     });
 
-    function generateTypeScriptDefinitions(metadata) {
+    function generateServiceFirstLine(serviceMetadata, entityName) {
+        var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
+        definition += "var me = new " + entityName + "(); "
+        for (var key in serviceMetadata.parameterDefinitions) {
+            if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
+            definition += "var " + key + ": " + serviceMetadata.parameterDefinitions[key].baseType + "; ";
+        }
+        return definition + '\n//------------------------------------------------------------------------';
+    }
+
+    function generateTypeScriptDefinitions(metadata, entityName) {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
-        var entityName = metadata.entityType + '' + metadata.id;
         var namespaceDefinition = "declare namespace " + entityName + " {\n";
         var classDefinition = "declare class " + entityName + " {\n constructor(); \n";
 
