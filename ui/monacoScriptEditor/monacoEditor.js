@@ -80,14 +80,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
             // remove the previous definitions
-            for (var i = 0; i < TW.jqPlugins.twCodeEditor.monacoEditorLibs.length; i++) {
-                TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
-            }
-            TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
+            removeEditorDefinitions();
             var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
             var meThingModel = serviceModel.model;
-            
-            var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g,'');
+
+            var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
@@ -107,6 +104,35 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             });
             var editableRange = new monaco.Range(4, 1, 99999, 99999);
             editor.getModel().setEditableRange(editableRange);
+            // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
+            editor.onDidFocusEditor(function () {
+                // get the service model again
+                var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
+                var meThingModel = serviceModel.model;
+                var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
+                // make the first line editable 
+                var firstLineRange = new monaco.Range(1, 1, 3, 9999);
+                editor.getModel().setEditableRange(firstLineRange);
+                var op = {
+                    identifier: {
+                        major: 1,
+                        minor: 2
+                    },
+                    range: firstLineRange,
+                    text: generateServiceFirstLine(serviceModel.serviceDefinition, entityName),
+                    forceMoveMarkers: true
+                };
+                // update the first list
+                thisPlugin.monacoEditor.executeEdits("my-source", [op]);
+                var editableRange = new monaco.Range(4, 1, 99999, 99999);
+                editor.getModel().setEditableRange(editableRange);
+                // remove the previous definitions
+                removeEditorDefinitions();
+
+                var fileName = 'thingworx/' + entityName + '.d.ts';
+                TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
+                    .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
+            });
 
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
@@ -226,5 +252,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             'interface USERNAME extends String{}',
             'interface DATETIME extends Date{}',
         ].join('\n'), 'thingworx/baseTypes.d.ts');
+    }
+
+    function removeEditorDefinitions() {
+        // remove the previous definitions
+        for (var i = 0; i < TW.jqPlugins.twCodeEditor.monacoEditorLibs.length; i++) {
+            TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
+        }
+        TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
     }
 }
