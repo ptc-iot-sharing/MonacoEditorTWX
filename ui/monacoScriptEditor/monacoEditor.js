@@ -136,7 +136,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
             thisPlugin.monacoEditor = editor;
             editor.onDidChangeModelContent(function (e) {
-                thisPlugin.properties.code = editor.getModel.getValueInRange(editableRange);
+                thisPlugin.properties.code = editor.getModel().getValueInRange(editableRange);
                 thisPlugin.properties.change(thisPlugin.properties.code);
             });
             editor.layout();
@@ -184,7 +184,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // now generate the definition
             classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
                 "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition) : "\n") + " **/ \n " +
-                service.name + "(params:" + entityName + "." + service.name + "Params):" + service.resultType.baseType + ";\n";
+                service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
+                "): " + service.resultType.baseType + ";\n";
         }
         namespaceDefinition = namespaceDefinition + "}\n";
 
