@@ -80,7 +80,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     // begin to init our editor
     require(['vs/editor/editor.main'], function () {
         // get the service model from the parent twService editor
-        var parentServiceEditorJqEl = jqEl.closest("tbody").find(".twServiceEditor");
+        var parentServiceEditorJqEl = jqEl.closest("tr").prev();
         var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
         // there are cases where showCodeProperly is called, but no properties are yet set.
         // there are cases where the parent twServiceEditor doesn't have a model set
