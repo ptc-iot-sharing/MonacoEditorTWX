@@ -102,17 +102,24 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 formatOnPaste: true,
                 theme: "vs"
             });
-            var editableRange = new monaco.Range(4, 1, 99999, 99999);
-            editor.getModel().setEditableRange(editableRange);
+
+            // TODO: Huge hack here. Because the folding controller resets the hidden areas,
+            // we override the setHiddenAreas function to always hide the first three lines
+            var proxiedSetHiddenAreas = editor.setHiddenAreas;
+            editor.setHiddenAreas = function (ranges) {
+                ranges.push(new monaco.Range(1, 1, 1, 2));
+                ranges.push(new monaco.Range(2, 1, 1, 2))
+                ranges.push(new monaco.Range(3, 1, 3, 2));
+                return proxiedSetHiddenAreas.apply(this, arguments);
+            };
+            editor.setHiddenAreas([])
+
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditor(function () {
                 // get the service model again
                 var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
                 var meThingModel = serviceModel.model;
                 var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
-                // make the first line editable 
-                var firstLineRange = new monaco.Range(1, 1, 3, 9999);
-                editor.getModel().setEditableRange(firstLineRange);
                 var op = {
                     range: firstLineRange,
                     text: generateServiceFirstLine(serviceModel.serviceDefinition, entityName),
@@ -120,8 +127,6 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 };
                 // update the first list. Use apply edits for no undo stack
                 thisPlugin.monacoEditor.executeEdits("modelUpdated", [op]);
-                var editableRange = new monaco.Range(4, 1, 99999, 99999);
-                editor.getModel().setEditableRange(editableRange);
                 // remove the previous definitions
                 removeEditorDefinitions();
 
