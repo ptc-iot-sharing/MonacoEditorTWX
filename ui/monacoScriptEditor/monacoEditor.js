@@ -31,6 +31,17 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
+    // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
+    var defaultMonacoSettings = {
+        folding: true,
+        fontSize: 12,
+        fontFamily: "Fira Code,Monaco,monospace",
+        fontLigatures: true,
+        mouseWheelZoom: true,
+        formatOnPaste: true,
+        scrollBeyondLastLine: false,
+        theme: "vs"
+    };
     // make sure that the key events stay inside the editor.
     codeTextareaElem.on("keydown keypress keyup", function (e) {
         e.stopPropagation();
@@ -112,21 +123,14 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // add the first lines to the service
             codeValue = generateServiceFirstLine(serviceModel.serviceDefinition, entityName) + "\n" + codeValue;
         }
+        // modify the initial settions
+        var editorSettings = $.extend({}, defaultMonacoSettings);
+        editorSettings.language = mode;
+        editorSettings.readOnly = !thisPlugin.properties.editMode;
+        editorSettings.value = codeValue;
 
-        // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-        var editor = monaco.editor.create(codeTextareaElem[0], {
-            language: mode,
-            readOnly: !thisPlugin.properties.editMode,
-            value: codeValue,
-            folding: true,
-            fontSize: 12,
-            fontFamily: "Fira Code,Monaco,monospace",
-            fontLigatures: true,
-            mouseWheelZoom: true,
-            formatOnPaste: true,
-            scrollBeyondLastLine: false,
-            theme: "vs"
-        });
+        var editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
+        var initialCode = codeValue;
 
         if (mode == "javascript") {
             // TODO: Huge hack here. Because the folding controller resets the hidden areas,
@@ -139,7 +143,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 return proxiedSetHiddenAreas.apply(this, arguments);
             };
             // hide the first three lines
-            editor.setHiddenAreas([])
+            editor.setHiddenAreas([]);
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditor(function () {
                 // get the service model again
@@ -220,6 +224,38 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             run: function (ed) {
                 var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
                 cancelButton.click();
+            }
+        });
+        // action triggered by CTRL+K
+        // shows a popup with a diff editor with the initial state of the editor
+        // reuse the current model, so changes can be made directly in the diff editor
+        editor.addAction({
+            id: 'viewDiffAction',
+            label: 'View Diff',
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
+            keybindingContext: null,
+            run: function (ed) {
+                TW.IDE.showModalDialog({
+                    title: "Diff Editor",
+                    show: function (popover) {
+                        popover.css({
+                            margin: "0",
+                            height: "85%",
+                            width: "85%",
+                            top: "5%",
+                            left: "5%"
+                        });
+                        var originalModel = monaco.editor.createModel(initialCode, mode);
+                        var modifiedModel = ed.getModel();
+
+                        var diffEditor = monaco.editor.createDiffEditor(popover[0], defaultMonacoSettings);
+                        diffEditor.setModel({
+                            original: originalModel,
+                            modified: modifiedModel
+                        });
+
+                    }
+                });
             }
         });
         thisPlugin.monacoEditor = editor;
