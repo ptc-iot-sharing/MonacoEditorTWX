@@ -109,6 +109,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     );
                 });
                 loadStandardTypescriptDefs();
+                generateScriptFunctions();
 
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
@@ -383,7 +384,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             'interface JSON {}',
             'interface QUERY {',
             '   filters?:any;',
-            '   sorts?:any;',    
+            '   sorts?:any;',
             '}',
             'interface TAGS {}',
             'interface SCHEDULE {}',
@@ -554,5 +555,37 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             doneButton = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
         }
         return doneButton;
+    }
+
+    function generateScriptFunctions() {
+        TW.IDE.getScriptFunctionLibraries(false, function (scriptFunctions) {
+            var result = "";
+            // iterate through all the script functions libraries
+            for (var key in scriptFunctions) {
+                if (!scriptFunctions.hasOwnProperty(key)) continue;
+                // iterate through all the functiond definitions
+                var scriptLibrary = scriptFunctions[key].details.functionDefinitions;
+                for (var def in scriptLibrary) {
+                    if (!scriptLibrary.hasOwnProperty(def)) continue;
+                    var functionDef = scriptLibrary[def];
+                    // generate in paralel both the jsdoc as well as the function declaration
+                    var jsDoc = "/**\n * " + functionDef.description;
+                    var declaration = "declare function " + functionDef.name + "(";;
+                    for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
+                        jsDoc += "\n * @param " + functionDef.parameterDefinitions[i].name + "  " + functionDef.parameterDefinitions[i].description;
+                        declaration += functionDef.parameterDefinitions[i].name + ": " + functionDef.parameterDefinitions[i].baseType;
+                        // add a comma between the parameters
+                        if (i < functionDef.parameterDefinitions.length - 1) {
+                            declaration += ", ";
+                        }
+                    }
+                    // add the return info
+                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/"
+                    declaration += "):" + functionDef.resultType.baseType;
+                    result += "\n" + jsDoc + "\n"+ declaration +";";
+                }
+            }
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+        });
     }
 }
