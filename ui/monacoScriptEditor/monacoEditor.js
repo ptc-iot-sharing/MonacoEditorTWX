@@ -100,6 +100,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 fontLigatures: true,
                 mouseWheelZoom: true,
                 formatOnPaste: true,
+                scrollBeyondLastLine: false,
                 theme: "vs"
             });
 
