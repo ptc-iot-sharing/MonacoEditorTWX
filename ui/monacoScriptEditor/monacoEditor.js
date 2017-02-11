@@ -28,6 +28,7 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
  * Initializes a new code mirror and registeres all the listeners
  */
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
+    debugger;
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
@@ -76,6 +77,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         if (!thisPlugin.properties || !serviceModel.model) {
             return;
         }
+        // the code gets automatically put in a text area, so just grab it from there
+        var codeValue = jqEl.find('.actual-code').val();
         // if the editor is javascript, then we need to init the compiler, and generate models
         if (mode === "javascript") {
             // if this is the first initalization attempt, then set the compiler optios
@@ -106,11 +109,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
-        }
-        var codeValue = jqEl.find('.actual-code').val();
-        if (mode == "javascript") {
+            // add the first lines to the service
             codeValue = generateServiceFirstLine(serviceModel.serviceDefinition, entityName) + "\n" + codeValue;
         }
+
         // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
         var editor = monaco.editor.create(codeTextareaElem[0], {
             language: mode,
@@ -126,27 +128,26 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             theme: "vs"
         });
 
-        // TODO: Huge hack here. Because the folding controller resets the hidden areas,
-        // we override the setHiddenAreas function to always hide the first three lines
-        var proxiedSetHiddenAreas = editor.setHiddenAreas;
-        editor.setHiddenAreas = function (ranges) {
-            ranges.push(new monaco.Range(1, 1, 1, 2));
-            ranges.push(new monaco.Range(2, 1, 1, 2))
-            ranges.push(new monaco.Range(3, 1, 3, 2));
-            return proxiedSetHiddenAreas.apply(this, arguments);
-        };
-        // hide the first three lines
-        editor.setHiddenAreas([])
-
-        // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
-        editor.onDidFocusEditor(function () {
-            if (mode == "javascript") {
+        if (mode == "javascript") {
+            // TODO: Huge hack here. Because the folding controller resets the hidden areas,
+            // we override the setHiddenAreas function to always hide the first three lines
+            var proxiedSetHiddenAreas = editor.setHiddenAreas;
+            editor.setHiddenAreas = function (ranges) {
+                ranges.push(new monaco.Range(1, 1, 1, 2));
+                ranges.push(new monaco.Range(2, 1, 1, 2))
+                ranges.push(new monaco.Range(3, 1, 3, 2));
+                return proxiedSetHiddenAreas.apply(this, arguments);
+            };
+            // hide the first three lines
+            editor.setHiddenAreas([])
+            // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
+            editor.onDidFocusEditor(function () {
                 // get the service model again
                 var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
                 var meThingModel = serviceModel.model;
                 var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
                 var op = {
-                    range: firstLineRange,
+                    range: new monaco.Range(1, 1, 3, 9999999),
                     text: generateServiceFirstLine(serviceModel.serviceDefinition, entityName),
                     forceMoveMarkers: true
                 };
@@ -158,11 +159,18 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 var fileName = 'thingworx/' + entityName + '.d.ts';
                 TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                     .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
-            }
-        });
+
+            });
+        }
+
         // whenever the model changes, we need to also push the changes up to the other plugins
         editor.onDidChangeModelContent(function (e) {
-            thisPlugin.properties.code = editor.getModel().getValueInRange(new monaco.Range(4,1,99999,999999));
+            if (mode == "javascript") {
+                var codeRange = new monaco.Range(4, 1, editor.getModel().getLineCount(), 999999);
+                thisPlugin.properties.code = editor.getModel().getValueInRange(codeRange);
+            } else {
+                thisPlugin.properties.code = editor.getModel().getValue();
+            }
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
