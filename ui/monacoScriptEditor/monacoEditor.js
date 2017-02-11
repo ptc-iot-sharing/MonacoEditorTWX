@@ -28,7 +28,6 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
  * Initializes a new code mirror and registeres all the listeners
  */
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
-    debugger;
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var codeTextareaElem = jqEl.find('.code-container');
@@ -174,6 +173,56 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
+        editor.addAction({
+            id: 'saveCodeAction',
+            label: 'Save Service',
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+            keybindingContext: null,
+            contextMenuGroupId: 'service',
+            contextMenuOrder: 1.5,
+            run: function (ed) {
+                // fake a click on the saveEntity button
+                // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
+                var saveEntityButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".save-entity-btn");
+                saveEntityButton.click();
+            }
+        });
+        editor.addAction({
+            id: 'doneCodeAction',
+            label: 'Save and Close',
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
+            keybindingContext: null,
+            run: function (ed) {
+                // fake a click on the done button
+                // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
+                var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".done-btn");
+                doneButton.click();
+            }
+        });
+        editor.addAction({
+            id: 'testCodeAction',
+            label: 'Test Service',
+            contextMenuGroupId: 'service',
+            contextMenuOrder: 1.5,
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Y],
+            keybindingContext: null,
+            run: function (ed) {
+                serviceModel.testService();
+            }
+        });
+        editor.addAction({
+            id: 'closeCodeAction',
+            label: 'Close Service',
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
+            keybindingContext: null,
+            run: function (ed) {
+                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
+                var cancelButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".cancel-btn");
+                cancelButton.click();
+            }
+        });
         thisPlugin.monacoEditor = editor;
     });
 
