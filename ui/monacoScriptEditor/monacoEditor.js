@@ -69,11 +69,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     // begin to init our editor
     require(['vs/editor/editor.main'], function () {
         // get the service model from the parent twService editor
-        var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
+        var parentServiceEditorJqEl = jqEl.closest("tbody").find(".twServiceEditor");
+        var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
         // there are cases where showCodeProperly is called, but no properties are yet set.
         // there are cases where the parent twServiceEditor doesn't have a model set
         // just exit in those cases
-        if (!thisPlugin.properties || !serviceModel.model) {
+        if (!thisPlugin.properties || !serviceModel || !serviceModel.model) {
             return;
         }
         // the code gets automatically put in a text area, so just grab it from there
@@ -142,7 +143,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditor(function () {
                 // get the service model again
-                var serviceModel = jqEl.closest("tbody").find(".twServiceEditor").twServiceEditor("getAllProperties");
+                var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
                 var meThingModel = serviceModel.model;
                 var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
                 var op = {
@@ -173,6 +174,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
+        // add actions for editor
         editor.addAction({
             id: 'saveCodeAction',
             label: 'Save Service',
@@ -183,8 +185,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             run: function (ed) {
                 // fake a click on the saveEntity button
                 // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
-                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
-                var saveEntityButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".save-entity-btn");
+                var saveEntityButton = findEditorButton(".save-entity-btn", parentServiceEditorJqEl);
                 saveEntityButton.click();
             }
         });
@@ -196,8 +197,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             run: function (ed) {
                 // fake a click on the done button
                 // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
-                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
-                var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".done-btn");
+                var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
                 doneButton.click();
             }
         });
@@ -218,8 +218,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
             keybindingContext: null,
             run: function (ed) {
-                var parentServiceEditor = jqEl.closest("tbody").find(".twServiceEditor")[0];
-                var cancelButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(".cancel-btn");
+                var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
                 cancelButton.click();
             }
         });
@@ -355,5 +354,17 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
         }
         TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
+    }
+    /**
+     * Finds the editor button in the button toolbar
+     */
+    function findEditorButton(buttonName, parentServiceEditorJqEl) {
+        var parentServiceEditor = parentServiceEditorJqEl[0];
+        var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(buttonName);
+        // we must be in fullscreen, try to find the button elsewhere
+        if (doneButton.length == 0) {
+            doneButton = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
+        }
+        return doneButton;
     }
 }
