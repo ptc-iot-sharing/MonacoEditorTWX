@@ -10,7 +10,7 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
         text: code,
         forceMoveMarkers: true
     };
-    thisPlugin.monacoEditor.executeEdits("my-source", [op]);
+    thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
 };
 TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
     var thisPlugin = this;
@@ -114,16 +114,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 var firstLineRange = new monaco.Range(1, 1, 3, 9999);
                 editor.getModel().setEditableRange(firstLineRange);
                 var op = {
-                    identifier: {
-                        major: 1,
-                        minor: 2
-                    },
                     range: firstLineRange,
                     text: generateServiceFirstLine(serviceModel.serviceDefinition, entityName),
                     forceMoveMarkers: true
                 };
-                // update the first list
-                thisPlugin.monacoEditor.executeEdits("my-source", [op]);
+                // update the first list. Use apply edits for no undo stack
+                thisPlugin.monacoEditor.executeEdits("modelUpdated", [op]);
                 var editableRange = new monaco.Range(4, 1, 99999, 99999);
                 editor.getModel().setEditableRange(editableRange);
                 // remove the previous definitions
