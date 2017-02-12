@@ -52,8 +52,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     jqEl.find('.btn-toolbar').hide();
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
-    codeTextareaElem.css("min-height", "365px");
-    if (thisPlugin.monacoEditor !== undefined) {
+    codeTextareaElem.css("min-height", (thisPlugin.height || 300) + "px");
+    if (codeTextareaElem.find(".monaco-editor").length > 0 && thisPlugin.monacoEditor !== undefined) {
         // already done, don't init the editor again
         return;
     }
@@ -81,7 +81,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     require(['vs/editor/editor.main'], function () {
         // get the service model from the parent twService editor
         var parentServiceEditorJqEl = jqEl.closest("tr").prev();
-        var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
+        var parentPluginType = parentServiceEditorJqEl.attr('tw-jqPlugin');
+        var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
         // there are cases where showCodeProperly is called, but no properties are yet set.
         // there are cases where the parent twServiceEditor doesn't have a model set
         // just exit in those cases
@@ -139,7 +140,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditor(function () {
                 // get the service model again
-                var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
+                var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 var meThingModel = serviceModel.model;
                 var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
                 // remove the previous definitions
@@ -334,13 +335,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Finds the editor button in the button toolbar
      */
     function findEditorButton(buttonName, parentServiceEditorJqEl) {
-        var parentServiceEditor = parentServiceEditorJqEl[0];
-        var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(buttonName);
+        var button = thisPlugin.jqElement.closest("tr").find(buttonName);
         // we must be in fullscreen, try to find the button elsewhere
-        if (doneButton.length == 0) {
-            doneButton = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
+        if (button.length == 0) {
+            button = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
         }
-        return doneButton;
+        return button;
     }
 
     function generateScriptFunctions() {
@@ -386,7 +386,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
                 monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
-                resourcesDef += "    " + key + ": Resource" + key +";\n";    
+                resourcesDef += "    " + key + ": Resource" + key + ";\n";
             }
             resourcesDef += "}\n var Resources: ResourcesInterface;";
             monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
