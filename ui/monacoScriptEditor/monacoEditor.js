@@ -152,6 +152,22 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                     .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
             });
+            // this handles on demand code completion for Thingworx entities
+            monaco.languages.registerCompletionItemProvider('javascript', {
+                triggerCharacters: [']', '.'],
+                provideCompletionItems: function (model, position) {
+                    // find out if we are completing on a entity collection
+                    var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                    var match = textUntilPosition.match(/(Things)\[['"]([^'"]+?)['"]\]\.?$/);
+                    if (match) {
+                        var metadata = TW.IDE.getEntityMetaData(match[1], match[2]);
+                        var entityName = match[1] + '' + sanitizeEntityName(match[2]);
+                        monaco.languages.typescript.javascriptDefaults.addExtraLib(generateTypeScriptDefinitions(metadata, entityName, true, true),
+                            'thingworx/' + entityName + '.d.ts');
+                    }
+                    return [];
+                }
+            });
         }
 
         // whenever the model changes, we need to also push the changes up to the other plugins
@@ -268,7 +284,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generates a typescript class and namespace for a metadata.
      * 
      */
-    function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isResource, showGenericServices) {
+    function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isGenericMetadata, showGenericServices) {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         var namespaceDefinition = "declare namespace " + entityName + " {\n";
@@ -283,7 +299,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var service = serviceDefs[key];
             // metadata for the service parameters
             var serviceParamDefinition = "";
-            if (isResource) {
+            if (isGenericMetadata) {
                 var serviceParameterMetadata = service.Inputs.fieldDefinitions;
             } else {
                 var serviceParameterMetadata = service.parameterDefinitions;
@@ -303,7 +319,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 }
                 namespaceDefinition += "}\n";
             }
-            if (isResource) {
+            if (isGenericMetadata) {
                 var outputMetadata = service.Outputs;
             } else {
                 var outputMetadata = service.resultType;
