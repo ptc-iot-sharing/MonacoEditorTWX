@@ -377,7 +377,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     function generateResourceFunctions() {
         TW.IDE.getResources(false, function (resourceLibraries) {
-            var result = "";
+            var resourcesDef = "interface ResourcesInterface {\n";
             // iterate through all the resources
             for (var key in resourceLibraries) {
                 if (!resourceLibraries.hasOwnProperty(key)) continue;
@@ -385,7 +385,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 var resourceLibrary = resourceLibraries[key].details;
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
                 monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
+                resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
+                resourcesDef += "    " + key + ": Resource" + key +";\n";    
             }
+            resourcesDef += "}\n var Resources: ResourcesInterface;";
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
     function loadStandardTypescriptDefs() {
