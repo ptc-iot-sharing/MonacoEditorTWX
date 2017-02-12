@@ -121,9 +121,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
-                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, false), fileName));
-            // add the first lines to the service
-            codeValue = generateServiceFirstLine(serviceModel.serviceDefinition, entityName) + "\n" + codeValue;
+                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+            // in the current globals we have me declarations as well as input parameters
+            TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
+                .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
         }
         // modify the initial settions
         var editorSettings = $.extend({}, defaultMonacoSettings);
@@ -135,48 +136,26 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         var initialCode = codeValue;
 
         if (mode == "javascript") {
-            // TODO: Huge hack here. Because the folding controller resets the hidden areas,
-            // we override the setHiddenAreas function to always hide the first three lines
-            var proxiedSetHiddenAreas = editor.setHiddenAreas;
-            editor.setHiddenAreas = function (ranges) {
-                ranges.push(new monaco.Range(1, 1, 1, 2));
-                ranges.push(new monaco.Range(2, 1, 1, 2))
-                ranges.push(new monaco.Range(3, 1, 3, 2));
-                return proxiedSetHiddenAreas.apply(this, arguments);
-            };
-            // hide the first three lines
-            editor.setHiddenAreas([]);
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditor(function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl.twServiceEditor("getAllProperties");
                 var meThingModel = serviceModel.model;
                 var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
-                var op = {
-                    range: new monaco.Range(1, 1, 3, 9999999),
-                    text: generateServiceFirstLine(serviceModel.serviceDefinition, entityName),
-                    forceMoveMarkers: true
-                };
-                // update the first list. Use apply edits for no undo stack
-                thisPlugin.monacoEditor.executeEdits("modelUpdated", [op]);
                 // remove the previous definitions
                 removeEditorDefinitions();
 
                 var fileName = 'thingworx/' + entityName + '.d.ts';
                 TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
-                    .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, false), fileName));
-
+                    .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+                TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
+                    .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
             });
         }
 
         // whenever the model changes, we need to also push the changes up to the other plugins
         editor.onDidChangeModelContent(function (e) {
-            if (mode == "javascript") {
-                var codeRange = new monaco.Range(4, 1, editor.getModel().getLineCount(), 999999);
-                thisPlugin.properties.code = editor.getModel().getValueInRange(codeRange);
-            } else {
-                thisPlugin.properties.code = editor.getModel().getValue();
-            }
+            thisPlugin.properties.code = editor.getModel().getValue();
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
@@ -266,7 +245,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     /**
      * In the first editor line we declare the "me" variable, as well as the inputs.
      */
-    function generateServiceFirstLine(serviceMetadata, entityName) {
+    function generateServiceGlobals(serviceMetadata, entityName) {
         var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
         definition += "var me = new " + entityName + "(); "
         for (var key in serviceMetadata.parameterDefinitions) {
@@ -409,7 +388,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             }
         });
     }
-     function loadStandardTypescriptDefs() {
+    function loadStandardTypescriptDefs() {
         // extra logger definitions
         monaco.languages.typescript.javascriptDefaults.addExtraLib([
             'declare class logger {',
