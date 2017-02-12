@@ -160,33 +160,37 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
-        // add actions for editor
-        editor.addAction({
-            id: 'saveCodeAction',
-            label: 'Save Service',
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            keybindingContext: null,
-            contextMenuGroupId: 'service',
-            contextMenuOrder: 1.5,
-            run: function (ed) {
-                // fake a click on the saveEntity button
-                // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
-                var saveEntityButton = findEditorButton(".save-entity-btn", parentServiceEditorJqEl);
-                saveEntityButton.click();
-            }
-        });
-        editor.addAction({
-            id: 'doneCodeAction',
-            label: 'Save and Close',
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
-            keybindingContext: null,
-            run: function (ed) {
-                // fake a click on the done button
-                // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
-                var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
-                doneButton.click();
-            }
-        });
+        if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
+            // add actions for editor
+            editor.addAction({
+                id: 'saveCodeAction',
+                label: 'Save Service',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+                keybindingContext: null,
+                contextMenuGroupId: 'service',
+                contextMenuOrder: 1.5,
+                run: function (ed) {
+                    // fake a click on the saveEntity button
+                    // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+                    var saveEntityButton = findEditorButton(".save-entity-btn", parentServiceEditorJqEl);
+                    saveEntityButton.click();
+                }
+            });
+        }
+        if (findEditorButton(".done-btn", parentServiceEditorJqEl).length > 0) {
+            editor.addAction({
+                id: 'doneCodeAction',
+                label: 'Save and Close',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
+                keybindingContext: null,
+                run: function (ed) {
+                    // fake a click on the done button
+                    // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+                    var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
+                    doneButton.click();
+                }
+            });
+        }
         editor.addAction({
             id: 'testCodeAction',
             label: 'Test Service',
@@ -198,22 +202,26 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 serviceModel.testService();
             }
         });
-        editor.addAction({
-            id: 'closeCodeAction',
-            label: 'Close Service',
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
-            keybindingContext: null,
-            run: function (ed) {
-                var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
-                cancelButton.click();
-            }
-        });
+        if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
+            editor.addAction({
+                id: 'closeCodeAction',
+                label: 'Close Service',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
+                keybindingContext: null,
+                run: function (ed) {
+                    var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
+                    cancelButton.click();
+                }
+            });
+        }
         // action triggered by CTRL+K
         // shows a popup with a diff editor with the initial state of the editor
         // reuse the current model, so changes can be made directly in the diff editor
         editor.addAction({
             id: 'viewDiffAction',
             label: 'View Diff',
+            contextMenuGroupId: 'service',
+            contextMenuOrder: 1.6,
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
             keybindingContext: null,
             run: function (ed) {
