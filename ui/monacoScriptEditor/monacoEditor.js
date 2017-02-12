@@ -341,7 +341,75 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         return "export as namespace " + entityName + ";\n" + namespaceDefinition + classDefinition;
     }
 
-    function loadStandardTypescriptDefs() {
+    /**
+     * Removes all the temporary typescript definions
+     */
+    function removeEditorDefinitions() {
+        // remove the previous definitions
+        for (var i = 0; i < TW.jqPlugins.twCodeEditor.monacoEditorLibs.length; i++) {
+            TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
+        }
+        TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
+    }
+    /**
+     * Finds the editor button in the button toolbar
+     */
+    function findEditorButton(buttonName, parentServiceEditorJqEl) {
+        var parentServiceEditor = parentServiceEditorJqEl[0];
+        var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(buttonName);
+        // we must be in fullscreen, try to find the button elsewhere
+        if (doneButton.length == 0) {
+            doneButton = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
+        }
+        return doneButton;
+    }
+
+    function generateScriptFunctions() {
+        TW.IDE.getScriptFunctionLibraries(false, function (scriptFunctions) {
+            var result = "";
+            // iterate through all the script functions libraries
+            for (var key in scriptFunctions) {
+                if (!scriptFunctions.hasOwnProperty(key)) continue;
+                // iterate through all the functiond definitions
+                var scriptLibrary = scriptFunctions[key].details.functionDefinitions;
+                for (var def in scriptLibrary) {
+                    if (!scriptLibrary.hasOwnProperty(def)) continue;
+                    var functionDef = scriptLibrary[def];
+                    // generate in paralel both the jsdoc as well as the function declaration
+                    var jsDoc = "/**\n * " + functionDef.description;
+                    var declaration = "declare function " + functionDef.name + "(";;
+                    for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
+                        jsDoc += "\n * @param " + functionDef.parameterDefinitions[i].name + "  " + functionDef.parameterDefinitions[i].description;
+                        declaration += functionDef.parameterDefinitions[i].name + ": " + functionDef.parameterDefinitions[i].baseType;
+                        // add a comma between the parameters
+                        if (i < functionDef.parameterDefinitions.length - 1) {
+                            declaration += ", ";
+                        }
+                    }
+                    // add the return info
+                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/"
+                    declaration += "):" + functionDef.resultType.baseType;
+                    result += "\n" + jsDoc + "\n" + declaration + ";";
+                }
+            }
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+        });
+    }
+
+    function generateResourceFunctions() {
+        TW.IDE.getResources(false, function (resourceLibraries) {
+            var result = "";
+            // iterate through all the resources
+            for (var key in resourceLibraries) {
+                if (!resourceLibraries.hasOwnProperty(key)) continue;
+                // generate the metadata for this resource
+                var resourceLibrary = resourceLibraries[key].details;
+                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
+                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
+            }
+        });
+    }
+     function loadStandardTypescriptDefs() {
         // extra logger definitions
         monaco.languages.typescript.javascriptDefaults.addExtraLib([
             'declare class logger {',
@@ -544,74 +612,5 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             '    CopyValues(rowNumber: number): INFOTABLE;',
             '}',
         ].join('\n'), 'thingworx/baseTypes.d.ts');
-    }
-
-    /**
-     * Removes all the temporary typescript definions
-     */
-    function removeEditorDefinitions() {
-        // remove the previous definitions
-        for (var i = 0; i < TW.jqPlugins.twCodeEditor.monacoEditorLibs.length; i++) {
-            TW.jqPlugins.twCodeEditor.monacoEditorLibs[i].dispose();
-        }
-        TW.jqPlugins.twCodeEditor.monacoEditorLibs = [];
-    }
-    /**
-     * Finds the editor button in the button toolbar
-     */
-    function findEditorButton(buttonName, parentServiceEditorJqEl) {
-        var parentServiceEditor = parentServiceEditorJqEl[0];
-        var doneButton = $.data(parentServiceEditor, "twServiceEditor").jqSecondElement.find(buttonName);
-        // we must be in fullscreen, try to find the button elsewhere
-        if (doneButton.length == 0) {
-            doneButton = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
-        }
-        return doneButton;
-    }
-
-    function generateScriptFunctions() {
-        TW.IDE.getScriptFunctionLibraries(false, function (scriptFunctions) {
-            var result = "";
-            // iterate through all the script functions libraries
-            for (var key in scriptFunctions) {
-                if (!scriptFunctions.hasOwnProperty(key)) continue;
-                // iterate through all the functiond definitions
-                var scriptLibrary = scriptFunctions[key].details.functionDefinitions;
-                for (var def in scriptLibrary) {
-                    if (!scriptLibrary.hasOwnProperty(def)) continue;
-                    var functionDef = scriptLibrary[def];
-                    // generate in paralel both the jsdoc as well as the function declaration
-                    var jsDoc = "/**\n * " + functionDef.description;
-                    var declaration = "declare function " + functionDef.name + "(";;
-                    for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
-                        jsDoc += "\n * @param " + functionDef.parameterDefinitions[i].name + "  " + functionDef.parameterDefinitions[i].description;
-                        declaration += functionDef.parameterDefinitions[i].name + ": " + functionDef.parameterDefinitions[i].baseType;
-                        // add a comma between the parameters
-                        if (i < functionDef.parameterDefinitions.length - 1) {
-                            declaration += ", ";
-                        }
-                    }
-                    // add the return info
-                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/"
-                    declaration += "):" + functionDef.resultType.baseType;
-                    result += "\n" + jsDoc + "\n" + declaration + ";";
-                }
-            }
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
-        });
-    }
-
-    function generateResourceFunctions() {
-        TW.IDE.getResources(false, function (resourceLibraries) {
-            var result = "";
-            // iterate through all the resources
-            for (var key in resourceLibraries) {
-                if (!resourceLibraries.hasOwnProperty(key)) continue;
-                // generate the metadata for this resource
-                var resourceLibrary = resourceLibraries[key].details;
-                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
-                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
-            }
-        });
     }
 }
