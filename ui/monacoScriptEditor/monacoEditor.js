@@ -110,6 +110,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 });
                 loadStandardTypescriptDefs();
                 generateScriptFunctions();
+                generateResourceFunctions();
 
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
@@ -120,7 +121,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
-                .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
+                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, false), fileName));
             // add the first lines to the service
             codeValue = generateServiceFirstLine(serviceModel.serviceDefinition, entityName) + "\n" + codeValue;
         }
@@ -163,7 +164,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
                 var fileName = 'thingworx/' + entityName + '.d.ts';
                 TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
-                    .addExtraLib(generateTypeScriptDefinitions(meThingModel, entityName), fileName));
+                    .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, false), fileName));
 
             });
         }
@@ -279,25 +280,31 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generates a typescript class and namespace for a metadata.
      * 
      */
-    function generateTypeScriptDefinitions(metadata, entityName) {
+    function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isResource, showGenericServices) {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         var namespaceDefinition = "declare namespace " + entityName + " {\n";
         var classDefinition = "declare class " + entityName + " {\n constructor(); \n";
 
         // generate info retated to services
-        var serviceDefs = metadata.attributes.effectiveShape.serviceDefinitions;
+        var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
+            if (!showGenericServices && TW.IDE.isGenericServiceName(key)) continue;
             // first create an interface for service params
             var service = serviceDefs[key];
             // metadata for the service parameters
             var serviceParamDefinition = "";
-            if (service.parameterDefinitions && Object.keys(service.parameterDefinitions).length > 0) {
+            if (isResource) {
+                var serviceParameterMetadata = service.Inputs.fieldDefinitions;
+            } else {
+                var serviceParameterMetadata = service.parameterDefinitions;
+            }
+            if (serviceParameterMetadata && Object.keys(serviceParameterMetadata).length > 0) {
                 namespaceDefinition += "export interface " + service.name + "Params {\n";
-                for (var parameterDef in service.parameterDefinitions) {
-                    if (!service.parameterDefinitions.hasOwnProperty(parameterDef)) continue;
-                    var inputDef = service.parameterDefinitions[parameterDef];
+                for (var parameterDef in serviceParameterMetadata) {
+                    if (!serviceParameterMetadata.hasOwnProperty(parameterDef)) continue;
+                    var inputDef = serviceParameterMetadata[parameterDef];
 
                     namespaceDefinition += "/** \n * " + inputDef.description +
                         (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
@@ -308,16 +315,21 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 }
                 namespaceDefinition += "}\n";
             }
+            if (isResource) {
+                var outputMetadata = service.Outputs;
+            } else {
+                var outputMetadata = service.resultType;
+            }
             // now generate the service definition, as well as jsdocs
             classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
                 "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition) : "\n") + " **/ \n " +
                 service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
-                "): " + service.resultType.baseType + ";\n";
+                "): " + outputMetadata.baseType + ";\n";
         }
         namespaceDefinition = namespaceDefinition + "}\n";
 
         // we handle property definitions here
-        var propertyDefs = metadata.attributes.effectiveShape.propertyDefinitions;
+        var propertyDefs = effectiveShapeMetadata.propertyDefinitions;
         for (var key in propertyDefs) {
             if (!propertyDefs.hasOwnProperty(key)) continue;
 
@@ -582,10 +594,24 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     // add the return info
                     jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/"
                     declaration += "):" + functionDef.resultType.baseType;
-                    result += "\n" + jsDoc + "\n"+ declaration +";";
+                    result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
             }
             monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+        });
+    }
+
+    function generateResourceFunctions() {
+        TW.IDE.getResources(false, function (resourceLibraries) {
+            var result = "";
+            // iterate through all the resources
+            for (var key in resourceLibraries) {
+                if (!resourceLibraries.hasOwnProperty(key)) continue;
+                // generate the metadata for this resource
+                var resourceLibrary = resourceLibraries[key].details;
+                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
+                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
+            }
         });
     }
 }
