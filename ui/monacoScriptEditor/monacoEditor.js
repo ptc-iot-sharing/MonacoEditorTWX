@@ -119,7 +119,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             removeEditorDefinitions();
             var meThingModel = serviceModel.model;
 
-            var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
+            var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
             var fileName = 'thingworx/' + entityName + '.d.ts';
             TW.jqPlugins.twCodeEditor.monacoEditorLibs.push(monaco.languages.typescript.javascriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
@@ -142,7 +142,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 var meThingModel = serviceModel.model;
-                var entityName = meThingModel.entityType + '' + meThingModel.id.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
+                var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
                 // remove the previous definitions
                 removeEditorDefinitions();
 
@@ -391,15 +391,23 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 if (!resourceLibraries.hasOwnProperty(key)) continue;
                 // generate the metadata for this resource
                 var resourceLibrary = resourceLibraries[key].details;
-                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + key, true, false);
-                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + key + ".d.ts");
+                var validEntityName = sanitizeEntityName(key);
+                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + validEntityName, true, false);
+                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + validEntityName + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
-                resourcesDef += "    " + key + ": Resource" + key + ";\n";
+                resourcesDef += "    '" + key + "': Resource" + validEntityName + ";\n";
             }
             resourcesDef += "}\n var Resources: ResourcesInterface;";
             monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
+    /**
+     * Sanitizes an entity name to be a valid javascript declaration
+     */
+    function sanitizeEntityName(entityName) {
+        return entityName.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
+    }
+
     function loadStandardTypescriptDefs() {
         // extra logger definitions
         monaco.languages.typescript.javascriptDefaults.addExtraLib([
