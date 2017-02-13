@@ -169,19 +169,19 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     if (match) {
                         // get metadata for this
                         var entityType = match[1];
-                        var entityName = match[2];
-                        var metadata = TW.IDE.getEntityMetaData(entityType, entityName);
+                        var entityId = match[2];
+                        var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
                         if (metadata) {
                             // generate the typescript definition
-                            var entityName = entityType + '' + sanitizeEntityName(entityName);
-                            removeEditorLibs('entityCollectionLibs')
+                            var entityName = entityType + '' + sanitizeEntityName(entityId);
+                            removeEditorLibs('entityCollectionLibs');
                             var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
 
                             monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.
                                 addExtraLib(entityTypescriptDef, 'thingworx/' + entityName + '.d.ts'));
 
                             monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                                generateEntityCollectionDefs(entityType, entityName), 'thingworx/entityCollections.d.ts'));
+                                generateEntityCollectionDefs(entityType, entityId), 'thingworx/entityCollections.d.ts'));
 
                         }
                     }
