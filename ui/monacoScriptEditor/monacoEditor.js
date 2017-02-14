@@ -322,6 +322,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
             keybindingContext: null,
             run: function (ed) {
+                var originalModel = monaco.editor.createModel(initialCode, mode);
+                var modifiedModel = ed.getModel();
+                var diffEditor;
+
                 TW.IDE.showModalDialog({
                     title: "Diff Editor",
                     show: function (popover) {
@@ -332,15 +336,17 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             top: "5%",
                             left: "5%"
                         });
-                        var originalModel = monaco.editor.createModel(initialCode, mode);
-                        var modifiedModel = ed.getModel();
 
-                        var diffEditor = monaco.editor.createDiffEditor(popover[0], defaultMonacoSettings);
+                        diffEditor = monaco.editor.createDiffEditor(popover[0], defaultMonacoSettings);
                         diffEditor.setModel({
                             original: originalModel,
                             modified: modifiedModel
                         });
 
+                    },
+                    close: function () {
+                        diffEditor.dispose();
+                        originalModel.dispose();
                     }
                 });
             }
