@@ -257,6 +257,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
+        // Action triggered by CTRL+S
+        // Clicks the save entity button 
         if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
             // add actions for editor
             editor.addAction({
@@ -274,11 +276,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 }
             });
         }
+        // Action triggered by CTRL+Enter
+        // Saves the service and closes it. Clicks the done button 
         if (findEditorButton(".done-btn", parentServiceEditorJqEl).length > 0) {
             editor.addAction({
                 id: 'doneCodeAction',
                 label: 'Save and Close',
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: null,
                 run: function (ed) {
                     // fake a click on the done button
@@ -288,6 +292,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 }
             });
         }
+        // Action triggered by Ctrl+Y
+        // Opens the test service window. Does not save the service before
         editor.addAction({
             id: 'testCodeAction',
             label: 'Test Service',
@@ -299,11 +305,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 serviceModel.testService();
             }
         });
+        // action triggered by CTRL+Backspace
+        // clicks the cancel button, closing the service
         if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
             editor.addAction({
                 id: 'closeCodeAction',
                 label: 'Close Service',
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backspace],
                 keybindingContext: null,
                 run: function (ed) {
                     var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
