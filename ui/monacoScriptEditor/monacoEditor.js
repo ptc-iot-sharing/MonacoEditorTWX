@@ -16,6 +16,25 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
     };
     thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
 };
+
+/**
+ * Property dispose the editor when needed
+ */
+TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
+    var thisPlugin = this;
+    try {
+        if (thisPlugin.monacoEditor !== undefined) {
+            if (thisPlugin.monacoEditor.getModel()) {
+                thisPlugin.monacoEditor.getModel().dispose();
+            }
+            thisPlugin.monacoEditor.dispose();
+        }
+    } catch (err) {
+        console.log("Failed to destory the monaco editor", err);
+    }
+    this.monacoEditor = undefined;
+    thisPlugin.jqElement.off('.twCodeEditor');
+};
 /**
  * Called when move from fullscreen or to fullscreen
  */
@@ -29,9 +48,19 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
     }
 };
 /**
- * Initializes a new code mirror and registeres all the listeners
+ * Initilizes a new code mirror. This takes care of the contidion that 
+ * we must create the monaco editor only once.
  */
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
+    if (TW.jqPlugins.twCodeEditor.timeout) {
+        window.clearTimeout(TW.jqPlugins.twCodeEditor.timeout);
+    }
+    TW.jqPlugins.twCodeEditor.timeout = setTimeout(TW.jqPlugins.twCodeEditor.initEditor.bind(this), 0);
+};
+/**
+ * Initializes a new code mirror and registeres all the listeners
+ */
+TW.jqPlugins.twCodeEditor.initEditor = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
@@ -50,7 +79,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     // make sure that the key events stay inside the editor.
     codeTextareaElem.on("keydown keypress keyup", function (e) {
         e.stopPropagation();
-    })
+    });
     // root of where the entire vs folder is
     var vsRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs';
     // hide the toolbar since we have all the toolbar functionality in the editor
@@ -317,6 +346,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             }
         });
         thisPlugin.monacoEditor = editor;
+        TW.jqPlugins.twCodeEditor.timeout = 0;
     });
 
     /**
@@ -700,4 +730,4 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             '}',
         ].join('\n'), 'thingworx/baseTypes.d.ts');
     }
-}
+};
