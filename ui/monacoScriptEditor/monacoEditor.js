@@ -1,8 +1,11 @@
+// libs in here follow the following format:
+// {entityId, entityType, disposable}
 TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     serviceLibs: [],
-    entityCollectionLibs: []
+    entityCollectionLibs: {},
+    entityCollection: undefined
 };
-TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = false;
+TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
 /**
  * Called when the exttension is asked to insert a code snippet via the snippets
  * We make sure that we also have an undo stack here
@@ -65,6 +68,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
     var codeTextareaElem = jqEl.find('.code-container');
+    // A list of all the entity collections avalible in TWX
+    var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Channels", "Configuration", "ContentCrawlers", "Dashboards",
+        "DataAnalysisDefinitions", "DataShapes", "DataTables", "DataTags", "DataTagVocabulary", "ModelTags", "ModelTagVocabulary",
+        "VocabularyTerm", "DirectoryServices", "Groups", "LocalizationTables", "Logs", "Mashups", "MediaEntities", "Menus", "Networks",
+        "Organizations", "Permissions", "PersistenceProviderPackages", "PersistenceProviders", "Projects", "Properties",
+        "StateDefinitions", "Streams", "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "ValueStreams", "Wikis"
+    ];
     // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
     var defaultMonacoSettings = {
         folding: true,
@@ -146,8 +156,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 loadStandardTypescriptDefs();
                 generateScriptFunctions();
                 generateResourceFunctions();
-                monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                    generateEntityCollectionDefs(), 'thingworx/entityCollections.d.ts'));
+                registerEntityCollectionDefs();
 
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
@@ -189,37 +198,39 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
             });
             // this handles on demand code completion for Thingworx entity names
-            monaco.languages.registerCompletionItemProvider('javascript', {
-                triggerCharacters: ['"', '.'],
-                provideCompletionItems: function (model, position) {
-                    if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
-                        return;
-                    }
-                    // find out if we are completing on a entity collection. Get the line until the current position
-                    var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
-                    // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                    var match = textUntilPosition.match(/(Things)\[['"]([^'"]+?)['"]\]\.?$/);
-                    if (match) {
-                        // get metadata for this
-                        var entityType = match[1];
-                        var entityId = match[2];
-                        var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
-                        if (metadata) {
-                            // generate the typescript definition
-                            var entityName = entityType + '' + sanitizeEntityName(entityId);
-                            removeEditorLibs('entityCollectionLibs');
-                            var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
+            /*  monaco.languages.registerCompletionItemProvider('javascript', {
+                  triggerCharacters: ['"', '.'],
+                  provideCompletionItems: function (model, position) {
+                      if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
+                          return;
+                      }
+                      // find out if we are completing on a entity collection. Get the line until the current position
+                      var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                      // matches if we have at the end of our line an entity definition. example: Things["gg"]
+                      var match = textUntilPosition.match(/(Things)\[['"]([^'"]+?)['"]\]\.?$/);
+                      if (match) {
+                          // get metadata for this
+                          var entityType = match[1];
+                          var entityId = match[2];
+                          var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
+                          if (metadata) {
+                              // generate the typescript definition
+                              var entityName = entityType + '' + sanitizeEntityName(entityId);
+                              removeEditorLibs('entityCollectionLibs');
+                              var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
 
-                            monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(entityTypescriptDef, 'thingworx/' + entityName + '.d.ts'));
+                              monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(entityTypescriptDef, 'thingworx/' + entityName + '.d.ts'));
 
-                            monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                                generateEntityCollectionDefs(entityType, entityId), 'thingworx/entityCollections.d.ts'));
+                              registerEntityCollectionDefs();
 
-                        }
-                    }
-                    return [];
-                }
-            });
+                          }
+                      }
+                      return [];
+                  }
+              });*/
+            // generate the regex that matches the autocomplete for the entity collection
+            var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
+
             // this handles on demand code completion for Thingworx entities medadata
             monaco.languages.registerCompletionItemProvider('javascript', {
                 triggerCharacters: [']', '.'],
@@ -227,7 +238,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     // find out if we are completing on a entity collection. Get the line until the current position
                     var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
                     // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                    var match = textUntilPosition.match(/(Things)\[['"]([^'"]+?)['"]\]\.?$/);
+                    var match = textUntilPosition.match(entityMatchRegex);
                     if (match) {
                         // get metadata for this
                         var entityType = match[1];
@@ -236,13 +247,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         if (metadata) {
                             // generate the typescript definition
                             var entityName = entityType + '' + sanitizeEntityName(entityId);
-                            removeEditorLibs('entityCollectionLibs');
                             var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
-
-                            monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(entityTypescriptDef, 'thingworx/' + entityName + '.d.ts'));
-
-                            monacoEditorLibs.entityCollectionLibs.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                                generateEntityCollectionDefs(entityType, entityId), 'thingworx/entityCollections.d.ts'));
+                            // if our definition is not yet added, then generate it
+                            if (registerEntityDefinitionLibrary(entityTypescriptDef, entityType, entityId)) {
+                                registerEntityCollectionDefs();
+                            }
 
                         }
                     }
@@ -311,7 +320,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             editor.addAction({
                 id: 'closeCodeAction',
                 label: 'Close Service',
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backspace],
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
                 keybindingContext: null,
                 run: function (ed) {
                     var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
@@ -364,6 +373,24 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     });
 
     /**
+     * Registers a typescript definiton in the extra serviceLibs
+     * If it already exists, just returns
+     */
+    function registerEntityDefinitionLibrary(typescriptMetadata, entityType, entityId) {
+        var entityName = entityType + '' + sanitizeEntityName(entityId);
+        var defintionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
+        if (!defintionInfo) {
+            monacoEditorLibs.entityCollectionLibs[entityName] = {
+                disposable: monaco.languages.typescript.javascriptDefaults.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
+                entityId: entityId,
+                entityType: entityType
+            };
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * In the first editor line we declare the "me" variable, as well as the inputs.
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
@@ -395,10 +422,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             var service = serviceDefs[key];
             // metadata for the service parameters
             var serviceParamDefinition = "";
+            var serviceParameterMetadata;
             if (isGenericMetadata) {
-                var serviceParameterMetadata = service.Inputs.fieldDefinitions;
+                serviceParameterMetadata = service.Inputs.fieldDefinitions;
             } else {
-                var serviceParameterMetadata = service.parameterDefinitions;
+                serviceParameterMetadata = service.parameterDefinitions;
             }
             if (serviceParameterMetadata && Object.keys(serviceParameterMetadata).length > 0) {
                 namespaceDefinition += "export interface " + service.name + "Params {\n";
@@ -415,10 +443,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 }
                 namespaceDefinition += "}\n";
             }
+            var outputMetadata;
             if (isGenericMetadata) {
-                var outputMetadata = service.Outputs;
+                outputMetadata = service.Outputs;
             } else {
-                var outputMetadata = service.resultType;
+                outputMetadata = service.resultType;
             }
             // now generate the service definition, as well as jsdocs
             classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
@@ -463,6 +492,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         return button;
     }
 
+    /**
+     * Generate typescript definitions for the script library functions
+     */
     function generateScriptFunctions() {
         TW.IDE.getScriptFunctionLibraries(false, function (scriptFunctions) {
             var result = "";
@@ -486,7 +518,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         }
                     }
                     // add the return info
-                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/"
+                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/";
                     declaration += "):" + functionDef.resultType.baseType;
                     result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
@@ -520,24 +552,31 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         return entityName.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
     }
 
-    function generateEntityCollectionDefs(entityType, entityName) {
-        // generate entity collections
-        var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Channels", "Configuration", "ContentCrawlers", "Dashboards",
-            "DataAnalysisDefinitions", "DataShapes", "DataTables", "DataTags", "DataTagVocabulary", "ModelTags", "ModelTagVocabulary",
-            "VocabularyTerm", "DirectoryServices", "Groups", "LocalizationTables", "Logs", "Mashups", "MediaEntities", "Menus", "Networks",
-            "Organizations", "Permissions", "PersistenceProviderPackages", "PersistenceProviders", "Projects", "Properties",
-            "StateDefinitions", "Streams", "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "ValueStreams", "Wikis"
-        ];
+    /**
+     * Generate the collection definitions
+     * Also adds the avalible entity definitons
+     */
+    function registerEntityCollectionDefs() {
+        if (monacoEditorLibs.entityCollection) {
+            monacoEditorLibs.entityCollection.dispose();
+        }
         var entityCollectionsDefs = "";
         for (var i = 0; i < entityCollections.length; i++) {
             entityCollectionsDefs += 'interface ' + entityCollections[i] + 'Interface {\n';
-            if (entityType == entityCollections[i]) {
-                entityCollectionsDefs += "    '" + entityName + "': " + sanitizeEntityName(entityName) + ";\n";
+            for (var typescriptDef in monacoEditorLibs.entityCollectionLibs) {
+                if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
+
+                if (monacoEditorLibs.entityCollectionLibs[typescriptDef].entityType == entityCollections[i]) {
+                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': " + typescriptDef + ";\n";
+                }
             }
+
             entityCollectionsDefs += "}\n";
             entityCollectionsDefs += 'var ' + entityCollections[i] + ': ' + entityCollections[i] + 'Interface;\n';
         }
-        return entityCollectionsDefs;
+
+        monacoEditorLibs.entityCollection = monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            entityCollectionsDefs, 'thingworx/entityCollections.d.ts');
     }
 
     function loadStandardTypescriptDefs() {
