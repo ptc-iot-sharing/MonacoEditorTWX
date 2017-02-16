@@ -51,6 +51,18 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
     }
 };
 /**
+ * Scrolls code to a certain location. This is not really used, but we implement it anyhow
+ */
+TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
+    var thisPlugin = this;
+    if (thisPlugin.monacoEditor) {
+        thisPlugin.monacoEditor.revealPositionInCenter({
+            lineNumber: (x || 0),
+            column: (y || 0)
+        });
+    }
+};
+/**
  * Initilizes a new code mirror. This takes care of the contidion that 
  * we must create the monaco editor only once.
  */
