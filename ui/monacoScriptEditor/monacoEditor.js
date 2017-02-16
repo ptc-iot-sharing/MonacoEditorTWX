@@ -6,6 +6,7 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     entityCollection: undefined
 };
 TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
+TW.jqPlugins.twCodeEditor.showGenericServices = false;
 /**
  * Called when the exttension is asked to insert a code snippet via the snippets
  * We make sure that we also have an undo stack here
@@ -198,16 +199,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             editor.onDidFocusEditor(function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
-                var meThingModel = serviceModel.model;
-                var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
-                // remove the previous definitions
-                removeEditorLibs('serviceLibs');
-
-                var fileName = 'thingworx/' + entityName + '.d.ts';
-                monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-                    .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
-                monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-                    .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+                refreshMeDefinitions(serviceModel);
             });
             // this handles on demand code completion for Thingworx entity names
             /*  monaco.languages.registerCompletionItemProvider('javascript', {
@@ -278,6 +270,19 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
         editor.layout();
+        // action to enable generic services
+        // clicks the cancel button, closing the service
+        editor.addAction({
+            id: 'showGenericServices',
+            label: 'Toggle Generic Services',
+            run: function (ed) {
+                TW.jqPlugins.twCodeEditor.showGenericServices = !TW.jqPlugins.twCodeEditor.showGenericServices;
+                // get the service model again
+                var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
+                refreshMeDefinitions(serviceModel);
+            }
+        });
+
         // Action triggered by CTRL+S
         // Clicks the save entity button 
         if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
@@ -384,6 +389,19 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         TW.jqPlugins.twCodeEditor.timeout = 0;
     });
 
+    function refreshMeDefinitions(serviceModel) {
+        var meThingModel = serviceModel.model;
+        var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
+        // remove the previous definitions
+        removeEditorLibs('serviceLibs');
+
+        var fileName = 'thingworx/' + entityName + '.d.ts';
+        monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+            .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+        monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+            .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+    }
+
     /**
      * Registers a typescript definiton in the extra serviceLibs
      * If it already exists, just returns
@@ -429,7 +447,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
-            if (!showGenericServices && TW.IDE.isGenericServiceName(key)) continue;
+            if (!(showGenericServices && TW.jqPlugins.twCodeEditor.showGenericServices) && TW.IDE.isGenericServiceName(key)) continue;
             // first create an interface for service params
             var service = serviceDefs[key];
             // metadata for the service parameters
