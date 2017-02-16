@@ -206,6 +206,73 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
 
+                // generate the regex that matches the autocomplete for the entity collection
+                var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
+                // this handles on demand code completion for Thingworx entity names
+                monaco.languages.registerCompletionItemProvider('javascript', {
+                    triggerCharacters: ['[', '["'],
+                    provideCompletionItems: function (model, position) {
+                        if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
+                            return;
+                        }
+                        // find out if we are completing on a entity collection. Get the line until the current position
+                        var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                        // matches if we have at the end of our line an entity definition. example: Things["gg"]
+                        var match = textUntilPosition.match(entityMatchCompleteRegex);
+                        if (match) {
+                            // get metadata for this
+                            var entityType = match[1];
+                            var entitySearch = match[2];
+                            // returns a  promise to the search
+                            return thisPlugin.spotlightSearch(entityType, entitySearch).then(function (rows) {
+                                var result = [];
+                                for (var i = 0; i < rows.length; i++) {
+                                    // generate the items list
+                                    result.push({
+                                        label: rows[i].name,
+                                        kind: monaco.languages.CompletionItemKind.Field,
+                                        documentation: rows[i].description,
+                                        detail: "Entity type: " + rows[i].type,
+                                        insertText: rows[i].name.substring(entitySearch.length - 1)
+                                    });
+                                }
+                                return result;
+                            });
+                        }
+                        return [];
+                    }
+                });
+                // generate the regex that matches the autocomplete for the entity collection enties
+                var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
+
+                // this handles on demand code completion for Thingworx entities medadata
+                monaco.languages.registerCompletionItemProvider('javascript', {
+                    triggerCharacters: [']', '.'],
+                    provideCompletionItems: function (model, position) {
+                        // find out if we are completing on a entity collection. Get the line until the current position
+                        var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                        // matches if we have at the end of our line an entity definition. example: Things["gg"]
+                        var match = textUntilPosition.match(entityMatchRegex);
+                        if (match) {
+                            // get metadata for this
+                            var entityType = match[1];
+                            var entityId = match[2];
+                            var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
+                            if (metadata) {
+                                // generate the typescript definition
+                                var entityName = entityType + '' + sanitizeEntityName(entityId);
+                                var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
+                                // if our definition is not yet added, then generate it
+                                if (registerEntityDefinitionLibrary(entityTypescriptDef, entityType, entityId)) {
+                                    registerEntityCollectionDefs();
+                                }
+
+                            }
+                        }
+                        return [];
+                    }
+                });
+
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
             // remove the previous definitions
@@ -235,72 +302,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
-            });
-            // generate the regex that matches the autocomplete for the entity collection
-            var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
-            // this handles on demand code completion for Thingworx entity names
-            monaco.languages.registerCompletionItemProvider('javascript', {
-                triggerCharacters: ['[', '["'],
-                provideCompletionItems: function (model, position) {
-                    if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
-                        return;
-                    }
-                    // find out if we are completing on a entity collection. Get the line until the current position
-                    var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
-                    // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                    var match = textUntilPosition.match(entityMatchCompleteRegex);
-                    if (match) {
-                        // get metadata for this
-                        var entityType = match[1];
-                        var entitySearch = match[2];
-                        // returns a  promise to the search
-                        // TODO: the items are added multiple times. Need to find a way to only add them once
-                        return thisPlugin.spotlightSearch(entityType, entitySearch).then(function (rows) {
-                            var result = [];
-                            for (var i = 0; i < rows.length; i++) {
-                                // generate the items list
-                                result.push({
-                                    label: rows[i].name,
-                                    kind: monaco.languages.CompletionItemKind.Field,
-                                    documentation: rows[i].description,
-                                    detail: "Entity type: " + rows[i].type
-                                });
-                            }
-                            return result;
-                        });
-                    }
-                    return [];
-                }
-            });
-            // generate the regex that matches the autocomplete for the entity collection
-            var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
-
-            // this handles on demand code completion for Thingworx entities medadata
-            monaco.languages.registerCompletionItemProvider('javascript', {
-                triggerCharacters: [']', '.'],
-                provideCompletionItems: function (model, position) {
-                    // find out if we are completing on a entity collection. Get the line until the current position
-                    var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
-                    // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                    var match = textUntilPosition.match(entityMatchRegex);
-                    if (match) {
-                        // get metadata for this
-                        var entityType = match[1];
-                        var entityId = match[2];
-                        var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
-                        if (metadata) {
-                            // generate the typescript definition
-                            var entityName = entityType + '' + sanitizeEntityName(entityId);
-                            var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
-                            // if our definition is not yet added, then generate it
-                            if (registerEntityDefinitionLibrary(entityTypescriptDef, entityType, entityId)) {
-                                registerEntityCollectionDefs();
-                            }
-
-                        }
-                    }
-                    return [];
-                }
             });
         }
 
