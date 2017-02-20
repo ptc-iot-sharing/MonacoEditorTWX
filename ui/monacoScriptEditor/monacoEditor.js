@@ -362,23 +362,28 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // Action triggered by CTRL+S
         // Clicks the save entity button 
-        if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
-            // add actions for editor
-            editor.addAction({
-                id: 'saveCodeAction',
-                label: 'Save Service',
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-                keybindingContext: null,
-                contextMenuGroupId: 'service',
-                contextMenuOrder: 1.5,
-                run: function (ed) {
-                    // fake a click on the saveEntity button
-                    // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+        // add actions for editor
+        editor.addAction({
+            id: 'saveCodeAction',
+            label: 'Save Service',
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+            keybindingContext: null,
+            contextMenuGroupId: 'service',
+            contextMenuOrder: 1.5,
+            run: function (ed) {
+                // fake a click on the saveEntity button
+                // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
+                // if the service is new, click the done button instead
+                if (serviceModel.isNew) {
+                    var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
+                    doneButton.click();
+                } else {
                     var saveEntityButton = findEditorButton(".save-entity-btn", parentServiceEditorJqEl);
                     saveEntityButton.click();
                 }
-            });
-        }
+            }
+        });
+
         // Action triggered by CTRL+Enter
         // Saves the service and closes it. Clicks the done button 
         if (findEditorButton(".done-btn", parentServiceEditorJqEl).length > 0) {
@@ -405,7 +410,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Y],
             keybindingContext: null,
             run: function (ed) {
-                serviceModel.testService();
+                if (serviceModel.isNew) {
+                    alert('This service has not been saved yet. Please save and then test.');
+                } else {
+                    serviceModel.testService();
+                }
             }
         });
         // action triggered by CTRL+Backspace
@@ -591,10 +600,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Finds the editor button in the button toolbar
      */
     function findEditorButton(buttonName, parentServiceEditorJqEl) {
-        var button = thisPlugin.jqElement.closest("tr").find(buttonName);
+        // find the visible button
+        var button = thisPlugin.jqElement.closest("tr").find(buttonName + ":visible");
         // we must be in fullscreen, try to find the button elsewhere
-        if (button.length == 0) {
-            button = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName);
+        if (button.length === 0) {
+            button = thisPlugin.jqElement.closest(".inline-body").next().find(buttonName + ":visible");
         }
         return button;
     }
