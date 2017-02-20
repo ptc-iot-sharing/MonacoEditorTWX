@@ -1,0 +1,52 @@
+{
+    "Infotable for loop": {
+        "prefix": "infofor",
+        "body": [
+            "for (var ${1:i} = 0; ${1:i} < ${2:infotable}.rows.length; ${1:i}++) {",
+            "\tvar ${3:row} = ${2:infotable}.rows[${1:i}];",
+            "\t$0",
+            "}"
+        ],
+        "description": "Infotable for loop"
+    },
+    "Iterate infotable datashape fields": {
+        "prefix": "infofields",
+        "body": [
+            "var ${2:dataShape} = ${1:infotable}.dataShape.fields;",
+            "for (var ${3:fieldName} in ${2:dataShape}) {",
+            "\tlogger.warn('field name is ' + ${2:dataShape}[${3:fieldName}].name);",
+            "\tlogger.warn('field basetype is ' + ${2:dataShape}[${3:fieldName}].baseType);",
+            "\t$0",
+            "}"
+        ],
+        "description": "Iterate infotable datashape fields"
+    },
+    "Logger debug": {
+        "prefix": "ld",
+        "body": [
+            "logger.debug('${1:prefix}: '+ $0);"
+        ],
+        "description": "Logger debug"
+    },
+    "Logger warn": {
+        "prefix": "lw",
+        "body": [
+            "logger.warn('${1:prefix}: '+ $0);"
+        ],
+        "description": "Logger warn"
+    },
+    "Logger info": {
+        "prefix": "li",
+        "body": [
+            "logger.info('${1:prefix}: '+ $0);"
+        ],
+        "description": "Logger info"
+    },
+    "Logger error": {
+        "prefix": "le",
+        "body": [
+            "logger.error('${1:prefix}: '+ $0);"
+        ],
+        "description": "Logger error"
+    }
+}

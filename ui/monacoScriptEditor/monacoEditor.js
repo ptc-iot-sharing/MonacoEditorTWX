@@ -58,6 +58,30 @@ TW.jqPlugins.twCodeEditor.prototype.spotlightSearch = function (entityType, sear
 };
 
 /**
+ * Loads a language json as snippet library
+ */
+TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
+    return new monaco.Promise(function (c, e, p) {
+        $.get(filePath, {}, c, "json").fail(e);
+    }).then(function (data) {
+        var result = [];
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                result.push({
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    label: data[key].prefix,
+                    documentation: data[key].description,
+                    insertText: {
+                        value: data[key].body.join('\n')
+                    }
+                });
+            }
+        }
+        return result;
+    });
+};
+
+/**
  * Property dispose the editor when needed
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
@@ -75,6 +99,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
     this.monacoEditor = undefined;
     thisPlugin.jqElement.off('.twCodeEditor');
 };
+
 /**
  * Called when move from fullscreen or to fullscreen
  */
@@ -208,24 +233,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the completion for snippets
                 monaco.languages.registerCompletionItemProvider('javascript', {
                     provideCompletionItems: function (model, position) {
-                        return new monaco.Promise(function (c, e, p) {
-                            $.get(vsRoot + "/javascriptSnippets.json", {}, c, "json").fail(e);
-                        }).then(function (data) {
-                            var result = [];
-                            for (var key in data) {
-                                if (data.hasOwnProperty(key)) {
-                                    result.push({
-                                        kind: monaco.languages.CompletionItemKind.Snippet,
-                                        label: data[key].prefix,
-                                        documentation: data[key].description,
-                                        insertText: {
-                                            value: data[key].body.join('\n')
-                                        }
-                                    });
-                                }
-                            }
-                            return result;
-                        });
+                        return thisPlugin.loadSnippets(vsRoot + "/thingworxSnippets.json");
+                    }
+                });
+                // generate the completion for twx snippets
+                monaco.languages.registerCompletionItemProvider('javascript', {
+                    provideCompletionItems: function (model, position) {
+                        return thisPlugin.loadSnippets(vsRoot + "/javascriptSnippets.json");
                     }
                 });
                 // generate the regex that matches the autocomplete for the entity collection
