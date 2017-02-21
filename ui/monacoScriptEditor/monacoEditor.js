@@ -449,6 +449,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 TW.IDE.showModalDialog({
                     title: "Diff Editor",
                     show: function (popover) {
+                        // hide the footer and the body because we show the editor directly in the popover
+                        popover.find(".modal-footer, .modal-body").hide();
+                        // make sure we make the popover big enough
                         popover.css({
                             margin: "0",
                             height: "85%",
@@ -456,7 +459,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             top: "5%",
                             left: "5%"
                         });
-
+                        // create the diff editor
                         diffEditor = monaco.editor.createDiffEditor(popover[0], defaultMonacoSettings);
                         diffEditor.setModel({
                             original: originalModel,
@@ -465,6 +468,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         diffEditor.focus();
                     },
                     close: function () {
+                        // dispose everything
                         diffEditor.dispose();
                         originalModel.dispose();
                     }
