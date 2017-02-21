@@ -414,6 +414,26 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     alert('This service has not been saved yet. Please save and then test.');
                 } else {
                     serviceModel.testService();
+                    // if we have no input parameters, just focus the execute button
+                    if ($.isEmptyObject(serviceModel.serviceDefinition.parameterDefinitions)) {
+                        var executeButton = TW.IDE.CurrentTab.contentView.find(".twPopoverDialog").find(".execute-btn");
+                        // hacky here, but a service should never have more than 20 inputs
+                        executeButton.attr({
+                            "role": "button",
+                            "tabindex": "20"
+                        });
+                        executeButton.keydown(function (e) {
+                            var code = e.which;
+                            // 13 = Return, 32 = Space
+                            if ((code === 13) || (code === 32)) {
+                                $(this).click();
+                            }
+                        });
+                        executeButton.focus();
+                    } else {
+                        // focus the first input in the popup that opens
+                        TW.IDE.CurrentTab.contentView.find(".twPopoverDialog").find(".std-input-container").find("input").first().focus();
+                    }
                 }
             }
         });
