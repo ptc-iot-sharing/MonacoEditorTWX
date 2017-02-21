@@ -311,17 +311,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                 TW.jqPlugins.twCodeEditor.initializedDefaults = true;
             }
-            // remove the previous definitions
-            removeEditorLibs('serviceLibs');
-            var meThingModel = serviceModel.model;
 
-            var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
-            var fileName = 'thingworx/' + entityName + '.d.ts';
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
-            // in the current globals we have me declarations as well as input parameters
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-                .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+            refreshMeDefinitions(serviceModel);
         }
         // modify the initial settions
         var editorSettings = $.extend({}, defaultMonacoSettings);
@@ -500,15 +491,20 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         TW.jqPlugins.twCodeEditor.timeout = 0;
     });
 
+    /**
+     * Refreshes the definitions related to the me context
+     */
     function refreshMeDefinitions(serviceModel) {
         var meThingModel = serviceModel.model;
         var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
         // remove the previous definitions
         removeEditorLibs('serviceLibs');
 
-        var fileName = 'thingworx/' + entityName + '.d.ts';
+        // we append an me in here, just in case the definition is already added by the autocomplete in another service
+        var fileName = 'thingworx/' + entityName + 'Me.d.ts';
         monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
             .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+        // in the current globals we have me declarations as well as input parameters
         monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
             .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
     }
