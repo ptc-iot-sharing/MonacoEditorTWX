@@ -462,7 +462,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             original: originalModel,
                             modified: modifiedModel
                         });
-
+                        diffEditor.focus();
                     },
                     close: function () {
                         diffEditor.dispose();
@@ -471,6 +471,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 });
             }
         });
+        editor.focus();
         thisPlugin.monacoEditor = editor;
         TW.jqPlugins.twCodeEditor.timeout = 0;
     });

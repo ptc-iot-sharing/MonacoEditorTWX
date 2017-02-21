@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><Entities>
   <ExtensionPackages>
-    <ExtensionPackage name="MonacoScriptEditor" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.0.373" minimumThingWorxVersion="6.0.0"/>
+    <ExtensionPackage name="MonacoScriptEditor" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.0.375" minimumThingWorxVersion="6.0.0"/>
   </ExtensionPackages>
   <Widgets>
     <Widget name="monacoScriptEditor">
