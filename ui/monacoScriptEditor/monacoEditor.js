@@ -496,17 +496,20 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function refreshMeDefinitions(serviceModel) {
         var meThingModel = serviceModel.model;
-        var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
-        // remove the previous definitions
-        removeEditorLibs('serviceLibs');
+        // if we have a valid entity name
+        if (meThingModel.id) {
+            var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
+            // remove the previous definitions
+            removeEditorLibs('serviceLibs');
 
-        // we append an me in here, just in case the definition is already added by the autocomplete in another service
-        var fileName = 'thingworx/' + entityName + 'Me.d.ts';
-        monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-            .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
-        // in the current globals we have me declarations as well as input parameters
-        monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
-            .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+            // we append an me in here, just in case the definition is already added by the autocomplete in another service
+            var fileName = 'thingworx/' + entityName + 'Me.d.ts';
+            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+            // in the current globals we have me declarations as well as input parameters
+            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+                .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+        }
     }
 
     /**
