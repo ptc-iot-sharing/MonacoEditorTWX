@@ -535,7 +535,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
         var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
-        definition += "const me = new " + entityName + "(); "
+        definition += "const me = new internal." + entityName + "." + entityName + "(); "
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             definition += "var " + key + ": " + serviceMetadata.parameterDefinitions[key].baseType + "; ";
@@ -550,9 +550,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isGenericMetadata, showGenericServices) {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
-        var namespaceDefinition = "declare namespace " + entityName + " {\n";
-        var classDefinition = "declare class " + entityName + " {\n constructor(); \n";
-        
+        var namespaceDefinition = "declare namespace internal." + entityName + " {\n";
+        var classDefinition = "export class " + entityName + " {\n constructor(); \n";
+
         // generate info retated to services
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
@@ -595,7 +595,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
                 "): " + outputMetadata.baseType + ";\n";
         }
-        namespaceDefinition = namespaceDefinition + "}\n";
 
         // we handle property definitions here
         var propertyDefs = effectiveShapeMetadata.propertyDefinitions;
@@ -607,7 +606,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + property.baseType + ";\n";
         }
         classDefinition = classDefinition + "}\n";
-        return "export as namespace " + entityName + ";\n" + namespaceDefinition + classDefinition;
+
+        namespaceDefinition = namespaceDefinition + classDefinition + "}\n";
+
+        return "export as namespace internal." + entityName + ";\n" + namespaceDefinition;
     }
 
     /**
@@ -677,10 +679,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the metadata for this resource
                 var resourceLibrary = resourceLibraries[key].details;
                 var validEntityName = sanitizeEntityName(key);
-                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, "Resource" + validEntityName, true, false);
-                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + "Resource" + validEntityName + ".d.ts");
+                var libraryName = "Resource" + validEntityName;
+                var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
+                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
-                resourcesDef += "    '" + key + "': Resource" + validEntityName + ";\n";
+                resourcesDef += "    '" + key + "': internal." + libraryName + "." + libraryName + ";\n";
             }
             resourcesDef += "}\n var Resources: ResourcesInterface;";
             monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
@@ -708,7 +711,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
 
                 if (monacoEditorLibs.entityCollectionLibs[typescriptDef].entityType == entityCollections[i]) {
-                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': " + typescriptDef + ";\n";
+                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': internal." + typescriptDef + "." + typescriptDef + ";\n";
                 }
             }
 
