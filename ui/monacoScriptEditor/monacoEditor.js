@@ -1,7 +1,7 @@
-// libs in here follow the following format:
-// {entityId, entityType, disposable}
 TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     serviceLibs: [],
+    // libs in here follow the following format:
+    // {entityId, entityType, disposable}
     entityCollectionLibs: {},
     entityCollection: undefined
 };
@@ -538,7 +538,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         definition += "const me = new internal." + entityName + "." + entityName + "(); "
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
-            definition += "var " + key + ": " + serviceMetadata.parameterDefinitions[key].baseType + "; ";
+            var inputDef = serviceMetadata.parameterDefinitions[key];
+            definition += "var " + key + ": " + getTypescriptBaseType(inputDef) + "; ";
         }
         return definition + '\n//------------------------------------------------------------------------';
     }
@@ -576,9 +577,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                     namespaceDefinition += "/** \n * " + inputDef.description +
                         (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
-                        inputDef.name + ":" + inputDef.baseType + ";\n";
+                        inputDef.name + ":" + getTypescriptBaseType(inputDef) + ";\n";
                     // generate a nice description of the service params
-                    serviceParamDefinition += "*     " + inputDef.name + ": " + inputDef.baseType +
+                    serviceParamDefinition += "*     " + inputDef.name + ": " + getTypescriptBaseType(inputDef) +
                         (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
                 }
                 namespaceDefinition += "}\n";
@@ -593,7 +594,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
                 "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition) : "\n") + " **/ \n " +
                 service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
-                "): " + outputMetadata.baseType + ";\n";
+                "): " + getTypescriptBaseType(outputMetadata) + ";\n";
         }
 
         // we handle property definitions here
@@ -603,7 +604,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
             var property = propertyDefs[key];
             // generate an export for each property
-            classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + property.baseType + ";\n";
+            classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + getTypescriptBaseType(property) + ";\n";
         }
         classDefinition = classDefinition + "}\n";
 
@@ -654,7 +655,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     var declaration = "declare function " + functionDef.name + "(";;
                     for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
                         jsDoc += "\n * @param " + functionDef.parameterDefinitions[i].name + "  " + functionDef.parameterDefinitions[i].description;
-                        declaration += functionDef.parameterDefinitions[i].name + ": " + functionDef.parameterDefinitions[i].baseType;
+                        declaration += functionDef.parameterDefinitions[i].name + ": " + getTypescriptBaseType(functionDef.parameterDefinitions[i]);
                         // add a comma between the parameters
                         if (i < functionDef.parameterDefinitions.length - 1) {
                             declaration += ", ";
@@ -662,12 +663,23 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     }
                     // add the return info
                     jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/";
-                    declaration += "):" + functionDef.resultType.baseType;
+                    declaration += "):" + getTypescriptBaseType(functionDef.resultType);
                     result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
             }
             monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
         });
+    }
+
+    /**
+     * Gets the typescript interface definiton from a thingworx defintion
+     */
+    function getTypescriptBaseType(definition) {
+        if(definition.baseType != "INFOTABLE") {
+            return definition.baseType;
+        } else if(definition.baseType == "INFOTABLE") {
+            return definition.baseType + "<" + (definition.aspects.dataShape ? definition.aspects.dataShape : "any") + ">";
+        }
     }
 
     function generateResourceFunctions() {
@@ -803,14 +815,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '    fieldDefinitions: FieldDefinition;',
             '}',
             '',
-            'interface InfotableJson {',
+            'interface InfotableJson<T> {',
             '    /**',
             '     * An array of all the rows in the infotable',
             '     */',
-            '    rows: any[];',
+            '    rows: T[];',
             '    datashape: DataShape;',
             '}',
-            'interface INFOTABLE extends InfotableJson {',
+            'interface INFOTABLE<T> extends InfotableJson<T> {',
             '    /**',
             '     * Adds a field to this InfoTable datashape',
             '     */',
@@ -818,7 +830,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '    /**',
             '     * Adds a row to this InfoTable given the values as a JSON',
             '     */',
-            '    AddRow(params: any);',
+            '    AddRow(params: T);',
             '    /**',
             '     * Removes a field from this InfoTable given the field name as a String',
             '     */',
@@ -842,27 +854,27 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '    /**',
             '     * Filters the infotable inplace base on values',
             '     */',
-            '    Filter(values: any);',
+            '    Filter(values: T);',
             '    /**',
             '     * Finds the first row that matches the condition based on values',
             '     */',
-            '    Filter(values: any);',
+            '    Filter(values: T);',
             '    /**',
             '     * Deletes all the rows that match the given vales',
             '     */',
-            '    Delete(values: any);',
+            '    Delete(values: T);',
             '    /**',
             '     * Transforms the infotable into a JSON infotable',
             '     */',
-            '    ToJSON(): InfotableJson;',
+            '    ToJSON(): InfotableJson<T>;',
             '    /**',
             '     * Transforms the infotable into a JSON infotable',
             '     */',
-            '    toJSONSubset(): InfotableJson;',
+            '    toJSONSubset(): InfotableJson<T>;',
             '    /**',
             '     * Transforms the infotable into a JSON infotable',
             '     */',
-            '    toJSONLite(): InfotableJson;',
+            '    toJSONLite(): InfotableJson<T>;',
             '    /**',
             '     * Finds rows in this InfoTable with values that match the values given and returns them as a new InfoTable',
             '     * @param values The values to be matched as a JSON',
@@ -891,7 +903,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '     * @param index Location of the row (ValueCollection) in the ValueCollectionList',
             '     * @return ValueCollection of the row specified or null if index is out of range',
             '     */',
-            '    getRow(index: number): any ;',
+            '    getRow(index: number): T ;',
             '    /**',
             '     * Finds and returns the index of a row from this InfoTable that matches the values of all fields given as a ValueCollection',
             '     *',
@@ -906,11 +918,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '    /**',
             '     * Limits the infotable to the top N items. Returns the new infotable',
             '     */',
-            '    topNToNewTable(maxItems: int): INFOTABLE;',
+            '    topNToNewTable(maxItems: int): INFOTABLE<T>;',
             '    /**',
             '     * Clones the infotable into a new one',
             '     */',
-            '    clone(): INFOTABLE;',
+            '    clone(): INFOTABLE<T>;',
             '    /**',
             '     * Returns a new empty InfoTable with the same fields defined',
             '     *',
@@ -923,7 +935,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '     * @param rowNumber The row to be copied from this InfoTable as an int',
             '     * @return InfoTable containing the row copied from this InfoTable',
             '     */',
-            '    CopyValues(rowNumber: number): INFOTABLE;',
+            '    CopyValues(rowNumber: number): INFOTABLE<T>;',
             '}',
         ].join('\n'), 'thingworx/baseTypes.d.ts');
     }
