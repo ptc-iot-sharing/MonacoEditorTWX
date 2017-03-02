@@ -163,8 +163,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     codeTextareaElem.on("keydown keypress keyup", function (e) {
         e.stopPropagation();
     });
-    // root of where the entire vs folder is
-    var vsRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs';
     // hide the toolbar since we have all the toolbar functionality in the editor
     jqEl.find('.btn-toolbar').hide();
     // make sure the textArea will strech, but have a minimum height
@@ -188,10 +186,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             break;
     }
 
+    // root of where the entire vs folder is
+    var extRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor';
     // configure AMD require module
     require.config({
         paths: {
-            'vs': vsRoot
+            'vs': extRoot + "/vs"
         }
     });
     // begin to init our editor
@@ -218,8 +218,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     allowNonTsExtensions: true,
                     noLib: true
                 });
-                var coreDefsName = 'lib.es5.d.ts';
-                $.get(vsRoot + "/language/typescript/lib/" + coreDefsName, function (data) {
+                var coreDefsName = 'lib.rhino.es5.d.ts';
+                $.get(extRoot + "/configs/" + coreDefsName, function (data) {
                     // Register the es5 library
                     monaco.languages.typescript.javascriptDefaults.addExtraLib(
                         data,
@@ -233,13 +233,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the completion for snippets
                 monaco.languages.registerCompletionItemProvider('javascript', {
                     provideCompletionItems: function (model, position) {
-                        return thisPlugin.loadSnippets(vsRoot + "/thingworxSnippets.json");
+                        return thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json");
                     }
                 });
                 // generate the completion for twx snippets
                 monaco.languages.registerCompletionItemProvider('javascript', {
                     provideCompletionItems: function (model, position) {
-                        return thisPlugin.loadSnippets(vsRoot + "/javascriptSnippets.json");
+                        return thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json");
                     }
                 });
                 // generate the regex that matches the autocomplete for the entity collection
