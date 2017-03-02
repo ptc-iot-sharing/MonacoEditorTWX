@@ -325,7 +325,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         if (mode == "javascript") {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
-            editor.onDidFocusEditor(function () {
+            editor.onDidFocusEditorText(function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
@@ -677,7 +677,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     function getTypescriptBaseType(definition) {
         if(definition.baseType != "INFOTABLE") {
             return definition.baseType;
-        } else if(definition.baseType == "INFOTABLE") {
+        } else {
             return definition.baseType + "<" + (definition.aspects.dataShape ? definition.aspects.dataShape : "any") + ">";
         }
     }
