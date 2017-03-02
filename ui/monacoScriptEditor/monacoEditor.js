@@ -535,7 +535,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
         var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
-        definition += "var me = new " + entityName + "(); "
+        definition += "const me = new " + entityName + "(); "
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             definition += "var " + key + ": " + serviceMetadata.parameterDefinitions[key].baseType + "; ";
@@ -552,7 +552,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         var namespaceDefinition = "declare namespace " + entityName + " {\n";
         var classDefinition = "declare class " + entityName + " {\n constructor(); \n";
-
+        
         // generate info retated to services
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
