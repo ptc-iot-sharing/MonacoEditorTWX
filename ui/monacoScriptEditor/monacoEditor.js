@@ -19,6 +19,30 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
         forceMoveMarkers: true
     };
     thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
+}; 
+
+/**
+ * Gets the metadata of all the datashapes in the system
+ */
+TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function() {
+    var invokerSpec = {
+        entityType: 'Things',
+        entityName: 'MonacoEditorHelper',
+        characteristic: 'Services',
+        target: 'GetAllDataShapes',
+        apiMethod: 'post'
+    };
+    var invoker = new ThingworxInvoker(invokerSpec);
+    return new monaco.Promise(function (c, e, p) {
+        invoker.invokeService(
+            function (invoker) {
+                c(invoker.result.rows);
+            },
+            function (invoker, xhr) {
+                e(invoker.result.rows);
+            }
+        );
+    });
 };
 
 /**
@@ -227,6 +251,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     );
                 });
                 loadStandardTypescriptDefs();
+                generateDataShapeDefs();
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
@@ -672,13 +697,48 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     }
 
     /**
+     * Generates typescript interfaces from all thingworx datashapes
+     */
+    function generateDataShapeDefs() {
+        thisPlugin.getDataShapeDefinitons().then(function (rows) {
+            // declare the namespace
+            var dataShapeTs = "export as namespace internal;\n";
+            dataShapeTs += "declare namespace internal { \n";
+            for (var i = 0; i < rows.length; i++) {
+                var datashape = rows[i];
+                // description as jsdoc
+                dataShapeTs += "\t/**\n\t *" + datashape.description + "\n\t*/\n";
+                dataShapeTs += "\texport interface " + datashape.name + " {\n";
+                for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
+                    var fieldDef = datashape.fieldDefinitions.rows[j];
+                    // description as jsdoc
+                    dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
+                    // generate the definition of this field
+                    dataShapeTs += "\n\t" + fieldDef.name + ":" + getTypescriptBaseType({
+                        baseType: fieldDef.baseType, 
+                        aspects: {
+                            dataShape: fieldDef.dataShape
+                        }
+                    });
+                    dataShapeTs += ";\n";
+                }
+                dataShapeTs += "}\n\n";
+            }
+            dataShapeTs += "}\n";
+            monaco.languages.typescript.javascriptDefaults.addExtraLib( dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+        }, function(reason) {
+            console.log("Failed to generate typescript definitions from datashapes " + reason);
+        })
+    }
+
+    /**
      * Gets the typescript interface definiton from a thingworx defintion
      */
     function getTypescriptBaseType(definition) {
-        if(definition.baseType != "INFOTABLE") {
+        if (definition.baseType != "INFOTABLE") {
             return definition.baseType;
         } else {
-            return definition.baseType + "<" + (definition.aspects.dataShape ? definition.aspects.dataShape : "any") + ">";
+            return definition.baseType + "<" + (definition.aspects.dataShape ? ( "internal." + definition.aspects.dataShape) : "any") + ">";
         }
     }
 

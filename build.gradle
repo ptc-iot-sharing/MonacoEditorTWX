@@ -21,6 +21,7 @@ project.ext {
     uiDir = "${baseDir}/ui"
     libDir = "${baseDir}/lib"
     configDir = "${baseDir}/metadata.xml"
+    entitiesDir = "${baseDir}/Entities"
     zipDir = "${baseDir}/zip"
     packageVendor = "ThingWorx Customer Service"
     thingworxServerRoot = "http://localhost:8006"
@@ -67,6 +68,11 @@ task prepPackage(dependsOn: increaseVersionNumber) {
         copy {
             from uiDir
             into "${buildDir}/zip/ui/"
+        }
+        // add the entities 
+        copy {
+            from entitiesDir
+            into "${buildDir}/zip/Entities/"
         }
     }
 }
