@@ -19,12 +19,12 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
         forceMoveMarkers: true
     };
     thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
-}; 
+};
 
 /**
  * Gets the metadata of all the datashapes in the system
  */
-TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function() {
+TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
     var invokerSpec = {
         entityType: 'Things',
         entityName: 'MonacoEditorHelper',
@@ -256,17 +256,23 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
                 // generate the completion for snippets
-                monaco.languages.registerCompletionItemProvider('javascript', {
-                    provideCompletionItems: function (model, position) {
-                        return thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json");
-                    }
+                thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
+                    monaco.languages.registerCompletionItemProvider('javascript', {
+                        provideCompletionItems: function (model, position) {
+                            return snippets;
+                        }
+                    });
                 });
+
                 // generate the completion for twx snippets
-                monaco.languages.registerCompletionItemProvider('javascript', {
-                    provideCompletionItems: function (model, position) {
-                        return thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json");
-                    }
+                thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
+                    monaco.languages.registerCompletionItemProvider('javascript', {
+                        provideCompletionItems: function (model, position) {
+                            return snippets;
+                        }
+                    });
                 });
+
                 // generate the regex that matches the autocomplete for the entity collection
                 var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
                 // this handles on demand code completion for Thingworx entity names
@@ -715,7 +721,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
                     // generate the definition of this field
                     dataShapeTs += "\n\t" + fieldDef.name + ":" + getTypescriptBaseType({
-                        baseType: fieldDef.baseType, 
+                        baseType: fieldDef.baseType,
                         aspects: {
                             dataShape: fieldDef.dataShape
                         }
@@ -725,8 +731,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 dataShapeTs += "}\n\n";
             }
             dataShapeTs += "}\n";
-            monaco.languages.typescript.javascriptDefaults.addExtraLib( dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
-        }, function(reason) {
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+        }, function (reason) {
             console.log("Failed to generate typescript definitions from datashapes " + reason);
         })
     }
@@ -738,7 +744,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (definition.baseType != "INFOTABLE") {
             return definition.baseType;
         } else {
-            return definition.baseType + "<" + (definition.aspects.dataShape ? ( "internal." + definition.aspects.dataShape) : "any") + ">";
+            return definition.baseType + "<" + (definition.aspects.dataShape ? ("internal." + definition.aspects.dataShape) : "any") + ">";
         }
     }
 
