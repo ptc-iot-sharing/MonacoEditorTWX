@@ -782,7 +782,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
     function generateResourceFunctions() {
         TW.IDE.getResources(false, function (resourceLibraries) {
-            var resourcesDef = "interface ResourcesInterface {\n";
+            var resourcesDef = "declare namespace internal {\n";
+            resourcesDef += "export interface ResourcesInterface {\n";
             // iterate through all the resources
             for (var key in resourceLibraries) {
                 if (!resourceLibraries.hasOwnProperty(key)) continue;
@@ -795,7 +796,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
                 resourcesDef += "    '" + key + "': internal." + libraryName + "." + libraryName + ";\n";
             }
-            resourcesDef += "}\n var Resources: ResourcesInterface;";
+            resourcesDef += "}\n}\n var Resources: internal.ResourcesInterface;";
             monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
@@ -814,9 +815,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (monacoEditorLibs.entityCollection) {
             monacoEditorLibs.entityCollection.dispose();
         }
-        var entityCollectionsDefs = "";
+        var entityCollectionsDefs = "declare namespace internal { \n";
         for (var i = 0; i < entityCollections.length; i++) {
-            entityCollectionsDefs += 'interface ' + entityCollections[i] + 'Interface {\n';
+            entityCollectionsDefs += 'export interface ' + entityCollections[i] + 'Interface {\n';
             for (var typescriptDef in monacoEditorLibs.entityCollectionLibs) {
                 if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
 
@@ -824,9 +825,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': internal." + typescriptDef + "." + typescriptDef + ";\n";
                 }
             }
-
+            // close the class declaration
             entityCollectionsDefs += "}\n";
-            entityCollectionsDefs += 'var ' + entityCollections[i] + ': ' + entityCollections[i] + 'Interface;\n';
+        }
+        // close the namespace declaration
+        entityCollectionsDefs += "}\n";
+        // now add all the entity collections
+        for (var i = 0; i < entityCollections.length; i++) {
+            entityCollectionsDefs += 'var ' + entityCollections[i] + ': internal.' + entityCollections[i] + 'Interface;\n';
         }
 
         monacoEditorLibs.entityCollection = monaco.languages.typescript.javascriptDefaults.addExtraLib(
