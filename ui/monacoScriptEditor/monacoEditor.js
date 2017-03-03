@@ -166,9 +166,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
     var codeTextareaElem = jqEl.find('.code-container');
-    // A list of all the entity collections avalible in TWX
+    // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "ContentCrawlers", "Dashboards",
-        "DataAnalysisDefinitions", "DataShapes", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
+        "DataAnalysisDefinitions", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
         "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions", "Streams",
         "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "ValueStreams", "Wikis"
     ];
@@ -242,15 +242,21 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     allowNonTsExtensions: true,
                     noLib: true
                 });
-                var coreDefsName = 'lib.rhino.es5.d.ts';
-                $.get(extRoot + "/configs/" + coreDefsName, function (data) {
+                $.get(extRoot + "/configs/lib.rhino.es5.d.ts", function (data) {
                     // Register the es5 library
                     monaco.languages.typescript.javascriptDefaults.addExtraLib(
                         data,
-                        coreDefsName
+                        "lib.rhino.es5.d.ts"
                     );
                 });
                 loadStandardTypescriptDefs();
+                $.get(extRoot + "/configs/ThingworxDataShape.d.ts", function (data) {
+                    // Register the es5 library
+                    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+                        data,
+                        'ThingworxDataShape.d.ts'
+                    );
+                });
                 generateDataShapeDefs();
                 generateScriptFunctions();
                 generateResourceFunctions();
@@ -707,34 +713,53 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function generateDataShapeDefs() {
         thisPlugin.getDataShapeDefinitons().then(function (rows) {
-            // declare the namespace
-            var dataShapeTs = "export as namespace internal;\n";
-            dataShapeTs += "declare namespace internal { \n";
+            addDatashapeDefs(rows);
+            var datashapesDef = "declare namespace internal {\n";
+            datashapesDef += "interface DataShapes {\n";
+            // iterate through all the datashapes
             for (var i = 0; i < rows.length; i++) {
                 var datashape = rows[i];
-                // description as jsdoc
-                dataShapeTs += "\t/**\n\t *" + datashape.description + "\n\t*/\n";
-                dataShapeTs += "\texport interface " + datashape.name + " {\n";
-                for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
-                    var fieldDef = datashape.fieldDefinitions.rows[j];
-                    // description as jsdoc
-                    dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
-                    // generate the definition of this field
-                    dataShapeTs += "\n\t" + fieldDef.name + ":" + getTypescriptBaseType({
-                        baseType: fieldDef.baseType,
-                        aspects: {
-                            dataShape: fieldDef.dataShape
-                        }
-                    });
-                    dataShapeTs += ";\n";
-                }
-                dataShapeTs += "}\n\n";
+                // generate the metadata for this resource
+                var validEntityName = sanitizeEntityName(datashape.name);
+                datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
+                datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + datashape.name + ">;\n";
             }
-            dataShapeTs += "}\n";
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+            datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
         }, function (reason) {
             console.log("Failed to generate typescript definitions from datashapes " + reason);
         })
+    }
+
+    /**
+     * Generate a typescript lib with all the datashapes as interfaces
+     */
+    function addDatashapeDefs(rows) {
+        // declare the namespace
+        var dataShapeTs = "export as namespace internal;\n";
+        dataShapeTs += "declare namespace internal { \n";
+        for (var i = 0; i < rows.length; i++) {
+            var datashape = rows[i];
+            // description as jsdoc
+            dataShapeTs += "\t/**\n\t *" + datashape.description + "\n\t*/\n";
+            dataShapeTs += "\texport interface " + datashape.name + " {\n";
+            for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
+                var fieldDef = datashape.fieldDefinitions.rows[j];
+                // description as jsdoc
+                dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
+                // generate the definition of this field
+                dataShapeTs += "\n\t" + fieldDef.name + ":" + getTypescriptBaseType({
+                    baseType: fieldDef.baseType,
+                    aspects: {
+                        dataShape: fieldDef.dataShape
+                    }
+                });
+                dataShapeTs += ";\n";
+            }
+            dataShapeTs += "}\n\n";
+        }
+        dataShapeTs += "}\n";
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
     }
 
     /**
