@@ -521,8 +521,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function refreshMeDefinitions(serviceModel) {
         var meThingModel = serviceModel.model;
-        // if we have a valid entity name
-        if (meThingModel.id) {
+        // if we have a valid entity name and the effectiveShape is set
+        if (meThingModel.id && meThingModel.attributes.effectiveShape) {
             var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
             // remove the previous definitions
             removeEditorLibs('serviceLibs');
