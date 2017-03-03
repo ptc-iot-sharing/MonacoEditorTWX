@@ -712,34 +712,41 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Generates typescript interfaces from all thingworx datashapes
      */
     function generateDataShapeDefs() {
-        thisPlugin.getDataShapeDefinitons().then(function (rows) {
-            addDatashapeDefs(rows);
-            var datashapesDef = "declare namespace internal {\n";
-            datashapesDef += "interface DataShapes {\n";
-            // iterate through all the datashapes
-            for (var i = 0; i < rows.length; i++) {
-                var datashape = rows[i];
-                // generate the metadata for this resource
-                var validEntityName = sanitizeEntityName(datashape.name);
-                datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-                datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + datashape.name + ">;\n";
-            }
-            datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
+        thisPlugin.getDataShapeDefinitons().then(function (dataShapes) {
+            addDataShapesAsInterfaces(dataShapes);
+            addDatashapesCollection(dataShapes);
         }, function (reason) {
             console.log("Failed to generate typescript definitions from datashapes " + reason);
         })
     }
 
     /**
+     * Generate typescript defs for all the datashapes in the system.
+     */
+    function addDatashapesCollection(dataShapes) {
+        var datashapesDef = "declare namespace internal {\n";
+        datashapesDef += "interface DataShapes {\n";
+        // iterate through all the datashapes
+        for (var i = 0; i < dataShapes.length; i++) {
+            var datashape = dataShapes[i];
+            // generate the metadata for this resource
+            var validEntityName = sanitizeEntityName(datashape.name);
+            datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
+            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + datashape.name + ">;\n";
+        }
+        datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
+    }
+
+    /**
      * Generate a typescript lib with all the datashapes as interfaces
      */
-    function addDatashapeDefs(rows) {
+    function addDataShapesAsInterfaces(dataShapes) {
         // declare the namespace
         var dataShapeTs = "export as namespace internal;\n";
         dataShapeTs += "declare namespace internal { \n";
-        for (var i = 0; i < rows.length; i++) {
-            var datashape = rows[i];
+        for (var i = 0; i < dataShapes.length; i++) {
+            var datashape = dataShapes[i];
             // description as jsdoc
             dataShapeTs += "\t/**\n\t *" + datashape.description + "\n\t*/\n";
             dataShapeTs += "\texport interface " + datashape.name + " {\n";
