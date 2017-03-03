@@ -48,5 +48,12 @@
             "logger.error('${1:prefix}: '+ $0);"
         ],
         "description": "Logger error"
+    },
+    "Create Infotable": {
+        "prefix": "crinfo",
+        "body": [
+            "var ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValues();\n$0"
+        ],
+        "description": "Create infotable"
     }
 }
