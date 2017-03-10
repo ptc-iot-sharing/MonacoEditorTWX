@@ -5,8 +5,10 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     entityCollectionLibs: {},
     entityCollection: undefined
 };
+
 TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
 TW.jqPlugins.twCodeEditor.showGenericServices = false;
+
 /**
  * Called when the exttension is asked to insert a code snippet via the snippets
  * We make sure that we also have an undo stack here
@@ -963,7 +965,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             '    /**',
             '     * Finds the first row that matches the condition based on values',
             '     */',
-            '    Filter(values: T);',
+            '    Find(values: T);',
             '    /**',
             '     * Deletes all the rows that match the given vales',
             '     */',
