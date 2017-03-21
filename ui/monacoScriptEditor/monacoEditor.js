@@ -8,6 +8,7 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
 
 TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
 TW.jqPlugins.twCodeEditor.showGenericServices = false;
+TW.jqPlugins.twCodeEditor.theme = "vs";
 
 /**
  * Called when the exttension is asked to insert a code snippet via the snippets
@@ -239,6 +240,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // if this is the first initalization attempt, then set the compiler optios
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
                 TW.jqPlugins.twCodeEditor.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
+                var savedTheme = TW.IDE.synchronouslyLoadPreferenceData("MONACO_PREFERRED_THEME");
+                if (savedTheme) {
+                    TW.jqPlugins.twCodeEditor.theme = savedTheme;
+                }
                 // compiler options
                 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -359,6 +364,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         editorSettings.language = mode;
         editorSettings.readOnly = !thisPlugin.properties.editMode;
         editorSettings.value = codeValue;
+        editorSettings.theme = TW.jqPlugins.twCodeEditor.theme;
 
         var editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
         var initialCode = codeValue;
@@ -523,6 +529,40 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         // dispose everything
                         diffEditor.dispose();
                         originalModel.dispose();
+                    }
+                });
+            }
+        });
+
+        // shows a popup allowing you to configure the code styles
+        editor.addAction({
+            id: 'changeTheme',
+            label: 'Change Theme',
+            run: function (ed) {
+                TW.IDE.showModalDialog({
+                    title: "Editor Theme",
+                    show: function (popover) {
+                        // hide the footer and the body because we show the editor directly in the popover
+                        popover.find(".modal-body").append('<div>\
+							<select id="theme-picker">\
+								<option value="vs">Visual Studio</option>\
+								<option value="vs-dark">Visual Studio Dark</option>\
+								<option value="hc-black">High Contrast Dark</option>\
+							</select>\
+						</div>');
+                        $('#theme-picker').val(TW.jqPlugins.twCodeEditor.theme);
+
+                        $("#theme-picker").change(function () {
+                            if (editor) {
+                                editor.updateOptions({
+                                    'theme': this.value
+                                });
+                            }
+                        });
+                    },
+                    close: function () {
+                        TW.jqPlugins.twCodeEditor.theme = $("#theme-picker").val();
+                        TW.IDE.savePreferenceData('MONACO_PREFERRED_THEME', TW.jqPlugins.twCodeEditor.theme);
                     }
                 });
             }
