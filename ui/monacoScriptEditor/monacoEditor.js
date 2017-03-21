@@ -238,6 +238,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (mode === "javascript") {
             // if this is the first initalization attempt, then set the compiler optios
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
+                TW.jqPlugins.twCodeEditor.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
                 // compiler options
                 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -384,6 +385,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             label: 'Toggle Generic Services',
             run: function (ed) {
                 TW.jqPlugins.twCodeEditor.showGenericServices = !TW.jqPlugins.twCodeEditor.showGenericServices;
+                TW.IDE.savePreferenceData('MONACO_SHOW_GENERIC_SERVICES', cmd);
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
