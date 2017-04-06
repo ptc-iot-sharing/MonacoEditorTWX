@@ -390,7 +390,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             label: "Toggle Generic Services",
             run: function (ed) {
                 TW.jqPlugins.twCodeEditor.showGenericServices = !TW.jqPlugins.twCodeEditor.showGenericServices;
-                TW.IDE.savePreferenceData("MONACO_SHOW_GENERIC_SERVICES", cmd);
+                TW.IDE.savePreferenceData("MONACO_SHOW_GENERIC_SERVICES", TW.jqPlugins.twCodeEditor.showGenericServices);
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
@@ -679,10 +679,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // we handle property definitions here
         var propertyDefs = effectiveShapeMetadata.propertyDefinitions;
-        for (var key in propertyDefs) {
-            if (!propertyDefs.hasOwnProperty(key)) continue;
+        for (var def in propertyDefs) {
+            if (!propertyDefs.hasOwnProperty(def)) continue;
 
-            var property = propertyDefs[key];
+            var property = propertyDefs[def];
             // generate an export for each property
             classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + getTypescriptBaseType(property) + ";\n";
         }
