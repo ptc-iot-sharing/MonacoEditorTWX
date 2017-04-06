@@ -776,7 +776,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
             datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + datashape.name + ">;\n";
+            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + sanitizeEntityName(datashape.name) + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
         monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
@@ -793,13 +793,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             var datashape = dataShapes[i];
             // description as jsdoc
             dataShapeTs += "\t/**\n\t *" + datashape.description + "\n\t*/\n";
-            dataShapeTs += "\texport interface " + datashape.name + " {\n";
+            dataShapeTs += "\texport interface " + sanitizeEntityName(datashape.name) + " {\n";
             for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
                 var fieldDef = datashape.fieldDefinitions.rows[j];
                 // description as jsdoc
                 dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
                 // generate the definition of this field
-                dataShapeTs += "\n\t" + fieldDef.name + ":" + getTypescriptBaseType({
+                dataShapeTs += "\n\t'" + fieldDef.name + "':" + getTypescriptBaseType({
                     baseType: fieldDef.baseType,
                     aspects: {
                         dataShape: fieldDef.dataShape
@@ -820,7 +820,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (definition.baseType != "INFOTABLE") {
             return "internal." + definition.baseType;
         } else {
-            return "internal." + definition.baseType + "<" + (definition.aspects.dataShape ? ("internal." + definition.aspects.dataShape) : "any") + ">";
+            return "internal." + definition.baseType + "<" + (definition.aspects.dataShape ? ("internal." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
         }
     }
 
