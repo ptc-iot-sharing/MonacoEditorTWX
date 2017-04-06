@@ -1,3 +1,4 @@
+/* global TW:false, ThingworxInvoker: false, monaco:false, require:false, $:false*/
 TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     serviceLibs: [],
     // libs in here follow the following format:
@@ -28,11 +29,11 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
  */
 TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
     var invokerSpec = {
-        entityType: 'Things',
-        entityName: 'MonacoEditorHelper',
-        characteristic: 'Services',
-        target: 'GetAllDataShapes',
-        apiMethod: 'post'
+        entityType: "Things",
+        entityName: "MonacoEditorHelper",
+        characteristic: "Services",
+        target: "GetAllDataShapes",
+        apiMethod: "post"
     };
     var invoker = new ThingworxInvoker(invokerSpec);
     return new monaco.Promise(function (c, e, p) {
@@ -52,11 +53,11 @@ TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
  */
 TW.jqPlugins.twCodeEditor.prototype.spotlightSearch = function (entityType, searchTerm) {
     var invokerSpec = {
-        entityType: 'Resources',
-        entityName: 'SearchFunctions',
-        characteristic: 'Services',
-        target: 'SpotlightSearch',
-        apiMethod: 'post',
+        entityType: "Resources",
+        entityName: "SearchFunctions",
+        characteristic: "Services",
+        target: "SpotlightSearch",
+        apiMethod: "post",
         parameters: {
             searchExpression: searchTerm + "*",
             withPermissions: false,
@@ -98,7 +99,7 @@ TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
                     label: data[key].prefix,
                     documentation: data[key].description,
                     insertText: {
-                        value: data[key].body.join('\n')
+                        value: data[key].body.join("\n")
                     }
                 });
             }
@@ -123,7 +124,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
         console.log("Failed to destory the monaco editor", err);
     }
     this.monacoEditor = undefined;
-    thisPlugin.jqElement.off('.twCodeEditor');
+    thisPlugin.jqElement.off(".twCodeEditor");
 };
 
 /**
@@ -132,7 +133,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
 TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
-    var container = jqEl.find('.editor-container');
+    var container = jqEl.find(".editor-container");
     container.height(height);
     if (thisPlugin.monacoEditor) {
         thisPlugin.monacoEditor.layout();
@@ -167,7 +168,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
-    var codeTextareaElem = jqEl.find('.code-container');
+    var codeTextareaElem = jqEl.find(".code-container");
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "ContentCrawlers", "Dashboards",
         "DataAnalysisDefinitions", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
@@ -190,7 +191,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         e.stopPropagation();
     });
     // hide the toolbar since we have all the toolbar functionality in the editor
-    jqEl.find('.btn-toolbar').hide();
+    jqEl.find(".btn-toolbar").hide();
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
     codeTextareaElem.css("min-height", (thisPlugin.height || 300) + "px");
@@ -199,32 +200,32 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         return;
     }
     // handle the different modes. For sql, we also need to hide the syntax check button
-    var mode = 'javascript';
+    var mode = "javascript";
     switch (thisPlugin.properties.handler) {
-        case 'SQLCommand':
-        case 'SQLQuery':
-            mode = 'sql';
-            jqEl.find('[cmd="syntax-check"]').hide();
-            break;
+    case "SQLCommand":
+    case "SQLQuery":
+        mode = "sql";
+        jqEl.find("[cmd=\"syntax-check\"]").hide();
+        break;
 
-        case 'Script':
-            jqEl.find('[cmd="syntax-check"]').show();
-            break;
+    case "Script":
+        jqEl.find("[cmd=\"syntax-check\"]").show();
+        break;
     }
 
     // root of where the entire vs folder is
-    var extRoot = '/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor';
+    var extRoot = "/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor";
     // configure AMD require module
     require.config({
         paths: {
-            'vs': extRoot + "/vs"
+            "vs": extRoot + "/vs"
         }
     });
     // begin to init our editor
-    require(['vs/editor/editor.main'], function () {
+    require(["vs/editor/editor.main"], function () {
         // get the service model from the parent twService editor
         var parentServiceEditorJqEl = jqEl.closest("tr").prev();
-        var parentPluginType = parentServiceEditorJqEl.attr('tw-jqPlugin');
+        var parentPluginType = parentServiceEditorJqEl.attr("tw-jqPlugin");
         var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
         // there are cases where showCodeProperly is called, but no properties are yet set.
         // there are cases where the parent twServiceEditor doesn't have a model set
@@ -233,7 +234,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             return;
         }
         // the code gets automatically put in a text area, so just grab it from there
-        var codeValue = jqEl.find('.actual-code').val();
+        var codeValue = jqEl.find(".actual-code").val();
         // if the editor is javascript, then we need to init the compiler, and generate models
         if (mode === "javascript") {
             // if this is the first initalization attempt, then set the compiler optios
@@ -261,7 +262,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     // Register the es5 library
                     monaco.languages.typescript.javascriptDefaults.addExtraLib(
                         data,
-                        'ThingworxDataShape.d.ts'
+                        "ThingworxDataShape.d.ts"
                     );
                 });
                 generateDataShapeDefs();
@@ -270,7 +271,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 registerEntityCollectionDefs();
                 // generate the completion for snippets
                 thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider('javascript', {
+                    monaco.languages.registerCompletionItemProvider("javascript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -279,7 +280,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                 // generate the completion for twx snippets
                 thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider('javascript', {
+                    monaco.languages.registerCompletionItemProvider("javascript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -289,8 +290,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the regex that matches the autocomplete for the entity collection
                 var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
                 // this handles on demand code completion for Thingworx entity names
-                monaco.languages.registerCompletionItemProvider('javascript', {
-                    triggerCharacters: ['[', '["'],
+                monaco.languages.registerCompletionItemProvider("javascript", {
+                    triggerCharacters: ["[", "[\""],
                     provideCompletionItems: function (model, position) {
                         if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
                             return;
@@ -326,8 +327,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
 
                 // this handles on demand code completion for Thingworx entities medadata
-                monaco.languages.registerCompletionItemProvider('javascript', {
-                    triggerCharacters: [']', '.'],
+                monaco.languages.registerCompletionItemProvider("javascript", {
+                    triggerCharacters: ["]", "."],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
                         var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
@@ -340,7 +341,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
                             if (metadata) {
                                 // generate the typescript definition
-                                var entityName = entityType + '' + sanitizeEntityName(entityId);
+                                var entityName = entityType + "" + sanitizeEntityName(entityId);
                                 var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
                                 // if our definition is not yet added, then generate it
                                 if (registerEntityDefinitionLibrary(entityTypescriptDef, entityType, entityId)) {
@@ -385,11 +386,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // action to enable generic services
         // clicks the cancel button, closing the service
         editor.addAction({
-            id: 'showGenericServices',
-            label: 'Toggle Generic Services',
+            id: "showGenericServices",
+            label: "Toggle Generic Services",
             run: function (ed) {
                 TW.jqPlugins.twCodeEditor.showGenericServices = !TW.jqPlugins.twCodeEditor.showGenericServices;
-                TW.IDE.savePreferenceData('MONACO_SHOW_GENERIC_SERVICES', cmd);
+                TW.IDE.savePreferenceData("MONACO_SHOW_GENERIC_SERVICES", cmd);
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
@@ -400,11 +401,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // Clicks the save entity button 
         // add actions for editor
         editor.addAction({
-            id: 'saveCodeAction',
-            label: 'Save Service',
+            id: "saveCodeAction",
+            label: "Save Service",
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
             keybindingContext: null,
-            contextMenuGroupId: 'service',
+            contextMenuGroupId: "service",
             contextMenuOrder: 1.5,
             run: function (ed) {
                 // fake a click on the saveEntity button
@@ -424,8 +425,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // Saves the service and closes it. Clicks the done button 
         if (findEditorButton(".done-btn", parentServiceEditorJqEl).length > 0) {
             editor.addAction({
-                id: 'doneCodeAction',
-                label: 'Save and Close',
+                id: "doneCodeAction",
+                label: "Save and Close",
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: null,
                 run: function (ed) {
@@ -439,15 +440,15 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // Action triggered by Ctrl+Y
         // Opens the test service window. Does not save the service before
         editor.addAction({
-            id: 'testCodeAction',
-            label: 'Test Service',
-            contextMenuGroupId: 'service',
+            id: "testCodeAction",
+            label: "Test Service",
+            contextMenuGroupId: "service",
             contextMenuOrder: 1.5,
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Y],
             keybindingContext: null,
             run: function (ed) {
                 if (serviceModel.isNew) {
-                    alert('This service has not been saved yet. Please save and then test.');
+                    alert("This service has not been saved yet. Please save and then test.");
                 } else {
                     serviceModel.testService();
                     // if we have no input parameters, just focus the execute button
@@ -477,8 +478,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // clicks the cancel button, closing the service
         if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
             editor.addAction({
-                id: 'closeCodeAction',
-                label: 'Close Service',
+                id: "closeCodeAction",
+                label: "Close Service",
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
                 keybindingContext: null,
                 run: function (ed) {
@@ -491,9 +492,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // shows a popup with a diff editor with the initial state of the editor
         // reuse the current model, so changes can be made directly in the diff editor
         editor.addAction({
-            id: 'viewDiffAction',
-            label: 'View Diff',
-            contextMenuGroupId: 'service',
+            id: "viewDiffAction",
+            label: "View Diff",
+            contextMenuGroupId: "service",
             contextMenuOrder: 1.6,
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
             keybindingContext: null,
@@ -534,33 +535,33 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // shows a popup allowing you to configure the code styles
         editor.addAction({
-            id: 'changeTheme',
-            label: 'Change Theme',
+            id: "changeTheme",
+            label: "Change Theme",
             run: function (ed) {
                 TW.IDE.showModalDialog({
                     title: "Editor Theme",
                     show: function (popover) {
                         // hide the footer and the body because we show the editor directly in the popover
-                        popover.find(".modal-body").append('<div>\
-							<select id="theme-picker">\
-								<option value="vs">Visual Studio</option>\
-								<option value="vs-dark">Visual Studio Dark</option>\
-								<option value="hc-black">High Contrast Dark</option>\
+                        popover.find(".modal-body").append("<div>\
+							<select id=\"theme-picker\">\
+								<option value=\"vs\">Visual Studio</option>\
+								<option value=\"vs-dark\">Visual Studio Dark</option>\
+								<option value=\"hc-black\">High Contrast Dark</option>\
 							</select>\
-						</div>');
-                        $('#theme-picker').val(defaultMonacoSettings.theme);
+						</div>");
+                        $("#theme-picker").val(defaultMonacoSettings.theme);
 
                         $("#theme-picker").change(function () {
                             if (editor) {
                                 editor.updateOptions({
-                                    'theme': this.value
+                                    "theme": this.value
                                 });
                             }
                         });
                     },
                     close: function () {
                         defaultMonacoSettings.theme = $("#theme-picker").val();
-                        TW.IDE.savePreferenceData('MONACO_PREFERRED_THEME', defaultMonacoSettings.theme);
+                        TW.IDE.savePreferenceData("MONACO_PREFERRED_THEME", defaultMonacoSettings.theme);
                     }
                 });
             }
@@ -577,12 +578,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var meThingModel = serviceModel.model;
         // if we have a valid entity name and the effectiveShape is set
         if (meThingModel.id && meThingModel.attributes.effectiveShape) {
-            var entityName = meThingModel.entityType + '' + sanitizeEntityName(meThingModel.id);
+            var entityName = meThingModel.entityType + "" + sanitizeEntityName(meThingModel.id);
             // remove the previous definitions
-            removeEditorLibs('serviceLibs');
+            removeEditorLibs("serviceLibs");
 
             // we append an me in here, just in case the definition is already added by the autocomplete in another service
-            var fileName = 'thingworx/' + entityName + 'Me.d.ts';
+            var fileName = "thingworx/" + entityName + "Me.d.ts";
             monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
             // in the current globals we have me declarations as well as input parameters
@@ -596,7 +597,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * If it already exists, just returns
      */
     function registerEntityDefinitionLibrary(typescriptMetadata, entityType, entityId) {
-        var entityName = entityType + '' + sanitizeEntityName(entityId);
+        var entityName = entityType + "" + sanitizeEntityName(entityId);
         var defintionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
         if (!defintionInfo) {
             monacoEditorLibs.entityCollectionLibs[entityName] = {
@@ -614,13 +615,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
         var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
-        definition += "const me = new internal." + entityName + "." + entityName + "(); "
+        definition += "const me = new internal." + entityName + "." + entityName + "(); ";
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             var inputDef = serviceMetadata.parameterDefinitions[key];
             definition += "var " + key + ": " + getTypescriptBaseType(inputDef) + "; ";
         }
-        return definition + '\n//------------------------------------------------------------------------';
+        return definition + "\n//------------------------------------------------------------------------";
     }
 
     /**
@@ -731,7 +732,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     var functionDef = scriptLibrary[def];
                     // generate in paralel both the jsdoc as well as the function declaration
                     var jsDoc = "/**\n * " + functionDef.description;
-                    var declaration = "declare function " + functionDef.name + "(";;
+                    var declaration = "declare function " + functionDef.name + "(";
                     for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
                         jsDoc += "\n * @param " + functionDef.parameterDefinitions[i].name + "  " + functionDef.parameterDefinitions[i].description;
                         declaration += functionDef.parameterDefinitions[i].name + ": " + getTypescriptBaseType(functionDef.parameterDefinitions[i]);
@@ -759,7 +760,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             addDatashapesCollection(dataShapes);
         }, function (reason) {
             console.log("Failed to generate typescript definitions from datashapes " + reason);
-        })
+        });
     }
 
     /**
@@ -774,7 +775,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
             datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + sanitizeEntityName(datashape.name) + ">;\n";
+            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
         monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
@@ -846,7 +847,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Sanitizes an entity name to be a valid javascript declaration
      */
     function sanitizeEntityName(entityName) {
-        return entityName.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, '');
+        return entityName.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, "");
     }
 
     /**
@@ -859,7 +860,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         }
         var entityCollectionsDefs = "declare namespace internal { \n";
         for (var i = 0; i < entityCollections.length; i++) {
-            entityCollectionsDefs += 'export interface ' + entityCollections[i] + 'Interface {\n';
+            entityCollectionsDefs += "export interface " + entityCollections[i] + "Interface {\n";
             for (var typescriptDef in monacoEditorLibs.entityCollectionLibs) {
                 if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
 
@@ -873,218 +874,218 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // close the namespace declaration
         entityCollectionsDefs += "}\n";
         // now add all the entity collections
-        for (var i = 0; i < entityCollections.length; i++) {
-            entityCollectionsDefs += 'var ' + entityCollections[i] + ': internal.' + entityCollections[i] + 'Interface;\n';
+        for (var j = 0; j < entityCollections.length; j++) {
+            entityCollectionsDefs += "var " + entityCollections[j] + ": internal." + entityCollections[j] + "Interface;\n";
         }
 
         monacoEditorLibs.entityCollection = monaco.languages.typescript.javascriptDefaults.addExtraLib(
-            entityCollectionsDefs, 'thingworx/entityCollections.d.ts');
+            entityCollectionsDefs, "thingworx/entityCollections.d.ts");
     }
 
     function loadStandardTypescriptDefs() {
         // extra logger definitions
         monaco.languages.typescript.javascriptDefaults.addExtraLib([
-            'declare class logger {',
-            '    /**',
-            '     * Log a debug warning',
-            '     */',
-            '    static debug(message:string)',
-            '    /**',
-            '     * Log a error warning',
-            '     */',
-            '    static error(message:string)',
-            '    /**',
-            '     * Log a warn warning',
-            '     */',
-            '    static warn(message:string)',
-            '    /**',
-            '     * Log a info warning',
-            '     */',
-            '    static info(message:string)',
-            '}',
-        ].join('\n'), 'thingworx/logger.d.ts');
+            "declare class logger {",
+            "    /**",
+            "     * Log a debug warning",
+            "     */",
+            "    static debug(message:string)",
+            "    /**",
+            "     * Log a error warning",
+            "     */",
+            "    static error(message:string)",
+            "    /**",
+            "     * Log a warn warning",
+            "     */",
+            "    static warn(message:string)",
+            "    /**",
+            "     * Log a info warning",
+            "     */",
+            "    static info(message:string)",
+            "}",
+        ].join("\n"), "thingworx/logger.d.ts");
 
         // extra definitions for the thingworx baseTypes
         monaco.languages.typescript.javascriptDefaults.addExtraLib([
-            'declare namespace internal {',
-            'export interface STRING extends String{}',
-            'export interface LOCATION {',
-            '   latitude: number',
-            '   longitude: number',
-            '   elevation?: number',
-            '   units?: string',
-            '}',
-            'export interface NOTHING extends Void{}',
-            'export interface NUMBER extends Number{}',
-            'export interface INTEGER extends Number{}',
-            'export interface LONG extends Number{}',
-            'export interface BOOLEAN extends boolean{}',
-            'export interface DASHBOADNAME extends String{}',
-            'export interface GROUPNAME extends String{}',
-            'export interface GUID extends String{}',
-            'export interface HTML extends String{}',
-            'export interface HYPERLINK extends String{}',
-            'export interface IMAGELINK extends String{}',
-            'export interface MASHUPNAME extends String{}',
-            'export interface MENUNAME extends String{}',
-            'export interface PASSWORD extends String{}',
-            'export interface TEXT extends String{}',
-            'export interface THINGCODE extends String{}',
-            'export interface THINGNAME extends String{}',
-            'export interface USERNAME extends String{}',
-            'export interface DATETIME extends Date{}',
-            'export interface XML {}',
-            'export interface JSON {}',
-            'export interface QUERY {',
-            '   filters?:any;',
-            '   sorts?:any;',
-            '}',
-            'export interface TAGS {}',
-            'export interface SCHEDULE {}',
-            'export interface VARIANT {}',
-            'export interface BLOB {}',
-            'export interface THINGSHAPENAME extends String{}',
-            'export interface THINGTEMPLATENAME extends String {}',
-            'export interface DATASHAPENAME extends String {}',
-            'export interface PROJECTNAME extends String {}',
-            'export interface BASETYPENAME extends String {}',
-            'export interface FieldDefinition {',
-            '    ordinal: number;',
-            '    baseType: string;',
-            '    name: string;',
-            '    description: string;',
-            '}',
-            'export interface SortDefinition {',
-            '    name: string;',
-            '    ascending: boolean;',
-            '}',
-            'export interface DataShape {',
-            '    fieldDefinitions: FieldDefinition;',
-            '}',
-            '',
-            'export interface InfotableJson<T> {',
-            '    /**',
-            '     * An array of all the rows in the infotable',
-            '     */',
-            '    rows: T[];',
-            '    datashape: DataShape;',
-            '}',
-            'export interface INFOTABLE<T> extends InfotableJson<T> {',
-            '    /**',
-            '     * Adds a field to this InfoTable datashape',
-            '     */',
-            '    AddField(params: FieldDefinition);',
-            '    /**',
-            '     * Adds a row to this InfoTable given the values as a JSON',
-            '     */',
-            '    AddRow(params: T);',
-            '    /**',
-            '     * Removes a field from this InfoTable given the field name as a String',
-            '     */',
-            '    RemoveField(fieldName: String);',
-            '    /**',
-            '     * Removes a row from the InfoTable given its index',
-            '     */',
-            '    RemoveRow(index: number);',
-            '    /**',
-            '     * Removes all rows from this InfoTable',
-            '     */',
-            '    RemoveAllRows();',
-            '    /**',
-            '     * Returns the number of rows in this InfoTable as an Integer',
-            '     */',
-            '    getRowCount(): number;',
-            '    /**',
-            '     * Sorts the infotable inplace on a particular field',
-            '     */',
-            '    Sort(field: SortDefinition);',
-            '    /**',
-            '     * Filters the infotable inplace base on values',
-            '     */',
-            '    Filter(values: T);',
-            '    /**',
-            '     * Finds the first row that matches the condition based on values',
-            '     */',
-            '    Find(values: T);',
-            '    /**',
-            '     * Deletes all the rows that match the given vales',
-            '     */',
-            '    Delete(values: T);',
-            '    /**',
-            '     * Transforms the infotable into a JSON infotable',
-            '     */',
-            '    ToJSON(): InfotableJson<T>;',
-            '    /**',
-            '     * Transforms the infotable into a JSON infotable',
-            '     */',
-            '    toJSONSubset(): InfotableJson<T>;',
-            '    /**',
-            '     * Transforms the infotable into a JSON infotable',
-            '     */',
-            '    toJSONLite(): InfotableJson<T>;',
-            '    /**',
-            '     * Finds rows in this InfoTable with values that match the values given and returns them as a new InfoTable',
-            '     * @param values The values to be matched as a JSON',
-            '     * @return InfoTable Containing the rows with matching values',
-            '     * @throws Exception If an error occurs',
-            '     */',
-            '    // NOT WORKING NativeObject->JSONObject FilterToNewTable(values: any): INFOTABLE;',
-            '    /**',
-            '     * Verifies a field exists in this InfoTables DataShape given the field name as a String',
-            '     *',
-            '     * @param name String containing the name of the field to verify',
-            '     * @return Boolean True: if field exists in DataShape, False: if field does not exist in DataShape',
-            '     */',
-            '    hasField(name: string): boolean;',
-            '    /**',
-            '     * Returns a FieldDefinition from this InfoTables DataShapeDefinition, given the name of the',
-            '     * field as a String',
-            '     *',
-            '     * @param name String containing the name of the field',
-            '     * @return FieldDefinition from this InfoTables DataShape or null if not found',
-            '     */',
-            '    getField(name: String): FieldDefinition;',
-            '    /**',
-            '     * Returns a row from this InfoTable given its index as an int',
-            '     *',
-            '     * @param index Location of the row (ValueCollection) in the ValueCollectionList',
-            '     * @return ValueCollection of the row specified or null if index is out of range',
-            '     */',
-            '    getRow(index: number): T ;',
-            '    /**',
-            '     * Finds and returns the index of a row from this InfoTable that matches the values of all fields given as a ValueCollection',
-            '     *',
-            '     * @param values ValueCollection containing the values that match all fields in the row',
-            '     * @return int Index of the row in this InfoTable that matches the values given or null if not found',
-            '     */',
-            '    findIndex(values: any): number;',
-            '    /**',
-            '     * Limits the infotable to the top N items. This happens inplace',
-            '     */',
-            '    topN(maxItems: int);',
-            '    /**',
-            '     * Limits the infotable to the top N items. Returns the new infotable',
-            '     */',
-            '    topNToNewTable(maxItems: int): INFOTABLE<T>;',
-            '    /**',
-            '     * Clones the infotable into a new one',
-            '     */',
-            '    clone(): INFOTABLE<T>;',
-            '    /**',
-            '     * Returns a new empty InfoTable with the same fields defined',
-            '     *',
-            '     * @return InfoTable with matching fields',
-            '     */',
-            '    // NOT WORKING CloneStructure(): INFOTABLE;',
-            '    /**',
-            '     * Copies a row from this InfoTable, given its row number as an int, and returns it in a new InfoTable',
-            '     *',
-            '     * @param rowNumber The row to be copied from this InfoTable as an int',
-            '     * @return InfoTable containing the row copied from this InfoTable',
-            '     */',
-            '    CopyValues(rowNumber: number): INFOTABLE<T>;',
-            '}',
-            '}'
-        ].join('\n'), 'thingworx/baseTypes.d.ts');
+            "declare namespace internal {",
+            "export interface STRING extends String{}",
+            "export interface LOCATION {",
+            "   latitude: number",
+            "   longitude: number",
+            "   elevation?: number",
+            "   units?: string",
+            "}",
+            "export interface NOTHING extends Void{}",
+            "export interface NUMBER extends Number{}",
+            "export interface INTEGER extends Number{}",
+            "export interface LONG extends Number{}",
+            "export interface BOOLEAN extends boolean{}",
+            "export interface DASHBOADNAME extends String{}",
+            "export interface GROUPNAME extends String{}",
+            "export interface GUID extends String{}",
+            "export interface HTML extends String{}",
+            "export interface HYPERLINK extends String{}",
+            "export interface IMAGELINK extends String{}",
+            "export interface MASHUPNAME extends String{}",
+            "export interface MENUNAME extends String{}",
+            "export interface PASSWORD extends String{}",
+            "export interface TEXT extends String{}",
+            "export interface THINGCODE extends String{}",
+            "export interface THINGNAME extends String{}",
+            "export interface USERNAME extends String{}",
+            "export interface DATETIME extends Date{}",
+            "export interface XML {}",
+            "export interface JSON {}",
+            "export interface QUERY {",
+            "   filters?:any;",
+            "   sorts?:any;",
+            "}",
+            "export interface TAGS {}",
+            "export interface SCHEDULE {}",
+            "export interface VARIANT {}",
+            "export interface BLOB {}",
+            "export interface THINGSHAPENAME extends String{}",
+            "export interface THINGTEMPLATENAME extends String {}",
+            "export interface DATASHAPENAME extends String {}",
+            "export interface PROJECTNAME extends String {}",
+            "export interface BASETYPENAME extends String {}",
+            "export interface FieldDefinition {",
+            "    ordinal: number;",
+            "    baseType: string;",
+            "    name: string;",
+            "    description: string;",
+            "}",
+            "export interface SortDefinition {",
+            "    name: string;",
+            "    ascending: boolean;",
+            "}",
+            "export interface DataShape {",
+            "    fieldDefinitions: FieldDefinition;",
+            "}",
+            "",
+            "export interface InfotableJson<T> {",
+            "    /**",
+            "     * An array of all the rows in the infotable",
+            "     */",
+            "    rows: T[];",
+            "    datashape: DataShape;",
+            "}",
+            "export interface INFOTABLE<T> extends InfotableJson<T> {",
+            "    /**",
+            "     * Adds a field to this InfoTable datashape",
+            "     */",
+            "    AddField(params: FieldDefinition);",
+            "    /**",
+            "     * Adds a row to this InfoTable given the values as a JSON",
+            "     */",
+            "    AddRow(params: T);",
+            "    /**",
+            "     * Removes a field from this InfoTable given the field name as a String",
+            "     */",
+            "    RemoveField(fieldName: String);",
+            "    /**",
+            "     * Removes a row from the InfoTable given its index",
+            "     */",
+            "    RemoveRow(index: number);",
+            "    /**",
+            "     * Removes all rows from this InfoTable",
+            "     */",
+            "    RemoveAllRows();",
+            "    /**",
+            "     * Returns the number of rows in this InfoTable as an Integer",
+            "     */",
+            "    getRowCount(): number;",
+            "    /**",
+            "     * Sorts the infotable inplace on a particular field",
+            "     */",
+            "    Sort(field: SortDefinition);",
+            "    /**",
+            "     * Filters the infotable inplace base on values",
+            "     */",
+            "    Filter(values: T);",
+            "    /**",
+            "     * Finds the first row that matches the condition based on values",
+            "     */",
+            "    Find(values: T);",
+            "    /**",
+            "     * Deletes all the rows that match the given vales",
+            "     */",
+            "    Delete(values: T);",
+            "    /**",
+            "     * Transforms the infotable into a JSON infotable",
+            "     */",
+            "    ToJSON(): InfotableJson<T>;",
+            "    /**",
+            "     * Transforms the infotable into a JSON infotable",
+            "     */",
+            "    toJSONSubset(): InfotableJson<T>;",
+            "    /**",
+            "     * Transforms the infotable into a JSON infotable",
+            "     */",
+            "    toJSONLite(): InfotableJson<T>;",
+            "    /**",
+            "     * Finds rows in this InfoTable with values that match the values given and returns them as a new InfoTable",
+            "     * @param values The values to be matched as a JSON",
+            "     * @return InfoTable Containing the rows with matching values",
+            "     * @throws Exception If an error occurs",
+            "     */",
+            "    // NOT WORKING NativeObject->JSONObject FilterToNewTable(values: any): INFOTABLE;",
+            "    /**",
+            "     * Verifies a field exists in this InfoTables DataShape given the field name as a String",
+            "     *",
+            "     * @param name String containing the name of the field to verify",
+            "     * @return Boolean True: if field exists in DataShape, False: if field does not exist in DataShape",
+            "     */",
+            "    hasField(name: string): boolean;",
+            "    /**",
+            "     * Returns a FieldDefinition from this InfoTables DataShapeDefinition, given the name of the",
+            "     * field as a String",
+            "     *",
+            "     * @param name String containing the name of the field",
+            "     * @return FieldDefinition from this InfoTables DataShape or null if not found",
+            "     */",
+            "    getField(name: String): FieldDefinition;",
+            "    /**",
+            "     * Returns a row from this InfoTable given its index as an int",
+            "     *",
+            "     * @param index Location of the row (ValueCollection) in the ValueCollectionList",
+            "     * @return ValueCollection of the row specified or null if index is out of range",
+            "     */",
+            "    getRow(index: number): T ;",
+            "    /**",
+            "     * Finds and returns the index of a row from this InfoTable that matches the values of all fields given as a ValueCollection",
+            "     *",
+            "     * @param values ValueCollection containing the values that match all fields in the row",
+            "     * @return int Index of the row in this InfoTable that matches the values given or null if not found",
+            "     */",
+            "    findIndex(values: any): number;",
+            "    /**",
+            "     * Limits the infotable to the top N items. This happens inplace",
+            "     */",
+            "    topN(maxItems: int);",
+            "    /**",
+            "     * Limits the infotable to the top N items. Returns the new infotable",
+            "     */",
+            "    topNToNewTable(maxItems: int): INFOTABLE<T>;",
+            "    /**",
+            "     * Clones the infotable into a new one",
+            "     */",
+            "    clone(): INFOTABLE<T>;",
+            "    /**",
+            "     * Returns a new empty InfoTable with the same fields defined",
+            "     *",
+            "     * @return InfoTable with matching fields",
+            "     */",
+            "    // NOT WORKING CloneStructure(): INFOTABLE;",
+            "    /**",
+            "     * Copies a row from this InfoTable, given its row number as an int, and returns it in a new InfoTable",
+            "     *",
+            "     * @param rowNumber The row to be copied from this InfoTable as an int",
+            "     * @return InfoTable containing the row copied from this InfoTable",
+            "     */",
+            "    CopyValues(rowNumber: number): INFOTABLE<T>;",
+            "}",
+            "}"
+        ].join("\n"), "thingworx/baseTypes.d.ts");
     }
 };
