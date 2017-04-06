@@ -109,6 +109,20 @@ TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
 };
 
 /**
+ * Build the html for the code editor
+ */
+TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
+    this._plugin_cleanup();
+    var thisPlugin = this;
+    var jqEl = thisPlugin.jqElement;
+    jqEl.html(
+        "<div class=\"editor-container\" >" +
+        "</div>"
+    );
+
+};
+
+/**
  * Property dispose the editor when needed
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
@@ -168,7 +182,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
-    var codeTextareaElem = jqEl.find(".code-container");
+    var codeTextareaElem = jqEl.find(".editor-container");
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "ContentCrawlers", "Dashboards",
         "DataAnalysisDefinitions", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
@@ -190,8 +204,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     codeTextareaElem.on("keydown keypress keyup", function (e) {
         e.stopPropagation();
     });
-    // hide the toolbar since we have all the toolbar functionality in the editor
-    jqEl.find(".btn-toolbar").hide();
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
     codeTextareaElem.css("min-height", (thisPlugin.height || 300) + "px");
@@ -202,15 +214,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     // handle the different modes. For sql, we also need to hide the syntax check button
     var mode = "javascript";
     switch (thisPlugin.properties.handler) {
-    case "SQLCommand":
-    case "SQLQuery":
-        mode = "sql";
-        jqEl.find("[cmd=\"syntax-check\"]").hide();
-        break;
-
-    case "Script":
-        jqEl.find("[cmd=\"syntax-check\"]").show();
-        break;
+        case "SQLCommand":
+        case "SQLQuery":
+            mode = "sql";
+            break;
+        case "Script":
+            break;
     }
 
     // root of where the entire vs folder is
@@ -234,7 +243,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             return;
         }
         // the code gets automatically put in a text area, so just grab it from there
-        var codeValue = jqEl.find(".actual-code").val();
+        var codeValue = thisPlugin.properties.code;
         // if the editor is javascript, then we need to init the compiler, and generate models
         if (mode === "javascript") {
             // if this is the first initalization attempt, then set the compiler optios
