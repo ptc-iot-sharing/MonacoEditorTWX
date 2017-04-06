@@ -10,6 +10,18 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
 TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
 TW.jqPlugins.twCodeEditor.showGenericServices = false;
 
+// avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
+TW.jqPlugins.twCodeEditor.defaultMonacoSettings = {
+    folding: true,
+    fontSize: 12,
+    fontFamily: "Fira Code,Monaco,monospace",
+    fontLigatures: true,
+    mouseWheelZoom: true,
+    formatOnPaste: true,
+    scrollBeyondLastLine: false,
+    theme: "vs"
+};
+
 /**
  * Called when the exttension is asked to insert a code snippet via the snippets
  * We make sure that we also have an undo stack here
@@ -189,17 +201,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions", "Streams",
         "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "ValueStreams", "Wikis"
     ];
-    // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-    var defaultMonacoSettings = {
-        folding: true,
-        fontSize: 12,
-        fontFamily: "Fira Code,Monaco,monospace",
-        fontLigatures: true,
-        mouseWheelZoom: true,
-        formatOnPaste: true,
-        scrollBeyondLastLine: false,
-        theme: "vs"
-    };
+
     // make sure that the key events stay inside the editor.
     codeTextareaElem.on("keydown keypress keyup", function (e) {
         e.stopPropagation();
@@ -251,7 +253,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 TW.jqPlugins.twCodeEditor.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
                 var savedTheme = TW.IDE.synchronouslyLoadPreferenceData("MONACO_PREFERRED_THEME");
                 if (savedTheme) {
-                    defaultMonacoSettings.theme = savedTheme;
+                    TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme = savedTheme;
                 }
                 // compiler options
                 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -369,7 +371,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             refreshMeDefinitions(serviceModel);
         }
         // modify the initial settions
-        var editorSettings = $.extend({}, defaultMonacoSettings);
+        var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultMonacoSettings);
         editorSettings.language = mode;
         editorSettings.readOnly = !thisPlugin.properties.editMode;
         editorSettings.value = codeValue;
@@ -526,7 +528,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             left: "5%"
                         });
                         // create the diff editor
-                        diffEditor = monaco.editor.createDiffEditor(popover[0], defaultMonacoSettings);
+                        diffEditor = monaco.editor.createDiffEditor(popover[0], TW.jqPlugins.twCodeEditor.defaultMonacoSettings);
                         diffEditor.setModel({
                             original: originalModel,
                             modified: modifiedModel
@@ -558,7 +560,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 								<option value=\"hc-black\">High Contrast Dark</option>\
 							</select>\
 						</div>");
-                        $("#theme-picker").val(defaultMonacoSettings.theme);
+                        $("#theme-picker").val(TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme);
 
                         $("#theme-picker").change(function () {
                             if (editor) {
@@ -569,8 +571,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         });
                     },
                     close: function () {
-                        defaultMonacoSettings.theme = $("#theme-picker").val();
-                        TW.IDE.savePreferenceData("MONACO_PREFERRED_THEME", defaultMonacoSettings.theme);
+                        TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme = $("#theme-picker").val();
+                        TW.IDE.savePreferenceData("MONACO_PREFERRED_THEME", TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme);
                     }
                 });
             }
