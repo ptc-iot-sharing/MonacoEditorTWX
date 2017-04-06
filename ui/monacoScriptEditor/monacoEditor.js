@@ -7,11 +7,8 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     entityCollection: undefined
 };
 
-TW.jqPlugins.twCodeEditor.enableCollectionSuggestions = true;
-TW.jqPlugins.twCodeEditor.showGenericServices = false;
-
 // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-TW.jqPlugins.twCodeEditor.defaultMonacoSettings = {
+TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
     folding: true,
     fontSize: 12,
     fontFamily: "Fira Code,Monaco,monospace",
@@ -19,7 +16,8 @@ TW.jqPlugins.twCodeEditor.defaultMonacoSettings = {
     mouseWheelZoom: true,
     formatOnPaste: true,
     scrollBeyondLastLine: false,
-    theme: "vs"
+    theme: "vs",
+    showGenericServices: false
 };
 
 /**
@@ -250,10 +248,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (mode === "javascript") {
             // if this is the first initalization attempt, then set the compiler optios
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
-                TW.jqPlugins.twCodeEditor.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
+                TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
                 var savedTheme = TW.IDE.synchronouslyLoadPreferenceData("MONACO_PREFERRED_THEME");
                 if (savedTheme) {
-                    TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme = savedTheme;
+                    TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme = savedTheme;
                 }
                 // compiler options
                 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -304,9 +302,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 monaco.languages.registerCompletionItemProvider("javascript", {
                     triggerCharacters: ["[", "[\""],
                     provideCompletionItems: function (model, position) {
-                        if (!TW.jqPlugins.twCodeEditor.enableCollectionSuggestions) {
-                            return;
-                        }
                         // find out if we are completing on a entity collection. Get the line until the current position
                         var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
                         // matches if we have at the end of our line an entity definition. example: Things["gg"]
@@ -371,7 +366,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             refreshMeDefinitions(serviceModel);
         }
         // modify the initial settions
-        var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultMonacoSettings);
+        var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultEditorSettings);
         editorSettings.language = mode;
         editorSettings.readOnly = !thisPlugin.properties.editMode;
         editorSettings.value = codeValue;
@@ -400,8 +395,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             id: "showGenericServices",
             label: "Toggle Generic Services",
             run: function (ed) {
-                TW.jqPlugins.twCodeEditor.showGenericServices = !TW.jqPlugins.twCodeEditor.showGenericServices;
-                TW.IDE.savePreferenceData("MONACO_SHOW_GENERIC_SERVICES", TW.jqPlugins.twCodeEditor.showGenericServices);
+                TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices = !TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices;
+                TW.IDE.savePreferenceData("MONACO_SHOW_GENERIC_SERVICES", TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices);
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
@@ -528,7 +523,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             left: "5%"
                         });
                         // create the diff editor
-                        diffEditor = monaco.editor.createDiffEditor(popover[0], TW.jqPlugins.twCodeEditor.defaultMonacoSettings);
+                        diffEditor = monaco.editor.createDiffEditor(popover[0], TW.jqPlugins.twCodeEditor.defaultEditorSettings);
                         diffEditor.setModel({
                             original: originalModel,
                             modified: modifiedModel
@@ -560,7 +555,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 								<option value=\"hc-black\">High Contrast Dark</option>\
 							</select>\
 						</div>");
-                        $("#theme-picker").val(TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme);
+                        $("#theme-picker").val(TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme);
 
                         $("#theme-picker").change(function () {
                             if (editor) {
@@ -571,8 +566,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         });
                     },
                     close: function () {
-                        TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme = $("#theme-picker").val();
-                        TW.IDE.savePreferenceData("MONACO_PREFERRED_THEME", TW.jqPlugins.twCodeEditor.defaultMonacoSettings.theme);
+                        TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme = $("#theme-picker").val();
+                        TW.IDE.savePreferenceData("MONACO_PREFERRED_THEME", TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme);
                     }
                 });
             }
@@ -649,7 +644,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
-            if (!(showGenericServices && TW.jqPlugins.twCodeEditor.showGenericServices) && TW.IDE.isGenericServiceName(key)) continue;
+            if (!(showGenericServices && TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices) && TW.IDE.isGenericServiceName(key)) continue;
             // first create an interface for service params
             var service = serviceDefs[key];
             // metadata for the service parameters
