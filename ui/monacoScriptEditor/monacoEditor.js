@@ -208,7 +208,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     });
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
-    codeTextareaElem.css("min-height", (thisPlugin.height || 300) + "px");
+    codeTextareaElem.css("min-height", (thisPlugin.height || 360) + "px");
     if (codeTextareaElem.find(".monaco-editor").length > 0 && thisPlugin.monacoEditor !== undefined) {
         // already done, don't init the editor again
         return;
