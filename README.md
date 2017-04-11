@@ -48,8 +48,8 @@ In the case of services that return infotables, or infotable properties with kno
 ![Infotable Completion](http://i.imgur.com/3pNrEC1.gif)
 
 ### Keyboard Shortcuts
-* Quick actions: Save (CTRL+S), Cancel (CTRL+Q), Test (CTRL+Y), Save and Close (CTRL+ENTER)
-* Diff editor: view changes since you started editing (CTRL+K)
+* Quick actions: Save (`CTRL+S`), Cancel (`CTRL+Q`), Test (`CTRL+Y`), Save and Close (`CTRL+ENTER`)
+* Diff editor: view changes since you started editing (`CTRL+K`)
 ![DiffEditor](http://i.imgur.com/1DywhM7.png)
 
 ### Other Features
