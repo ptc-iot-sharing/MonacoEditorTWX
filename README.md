@@ -9,7 +9,7 @@
 As it's based on the Visual Studio Code, most basic code editor features are inherited from there. See the [official page](https://code.visualstudio.com/docs/editor/codebasics) for a list of keyboard shortcuts, as well as detailed explanations of other features like:
 #### Multiple selections (multi-cursor)
 
-VS Code supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down` or `Ctrl+Alt+Up` that insert cursors below or above.
+The editor supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down` or `Ctrl+Alt+Up` that insert cursors below or above.
 
 ![Multi-cursor](https://code.visualstudio.com/images/editingevolved_multicursor.gif)
 
