@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* global TW:false, ThingworxInvoker: false, monaco:false, require:false, $:false*/
 TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
     serviceLibs: [],
@@ -21,8 +22,9 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
 };
 
 /**
- * Called when the exttension is asked to insert a code snippet via the snippets
+ * Called when the extension is asked to insert a code snippet via the snippets.
  * We make sure that we also have an undo stack here
+ * @param  {string} code code to be inserted into the editor
  */
 TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
     var thisPlugin = this;
@@ -35,7 +37,7 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
 };
 
 /**
- * Gets the metadata of all the datashapes in the system
+ * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
 TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
     var invokerSpec = {
@@ -59,7 +61,9 @@ TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
 };
 
 /**
- * Searches for enities in the platform using the spotlight search
+ * Searches for enities in the platform using the spotlight search an retruns a new promise with the metadata
+ * @param  {string} entityType Thingworx Entity Type. 
+ * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
 TW.jqPlugins.twCodeEditor.prototype.spotlightSearch = function (entityType, searchTerm) {
     var invokerSpec = {
@@ -95,7 +99,9 @@ TW.jqPlugins.twCodeEditor.prototype.spotlightSearch = function (entityType, sear
 };
 
 /**
- * Loads a language json as snippet library
+ * Loads a json monaco snippet file and returns a promise
+ *
+ * @param  {string} filePath File to load
  */
 TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
     return new monaco.Promise(function (c, e, p) {
@@ -119,7 +125,8 @@ TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
 };
 
 /**
- * Build the html for the code editor
+ * Build the html for the code editor. Called by other thingworx widgets. 
+ * Only returns a div where the monaco editor goes
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     this._plugin_cleanup();
@@ -133,7 +140,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
 };
 
 /**
- * Property dispose the editor when needed
+ * Properly dispose the editor when needed. This is called by the thingworx editor when the editor closes or opens
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
     var thisPlugin = this;
@@ -152,7 +159,8 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
 };
 
 /**
- * Called when move from fullscreen or to fullscreen
+ * Called when move from fullscreen or to fullscreen.
+ * @param {int} height The height of the editor.
  */
 TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
     var thisPlugin = this;
@@ -242,7 +250,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (!thisPlugin.properties || !serviceModel || !serviceModel.model) {
             return;
         }
-        // the code gets automatically put in a text area, so just grab it from there
+        // the code comes from the plugin properties
         var codeValue = thisPlugin.properties.code;
         // if the editor is javascript, then we need to init the compiler, and generate models
         if (mode === "javascript") {
