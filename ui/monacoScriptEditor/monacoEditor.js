@@ -220,7 +220,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         return;
     }
     // handle the different modes. For sql, we also need to hide the syntax check button
-    var mode = "javascript";
+    var mode = "typescript";
     switch (thisPlugin.properties.handler) {
         case "SQLCommand":
         case "SQLQuery":
@@ -253,7 +253,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // the code comes from the plugin properties
         var codeValue = thisPlugin.properties.code;
         // if the editor is javascript, then we need to init the compiler, and generate models
-        if (mode === "javascript") {
+        if (mode === "typescript") {
             // if this is the first initalization attempt, then set the compiler optios
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
                 TW.jqPlugins.twCodeEditor.defaultEditorSettings.showGenericServices = TW.IDE.synchronouslyLoadPreferenceData("MONACO_SHOW_GENERIC_SERVICES");
@@ -262,14 +262,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme = savedTheme;
                 }
                 // compiler options
-                monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+                monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
                     allowNonTsExtensions: true,
                     noLib: true
                 });
                 $.get(extRoot + "/configs/lib.rhino.es5.d.ts", function (data) {
                     // Register the es5 library
-                    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+                    monaco.languages.typescript.typescriptDefaults.addExtraLib(
                         data,
                         "lib.rhino.es5.d.ts"
                     );
@@ -277,7 +277,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 loadStandardTypescriptDefs();
                 $.get(extRoot + "/configs/ThingworxDataShape.d.ts", function (data) {
                     // Register the es5 library
-                    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+                    monaco.languages.typescript.typescriptDefaults.addExtraLib(
                         data,
                         "ThingworxDataShape.d.ts"
                     );
@@ -288,7 +288,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 registerEntityCollectionDefs();
                 // generate the completion for snippets
                 thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider("javascript", {
+                    monaco.languages.registerCompletionItemProvider("typescript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -297,7 +297,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                 // generate the completion for twx snippets
                 thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider("javascript", {
+                    monaco.languages.registerCompletionItemProvider("typescript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -307,7 +307,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the regex that matches the autocomplete for the entity collection
                 var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
                 // this handles on demand code completion for Thingworx entity names
-                monaco.languages.registerCompletionItemProvider("javascript", {
+                monaco.languages.registerCompletionItemProvider("typescript", {
                     triggerCharacters: ["[", "[\""],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
@@ -341,7 +341,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
 
                 // this handles on demand code completion for Thingworx entities medadata
-                monaco.languages.registerCompletionItemProvider("javascript", {
+                monaco.languages.registerCompletionItemProvider("typescript", {
                     triggerCharacters: ["]", "."],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
@@ -382,7 +382,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
         var initialCode = codeValue;
 
-        if (mode == "javascript") {
+        if (mode == "typescript") {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditorText(function () {
                 // get the service model again
@@ -598,10 +598,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
             // we append an me in here, just in case the definition is already added by the autocomplete in another service
             var fileName = "thingworx/" + entityName + "Me.d.ts";
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.typescriptDefaults
                 .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
             // in the current globals we have me declarations as well as input parameters
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.javascriptDefaults
+            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.typescriptDefaults
                 .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
         }
     }
@@ -615,7 +615,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var defintionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
         if (!defintionInfo) {
             monacoEditorLibs.entityCollectionLibs[entityName] = {
-                disposable: monaco.languages.typescript.javascriptDefaults.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
+                disposable: monaco.languages.typescript.typescriptDefaults.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
                 entityId: entityId,
                 entityType: entityType
             };
@@ -671,7 +671,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                     namespaceDefinition += "/** \n * " + inputDef.description +
                         (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
-                        inputDef.name + ":" + getTypescriptBaseType(inputDef) + ";\n";
+                        inputDef.name + (inputDef.aspects.isRequired ? "" : "?") + ":" + getTypescriptBaseType(inputDef) + ";\n";
                     // generate a nice description of the service params
                     serviceParamDefinition += "*     " + inputDef.name + ": " + getTypescriptBaseType(inputDef) +
                         (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
@@ -761,7 +761,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
             }
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+            monaco.languages.typescript.typescriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
         });
     }
 
@@ -792,7 +792,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
-        monaco.languages.typescript.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
     /**
@@ -812,7 +812,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // description as jsdoc
                 dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
                 // generate the definition of this field
-                dataShapeTs += "\n\t'" + fieldDef.name + "':" + getTypescriptBaseType({
+                dataShapeTs += "\n\t'" + fieldDef.name + "'?:" + getTypescriptBaseType({
                     baseType: fieldDef.baseType,
                     aspects: {
                         dataShape: fieldDef.dataShape
@@ -823,7 +823,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             dataShapeTs += "}\n\n";
         }
         dataShapeTs += "}\n";
-        monaco.languages.typescript.javascriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
     }
 
     /**
@@ -849,12 +849,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var validEntityName = sanitizeEntityName(key);
                 var libraryName = "Resource" + validEntityName;
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
-                monaco.languages.typescript.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
+                monaco.languages.typescript.typescriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
                 resourcesDef += "    '" + key + "': internal." + libraryName + "." + libraryName + ";\n";
             }
             resourcesDef += "}\n}\n var Resources: internal.ResourcesInterface;";
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
+            monaco.languages.typescript.typescriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
     /**
@@ -892,13 +892,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             entityCollectionsDefs += "var " + entityCollections[j] + ": internal." + entityCollections[j] + "Interface;\n";
         }
 
-        monacoEditorLibs.entityCollection = monaco.languages.typescript.javascriptDefaults.addExtraLib(
+        monacoEditorLibs.entityCollection = monaco.languages.typescript.typescriptDefaults.addExtraLib(
             entityCollectionsDefs, "thingworx/entityCollections.d.ts");
     }
 
     function loadStandardTypescriptDefs() {
         // extra logger definitions
-        monaco.languages.typescript.javascriptDefaults.addExtraLib([
+        monaco.languages.typescript.typescriptDefaults.addExtraLib([
             "declare class logger {",
             "    /**",
             "     * Log a debug warning",
@@ -920,7 +920,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         ].join("\n"), "thingworx/logger.d.ts");
 
         // extra definitions for the thingworx baseTypes
-        monaco.languages.typescript.javascriptDefaults.addExtraLib([
+        monaco.languages.typescript.typescriptDefaults.addExtraLib([
             "declare namespace internal {",
             "export interface STRING extends String{}",
             "export interface LOCATION {",
