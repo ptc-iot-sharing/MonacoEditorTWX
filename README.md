@@ -58,8 +58,5 @@ In the case of services that return infotables, or infotable properties with kno
 * Theme support (F1 -> select "Change Theme" option )
 * Support for SQL services
 
-## Known issues:
- * Intellisense sometimes fails when multiple editors are open at the same time. 
-
 ## Download the latest prebuild binary from here:
 ftp://rostorage.ptcnet.ptc.com/SHARE/Petrisor/monaco/MonacoEditor_widget.zip (guest1:guest for auth)
