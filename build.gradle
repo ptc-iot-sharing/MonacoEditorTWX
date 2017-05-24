@@ -32,6 +32,7 @@ project.ext {
     thingworxServerRoot = "http://localhost:8012"
     thingworxUser = "Administrator"
     thingworxPass = "admin"
+    skipJsFiles = []
 }
 
 task increaseVersionNumber() {
@@ -52,7 +53,6 @@ task increaseVersionNumber() {
   //  xml.ExtensionPackages.ExtensionPackage.get(0).attributes().put('packageVersion', String.join(',', versionComponents));
 
     println 'Updated to version ' + String.join('.', versionComponents)
-    println xml.ExtensionPackages.ExtensionPackage.@packageVersion[0];
 
     PrintWriter pw = new PrintWriter(new File(file))
     pw.write(groovy.xml.XmlUtil.serialize(xml))

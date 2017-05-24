@@ -426,10 +426,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
                 // if the service is new, click the done button instead
                 if (serviceModel.isNew) {
-                    var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
+                    var doneButton = findEditorButton(".done-btn");
                     doneButton.click();
                 } else {
-                    var saveEntityButton = findEditorButton(".save-entity-btn", parentServiceEditorJqEl);
+                    var saveEntityButton = findEditorButton(".save-entity-btn");
                     saveEntityButton.click();
                 }
             }
@@ -437,7 +437,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // Action triggered by CTRL+Enter
         // Saves the service and closes it. Clicks the done button 
-        if (findEditorButton(".done-btn", parentServiceEditorJqEl).length > 0) {
+        if (findEditorButton(".done-btn").length > 0) {
             editor.addAction({
                 id: "doneCodeAction",
                 label: "Save and Close",
@@ -446,7 +446,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 run: function (ed) {
                     // fake a click on the done button
                     // TODO: this is hacky... there is no other way of executing the saveService on the twServiceEditor
-                    var doneButton = findEditorButton(".done-btn", parentServiceEditorJqEl);
+                    var doneButton = findEditorButton(".done-btn");
                     doneButton.click();
                 }
             });
@@ -490,14 +490,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         });
         // action triggered by CTRL+Backspace
         // clicks the cancel button, closing the service
-        if (findEditorButton(".save-entity-btn", parentServiceEditorJqEl).length > 0) {
+        if (findEditorButton(".save-entity-btn").length > 0) {
             editor.addAction({
                 id: "closeCodeAction",
                 label: "Close Service",
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
                 keybindingContext: null,
                 run: function (ed) {
-                    var cancelButton = findEditorButton(".cancel-btn", parentServiceEditorJqEl);
+                    var cancelButton = findEditorButton(".cancel-btn");
                     cancelButton.click();
                 }
             });
@@ -625,22 +625,25 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     }
 
     /**
-     * In the first editor line we declare the "me" variable, as well as the inputs.
+     * Declares the me object and the inputs of the service
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
-        var definition = "// The first line is not editable and declares the entities used in the service. The line is NOT saved\n";
-        definition += "const me = new internal." + entityName + "." + entityName + "(); ";
+        var definition = "const me = new internal." + entityName + "." + entityName + "(); ";
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             var inputDef = serviceMetadata.parameterDefinitions[key];
             definition += "var " + key + ": " + getTypescriptBaseType(inputDef) + "; ";
         }
-        return definition + "\n//------------------------------------------------------------------------";
+        return definition;
     }
 
     /**
      * Generates a typescript class and namespace for a metadata.
-     * 
+     * @param  {} effectiveShapeMetadata The enity metadata as a standard object with info about the properties. This is what thingworx responds for a object metadata request
+     * @param  {String} entityName The name of the entity that has this metadata
+     * @param  {Boolean} isGenericMetadata Specifies where to take the services definitios for. This differes if we are on the "me" metadata, or on a generic metadata
+     * @param  {Boolean} showGenericServices Include the generic services in the results
+     * @return The typescript definitions generated using this metadata
      */
     function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isGenericMetadata, showGenericServices) {
         // based on a module class declaration
@@ -708,7 +711,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     }
 
     /**
-     * Removes all the temporary typescript definions
+     * Removes all the temporary typescript definions with a category
      */
     function removeEditorLibs(category) {
         // remove the previous definitions
@@ -718,9 +721,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         TW.jqPlugins.twCodeEditor.monacoEditorLibs[category] = [];
     }
     /**
-     * Finds the editor button in the button toolbar
+     * Retuns a button on the button toolbar with a certain name.
+     * If the button is not found, it returns null
      */
-    function findEditorButton(buttonName, parentServiceEditorJqEl) {
+    function findEditorButton(buttonName) {
         // find the visible button
         var button = thisPlugin.jqElement.closest("tr").find(buttonName + ":visible");
         // we must be in fullscreen, try to find the button elsewhere
