@@ -171,9 +171,53 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
 };
 
 /**
+ * Overriden method from the twServiceEditor. We do this because in our version, the footer has absolute positoning.
+ * Because of this, it does not need to be taken into cosideration when calculating sizes for the editor
+ * Also, we must increase the size of the targetBodyHt from 360 to 535
+ */
+TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
+    var thisPlugin = this;
+    var serviceDefinitionBody;
+    var detailsEl;
+    var targetBodyHt = 535;
+
+    if (thisPlugin.properties.isFullScreen) {
+        detailsEl = thisPlugin.detachedExpandCollapseContent;
+        var fullscreenContainer = thisPlugin.detachedExpandCollapseContent.closest('.full-tab-div');
+        var fullscreenTitle = fullscreenContainer.find('.popover-title');
+        var fullscreenFooter = fullscreenContainer.find('.inline-footer');
+        if (fullscreenContainer.length > 0) {
+            targetBodyHt = (fullscreenContainer.innerHeight() - fullscreenTitle.outerHeight() - 10);
+        }
+        if (thisPlugin.properties.readOnly) {
+            targetBodyHt = (fullscreenContainer.innerHeight() - fullscreenTitle.outerHeight() - 10);
+        }
+    } else {
+        detailsEl = thisPlugin.detailsElem;
+    }
+    serviceDefinitionBody = detailsEl.find('.inline-body');
+    serviceDefinitionBody.height(targetBodyHt);
+
+    var serviceTabContent = detailsEl.find('.script-editor-tab-content');
+    var inlineServiceTabHeight = detailsEl.find('.io-code-tabs');
+
+    serviceTabContent.outerHeight(targetBodyHt - inlineServiceTabHeight.outerHeight());
+
+    var navTabsHt = 0;
+    var navTabs = detailsEl.find('.nav-tabs');
+    if (navTabs.length > 0) {
+        navTabsHt = navTabs.outerHeight(true);
+    }
+    var bodyHt = serviceDefinitionBody.innerHeight();
+    if (includeCodeEditor) {
+        thisPlugin.scriptCodeElem.twCodeEditor('setHeight', bodyHt - serviceDefinitionBody.find('.script-editor-header').outerHeight() - 10);
+    }
+};
+
+/**
  * Makes the monaco editor layout again
  */
-TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function() {
+TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
     if (this.monacoEditor) {
         this.monacoEditor.layout();
     }
@@ -223,7 +267,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     });
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
-    codeTextareaElem.css("min-height", (thisPlugin.height || 360) + "px");
+    codeTextareaElem.css("min-height", (thisPlugin.height || 535) + "px");
     if (codeTextareaElem.find(".monaco-editor").length > 0 && thisPlugin.monacoEditor !== undefined) {
         // already done, don't init the editor again
         return;
@@ -393,7 +437,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // make the editor layout again on window resize
         window.addEventListener("resize", thisPlugin.updateContainerSize.bind(thisPlugin));
-  
+
         if (mode == "typescript") {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditorText(function () {
