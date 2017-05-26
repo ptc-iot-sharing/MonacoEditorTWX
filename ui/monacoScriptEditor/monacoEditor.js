@@ -16,7 +16,7 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
     fontLigatures: true,
     mouseWheelZoom: true,
     formatOnPaste: true,
-    scrollBeyondLastLine: false,
+    scrollBeyondLastLine: true,
     theme: "vs",
     showGenericServices: false
 };
@@ -146,6 +146,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
     var thisPlugin = this;
     try {
         if (thisPlugin.monacoEditor !== undefined) {
+            window.removeEventListener("resize", thisPlugin.updateContainerSize.bind(thisPlugin));
             if (thisPlugin.monacoEditor.getModel()) {
                 thisPlugin.monacoEditor.getModel().dispose();
             }
@@ -163,14 +164,21 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
  * @param {int} height The height of the editor.
  */
 TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
-    var thisPlugin = this;
-    var jqEl = thisPlugin.jqElement;
+    var jqEl = this.jqElement;
     var container = jqEl.find(".editor-container");
     container.height(height);
-    if (thisPlugin.monacoEditor) {
-        thisPlugin.monacoEditor.layout();
+    this.updateContainerSize();
+};
+
+/**
+ * Makes the monaco editor layout again
+ */
+TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function() {
+    if (this.monacoEditor) {
+        this.monacoEditor.layout();
     }
 };
+
 /**
  * Scrolls code to a certain location. This is not really used, but we implement it anyhow
  */
@@ -183,6 +191,7 @@ TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
         });
     }
 };
+
 /**
  * Initilizes a new code mirror. This takes care of the contidion that 
  * we must create the monaco editor only once.
@@ -382,6 +391,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
         var initialCode = codeValue;
 
+        // make the editor layout again on window resize
+        window.addEventListener("resize", thisPlugin.updateContainerSize.bind(thisPlugin));
+  
         if (mode == "typescript") {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditorText(function () {

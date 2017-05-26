@@ -2,10 +2,25 @@
     margin-left: 20px;
 }
 
-.popover-property>.inline-body {
-    overflow: visible !important;
+.popover-property>.inline-body>.col1 {
+    width: 30% !important; 
+}
+
+.popover-property>.inline-body>.col2 {
+    width: 70% !important; 
 }
 
 #twServices td {
     overflow: visible !important;
+}
+
+.popover-property>.inline-footer {
+    top: auto;
+    bottom: 15px;
+    left: auto;
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
