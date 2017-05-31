@@ -2,11 +2,11 @@
     margin-left: 20px;
 }
 
-.popover-property>.inline-body>.col1 {
+#inline-editor>.popover-property>.inline-body>.col1 {
     width: 433px !important; 
 }
 
-.popover-property>.inline-body>.col2 {
+#inline-editor>.popover-property>.inline-body>.col2 {
     width: calc(100% - 433px) !important; 
 }
 
@@ -14,7 +14,7 @@
     overflow: visible !important;
 }
 
-.popover-property>.inline-footer {
+#inline-editor>.popover-property>.inline-footer {
     top: auto;
     bottom: 15px;
     left: auto;

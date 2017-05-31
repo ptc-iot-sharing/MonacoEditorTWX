@@ -183,9 +183,9 @@ TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
 
     if (thisPlugin.properties.isFullScreen) {
         detailsEl = thisPlugin.detachedExpandCollapseContent;
-        var fullscreenContainer = thisPlugin.detachedExpandCollapseContent.closest('.full-tab-div');
-        var fullscreenTitle = fullscreenContainer.find('.popover-title');
-        var fullscreenFooter = fullscreenContainer.find('.inline-footer');
+        var fullscreenContainer = thisPlugin.detachedExpandCollapseContent.closest(".full-tab-div");
+        var fullscreenTitle = fullscreenContainer.find(".popover-title");
+        var fullscreenFooter = fullscreenContainer.find(".inline-footer");
         if (fullscreenContainer.length > 0) {
             targetBodyHt = (fullscreenContainer.innerHeight() - fullscreenTitle.outerHeight() - 10);
         }
@@ -195,22 +195,22 @@ TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
     } else {
         detailsEl = thisPlugin.detailsElem;
     }
-    serviceDefinitionBody = detailsEl.find('.inline-body');
+    serviceDefinitionBody = detailsEl.find(".inline-body");
     serviceDefinitionBody.height(targetBodyHt);
 
-    var serviceTabContent = detailsEl.find('.script-editor-tab-content');
-    var inlineServiceTabHeight = detailsEl.find('.io-code-tabs');
+    var serviceTabContent = detailsEl.find(".script-editor-tab-content");
+    var inlineServiceTabHeight = detailsEl.find(".io-code-tabs");
 
     serviceTabContent.outerHeight(targetBodyHt - inlineServiceTabHeight.outerHeight());
 
     var navTabsHt = 0;
-    var navTabs = detailsEl.find('.nav-tabs');
+    var navTabs = detailsEl.find(".nav-tabs");
     if (navTabs.length > 0) {
         navTabsHt = navTabs.outerHeight(true);
     }
     var bodyHt = serviceDefinitionBody.innerHeight();
     if (includeCodeEditor) {
-        thisPlugin.scriptCodeElem.twCodeEditor('setHeight', bodyHt - serviceDefinitionBody.find('.script-editor-header').outerHeight() - 10);
+        thisPlugin.scriptCodeElem.twCodeEditor("setHeight", bodyHt - serviceDefinitionBody.find(".script-editor-header").outerHeight() - 10);
     }
 };
 
