@@ -29,9 +29,9 @@ project.ext {
     entitiesDir = "${baseDir}/Entities"
     zipDir = "${baseDir}/zip"
     packageVendor = "ThingWorx Customer Service"
-    thingworxServerRoot = "http://localhost:8011"
+    thingworxServerRoot = "http://localhost:8015"
     thingworxUser = "Administrator"
-    thingworxPass = "admin"
+    thingworxPass = "trUf6yuz2?_Gub"
     skipJsFiles = []
 }
 
@@ -119,7 +119,7 @@ task upload(dependsOn: packageExtension) {
 
     http.request(POST) { req ->
         uri.path = 'ExtensionPackageUploader'
-        uri.query = ['purpose': 'import']
+        uri.query = ['purpose': 'import', 'validate':'false']
         headers."X-XSRF-TOKEN" = "TWX-XSRF-TOKEN-VALUE"
         requestContentType = 'multipart/form-data'
         MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE)
