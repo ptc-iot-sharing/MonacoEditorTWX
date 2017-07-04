@@ -623,9 +623,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                         $("#theme-picker").change(function () {
                             if (editor) {
-                                editor.updateOptions({
-                                    "theme": this.value
-                                });
+                                monaco.editor.setTheme(this.value);
                             }
                         });
                     },
