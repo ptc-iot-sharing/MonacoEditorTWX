@@ -595,7 +595,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             height: "85%",
                             width: "85%",
                             top: "5%",
-                            left: "5%"
+                            left: "5%",
+                            overflow: "hidden"
+                        });
+                        // make sure that the key events stay inside the editor.
+                        popover.on("keydown keypress keyup", function (e) {
+                            e.stopPropagation();
                         });
                         // create the diff editor
                         diffEditor = monaco.editor.createDiffEditor(popover[0], TW.jqPlugins.twCodeEditor.defaultEditorSettings);
@@ -635,7 +640,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             height: "85%",
                             width: "85%",
                             top: "5%",
-                            left: "5%"
+                            left: "5%",
+                            overflow: "hidden"
+                        });
+                        // make sure that the key events stay inside the editor.
+                        popover.on("keydown keypress keyup", function (e) {
+                            e.stopPropagation();
                         });
                         // create the diff editor
                         var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultEditorSettings);
