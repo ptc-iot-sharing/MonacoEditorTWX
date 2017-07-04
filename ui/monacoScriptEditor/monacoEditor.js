@@ -21,6 +21,49 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
     showGenericServices: false
 };
 
+TW.jqPlugins.twCodeEditor.flatten = function (data) {
+    var result = {};
+    function recurse(cur, prop) {
+        if (Object(cur) !== cur) {
+            result[prop] = cur;
+        } else if (Array.isArray(cur)) {
+            for (var i = 0, l = cur.length; i < l; i++)
+                recurse(cur[i], prop + "[" + i + "]");
+            if (l == 0)
+                result[prop] = [];
+        } else {
+            var isEmpty = true;
+            for (var p in cur) {
+                isEmpty = false;
+                recurse(cur[p], prop ? prop + "." + p : p);
+            }
+            if (isEmpty && prop)
+                result[prop] = {};
+        }
+    }
+    recurse(data, "");
+    return result;
+};
+
+TW.jqPlugins.twCodeEditor.unflatten = function (data) {
+    "use strict";
+    if (Object(data) !== data || Array.isArray(data))
+        return data;
+    var regex = /\.?([^.\[\]]+)|\[(\d+)\]/g,
+        resultholder = {};
+    for (var p in data) {
+        var cur = resultholder,
+            prop = "",
+            m;
+        while (m = regex.exec(p)) {
+            cur = cur[prop] || (cur[prop] = (m[2] ? [] : {}));
+            prop = m[2] || m[1];
+        }
+        cur[prop] = data[p];
+    }
+    return resultholder[""] || resultholder;
+};
+
 /**
  * Called when the extension is asked to insert a code snippet via the snippets.
  * We make sure that we also have an undo stack here
@@ -319,7 +362,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                         schemas: [{
                             uri: "http://monaco-editor/schema.json",
-                            schema: data
+                            schema: data,
+                            fileMatch: ["*"]
                         }],
                         validate: true
                     });
@@ -647,16 +691,28 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         popover.on("keydown keypress keyup", function (e) {
                             e.stopPropagation();
                         });
-                        // create the diff editor
+                        // create the conf editor
                         var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultEditorSettings);
-                        editorSettings.value = [
-                            "{",
-                            "    \"$schema\": \"http://monaco-editor/schema.json\"",
-                            "}"
-                        ].join("\n");
+                        // set the intial text to be the current config
+                        editorSettings.value = 
+                           JSON.stringify(TW.jqPlugins.twCodeEditor.flatten({editor: TW.jqPlugins.twCodeEditor.defaultEditorSettings}),null, "\t");
+                       
                         editorSettings.language = "json";
                         confEditor = monaco.editor.create(popover[0], editorSettings);
                         confEditor.focus();
+                        // whenever the model changes, we need to also update the current editor, as well as other editors
+                        confEditor.onDidChangeModelContent(function (e) {
+                            try {
+                                // if the json is valid, then set it on this editor as well as the editor behind
+                                var expandedOptions = TW.jqPlugins.twCodeEditor.unflatten(JSON.parse(confEditor.getModel().getValue())).editor;
+                                confEditor.updateOptions(expandedOptions);
+                                editor.updateOptions(expandedOptions);
+                                TW.jqPlugins.twCodeEditor.defaultEditorSettings = expandedOptions;
+                            } catch (e) {
+                                return false;
+                            }
+                            return true;
+                        });
                     },
                     close: function () {
                         // dispose everything
