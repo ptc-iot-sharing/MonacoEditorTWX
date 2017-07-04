@@ -314,6 +314,17 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 if (savedTheme) {
                     TW.jqPlugins.twCodeEditor.defaultEditorSettings.theme = savedTheme;
                 }
+                $.get(extRoot + "/configs/confSchema.json", function (data) {
+                    // text formatting 
+                    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                        schemas: [{
+                            uri: "http://monaco-editor/schema.json",
+                            schema: data
+                        }],
+                        validate: true
+                    });
+                });
+
                 // compiler options
                 monaco.languages.typescript.thingworxJavascriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -598,6 +609,49 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         // dispose everything
                         diffEditor.dispose();
                         originalModel.dispose();
+                    }
+                });
+            }
+        });
+
+        // action triggered by CTRL+~
+        // shows a popup with a diff editor with the initial state of the editor
+        // reuse the current model, so changes can be made directly in the diff editor
+        editor.addAction({
+            id: "viewConfAction",
+            label: "View Configuration",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_BACKTICK],
+            keybindingContext: null,
+            run: function (ed) {
+                var confEditor;
+                TW.IDE.showModalDialog({
+                    title: "Conf Editor",
+                    show: function (popover) {
+                        // hide the footer and the body because we show the editor directly in the popover
+                        popover.find(".modal-footer, .modal-body").hide();
+                        // make sure we make the popover big enough
+                        popover.css({
+                            margin: "0",
+                            height: "85%",
+                            width: "85%",
+                            top: "5%",
+                            left: "5%"
+                        });
+                        // create the diff editor
+                        var editorSettings = $.extend({}, TW.jqPlugins.twCodeEditor.defaultEditorSettings);
+                        editorSettings.value = [
+                            "{",
+                            "    \"$schema\": \"http://monaco-editor/schema.json\"",
+                            "}"
+                        ].join("\n");
+                        editorSettings.language = "json";
+                        confEditor = monaco.editor.create(popover[0], editorSettings);
+                        confEditor.focus();
+                    },
+                    close: function () {
+                        // dispose everything
+                        confEditor.dispose();
+                        confEditor.dispose();
                     }
                 });
             }
