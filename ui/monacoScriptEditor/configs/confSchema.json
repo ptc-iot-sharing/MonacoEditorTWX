@@ -451,6 +451,11 @@
       "type": "boolean",
       "default": true,
       "description": "Controls if the diff editor shows +/- indicators for added/removed changes"
+    }, 
+    "thingworx.showGenericServices": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show thing generic services in autocomplete. This includes services on GenericThing template."
     }
   }
 }
