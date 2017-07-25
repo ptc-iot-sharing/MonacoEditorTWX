@@ -21,11 +21,12 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
         theme: "vs"
     },
     diffEditor: {},
-    thingworx: { 
+    thingworx: {
         showGenericServices: false
     }
 };
 
+// converts a nested json into a flat json
 TW.jqPlugins.twCodeEditor.flatten = function (data) {
     var result = {};
     function recurse(cur, prop) {
@@ -50,6 +51,7 @@ TW.jqPlugins.twCodeEditor.flatten = function (data) {
     return result;
 };
 
+// converts a flat json into a nested json
 TW.jqPlugins.twCodeEditor.unflatten = function (data) {
     "use strict";
     if (Object(data) !== data || Array.isArray(data))
@@ -330,6 +332,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             break;
         case "Script":
             break;
+        case "Typescript":
+            mode = "typescript";
+            break;
     }
 
     // root of where the entire vs folder is
@@ -355,29 +360,30 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // the code comes from the plugin properties
         var codeValue = thisPlugin.properties.code;
         // if the editor is javascript, then we need to init the compiler, and generate models
+        if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
+            try {
+                defaultEditorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
+                if (defaultEditorSettings.editor.theme) {
+                    monaco.editor.setThme(defaultEditorSettings.editor.theme);
+                }
+            } catch (e) {
+                TW.log.log("Failed to load settings from preferences. Using defaults");
+            }
+            $.get(extRoot + "/configs/confSchema.json", function (data) {
+                // text formatting 
+                monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                    schemas: [{
+                        uri: "http://monaco-editor/schema.json",
+                        schema: data,
+                        fileMatch: ["*"]
+                    }],
+                    validate: true
+                });
+            });
+        }
         if (mode === "thingworxJavascript") {
             // if this is the first initalization attempt, then set the compiler options and load the custom settings
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
-                try {
-                    defaultEditorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
-                    if(defaultEditorSettings.editor.theme) {
-                        monaco.editor.setThme(defaultEditorSettings.editor.theme);
-                    }
-                } catch (e) {
-                    console.log("Failed to load settings from preferences. Using defaults");
-                }
-                $.get(extRoot + "/configs/confSchema.json", function (data) {
-                    // text formatting 
-                    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                        schemas: [{
-                            uri: "http://monaco-editor/schema.json",
-                            schema: data,
-                            fileMatch: ["*"]
-                        }],
-                        validate: true
-                    });
-                });
-
                 // compiler options
                 monaco.languages.typescript.thingworxJavascriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -718,7 +724,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                                 confEditor.updateOptions(expandedOptions.editor);
                                 editor.updateOptions(expandedOptions.editor);
                                 // theme has to be updated separately
-                                if(defaultEditorSettings.editor.theme != expandedOptions.editor.theme) {
+                                if (defaultEditorSettings.editor.theme != expandedOptions.editor.theme) {
                                     monaco.editor.setTheme(expandedOptions.editor.theme);
                                 }
                                 defaultEditorSettings = expandedOptions;
@@ -763,7 +769,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         });
                     },
                     close: function () {
-                        defaultEditorSettings.editor.theme = $("#theme-picker").val();                        
+                        defaultEditorSettings.editor.theme = $("#theme-picker").val();
                         TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(defaultEditorSettings));
                     }
                 });
