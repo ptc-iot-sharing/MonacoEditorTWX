@@ -333,6 +333,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         case "TypeScript":
         case "Script":
             break;
+        // experimental stuff from James Mccuen
+        case "Python": 
+            mode = "python";
+            break;
+        case "R":
+            mode = "r";
+            break;
     }
 
     // root of where the entire vs folder is
