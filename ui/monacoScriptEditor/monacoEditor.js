@@ -330,10 +330,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         case "SQLQuery":
             mode = "sql";
             break;
+        case "TypeScript":
         case "Script":
-            break;
-        case "Typescript":
-            mode = "thingworxTypescript";
             break;
     }
 
@@ -367,7 +365,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     monaco.editor.setThme(defaultEditorSettings.editor.theme);
                 }
             } catch (e) {
-                TW.log.log("Failed to load settings from preferences. Using defaults");
+                TW.log.warn("Failed to load settings from preferences. Using defaults");
             }
             $.get(extRoot + "/configs/confSchema.json", function (data) {
                 // text formatting 
@@ -516,12 +514,31 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 refreshMeDefinitions(serviceModel);
             });
         }
-
+        var transpileTypeScript = function () {
+            monaco.languages.typescript.getThingworxJavaScriptWorker()
+                .then(function (worker) {
+                    worker(editor.getModel().uri)
+                        .then(function (client) {
+                            client.getEmitOutput(editor.getModel().uri.toString())
+                                .then(function (result) {
+                                    thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
+                                });
+                        });
+                });
+        };
+        if (mode == "thingworxJavascript") {
+            transpileTypeScript();
+        }
         // whenever the model changes, we need to also push the changes up to the other plugins
-        editor.onDidChangeModelContent(function (e) {
+        editor.getModel().onDidChangeContent(function (e) {
             thisPlugin.properties.code = editor.getModel().getValue();
+            if (mode == "thingworxJavascript") {
+                transpileTypeScript();
+            }
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
+
+
         editor.layout();
         // action to enable generic services
         // clicks the cancel button, closing the service

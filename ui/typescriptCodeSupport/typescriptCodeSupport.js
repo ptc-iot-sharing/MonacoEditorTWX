@@ -88,14 +88,16 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 if (scriptInfo.rows !== undefined && scriptInfo.rows.length > 0) {
                     var id = TW.uniqueId();
                     scriptHtml = "<div class=\"actual-script-code padded-container-white\" id=\"" + id + "\"></div>";
+                    var isTypescript = scriptInfo.rows.length == 2;
                     scriptObjects.push({
                         id: id,
-                        code: scriptInfo.rows[0].code,
-                        handler: handlerName,
+                        code: isTypescript ? scriptInfo.rows[1].code : scriptInfo.rows[0].code,
+                        handler: isTypescript ? "TypeScript" : "Script",
                         handlers: (isThingShape ? [] : (thisPlugin.properties.model.thingPackageInfo === undefined ? [] : thisPlugin.properties.model.thingPackageInfo.handlerDefinitions)),
                         //configurationTables: implOfThisSvc.configurationTables,
                         name: implOfThisSvc.name
                     });
+                    handlerName = isTypescript ? "TypeScript" : "Script";
                 }
             }
         } else if (handlerName === "SQLCommand" || handlerName === "SQLQuery") {
@@ -338,8 +340,19 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
         if (handlerName !== newHandlerName) {
             handlerChanged = true;
         }
+        // if we switch to javascript, then put in the transpiled code
+        if (newHandlerName == "Script" && handlerName == "TypeScript") {
+            // keep a backup of the existing typescript code if the user switches and then wants to switch back
+            thisPlugin.scriptObject.oldTypescriptCode = thisPlugin.scriptObject.code;
+            thisPlugin.scriptObject.code = thisPlugin.scriptCodeElem.twCodeEditor("getProperty", "javascriptCode");
+        }
+        // if we switch to typescript, then put the old code, if it exists
+        if (newHandlerName == "TypeScript" && thisPlugin.scriptObject.oldTypescriptCode) {
+            thisPlugin.scriptObject.code = thisPlugin.scriptObject.oldTypescriptCode;
+        }
         handlerName = newHandlerName;
         switch (handlerName) {
+            case "TypeScript":
             case "Script":
                 maxItemsEl.hide();
                 break;
@@ -575,7 +588,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             });
 
             var options = [
-                { value: "Script", displayText: TW.IDE.convertHandlerToDisplayHandler("Script") }
+                { value: "Script", displayText: TW.IDE.convertHandlerToDisplayHandler("Script") },
+                { value: "TypeScript", displayText: TW.IDE.convertHandlerToDisplayHandler("TypeScript") }
             ];
             if (thisPlugin.properties.model.thingPackageInfo !== undefined) {
                 _.each(thisPlugin.properties.model.thingPackageInfo.handlerDefinitions, function (handler) {
@@ -640,7 +654,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 //markThisAsChanged();
             },
             insertText: function (inputName) {
-                if (handlerName === "Script") {
+                if (handlerName === "Script" || handlerName === "TypeScript") {
                     thisPlugin.scriptCodeElem.twCodeEditor("insertCode", inputName);
                 } else {
                     thisPlugin.scriptCodeElem.twCodeEditor("insertCode", "[[" + inputName + "]]");
@@ -685,6 +699,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             svcEnableQueueEl.hide();
             maxItemsEl.hide();
             switch (handlerName) {
+                case "TypeScript":
                 case "Script":
                     codeSnippetsEl.show();
                     codeSnippetsEl.twCodeSnippets("destroy");
@@ -831,6 +846,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             }
 
             switch (handlerName) {
+                case "TypeScript":
                 case "Script":
                 case "SQLQuery":
                 case "SQLCommand":
@@ -1087,9 +1103,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             if (thisPlugin.scriptCodeElem.length > 0) {
                 var scriptCode = thisPlugin.scriptCodeElem.twCodeEditor("getProperty", "code");
             }
-            if (handlerName === "Script") {
+            if (handlerName === "Script" || handlerName == "TypeScript") {
                 var scriptInfo = implOfThisSvc.configurationTables.Script;
-
                 // in case they changed handlers
                 delete implOfThisSvc.configurationTables["Query"];
 
@@ -1118,9 +1133,15 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                     };
                     scriptInfo = implOfThisSvc.configurationTables.Script;
                 }
-                scriptInfo.rows[0]["code"] = scriptCode;
+                if (handlerName === "TypeScript") {
+                    var transpiledCode = thisPlugin.scriptCodeElem.twCodeEditor("getProperty", "javascriptCode");
+                    scriptInfo.rows[1] = { "code": scriptCode };
+                    scriptInfo.rows[0] = { "code": transpiledCode };
+                } else {
+                    scriptInfo.rows[0]["code"] = scriptCode;
+                }
                 thisPlugin.scriptObject.code = scriptCode;
-                implOfThisSvc.handlerName = handlerName;
+                implOfThisSvc.handlerName = "Script";
             } else if (handlerName === "SQLCommand" || handlerName === "SQLQuery") {
                 var queryInfo = implOfThisSvc.configurationTables.Query;
 
@@ -1427,5 +1448,27 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
     var doneBtn = jqSecondEl.find("button.done-btn");
     if (doneBtn.length > 0) {
         doneBtn.scrollintoview({ offset: 5 });
+    }
+};
+
+TW.IDE.convertHandlerToDisplayHandler = function (handlerName) {
+    switch (handlerName) {
+        case "Script":
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.script");
+        case "TypeScript":
+            return "Local (TypeScript)";
+        case "Reflection":
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.reflection");
+        case "SQLCommand":
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.sql-command");
+        case "SQLQuery":
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.sql-query");
+        case "Remote":
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.remote");
+        case "":
+            return "";
+        default:
+            TW.log.error("TW.IDE.convertHandlerToDisplayHandler: unknown handler name: \"" + XSS.encodeHTML(handlerName) + "\"");
+            return TW.IDE.I18NController.translate("tw.utility-functions.handlers.unknown", { handlerName: XSS.encodeHTML(handlerName) });
     }
 };
