@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><Entities>
   <ExtensionPackages>
-    <ExtensionPackage name="MonacoScriptEditor" homeMashup="http://roicentersvn/placatus/MonacoScriptEditorWidget" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.2.0" minimumThingWorxVersion="6.0.0"/>
+    <ExtensionPackage name="MonacoScriptEditor" homeMashup="http://roicentersvn/placatus/MonacoScriptEditorWidget" description="Monaco Widget" vendor="ThingWorx, a PTC Business" packageVersion="1.2.6" minimumThingWorxVersion="6.0.0"/>
   </ExtensionPackages>
   <Widgets>
     <Widget name="monacoScriptEditor">
@@ -8,6 +8,11 @@
         <FileResource type="JS" file="monacoEditor.js" description="" isDevelopment="true" isRuntime="false"/>
         <FileResource type="CSS" file="monacoEditor.css" description="" isDevelopment="true" isRuntime="false"/>
         <FileResource type="JS" url="/Thingworx/Common/extensions/MonacoScriptEditor/ui/monacoScriptEditor/vs/loader.js" description="" isDevelopment="true" isRuntime="false"/>
+      </UIResources>
+    </Widget>
+    <Widget name="typescriptCodeSupport">
+      <UIResources>
+        <FileResource type="JS" file="typescriptCodeSupport.js" description="" isDevelopment="true" isRuntime="false"/>
       </UIResources>
     </Widget>
   </Widgets>

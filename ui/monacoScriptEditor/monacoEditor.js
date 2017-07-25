@@ -333,7 +333,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         case "Script":
             break;
         case "Typescript":
-            mode = "typescript";
+            mode = "thingworxTypescript";
             break;
     }
 
@@ -381,7 +381,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 });
             });
         }
-        if (mode === "thingworxJavascript") {
+        if (mode === "thingworxJavascript" || mode == "thingworxTypescript") {
             // if this is the first initalization attempt, then set the compiler options and load the custom settings
             if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
                 // compiler options
