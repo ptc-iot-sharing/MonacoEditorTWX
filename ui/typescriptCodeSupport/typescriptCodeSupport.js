@@ -1451,6 +1451,23 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
     }
 };
 
+// poly-fill older TW versions with the i18nController
+if(!TW.IDE.I18NController) {
+    var tokenMap= {
+        "tw.utility-functions.handlers.script": "Local (JavaScript)",
+        "tw.utility-functions.handlers.reflection": "Local (Java Code)",
+        "tw.utility-functions.handlers.sql-command": "SQL (Command)",
+        "tw.utility-functions.handlers.sql-query": "SQL (Query)",
+        "tw.utility-functions.handlers.remote": "Remote",
+        "tw.utility-functions.handlers.unknown": "Unknown"
+    };
+    TW.IDE.I18NController = {
+        translate: function (token) {
+            return tokenMap[token];
+        }
+    };
+}
+
 TW.IDE.convertHandlerToDisplayHandler = function (handlerName) {
     switch (handlerName) {
         case "Script":
