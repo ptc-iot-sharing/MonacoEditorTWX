@@ -1,4 +1,4 @@
-declare namespace internal.DataShape {
+declare namespace twx.DataShapeParams {
     export interface AddFieldDefinitionParams {
         /** 
          * Property name 
@@ -49,11 +49,11 @@ declare namespace internal.DataShape {
          */
         name: STRING;
     }
-    export interface CreateValuesWithDataParams {
+    export interface CreateValuesWithDataParams<T> {
         /** 
          * Data values (JSON Object) 
          */
-        values: JSON;
+        values: T;
     }
     export interface UpdateFieldDefinitionParams {
         /** 
@@ -81,7 +81,9 @@ declare namespace internal.DataShape {
          */
         dataShape: DATASHAPENAME;
     }
-    export interface DataShape<T> {
+}
+declare namespace twx {
+    export interface ds<T> {
         /** 
          * Category: Fields
          * Add a field definition
@@ -93,20 +95,20 @@ declare namespace internal.DataShape {
          *     primaryKey: BOOLEAN - Is Primary Key
          *     dataShape: DATASHAPENAME - Data shape
           **/
-        AddFieldDefinition(params: DataShape.AddFieldDefinitionParams): NOTHING;
+        AddFieldDefinition(params: twx.DataShapeParams.AddFieldDefinitionParams): NOTHING;
         /** 
          * Category: Fields
          * Get a field definition by name for this data shape
          * Params: 
          *     name: STRING - Field name
           **/
-        GetFieldDefinition(params: DataShape.GetFieldDefinitionParams): INFOTABLE<internal.FieldDefinition>;
+        GetFieldDefinition(params: twx.DataShapeParams.GetFieldDefinitionParams): INFOTABLE<twx.ds.FieldDefinition>;
         /** 
          * Category: Fields
          * Get the effective fields for this data shape
          * 
          **/
-        GetEffectiveFieldDefinitions(): INFOTABLE<internal.FieldDefinition>;
+        GetEffectiveFieldDefinitions(): INFOTABLE<twx.ds.FieldDefinition>;
         /** 
          * Category: Metadata
          * Get the metadata for this data shape as JSON
@@ -119,20 +121,20 @@ declare namespace internal.DataShape {
          * Params: 
          *     maxItems: NUMBER - Maximum number of items to return
           **/
-        GetRelatedEntities(params: DataShape.GetRelatedEntitiesParams): INFOTABLE<internal.EntityDescriptor>;
+        GetRelatedEntities(params: twx.DataShapeParams.GetRelatedEntitiesParams): INFOTABLE<twx.ds.EntityDescriptor>;
         /** 
          * Category: Fields
          * Get the fields for this data shape
          * 
          **/
-        GetFieldDefinitions(): INFOTABLE<internal.FieldDefinition>;
+        GetFieldDefinitions(): INFOTABLE<twx.ds.FieldDefinition>;
         /** 
          * Category: Fields
          * Get an effective field definition by name for this data shape
          * Params: 
          *     name: STRING - Field name
           **/
-        GetEffectiveFieldDefinition(params: DataShape.GetEffectiveFieldDefinitionParams): INFOTABLE<internal.FieldDefinition>;
+        GetEffectiveFieldDefinition(params: twx.DataShapeParams.GetEffectiveFieldDefinitionParams): INFOTABLE<twx.ds.FieldDefinition>;
         /** 
          * Category: Values
          * Create an empty info table of the correct datashape for this data table
@@ -151,14 +153,14 @@ declare namespace internal.DataShape {
          * Params: 
          *     name: STRING - Property name
           **/
-        RemoveFieldDefinition(params: DataShape.RemoveFieldDefinitionParams): NOTHING;
+        RemoveFieldDefinition(params: twx.DataShapeParams.RemoveFieldDefinitionParams): NOTHING;
         /** 
          * Category: Crawl
          * Create an info table of the correct datashape for this stream and include data values
          * Params: 
          *     values: JSON - Data values (JSON Object)
           **/
-        CreateValuesWithData(params: DataShape.CreateValuesWithDataParams): INFOTABLE<T>;
+        CreateValuesWithData(params: twx.DataShapeParams.CreateValuesWithDataParams<T>): INFOTABLE<T>;
         /** 
          * Category: Fields
          * Update a field definition
@@ -170,6 +172,6 @@ declare namespace internal.DataShape {
          *     primaryKey: BOOLEAN - Is Primary Key
          *     dataShape: DATASHAPENAME - Data shape
           **/
-        UpdateFieldDefinition(params: DataShape.UpdateFieldDefinitionParams): NOTHING;
+        UpdateFieldDefinition(params: twx.DataShapeParams.UpdateFieldDefinitionParams): NOTHING;
     }
 }

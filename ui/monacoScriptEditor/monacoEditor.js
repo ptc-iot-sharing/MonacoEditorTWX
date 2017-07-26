@@ -1013,7 +1013,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
             datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-            datashapesDef += "    '" + datashape.name + "': twx.DataShape.DataShape<twx." + validEntityName + ">;\n";
+            datashapesDef += "    '" + validEntityName + "': twx.ds<twx.ds." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
         monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
@@ -1024,8 +1024,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function addDataShapesAsInterfaces(dataShapes) {
         // declare the namespace
-        var dataShapeTs = "export as namespace twx;\n";
-        dataShapeTs += "declare namespace twx { \n";
+        var dataShapeTs = "export as namespace twx.ds;\n";
+        dataShapeTs += "declare namespace twx.ds { \n";
         for (var i = 0; i < dataShapes.length; i++) {
             var datashape = dataShapes[i];
             // description as jsdoc
@@ -1057,7 +1057,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (definition.baseType != "INFOTABLE") {
             return "twx." + definition.baseType;
         } else {
-            return "twx." + definition.baseType + "<" + (definition.aspects.dataShape ? ("twx." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
+            return "twx." + definition.baseType + "<" + (definition.aspects.dataShape ? ("twx.ds." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
         }
     }
 
