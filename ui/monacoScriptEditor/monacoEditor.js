@@ -203,7 +203,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
             thisPlugin.monacoEditor.dispose();
         }
     } catch (err) {
-        console.log("Failed to destory the monaco editor", err);
+        TW.log.error("Failed to destory the monaco editor", err);
     }
     this.monacoEditor = undefined;
     thisPlugin.jqElement.off(".twCodeEditor");
@@ -996,7 +996,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             addDataShapesAsInterfaces(dataShapes);
             addDatashapesCollection(dataShapes);
         }, function (reason) {
-            console.log("Failed to generate typescript definitions from datashapes " + reason);
+            TW.log.error("Failed to generate typescript definitions from datashapes " + reason);
         });
     }
 
