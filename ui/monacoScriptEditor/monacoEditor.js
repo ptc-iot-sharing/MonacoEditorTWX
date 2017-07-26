@@ -12,6 +12,7 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
 TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
     editor: {
         showFoldingControls: "mouseover",
+        folding: true,
         fontSize: 12,
         fontFamily: "Fira Code,Monaco,monospace",
         fontLigatures: true,
