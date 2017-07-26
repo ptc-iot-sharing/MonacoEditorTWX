@@ -847,7 +847,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Declares the me object and the inputs of the service
      */
     function generateServiceGlobals(serviceMetadata, entityName) {
-        var definition = "const me = new internal." + entityName + "." + entityName + "(); ";
+        var definition = "const me = new twx." + entityName + "." + entityName + "(); ";
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             var inputDef = serviceMetadata.parameterDefinitions[key];
@@ -867,7 +867,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     function generateTypeScriptDefinitions(effectiveShapeMetadata, entityName, isGenericMetadata, showGenericServices) {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
-        var namespaceDefinition = "declare namespace internal." + entityName + " {\n";
+        var namespaceDefinition = "declare namespace twx." + entityName + " {\n";
         var classDefinition = "export class " + entityName + " {\n constructor(); \n";
 
         // generate info retated to services
@@ -926,7 +926,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         namespaceDefinition = namespaceDefinition + classDefinition + "}\n";
 
-        return "export as namespace internal." + entityName + ";\n" + namespaceDefinition;
+        return "export as namespace twx." + entityName + ";\n" + namespaceDefinition;
     }
 
     /**
@@ -1004,7 +1004,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Generate typescript defs for all the datashapes in the system.
      */
     function addDatashapesCollection(dataShapes) {
-        var datashapesDef = "declare namespace internal {\n";
+        var datashapesDef = "declare namespace twx {\n";
         datashapesDef += "interface DataShapes {\n";
         // iterate through all the datashapes
         for (var i = 0; i < dataShapes.length; i++) {
@@ -1012,9 +1012,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
             datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-            datashapesDef += "    '" + datashape.name + "': internal.DataShape.DataShape<internal." + validEntityName + ">;\n";
+            datashapesDef += "    '" + datashape.name + "': twx.DataShape.DataShape<twx." + validEntityName + ">;\n";
         }
-        datashapesDef += "}\n}\n var DataShapes: internal.DataShapes;";
+        datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
         monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
@@ -1023,8 +1023,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function addDataShapesAsInterfaces(dataShapes) {
         // declare the namespace
-        var dataShapeTs = "export as namespace internal;\n";
-        dataShapeTs += "declare namespace internal { \n";
+        var dataShapeTs = "export as namespace twx;\n";
+        dataShapeTs += "declare namespace twx { \n";
         for (var i = 0; i < dataShapes.length; i++) {
             var datashape = dataShapes[i];
             // description as jsdoc
@@ -1054,15 +1054,15 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function getTypescriptBaseType(definition) {
         if (definition.baseType != "INFOTABLE") {
-            return "internal." + definition.baseType;
+            return "twx." + definition.baseType;
         } else {
-            return "internal." + definition.baseType + "<" + (definition.aspects.dataShape ? ("internal." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
+            return "twx." + definition.baseType + "<" + (definition.aspects.dataShape ? ("twx." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
         }
     }
 
     function generateResourceFunctions() {
         TW.IDE.getResources(false, function (resourceLibraries) {
-            var resourcesDef = "declare namespace internal {\n";
+            var resourcesDef = "declare namespace twx {\n";
             resourcesDef += "export interface ResourcesInterface {\n";
             // iterate through all the resources
             for (var key in resourceLibraries) {
@@ -1074,9 +1074,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
                 monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
-                resourcesDef += "    '" + key + "': internal." + libraryName + "." + libraryName + ";\n";
+                resourcesDef += "    '" + key + "': twx." + libraryName + "." + libraryName + ";\n";
             }
-            resourcesDef += "}\n}\n var Resources: internal.ResourcesInterface;";
+            resourcesDef += "}\n}\n var Resources: twx.ResourcesInterface;";
             monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
@@ -1095,14 +1095,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (monacoEditorLibs.entityCollection) {
             monacoEditorLibs.entityCollection.dispose();
         }
-        var entityCollectionsDefs = "declare namespace internal { \n";
+        var entityCollectionsDefs = "declare namespace twx { \n";
         for (var i = 0; i < entityCollections.length; i++) {
             entityCollectionsDefs += "export interface " + entityCollections[i] + "Interface {\n";
             for (var typescriptDef in monacoEditorLibs.entityCollectionLibs) {
                 if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
 
                 if (monacoEditorLibs.entityCollectionLibs[typescriptDef].entityType == entityCollections[i]) {
-                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': internal." + typescriptDef + "." + typescriptDef + ";\n";
+                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': twx." + typescriptDef + "." + typescriptDef + ";\n";
                 }
             }
             // close the class declaration
@@ -1112,7 +1112,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         entityCollectionsDefs += "}\n";
         // now add all the entity collections
         for (var j = 0; j < entityCollections.length; j++) {
-            entityCollectionsDefs += "var " + entityCollections[j] + ": internal." + entityCollections[j] + "Interface;\n";
+            entityCollectionsDefs += "var " + entityCollections[j] + ": twx." + entityCollections[j] + "Interface;\n";
         }
 
         monacoEditorLibs.entityCollection = monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib(
@@ -1144,7 +1144,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
         // extra definitions for the thingworx baseTypes
         monaco.languages.typescript.thingworxJavascriptDefaults.addExtraLib([
-            "declare namespace internal {",
+            "declare namespace twx {",
             "export type STRING = string;",
             "export interface LOCATION {",
             "   latitude: number",
