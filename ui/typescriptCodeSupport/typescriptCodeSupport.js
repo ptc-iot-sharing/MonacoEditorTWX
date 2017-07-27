@@ -100,7 +100,24 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                     handlerName = isTypescript ? "TypeScript" : "Script";
                 }
             }
-        } else if (handlerName === "SQLCommand" || handlerName === "SQLQuery") {
+        } else if (handlerName === "R" || handlerName === "Python") {
+            var handlerInfo = implOfThisSvc.configurationTables[handlerName];
+            if (handlerInfo !== undefined) {
+                if (handlerInfo.rows !== undefined && handlerInfo.rows.length > 0) {
+                    var id = TW.uniqueId();
+                    scriptHtml = "<div class=\"actual-script-code padded-container-white\" id=\"" + id + "\"></div>";
+                    scriptObjects.push({
+                        id: id,
+                        code: handlerInfo.rows[0].code,
+                        handler: handlerName,
+                        handlers: (isThingShape ? [] : (thisPlugin.properties.model.thingPackageInfo === undefined ? [] : thisPlugin.properties.model.thingPackageInfo.handlerDefinitions)),
+                        //configurationTables: implOfThisSvc.configurationTables,
+                        name: implOfThisSvc.name
+                    });
+                }
+            }
+        }
+        else if (handlerName === "SQLCommand" || handlerName === "SQLQuery") {
             var queryInfo = implOfThisSvc.configurationTables.Query;
             maxRows = 500;
             svcTimeout = 60;
@@ -368,6 +385,12 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                     svcTimeout = 60;
                 }
                 maxItemsEl.show();
+                break;
+            case "R":
+                outputFieldDefinitionEl.twOutputDefinition("updateBaseType", "INFOTABLE");
+                break;
+            case "Python":
+                outputFieldDefinitionEl.twOutputDefinition("updateBaseType", "STRING");
                 break;
             case "SQLCommand":
                 outputFieldDefinitionEl.twOutputDefinition("updateBaseType", "NUMBER");
@@ -762,6 +785,27 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                     codeEl.show();
                     scriptEditorcol1El.removeClass("remote-service");
                     break;
+                case "R":
+                case "Python":
+                    ioSnippetTabs_CodeSnippetsTab.hide();
+                    ioSnippetTabs_MeTab.hide();
+                    ioSnippetTabs_OtherEntitiesTab.hide();
+                    ioSnippetTabs_TablesTab.hide();
+                    tablesColumnsHelperEl.twTablesColumnsHelper("destroy");
+                    tablesColumnsHelperEl.twTablesColumnsHelper({
+                        model: thisPlugin.properties.model,
+                        handler: handlerName,
+                        insertCode: function (code) {
+                            thisPlugin.scriptCodeElem.twCodeEditor("insertCode", code);
+                        }
+                    });
+                    testQueryBtn.text(TW.IDE.I18NController.translate("tw.buttons.test"));
+                    testQueryBtn.show();
+                    if (isThingShape || isThingTemplate) {
+                        testQueryBtn.hide();
+                    }
+                    codeEl.show();
+                    break;
                 case "SQLQuery":
                 case "SQLCommand":
                     ioSnippetTabs_CodeSnippetsTab.hide();
@@ -850,6 +894,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 case "Script":
                 case "SQLQuery":
                 case "SQLCommand":
+                case "R":
+                case "Python":
                     codeEl.show();
                     break;
                 case "Remote":
@@ -1142,6 +1188,42 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 }
                 thisPlugin.scriptObject.code = scriptCode;
                 implOfThisSvc.handlerName = "Script";
+
+            } if (handlerName === "R" || handlerName === "Python") {
+                var handlerInfo = implOfThisSvc.configurationTables[handlerName];
+
+                // in case they changed handlers
+                delete implOfThisSvc.configurationTables["Script"];
+
+                if (handlerInfo === undefined) {
+                    implOfThisSvc.configurationTables[handlerName] = {
+                        description: handlerName,
+                        dataShape: {
+                            "description": "",
+                            "name": "",
+                            "fieldDefinitions": {
+                                "code": {
+                                    "baseType": "STRING",
+                                    "description": "code",
+                                    "name": "code",
+                                    "aspects": {},
+                                    "ordinal": 0
+                                }
+                            }
+                        },
+                        isMultiRow: false,
+                        name: handlerName,
+                        rows: [
+                            {
+                            }
+                        ]
+                    };
+                    handlerInfo = implOfThisSvc.configurationTables[handlerName];
+                }
+
+                handlerInfo.rows[0].code = scriptCode;
+                thisPlugin.scriptObject.code = scriptCode;
+                implOfThisSvc.handlerName = handlerName;
             } else if (handlerName === "SQLCommand" || handlerName === "SQLQuery") {
                 var queryInfo = implOfThisSvc.configurationTables.Query;
 
@@ -1306,7 +1388,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
         };
 
         // only check syntax for scripts
-        if (handlerName === "Script") {
+        if (handlerName === "Script" || handlerName === "TypeScript") {
             thisPlugin.scriptCodeElem.twCodeEditor("checkSyntax", false /*showSuccess*/, function (ok) {
                 if (ok) {
                     saveService();
@@ -1452,8 +1534,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
 };
 
 // poly-fill older TW versions with the i18nController
-if(!TW.IDE.I18NController) {
-    var tokenMap= {
+if (!TW.IDE.I18NController) {
+    var tokenMap = {
         "tw.utility-functions.handlers.script": "Local (JavaScript)",
         "tw.utility-functions.handlers.reflection": "Local (Java Code)",
         "tw.utility-functions.handlers.sql-command": "SQL (Command)",
@@ -1482,6 +1564,10 @@ TW.IDE.convertHandlerToDisplayHandler = function (handlerName) {
             return TW.IDE.I18NController.translate("tw.utility-functions.handlers.sql-query");
         case "Remote":
             return TW.IDE.I18NController.translate("tw.utility-functions.handlers.remote");
+        case "R":
+            return "Local (R)";
+        case "Python":
+            return "Local (Python)";
         case "":
             return "";
         default:
