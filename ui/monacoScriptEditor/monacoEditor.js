@@ -287,6 +287,68 @@ TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
     }
 };
 
+TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callback, btnForPopover) {
+    var thisPlugin = this;
+    var jqEl = thisPlugin.jqElement;
+    var btn = jqEl.find("button[cmd=\"syntax-check\"]");
+    if (btnForPopover !== undefined) {
+        btn = btnForPopover;
+    }
+    var invoker = new ThingworxInvoker({
+        entityType: "Resources",
+        entityName: "ScriptServices",
+        characteristic: "Services",
+        target: "CheckScript",
+        apiMethod: "post",
+        parameters: {
+            script: thisPlugin.properties.isTypescript ? thisPlugin.properties.javascriptCode : thisPlugin.properties.code
+        }
+    });
+
+    invoker.invokeService(
+        function (invoker) {
+            var resultInfo = invoker.result.rows[0];
+            if (resultInfo.status === true) {
+                if (showSuccess) {
+                    TW.IDE.twPopoverNotification("info", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-check-passed"));
+                }
+                if (callback !== undefined) {
+                    callback(true);
+                }
+            } else {
+                // 	"missing ( before condition at line 6 column 2 source: [if]"
+                TW.IDE.twPopoverNotification("warning", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-check-failed", { syntaxCheckFail: resultInfo.message }));
+
+                // NOTE: got to learn the regex stuff ... this code is ridiculous :)
+
+                var lineNoText = resultInfo.message.indexOf(" at line ");
+                if (lineNoText > 0) {
+                    var linePlusText = resultInfo.message.substring(lineNoText + " at line ".length);
+                    var firstSpace = linePlusText.indexOf(" ");
+                    var line = parseInt(linePlusText.substring(0, firstSpace));
+                    var columnNo = linePlusText.indexOf(" column ");
+                    var columnPlusText = linePlusText.substring(columnNo + " column ".length);
+                    firstSpace = columnPlusText.indexOf(" ");
+                    var column = parseInt(columnPlusText.substring(0, firstSpace));
+                    thisPlugin.myCodeMirror.setCursor(line - 1, column);
+                    thisPlugin.myCodeMirror.focus();
+                    if (callback !== undefined) {
+                        callback(false);
+                    }
+                }
+            }
+        },
+        function (invoker, xhr) {
+            TW.IDE.twPopoverNotification("error", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-evaluation-error", { syntaxEvalError1: xhr.status, syntaxEvalError2: xhr.responseText }));
+            TW.log.error("CheckScript failed unexpectedly status:" + xhr.status + ", message: " + xhr.responseText);
+            if (callback !== undefined) {
+                callback(false);
+            }
+        }
+    );
+
+};
+
 /**
  * Initilizes a new code mirror. This takes care of the contidion that 
  * we must create the monaco editor only once.
@@ -332,11 +394,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             mode = "sql";
             break;
         case "TypeScript":
+            thisPlugin.properties.isTypescript = true;
+        // fallthrough
         case "Script":
             mode = "thingworxJavascript";
             break;
         // experimental stuff from James Mccuen
-        case "Python": 
+        case "Python":
             mode = "python";
             break;
         case "R":
@@ -524,18 +588,18 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             });
         }
         var transpileTypeScript = function () {
-            setTimeout(function() {
-                 monaco.languages.typescript.getThingworxJavaScriptWorker()
-                .then(function (worker) {
-                    worker(editor.getModel().uri)
-                        .then(function (client) {
-                            client.getEmitOutput(editor.getModel().uri.toString())
-                                .then(function (result) {
-                                    thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
-                                });
-                        });
-                });
-            }, 10);  
+            setTimeout(function () {
+                monaco.languages.typescript.getThingworxJavaScriptWorker()
+                    .then(function (worker) {
+                        worker(editor.getModel().uri)
+                            .then(function (client) {
+                                client.getEmitOutput(editor.getModel().uri.toString())
+                                    .then(function (result) {
+                                        thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
+                                    });
+                            });
+                    });
+            }, 10);
         };
         if (mode == "thingworxJavascript") {
             transpileTypeScript();
