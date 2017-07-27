@@ -325,7 +325,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         return;
     }
     // handle the different modes. For sql, we also need to hide the syntax check button
-    var mode = "thingworxJavascript";
+    var mode;
     switch (thisPlugin.properties.handler) {
         case "SQLCommand":
         case "SQLQuery":
@@ -333,6 +333,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             break;
         case "TypeScript":
         case "Script":
+            mode = "thingworxJavascript";
             break;
         // experimental stuff from James Mccuen
         case "Python": 
@@ -523,7 +524,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             });
         }
         var transpileTypeScript = function () {
-            monaco.languages.typescript.getThingworxJavaScriptWorker()
+            setTimeout(function() {
+                 monaco.languages.typescript.getThingworxJavaScriptWorker()
                 .then(function (worker) {
                     worker(editor.getModel().uri)
                         .then(function (client) {
@@ -533,6 +535,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                                 });
                         });
                 });
+            }, 10);  
         };
         if (mode == "thingworxJavascript") {
             transpileTypeScript();
