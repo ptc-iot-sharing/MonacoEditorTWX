@@ -1,6 +1,9 @@
 // @ts-nocheck
 /* global TW:false, ThingworxInvoker: false, monaco:false, require:false, $:false*/
-TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
+if (!TW.monacoEditor) {
+    TW.monacoEditor = {};
+}
+TW.monacoEditor.editorLibs = {
     serviceLibs: [],
     // libs in here follow the following format:
     // {entityId, entityType, disposable}
@@ -9,7 +12,7 @@ TW.jqPlugins.twCodeEditor.monacoEditorLibs = {
 };
 
 // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
+TW.monacoEditor.defaultEditorSettings = {
     editor: {
         showFoldingControls: "mouseover",
         folding: true,
@@ -26,6 +29,7 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
         showGenericServices: false
     }
 };
+TW.monacoEditor.initializedDefaults = false;
 
 /**
  * Called when the extension is asked to insert a code snippet via the snippets.
@@ -40,94 +44,6 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
         forceMoveMarkers: true
     };
     thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
-};
-
-/**
- * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
- */
-TW.jqPlugins.twCodeEditor.prototype.getDataShapeDefinitons = function () {
-    var invokerSpec = {
-        entityType: "Things",
-        entityName: "MonacoEditorHelper",
-        characteristic: "Services",
-        target: "GetAllDataShapes",
-        apiMethod: "post"
-    };
-    var invoker = new ThingworxInvoker(invokerSpec);
-    return new monaco.Promise(function (c, e, p) {
-        invoker.invokeService(
-            function (invoker) {
-                c(invoker.result.rows);
-            },
-            function (invoker, xhr) {
-                e(invoker.result.rows);
-            }
-        );
-    });
-};
-
-/**
- * Searches for enities in the platform using the spotlight search an retruns a new promise with the metadata
- * @param  {string} entityType Thingworx Entity Type. 
- * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
- */
-TW.jqPlugins.twCodeEditor.prototype.spotlightSearch = function (entityType, searchTerm) {
-    var invokerSpec = {
-        entityType: "Resources",
-        entityName: "SearchFunctions",
-        characteristic: "Services",
-        target: "SpotlightSearch",
-        apiMethod: "post",
-        parameters: {
-            searchExpression: searchTerm + "*",
-            withPermissions: false,
-            isAscending: false,
-            maxItems: 500,
-            types: {
-                // todo: proper fix for MediaEntities -> MediaEntity
-                items: [entityType == "MediaEntities" ? "MediaEntity" : entityType.slice(0, -1)]
-            },
-            sortBy: "lastModifiedDate",
-            searchDescriptions: true
-        }
-    };
-    var invoker = new ThingworxInvoker(invokerSpec);
-    return new monaco.Promise(function (c, e, p) {
-        invoker.invokeService(
-            function (invoker) {
-                c(invoker.result.rows);
-            },
-            function (invoker, xhr) {
-                e("failed to search" + invoker.result.rows);
-            }
-        );
-    });
-};
-
-/**
- * Loads a json monaco snippet file and returns a promise
- *
- * @param  {string} filePath File to load
- */
-TW.jqPlugins.twCodeEditor.prototype.loadSnippets = function (filePath) {
-    return new monaco.Promise(function (c, e, p) {
-        $.get(filePath, {}, c, "json").fail(e);
-    }).then(function (data) {
-        var result = [];
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                result.push({
-                    kind: monaco.languages.CompletionItemKind.Snippet,
-                    label: data[key].prefix,
-                    documentation: data[key].description,
-                    insertText: {
-                        value: data[key].body.join("\n")
-                    }
-                });
-            }
-        }
-        return result;
-    });
 };
 
 /**
@@ -323,9 +239,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 TW.jqPlugins.twCodeEditor.initEditor = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
-    var monacoEditorLibs = TW.jqPlugins.twCodeEditor.monacoEditorLibs;
-    var defaultEditorSettings = TW.jqPlugins.twCodeEditor.defaultEditorSettings;
+    var monacoEditorLibs = TW.monacoEditor.editorLibs;
+    var defaultEditorSettings = TW.monacoEditor.defaultEditorSettings;
     var codeTextareaElem = jqEl.find(".editor-container");
+    var Utilities = TW.monacoEditor.utilities;
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "ContentCrawlers", "Dashboards",
         "DataAnalysisDefinitions", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
@@ -389,11 +306,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // the code comes from the plugin properties
         var codeValue = thisPlugin.properties.code;
         // if the editor is javascript, then we need to init the compiler, and generate models
-        if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
+        if (!TW.monacoEditor.initializedDefaults) {
             try {
                 defaultEditorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
                 if (defaultEditorSettings.editor.theme) {
-                    monaco.editor.setThme(defaultEditorSettings.editor.theme);
+                    monaco.editor.setTheme(defaultEditorSettings.editor.theme);
                 }
             } catch (e) {
                 TW.log.warn("Failed to load settings from preferences. Using defaults");
@@ -412,7 +329,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         }
         if (mode === "thingworxJavascript" || mode == "thingworxTypescript") {
             // if this is the first initalization attempt, then set the compiler options and load the custom settings
-            if (!TW.jqPlugins.twCodeEditor.initializedDefaults) {
+            if (!TW.monacoEditor.initializedDefaults) {
                 // compiler options
                 monaco.languages.typescript.thingworxJavascriptDefaults.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -439,7 +356,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
                 // generate the completion for snippets
-                thisPlugin.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
+                Utilities.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
                     monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
@@ -448,7 +365,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 });
 
                 // generate the completion for twx snippets
-                thisPlugin.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
+                Utilities.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
                     monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
@@ -471,7 +388,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                             var entityType = match[1];
                             var entitySearch = match[2];
                             // returns a  promise to the search
-                            return thisPlugin.spotlightSearch(entityType, entitySearch).then(function (rows) {
+                            return Utilities.spotlightSearch(entityType, entitySearch).then(function (rows) {
                                 var result = [];
                                 for (var i = 0; i < rows.length; i++) {
                                     // generate the items list
@@ -730,8 +647,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         });
 
         // action triggered by CTRL+~
-        // shows a popup with a diff editor with the initial state of the editor
-        // reuse the current model, so changes can be made directly in the diff editor
+        // shows a popup with a json configuration for the editor
         editor.addAction({
             id: "viewConfAction",
             label: "View Configuration",
@@ -740,7 +656,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             run: function (ed) {
                 var confEditor;
                 TW.IDE.showModalDialog({
-                    title: "Conf Editor",
+                    title: "Config Editor. Use Intellisense to or check <a href='https://code.visualstudio.com/docs/getstarted/settings#_settings-and-security'>here</a> for available options.",
                     show: function (popover) {
                         // hide the footer and the body because we show the editor directly in the popover
                         popover.find(".modal-footer, .modal-body").hide();
@@ -761,7 +677,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         var editorSettings = $.extend({}, defaultEditorSettings.editor);
                         // set the intial text to be the current config
                         editorSettings.value =
-                            JSON.stringify(TW.monacoEditor.utilties.flatten(defaultEditorSettings), null, "\t");
+                            JSON.stringify(Utilities.flatten(defaultEditorSettings), null, "\t");
 
                         editorSettings.language = "json";
                         confEditor = monaco.editor.create(popover[0], editorSettings);
@@ -770,7 +686,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         confEditor.onDidChangeModelContent(function (e) {
                             try {
                                 // if the json is valid, then set it on this editor as well as the editor behind
-                                var expandedOptions = TW.monacoEditor.utilties.unflatten(JSON.parse(confEditor.getModel().getValue()));
+                                var expandedOptions = Utilities.unflatten(JSON.parse(confEditor.getModel().getValue()));
                                 confEditor.updateOptions(expandedOptions.editor);
                                 editor.updateOptions(expandedOptions.editor);
                                 // theme has to be updated separately
@@ -900,7 +816,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (var key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
-            if (!(showGenericServices && TW.jqPlugins.twCodeEditor.defaultEditorSettings.thingworx.showGenericServices) && TW.IDE.isGenericServiceName(key)) continue;
+            var userConfigShowGenericServices = TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices;
+            if (!(showGenericServices && userConfigShowGenericServices) && TW.IDE.isGenericServiceName(key)) continue;
             // first create an interface for service params
             var service = serviceDefs[key];
             // metadata for the service parameters
@@ -961,9 +878,9 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     function removeEditorLibs(category) {
         // remove the previous definitions
         for (var i = 0; i < monacoEditorLibs[category].length; i++) {
-            TW.jqPlugins.twCodeEditor.monacoEditorLibs[category][i].dispose();
+            TW.monacoEditor.editorLibs[category][i].dispose();
         }
-        TW.jqPlugins.twCodeEditor.monacoEditorLibs[category] = [];
+        TW.monacoEditor.editorLibs[category] = [];
     }
     /**
      * Retuns a button on the button toolbar with a certain name.
@@ -1018,7 +935,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      * Generates typescript interfaces from all thingworx datashapes
      */
     function generateDataShapeDefs() {
-        thisPlugin.getDataShapeDefinitons().then(function (dataShapes) {
+        Utilities.getDataShapeDefinitons().then(function (dataShapes) {
             addDataShapesAsInterfaces(dataShapes);
             addDatashapesCollection(dataShapes);
         }, function (reason) {
