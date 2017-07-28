@@ -27,51 +27,6 @@ TW.jqPlugins.twCodeEditor.defaultEditorSettings = {
     }
 };
 
-// converts a nested json into a flat json
-TW.jqPlugins.twCodeEditor.flatten = function (data) {
-    var result = {};
-    function recurse(cur, prop) {
-        if (Object(cur) !== cur) {
-            result[prop] = cur;
-        } else if (Array.isArray(cur)) {
-            for (var i = 0, l = cur.length; i < l; i++)
-                recurse(cur[i], prop + "[" + i + "]");
-            if (l == 0)
-                result[prop] = [];
-        } else {
-            var isEmpty = true;
-            for (var p in cur) {
-                isEmpty = false;
-                recurse(cur[p], prop ? prop + "." + p : p);
-            }
-            if (isEmpty && prop)
-                result[prop] = {};
-        }
-    }
-    recurse(data, "");
-    return result;
-};
-
-// converts a flat json into a nested json
-TW.jqPlugins.twCodeEditor.unflatten = function (data) {
-    "use strict";
-    if (Object(data) !== data || Array.isArray(data))
-        return data;
-    var regex = /\.?([^.\[\]]+)|\[(\d+)\]/g,
-        resultholder = {};
-    for (var p in data) {
-        var cur = resultholder,
-            prop = "",
-            m;
-        while (m = regex.exec(p)) {
-            cur = cur[prop] || (cur[prop] = (m[2] ? [] : {}));
-            prop = m[2] || m[1];
-        }
-        cur[prop] = data[p];
-    }
-    return resultholder[""] || resultholder;
-};
-
 /**
  * Called when the extension is asked to insert a code snippet via the snippets.
  * We make sure that we also have an undo stack here
@@ -287,6 +242,9 @@ TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
     }
 };
 
+/**
+ * Checks the syntax of the underlying code using a server based method
+ */
 TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callback, btnForPopover) {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
@@ -803,7 +761,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         var editorSettings = $.extend({}, defaultEditorSettings.editor);
                         // set the intial text to be the current config
                         editorSettings.value =
-                            JSON.stringify(TW.jqPlugins.twCodeEditor.flatten(defaultEditorSettings), null, "\t");
+                            JSON.stringify(TW.monacoEditor.utilties.flatten(defaultEditorSettings), null, "\t");
 
                         editorSettings.language = "json";
                         confEditor = monaco.editor.create(popover[0], editorSettings);
@@ -812,7 +770,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                         confEditor.onDidChangeModelContent(function (e) {
                             try {
                                 // if the json is valid, then set it on this editor as well as the editor behind
-                                var expandedOptions = TW.jqPlugins.twCodeEditor.unflatten(JSON.parse(confEditor.getModel().getValue()));
+                                var expandedOptions = TW.monacoEditor.utilties.unflatten(JSON.parse(confEditor.getModel().getValue()));
                                 confEditor.updateOptions(expandedOptions.editor);
                                 editor.updateOptions(expandedOptions.editor);
                                 // theme has to be updated separately
