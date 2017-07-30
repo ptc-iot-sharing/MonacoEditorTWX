@@ -653,7 +653,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             run: function (ed) {
                 var confEditor;
                 TW.IDE.showModalDialog({
-                    title: "Config Editor. Use Intellisense to or check <a href='https://code.visualstudio.com/docs/getstarted/settings#_settings-and-security'>here</a> for available options.",
+                    title: "Config Editor. Use Intellisense or check <a href='https://code.visualstudio.com/docs/getstarted/settings#_settings-and-security'>here</a> for available options.",
                     show: function (popover) {
                         // hide the footer and the body because we show the editor directly in the popover
                         popover.find(".modal-footer, .modal-body").hide();
