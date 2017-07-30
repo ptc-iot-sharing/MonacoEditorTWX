@@ -269,10 +269,10 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             mode = "sql";
             break;
         case "TypeScript":
-            thisPlugin.properties.isTypescript = true;
-        // fallthrough
+            mode = "twxTypescript";
+            break;
         case "Script":
-            mode = "thingworxJavascript";
+            mode = "twxJavascript";
             break;
         // experimental stuff from James Mccuen
         case "Python":
@@ -327,41 +327,34 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 });
             });
         }
-        if (mode === "thingworxJavascript") {
+        if (mode === "twxJavascript" || mode === "twxTypescript") {
             // if this is the first initalization attempt, then set the compiler options and load the custom settings
             if (!TW.monacoEditor.initializedDefaults) {
-                // create a new language called thingworxJavascript
-                monaco.languages.typescript.setupNamedLanguage({id: "thingworxJavascript"}, false);
-                // compiler options
-                TW.monacoEditor.javascriptDefaults = monaco.languages.typescript.getLanguageDefaults("thingworxJavascript");
-
-                TW.monacoEditor.javascriptDefaults.setCompilerOptions({
+                // create a new language called twxJavascript
+                monaco.languages.typescript.setupNamedLanguage({id: "twxJavascript"}, false);
+                // create a new language called twxTypescript
+                monaco.languages.typescript.setupNamedLanguage({id: "twxTypescript"}, true);
+                TW.monacoEditor.scriptManager = new TW.monacoEditor.workerScriptManager(monaco.languages.typescript.getLanguageDefaults("twxTypescript"), 
+                                    monaco.languages.typescript.getLanguageDefaults("twxJavascript"));
+                // set the compiler options
+                TW.monacoEditor.scriptManager.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
                     allowNonTsExtensions: true,
                     noLib: true
                 });
-                $.get(extRoot + "/configs/lib.rhino.es5.d.ts", function (data) {
-                    // Register the es5 library
-                    TW.monacoEditor.javascriptDefaults.addExtraLib(
-                        data,
-                        "lib.rhino.es5.d.ts"
-                    );
-                });
-                loadStandardTypescriptDefs();
-                $.get(extRoot + "/configs/declarations/ThingworxDataShape.d.ts", function (data) {
-                    // Register the es5 library
-                    TW.monacoEditor.javascriptDefaults.addExtraLib(
-                        data,
-                        "ThingworxDataShape.d.ts"
-                    );
-                });
+                // register the rhino es5 library
+                TW.monacoEditor.scriptManager.addRemoteExtraLib(extRoot + "/configs/lib.rhino.es5.d.ts", "lib.rhino.es5.d.ts");
+                // register the thingworx base types and the logger class
+                TW.monacoEditor.scriptManager.addRemoteExtraLib(extRoot + "/configs/declarations/ThingworxBaseTypes.d.ts", "ThingworxBaseTypes.d.ts");
+                // register the thingworx datashape library
+                TW.monacoEditor.scriptManager.addRemoteExtraLib(extRoot + "/configs/declarations/ThingworxDataShape.d.ts", "ThingworxDataShape.d.ts");
                 generateDataShapeDefs();
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
                 // generate the completion for snippets
                 Utilities.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
+                    monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -370,7 +363,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
                 // generate the completion for twx snippets
                 Utilities.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
+                    monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -380,7 +373,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 // generate the regex that matches the autocomplete for the entity collection
                 var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
                 // this handles on demand code completion for Thingworx entity names
-                monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
+                monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
                     triggerCharacters: ["[", "[\""],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
@@ -414,7 +407,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
 
                 // this handles on demand code completion for Thingworx entities medadata
-                monaco.languages.registerCompletionItemProvider("thingworxJavascript", {
+                monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
                     triggerCharacters: ["]", "."],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
@@ -441,7 +434,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     }
                 });
 
-                TW.jqPlugins.twCodeEditor.initializedDefaults = true;
+                TW.monacoEditor.initializedDefaults = true;
             }
 
             refreshMeDefinitions(serviceModel);
@@ -458,7 +451,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         // make the editor layout again on window resize
         window.addEventListener("resize", thisPlugin.updateContainerSize.bind(thisPlugin));
 
-        if (mode == "thingworxJavascript") {
+        if (mode === "twxJavascript" || mode === "twxTypescript") {
             // whenever the editor regains focus, we regenerate the first line (inputs defs) and me defs
             editor.onDidFocusEditorText(function () {
                 // get the service model again
@@ -468,7 +461,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         }
         var transpileTypeScript = function () {
             setTimeout(function () {
-                monaco.languages.typescript.getLanguageWorker("thingworxJavascript")
+                monaco.languages.typescript.getLanguageWorker("twxTypescript")
                     .then(function (worker) {
                         worker(editor.getModel().uri)
                             .then(function (client) {
@@ -480,13 +473,13 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     });
             }, 10);
         };
-        if (mode == "thingworxJavascript") {
+        if (mode === "twxTypescript") {
             transpileTypeScript();
         }
         // whenever the model changes, we need to also push the changes up to the other plugins
         editor.getModel().onDidChangeContent(function (e) {
             thisPlugin.properties.code = editor.getModel().getValue();
-            if (mode == "thingworxJavascript") {
+            if (mode === "twxTypescript") {
                 transpileTypeScript();
             }
             thisPlugin.properties.change(thisPlugin.properties.code);
@@ -763,11 +756,11 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
 
             // we append an me in here, just in case the definition is already added by the autocomplete in another service
             var fileName = "thingworx/" + entityName + "Me.d.ts";
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.getLanguageDefaults("thingworxJavascript")
-                .addExtraLib(generateTypeScriptDefinitions(meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
+            monacoEditorLibs.serviceLibs.push(TW.monacoEditor.scriptManager.addExtraLib(generateTypeScriptDefinitions(
+                meThingModel.attributes.effectiveShape, entityName, false, true), fileName));
             // in the current globals we have me declarations as well as input parameters
-            monacoEditorLibs.serviceLibs.push(monaco.languages.typescript.getLanguageDefaults("thingworxJavascript")
-                .addExtraLib(generateServiceGlobals(serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+            monacoEditorLibs.serviceLibs.push(TW.monacoEditor.scriptManager.addExtraLib(generateServiceGlobals(
+                serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
         }
     }
 
@@ -780,7 +773,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         var defintionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
         if (!defintionInfo) {
             monacoEditorLibs.entityCollectionLibs[entityName] = {
-                disposable: TW.monacoEditor.javascriptDefaults.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
+                disposable: TW.monacoEditor.scriptManager.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
                 entityId: entityId,
                 entityType: entityType
             };
@@ -882,7 +875,15 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     function removeEditorLibs(category) {
         // remove the previous definitions
         for (var i = 0; i < monacoEditorLibs[category].length; i++) {
-            TW.monacoEditor.editorLibs[category][i].dispose();
+            // there should be two libraries here, one for javascript and one for typescript
+            var node = TW.monacoEditor.editorLibs[category][i];
+            if(node instanceof Array) {
+                for (var j = 0; j < node.length; j++) {
+                    node[j].dispose();
+                }
+            } else {
+                TW.monacoEditor.editorLibs[category][i].dispose();
+            }
         }
         TW.monacoEditor.editorLibs[category] = [];
     }
@@ -931,7 +932,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                     result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
             }
-            TW.monacoEditor.javascriptDefaults.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+            TW.monacoEditor.scriptManager.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
         });
     }
 
@@ -962,7 +963,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             datashapesDef += "    '" + validEntityName + "': twx.ds<twx.ds." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
-        TW.monacoEditor.javascriptDefaults.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
+        TW.monacoEditor.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
     /**
@@ -993,7 +994,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             dataShapeTs += "}\n\n";
         }
         dataShapeTs += "}\n";
-        TW.monacoEditor.javascriptDefaults.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+        TW.monacoEditor.scriptManager.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
     }
 
     /**
@@ -1019,12 +1020,12 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 var validEntityName = sanitizeEntityName(key);
                 var libraryName = "Resource" + validEntityName;
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
-                TW.monacoEditor.javascriptDefaults.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
+                TW.monacoEditor.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
                 resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
                 resourcesDef += "    '" + key + "': twx." + libraryName + "." + libraryName + ";\n";
             }
             resourcesDef += "}\n}\n var Resources: twx.ResourcesInterface;";
-            TW.monacoEditor.javascriptDefaults.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
+            TW.monacoEditor.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
         });
     }
     /**
@@ -1040,7 +1041,8 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
      */
     function registerEntityCollectionDefs() {
         if (monacoEditorLibs.entityCollection) {
-            monacoEditorLibs.entityCollection.dispose();
+            monacoEditorLibs.entityCollection[0].dispose();
+            monacoEditorLibs.entityCollection[1].dispose();
         }
         var entityCollectionsDefs = "declare namespace twx { \n";
         for (var i = 0; i < entityCollections.length; i++) {
@@ -1062,18 +1064,34 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             entityCollectionsDefs += "var " + entityCollections[j] + ": twx." + entityCollections[j] + "Interface;\n";
         }
 
-        monacoEditorLibs.entityCollection = TW.monacoEditor.javascriptDefaults.addExtraLib(
+        monacoEditorLibs.entityCollection = TW.monacoEditor.scriptManager.addExtraLib(
             entityCollectionsDefs, "thingworx/entityCollections.d.ts");
     }
+};
 
-    function loadStandardTypescriptDefs() {
-        // extra logger definitions and extra definitions for the thingworx baseTypes
-        $.get(extRoot + "/configs/declarations/ThingworxBaseTypes.d.ts", function (data) {
-            // Register the es5 library
-            TW.monacoEditor.javascriptDefaults.addExtraLib(
-                data,
-                "ThingworxBaseTypes.d.ts"
-            );
+TW.monacoEditor.workerScriptManager = function(typescriptDefaults, javascriptDefaults) {
+    this.setDefaults(typescriptDefaults, javascriptDefaults);
+};
+
+/**
+ * Abstracts over the typescript and javascript workers in monaco
+ */
+TW.monacoEditor.workerScriptManager.prototype = {
+    setDefaults: function (typescriptDefaults, javascriptDefaults) {
+        this.typescriptDefaults = typescriptDefaults;
+        this.javascriptDefaults = javascriptDefaults;
+    },
+    addExtraLib: function (code, name) {
+        return [this.typescriptDefaults.addExtraLib(code, name), this.javascriptDefaults.addExtraLib(code, name)];
+    },
+    addRemoteExtraLib: function(location, name) {
+        var self = this;
+        $.get(location, function (data) {
+            self.addExtraLib(data, name);
         });
+    },
+    setCompilerOptions: function(options) {
+        this.typescriptDefaults.setCompilerOptions(options);
+        this.javascriptDefaults.setCompilerOptions(options);
     }
 };
