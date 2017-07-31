@@ -175,7 +175,7 @@ TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callbac
         target: "CheckScript",
         apiMethod: "post",
         parameters: {
-            script: thisPlugin.properties.isTypescript ? thisPlugin.properties.javascriptCode : thisPlugin.properties.code
+            script: thisPlugin.properties.handler === "TypeScript" ? thisPlugin.properties.javascriptCode : thisPlugin.properties.code
         }
     });
 
@@ -960,7 +960,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
             datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
-            datashapesDef += "    '" + validEntityName + "': twx.ds<twx.ds." + validEntityName + ">;\n";
+            datashapesDef += "    '" + datashape.name + "': twx.ds<twx.ds." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
         TW.monacoEditor.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
