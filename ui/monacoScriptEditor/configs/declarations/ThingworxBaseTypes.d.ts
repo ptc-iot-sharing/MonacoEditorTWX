@@ -16,6 +16,8 @@ declare class logger {
      */
     static info(message: string)
 }
+/** The name of the currently logged in user */
+declare var principal: string;
 declare namespace twx {
     export type STRING = string;
     export interface LOCATION {
