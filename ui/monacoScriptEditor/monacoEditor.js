@@ -330,12 +330,17 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         if (mode === "twxJavascript" || mode === "twxTypescript") {
             // if this is the first initalization attempt, then set the compiler options and load the custom settings
             if (!TW.monacoEditor.initializedDefaults) {
-                // create a new language called twxJavascript
-                monaco.languages.typescript.setupNamedLanguage({id: "twxJavascript"}, false);
-                // create a new language called twxTypescript
-                monaco.languages.typescript.setupNamedLanguage({id: "twxTypescript"}, true);
-                TW.monacoEditor.scriptManager = new TW.monacoEditor.workerScriptManager(monaco.languages.typescript.getLanguageDefaults("twxTypescript"), 
-                                    monaco.languages.typescript.getLanguageDefaults("twxJavascript"));
+                try {
+                    // create a new language called twxJavascript
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false);
+                    // create a new language called twxTypescript
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true);
+                } catch (e) {
+                    alert("There was an error initializing monaco. Please clean the browser cache.");
+                    throw e;
+                }
+                TW.monacoEditor.scriptManager = new TW.monacoEditor.workerScriptManager(monaco.languages.typescript.getLanguageDefaults("twxTypescript"),
+                    monaco.languages.typescript.getLanguageDefaults("twxJavascript"));
                 // set the compiler options
                 TW.monacoEditor.scriptManager.setCompilerOptions({
                     target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -463,13 +468,16 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
             setTimeout(function () {
                 monaco.languages.typescript.getLanguageWorker("twxTypescript")
                     .then(function (worker) {
-                        worker(editor.getModel().uri)
-                            .then(function (client) {
-                                client.getEmitOutput(editor.getModel().uri.toString())
-                                    .then(function (result) {
-                                        thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
-                                    });
-                            });
+                        // if there is an uri available
+                        if (editor.getModel().uri) {
+                            worker(editor.getModel().uri)
+                                .then(function (client) {
+                                    client.getEmitOutput(editor.getModel().uri.toString())
+                                        .then(function (result) {
+                                            thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
+                                        });
+                                });
+                        }
                     });
             }, 10);
         };
@@ -877,7 +885,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         for (var i = 0; i < monacoEditorLibs[category].length; i++) {
             // there should be two libraries here, one for javascript and one for typescript
             var node = TW.monacoEditor.editorLibs[category][i];
-            if(node instanceof Array) {
+            if (node instanceof Array) {
                 for (var j = 0; j < node.length; j++) {
                     node[j].dispose();
                 }
@@ -1069,7 +1077,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     }
 };
 
-TW.monacoEditor.workerScriptManager = function(typescriptDefaults, javascriptDefaults) {
+TW.monacoEditor.workerScriptManager = function (typescriptDefaults, javascriptDefaults) {
     this.setDefaults(typescriptDefaults, javascriptDefaults);
 };
 
@@ -1084,13 +1092,13 @@ TW.monacoEditor.workerScriptManager.prototype = {
     addExtraLib: function (code, name) {
         return [this.typescriptDefaults.addExtraLib(code, name), this.javascriptDefaults.addExtraLib(code, name)];
     },
-    addRemoteExtraLib: function(location, name) {
+    addRemoteExtraLib: function (location, name) {
         var self = this;
         $.get(location, function (data) {
             self.addExtraLib(data, name);
         });
     },
-    setCompilerOptions: function(options) {
+    setCompilerOptions: function (options) {
         this.typescriptDefaults.setCompilerOptions(options);
         this.javascriptDefaults.setCompilerOptions(options);
     }
