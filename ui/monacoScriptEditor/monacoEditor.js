@@ -251,7 +251,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     ];
 
     // make sure that the key events stay inside the editor.
-    codeTextareaElem.on("keydown keypress keyup", function (e) {
+    codeTextareaElem.on("keydown.twCodeEditor keypress.twCodeEditor keyup.twCodeEditor", function (e) {
         e.stopPropagation();
     });
     // make sure the textArea will strech, but have a minimum height
@@ -295,7 +295,14 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
     require(["vs/editor/editor.main"], function () {
         // get the service model from the parent twService editor
         var parentServiceEditorJqEl = jqEl.closest("tr").prev();
+        if(!parentServiceEditorJqEl) {
+            return;
+        }
         var parentPluginType = parentServiceEditorJqEl.attr("tw-jqPlugin");
+        // if the parent service editor is not available then don't go further
+        if (!parentServiceEditorJqEl[parentPluginType]) {
+            return;
+        }
         var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
         // there are cases where showCodeProperly is called, but no properties are yet set.
         // there are cases where the parent twServiceEditor doesn't have a model set
@@ -469,7 +476,7 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
                 monaco.languages.typescript.getLanguageWorker("twxTypescript")
                     .then(function (worker) {
                         // if there is an uri available
-                        if (editor.getModel().uri) {
+                        if (editor.getModel()) {
                             worker(editor.getModel().uri)
                                 .then(function (client) {
                                     client.getEmitOutput(editor.getModel().uri.toString())
