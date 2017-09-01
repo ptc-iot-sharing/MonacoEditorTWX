@@ -235,10 +235,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var codeTextareaElem = jqEl.find(".editor-container");
     var Utilities = TW.monacoEditor.utilities;
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
-    var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "ContentCrawlers", "Dashboards",
-        "DataAnalysisDefinitions", "DataTables", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
-        "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions", "Streams",
-        "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "ValueStreams", "Wikis"
+    var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Dashboards",
+        "DataAnalysisDefinitions", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
+        "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions", 
+        "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "Wikis"
     ];
 
     // make sure that the key events stay inside the editor.
