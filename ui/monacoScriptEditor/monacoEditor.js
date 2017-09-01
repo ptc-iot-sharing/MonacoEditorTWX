@@ -228,15 +228,6 @@ TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callbac
  * we must create the monaco editor only once.
  */
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
-    if (TW.jqPlugins.twCodeEditor.timeout) {
-        window.clearTimeout(TW.jqPlugins.twCodeEditor.timeout);
-    }
-    TW.jqPlugins.twCodeEditor.timeout = setTimeout(TW.jqPlugins.twCodeEditor.initEditor.bind(this), 0);
-};
-/**
- * Initializes a new code mirror and registeres all the listeners
- */
-TW.jqPlugins.twCodeEditor.initEditor = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.monacoEditor.editorLibs;
@@ -457,7 +448,15 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         editorSettings.readOnly = !thisPlugin.properties.editMode;
         editorSettings.value = codeValue;
 
-        var editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
+        var editor;
+        // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
+        if(thisPlugin.monacoEditor) {
+            editor = thisPlugin.monacoEditor;
+            editor.updateOptions(editorSettings);
+        } else {
+            // else create a new one
+            editor = monaco.editor.create(codeTextareaElem[0], editorSettings);            
+        }
         var initialCode = codeValue;
 
         // make the editor layout again on window resize
@@ -755,7 +754,6 @@ TW.jqPlugins.twCodeEditor.initEditor = function () {
         });
         editor.focus();
         thisPlugin.monacoEditor = editor;
-        TW.jqPlugins.twCodeEditor.timeout = 0;
     });
 
     /**
