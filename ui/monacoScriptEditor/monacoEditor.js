@@ -388,7 +388,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 });
 
                 // generate the regex that matches the autocomplete for the entity collection
-                var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"\\]]*)['\"]?");
+                var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")\\[['\"]([^'\"\\]]*)$");
                 // this handles on demand code completion for Thingworx entity names
                 monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
                     triggerCharacters: ["[", "[\""],
@@ -410,8 +410,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                         label: rows[i].name,
                                         kind: monaco.languages.CompletionItemKind.Field,
                                         documentation: rows[i].description,
-                                        detail: "Entity type: " + rows[i].type,
-                                        insertText: rows[i].name.substring(entitySearch.length - 1)
+                                        detail: "Entity type: " + rows[i].type
                                     });
                                 }
                                 return result;
