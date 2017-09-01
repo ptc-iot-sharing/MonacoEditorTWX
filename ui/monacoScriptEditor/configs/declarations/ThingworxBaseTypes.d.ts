@@ -73,6 +73,27 @@ declare namespace twx {
     export interface DataShape {
         fieldDefinitions: FieldDefinition;
     }
+    /**
+     * This is a native java value collection
+     */
+    export type ValueCollection<T extends {}> = T & {
+        /**
+         * Clones this value collection into a new one
+         */
+        clone(): ValueCollection<T>;
+        /**
+         * Performs equality check on two value collections.
+         */
+        matches(valuesToCompare: ValueCollection<T>): boolean;
+        /**
+         * Transforms this value collection into a native Javascript JSON so it's easier to work on
+         */
+        toJSON(): T;
+        /**
+         * Transforms this value collection into a native Infotable in order to return out of a service
+         */
+        toInfoTable(): twx.INFOTABLE<T>;
+    }
 
     export interface InfotableJson<T> {
         /**
@@ -82,6 +103,10 @@ declare namespace twx {
         datashape: DataShape;
     }
     export interface INFOTABLE<T> extends InfotableJson<T> {
+        /**
+         * An array of all the  rows in the infotable as ValueCollection
+         */
+        rows: ValueCollection<T>[];
         /**
          * Adds a field to this InfoTable datashape
          */
@@ -162,14 +187,14 @@ declare namespace twx {
          * @param index Location of the row (ValueCollection) in the ValueCollectionList
          * @return ValueCollection of the row specified or null if index is out of range
          */
-        getRow(index: number): T;
+        getRow(index: number): ValueCollection<T>;
         /**
          * Finds and returns the index of a row from this InfoTable that matches the values of all fields given as a ValueCollection
          *
          * @param values ValueCollection containing the values that match all fields in the row
          * @return int Index of the row in this InfoTable that matches the values given or null if not found
          */
-        findIndex(values: any): number;
+        // NOT WORKING: findIndex(values: any): number;
         /**
          * Limits the infotable to the top N items. This happens inplace
          */
