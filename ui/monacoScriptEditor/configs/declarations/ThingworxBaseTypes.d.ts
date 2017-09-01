@@ -95,14 +95,14 @@ declare namespace twx {
         toInfoTable(): twx.INFOTABLE<T>;
     }
 
-    export interface InfotableJson<T> {
+    export interface InfotableJson<T = any> {
         /**
          * An array of all the rows in the infotable
          */
         rows: T[];
         datashape: DataShape;
     }
-    export interface INFOTABLE<T> extends InfotableJson<T> {
+    export interface INFOTABLE<T = any> extends InfotableJson<T> {
         /**
          * An array of all the  rows in the infotable as ValueCollection
          */

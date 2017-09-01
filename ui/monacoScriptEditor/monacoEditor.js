@@ -1017,7 +1017,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         if (definition.baseType != "INFOTABLE") {
             return "twx." + definition.baseType;
         } else {
-            return "twx." + definition.baseType + "<" + (definition.aspects.dataShape ? ("twx.ds." + sanitizeEntityName(definition.aspects.dataShape)) : "any") + ">";
+            return "twx." + definition.baseType + (definition.aspects.dataShape ? ("<twx.ds." + sanitizeEntityName(definition.aspects.dataShape) + ">") : "");
         }
     }
 
