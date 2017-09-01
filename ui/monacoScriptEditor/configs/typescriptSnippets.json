@@ -8,61 +8,6 @@
 		],
 		"description": "jsdoc snippet"
 	},
-	"Constructor": {
-		"prefix": "ctor",
-		"body": [
-			"/**",
-			" *",
-			" */",
-			"constructor() {",
-			"\tsuper();",
-			"\t$0",
-			"}"
-		],
-		"description": "Constructor"
-	},
-	"Class Definition": {
-		"prefix": "class",
-		"body": [
-			"/**",
-			" * ${1:name}",
-			" */",
-			"class ${1:name} {",
-			"\tconstructor(${2:parameters}) {",
-			"\t\t$0",
-			"\t}",
-			"}"
-		],
-		"description": "Class Definition"
-	},
-	"Public Method Definition": {
-		"prefix": "public method",
-		"body": [
-			"/**",
-			" * ${1:name}",
-			" */",
-			"public ${1:name}() {",
-			"\t$0",
-			"}"
-		],
-		"description": "Public Method Definition"
-	},
-	"Private Method Definition": {
-		"prefix": "private method",
-		"body": [
-			"private ${1:name}() {",
-			"\t$0",
-			"}"
-		],
-		"description": "Private Method Definition"
-	},
-	"Import external module.": {
-		"prefix": "import statement",
-		"body": [
-			"import { $0 } from '${1:module}';"
-		],
-		"description": "Import external module."
-	},
 	"Return false": {
 		"prefix": "ret0",
 		"body": [
@@ -83,17 +28,6 @@
 			"return $1;$0"
 		],
 		"description": "Return statement"
-	},
-	"Property setter": {
-		"prefix": "set",
-		"body": [
-			"",
-			"public set ${1:value}(v : ${2:string}) {",
-			"   this.$3 = v;",
-			"}",
-			""
-		],
-		"description": "Property setter"
 	},
 	"Throw Exception": {
 		"prefix": "throw",
