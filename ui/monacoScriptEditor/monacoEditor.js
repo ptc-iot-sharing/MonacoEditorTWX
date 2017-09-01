@@ -239,7 +239,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Dashboards",
         "DataAnalysisDefinitions", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
-        "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions", 
+        "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions",
         "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "Wikis"
     ];
 
@@ -494,10 +494,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         if (editor.getModel()) {
                             worker(editor.getModel().uri)
                                 .then(function (client) {
-                                    client.getEmitOutput(editor.getModel().uri.toString())
-                                        .then(function (result) {
-                                            thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
-                                        });
+                                    if (editor.getModel())
+                                        client.getEmitOutput(editor.getModel().uri.toString())
+                                            .then(function (result) {
+                                                thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
+                                            });
                                 });
                         }
                     });
@@ -981,7 +982,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generate typescript defs for all the datashapes in the system.
      */
     function addDatashapesCollection(dataShapes) {
-        if(monacoEditorLibs.datashapeCollection) {
+        if (monacoEditorLibs.datashapeCollection) {
             monacoEditorLibs.datashapeCollection[0].dispose();
             monacoEditorLibs.datashapeCollection[1].dispose();
         }
@@ -1003,7 +1004,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generate a typescript lib with all the datashapes as interfaces
      */
     function addDataShapesAsInterfaces(dataShapes) {
-        if(monacoEditorLibs.datashapeInterfaces) {
+        if (monacoEditorLibs.datashapeInterfaces) {
             monacoEditorLibs.datashapeInterfaces[0].dispose();
             monacoEditorLibs.datashapeInterfaces[1].dispose();
         }
