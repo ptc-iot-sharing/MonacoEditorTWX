@@ -8,7 +8,9 @@ TW.monacoEditor.editorLibs = {
     // libs in here follow the following format:
     // {entityId, entityType, disposable}
     entityCollectionLibs: {},
-    entityCollection: undefined
+    entityCollection: undefined,
+    datashapeCollection: undefined,
+    datashapeInterfaces: undefined
 };
 
 // avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
@@ -351,7 +353,6 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 TW.monacoEditor.scriptManager.addRemoteExtraLib(extRoot + "/configs/declarations/ThingworxBaseTypes.d.ts", "ThingworxBaseTypes.d.ts");
                 // register the thingworx datashape library
                 TW.monacoEditor.scriptManager.addRemoteExtraLib(extRoot + "/configs/declarations/ThingworxDataShape.d.ts", "ThingworxDataShape.d.ts");
-                generateDataShapeDefs();
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
@@ -452,7 +453,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
                 TW.monacoEditor.initializedDefaults = true;
             }
-
+            // we regenerate all the datashape definitions when a new editor loads
+            generateDataShapeDefs();
+            // also refresh the me definitions
             refreshMeDefinitions(serviceModel);
         }
         // modify the initial settions
@@ -978,6 +981,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generate typescript defs for all the datashapes in the system.
      */
     function addDatashapesCollection(dataShapes) {
+        if(monacoEditorLibs.datashapeCollection) {
+            monacoEditorLibs.datashapeCollection[0].dispose();
+            monacoEditorLibs.datashapeCollection[1].dispose();
+        }
         var datashapesDef = "declare namespace twx {\n";
         datashapesDef += "interface DataShapes {\n";
         // iterate through all the datashapes
@@ -989,13 +996,17 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             datashapesDef += "    '" + datashape.name + "': twx.ds<twx.ds." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
-        TW.monacoEditor.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
+        monacoEditorLibs.datashapeCollection = TW.monacoEditor.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
     /**
      * Generate a typescript lib with all the datashapes as interfaces
      */
     function addDataShapesAsInterfaces(dataShapes) {
+        if(monacoEditorLibs.datashapeInterfaces) {
+            monacoEditorLibs.datashapeInterfaces[0].dispose();
+            monacoEditorLibs.datashapeInterfaces[1].dispose();
+        }
         // declare the namespace
         var dataShapeTs = "export as namespace twx.ds;\n";
         dataShapeTs += "declare namespace twx.ds { \n";
@@ -1020,7 +1031,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             dataShapeTs += "}\n\n";
         }
         dataShapeTs += "}\n";
-        TW.monacoEditor.scriptManager.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
+        monacoEditorLibs.datashapeInterfaces = TW.monacoEditor.scriptManager.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
     }
 
     /**
