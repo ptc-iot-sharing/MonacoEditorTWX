@@ -286,7 +286,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     require(["vs/editor/editor.main"], function () {
         // get the service model from the parent twService editor
         var parentServiceEditorJqEl = jqEl.closest("tr").prev();
-        if(!parentServiceEditorJqEl) {
+        if (!parentServiceEditorJqEl) {
             return;
         }
         var parentPluginType = parentServiceEditorJqEl.attr("tw-jqPlugin");
@@ -355,9 +355,16 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
-                // generate the completion for snippets
+                // generate the completion for language snippets
                 Utilities.loadSnippets(extRoot + "/configs/javascriptSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
+                    monaco.languages.registerCompletionItemProvider("twxJavascript", {
+                        provideCompletionItems: function (model, position) {
+                            return snippets;
+                        }
+                    });
+                });
+                Utilities.loadSnippets(extRoot + "/configs/typescriptSnippets.json").then(function (snippets) {
+                    monaco.languages.registerCompletionItemProvider("twxTypescript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -365,8 +372,15 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 });
 
                 // generate the completion for twx snippets
-                Utilities.loadSnippets(extRoot + "/configs/thingworxSnippets.json").then(function (snippets) {
-                    monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
+                Utilities.loadSnippets(extRoot + "/configs/thingworxJavascriptSnippets.json").then(function (snippets) {
+                    monaco.languages.registerCompletionItemProvider("twxJavascript", {
+                        provideCompletionItems: function (model, position) {
+                            return snippets;
+                        }
+                    });
+                });
+                Utilities.loadSnippets(extRoot + "/configs/thingworxTypescriptSnippets.json").then(function (snippets) {
+                    monaco.languages.registerCompletionItemProvider("twxTypescript", {
                         provideCompletionItems: function (model, position) {
                             return snippets;
                         }
@@ -450,12 +464,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
         var editor;
         // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
-        if(thisPlugin.monacoEditor) {
+        if (thisPlugin.monacoEditor) {
             editor = thisPlugin.monacoEditor;
             editor.updateOptions(editorSettings);
         } else {
             // else create a new one
-            editor = monaco.editor.create(codeTextareaElem[0], editorSettings);            
+            editor = monaco.editor.create(codeTextareaElem[0], editorSettings);
         }
         var initialCode = codeValue;
 

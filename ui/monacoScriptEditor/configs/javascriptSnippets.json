@@ -108,5 +108,13 @@
             "}"
         ],
         "description": "Try-Catch Statement"
-    }
+    },
+    "Throw Exception": {
+		"prefix": "throw",
+		"body": [
+			"throw \"$1\";",
+			"$0"
+		],
+		"description": "Throw Exception"
+	}
 }
