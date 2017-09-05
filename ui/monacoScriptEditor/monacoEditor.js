@@ -233,7 +233,6 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var thisPlugin = this;
     var jqEl = thisPlugin.jqElement;
     var monacoEditorLibs = TW.monacoEditor.editorLibs;
-    var defaultEditorSettings = TW.monacoEditor.defaultEditorSettings;
     var codeTextareaElem = jqEl.find(".editor-container");
     var Utilities = TW.monacoEditor.utilities;
     // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
@@ -308,9 +307,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         // if the editor is javascript, then we need to init the compiler, and generate models
         if (!TW.monacoEditor.initializedDefaults) {
             try {
-                defaultEditorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
-                if (defaultEditorSettings.editor.theme) {
-                    monaco.editor.setTheme(defaultEditorSettings.editor.theme);
+                TW.monacoEditor.defaultEditorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
+                if (TW.monacoEditor.defaultEditorSettings.editor.theme) {
+                    monaco.editor.setTheme(TW.monacoEditor.defaultEditorSettings.editor.theme);
                 }
             } catch (e) {
                 TW.log.warn("Failed to load settings from preferences. Using defaults");
@@ -459,7 +458,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             refreshMeDefinitions(serviceModel);
         }
         // modify the initial settions
-        var editorSettings = $.extend({}, defaultEditorSettings.editor);
+        var editorSettings = $.extend({}, TW.monacoEditor.defaultEditorSettings.editor);
         editorSettings.language = mode;
         editorSettings.readOnly = !thisPlugin.properties.editMode;
         editorSettings.value = codeValue;
@@ -524,8 +523,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             id: "showGenericServices",
             label: "Toggle Generic Services",
             run: function (ed) {
-                defaultEditorSettings.thingworx.showGenericServices = !defaultEditorSettings.thingworx.showGenericServices;
-                TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(defaultEditorSettings));
+                TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices = !TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices;
+                TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(TW.monacoEditor.defaultEditorSettings));
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
@@ -656,7 +655,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         popover.on("keydown keypress keyup", function (e) {
                             e.stopPropagation();
                         });
-                        var editorSettings = $.extend(defaultEditorSettings.editor, defaultEditorSettings.diffEditor);
+                        var editorSettings = $.extend(TW.monacoEditor.defaultEditorSettings.editor, TW.monacoEditor.defaultEditorSettings.diffEditor);
                         // create the diff editor
                         diffEditor = monaco.editor.createDiffEditor(popover[0], editorSettings);
                         diffEditor.setModel({
@@ -702,10 +701,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                             e.stopPropagation();
                         });
                         // create the conf editor
-                        var editorSettings = $.extend({}, defaultEditorSettings.editor);
+                        var editorSettings = $.extend({}, TW.monacoEditor.defaultEditorSettings.editor);
                         // set the intial text to be the current config
                         editorSettings.value =
-                            JSON.stringify(Utilities.flatten(defaultEditorSettings), null, "\t");
+                            JSON.stringify(Utilities.flatten(TW.monacoEditor.defaultEditorSettings), null, "\t");
 
                         editorSettings.language = "json";
                         confEditor = monaco.editor.create(popover[0], editorSettings);
@@ -718,11 +717,15 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                 confEditor.updateOptions(expandedOptions.editor);
                                 editor.updateOptions(expandedOptions.editor);
                                 // theme has to be updated separately
-                                if (defaultEditorSettings.editor.theme != expandedOptions.editor.theme) {
+                                if (TW.monacoEditor.defaultEditorSettings.editor.theme != expandedOptions.editor.theme) {
                                     monaco.editor.setTheme(expandedOptions.editor.theme);
                                 }
-                                defaultEditorSettings = expandedOptions;
-                                TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(defaultEditorSettings));
+                                // changed the thingworx related stuff
+                                if(TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices != expandedOptions.thingworx.showGenericServices) {
+                                    refreshMeDefinitions(serviceModel);
+                                }
+                                TW.monacoEditor.defaultEditorSettings = expandedOptions;
+                                TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(TW.monacoEditor.defaultEditorSettings));
                             } catch (e) {
                                 return false;
                             }
@@ -754,7 +757,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 								<option value=\"hc-black\">High Contrast Dark</option>\
 							</select>\
 						</div>");
-                        $("#theme-picker").val(defaultEditorSettings.theme);
+                        $("#theme-picker").val(TW.monacoEditor.defaultEditorSettings.theme);
 
                         $("#theme-picker").change(function () {
                             if (editor) {
@@ -763,8 +766,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         });
                     },
                     close: function () {
-                        defaultEditorSettings.editor.theme = $("#theme-picker").val();
-                        TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(defaultEditorSettings));
+                        TW.monacoEditor.defaultEditorSettings.editor.theme = $("#theme-picker").val();
+                        TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(TW.monacoEditor.defaultEditorSettings));
                     }
                 });
             }
