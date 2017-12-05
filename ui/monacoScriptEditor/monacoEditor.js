@@ -24,7 +24,8 @@ TW.monacoEditor.defaultEditorSettings = {
         mouseWheelZoom: true,
         formatOnPaste: true,
         scrollBeyondLastLine: true,
-        theme: "vs"
+        theme: "vs",
+        disableLayerHinting: true // fixes bug in FF
     },
     diffEditor: {},
     thingworx: {
@@ -95,8 +96,8 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
 };
 
 /**
- * Overriden method from the twServiceEditor. We do this because in our version, the footer has absolute positoning.
- * Because of this, it does not need to be taken into cosideration when calculating sizes for the editor
+ * Overridden method from the twServiceEditor. We do this because in our version, the footer has absolute positoning.
+ * Because of this, it does not need to be taken into consideration when calculating sizes for the editor
  * Also, we must increase the size of the targetBodyHt from 360 to 535
  */
 TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
