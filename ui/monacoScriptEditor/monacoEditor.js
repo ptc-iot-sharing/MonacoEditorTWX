@@ -13,7 +13,7 @@ TW.monacoEditor.editorLibs = {
     datashapeInterfaces: undefined
 };
 
-// avalible options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
+// available options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
 TW.monacoEditor.defaultEditorSettings = {
     editor: {
         showFoldingControls: "mouseover",
@@ -96,7 +96,7 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
 };
 
 /**
- * Overridden method from the twServiceEditor. We do this because in our version, the footer has absolute positoning.
+ * Overridden method from the twServiceEditor. We do this because in our version, the footer has absolute positioning.
  * Because of this, it does not need to be taken into consideration when calculating sizes for the editor
  * Also, we must increase the size of the targetBodyHt from 360 to 535
  */
@@ -227,7 +227,7 @@ TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callbac
 };
 
 /**
- * Initilizes a new code mirror. This takes care of the contidion that 
+ * Initializes a new code mirror. This takes care of the condition that 
  * we must create the monaco editor only once.
  */
 TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
@@ -236,7 +236,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     var monacoEditorLibs = TW.monacoEditor.editorLibs;
     var codeTextareaElem = jqEl.find(".editor-container");
     var Utilities = TW.monacoEditor.utilities;
-    // A list of all the entity collections avalible in TWX. Datashapes and Resources are not included
+    // A list of all the entity collections available in TWX. Datashapes and Resources are not included
     var entityCollections = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Dashboards",
         "DataAnalysisDefinitions", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
         "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions",
@@ -799,13 +799,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     }
 
     /**
-     * Registers a typescript definiton in the extra serviceLibs
+     * Registers a typescript definition in the extra serviceLibs
      * If it already exists, just returns
      */
     function registerEntityDefinitionLibrary(typescriptMetadata, entityType, entityId) {
         var entityName = entityType + "" + sanitizeEntityName(entityId);
-        var defintionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
-        if (!defintionInfo) {
+        var definitionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
+        if (!definitionInfo) {
             monacoEditorLibs.entityCollectionLibs[entityName] = {
                 disposable: TW.monacoEditor.scriptManager.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
                 entityId: entityId,
@@ -904,7 +904,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     }
 
     /**
-     * Removes all the temporary typescript definions with a category
+     * Removes all the temporary typescript definitions with a specific category
      */
     function removeEditorLibs(category) {
         // remove the previous definitions
@@ -922,7 +922,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         TW.monacoEditor.editorLibs[category] = [];
     }
     /**
-     * Retuns a button on the button toolbar with a certain name.
+     * Returns a button on the button toolbar with a certain name.
      * If the button is not found, it returns null
      */
     function findEditorButton(buttonName) {
@@ -944,12 +944,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // iterate through all the script functions libraries
             for (var key in scriptFunctions) {
                 if (!scriptFunctions.hasOwnProperty(key)) continue;
-                // iterate through all the functiond definitions
+                // iterate through all the function definitions
                 var scriptLibrary = scriptFunctions[key].details.functionDefinitions;
                 for (var def in scriptLibrary) {
                     if (!scriptLibrary.hasOwnProperty(def)) continue;
                     var functionDef = scriptLibrary[def];
-                    // generate in paralel both the jsdoc as well as the function declaration
+                    // generate at the same time both the jsdoc as well as the function declaration
                     var jsDoc = "/**\n * " + functionDef.description;
                     var declaration = "declare function " + functionDef.name + "(";
                     for (var i = 0; i < functionDef.parameterDefinitions.length; i++) {
@@ -974,9 +974,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Generates typescript interfaces from all thingworx datashapes
      */
     function generateDataShapeDefs() {
-        Utilities.getDataShapeDefinitons().then(function (dataShapes) {
+        Utilities.getDataShapeDefinitions().then(function (dataShapes) {
             addDataShapesAsInterfaces(dataShapes);
-            addDatashapesCollection(dataShapes);
+            addDataShapesCollection(dataShapes);
         }, function (reason) {
             TW.log.error("Failed to generate typescript definitions from datashapes " + reason);
         });
@@ -985,7 +985,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     /**
      * Generate typescript defs for all the datashapes in the system.
      */
-    function addDatashapesCollection(dataShapes) {
+    function addDataShapesCollection(dataShapes) {
         if (monacoEditorLibs.datashapeCollection) {
             monacoEditorLibs.datashapeCollection[0].dispose();
             monacoEditorLibs.datashapeCollection[1].dispose();
@@ -1040,7 +1040,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     }
 
     /**
-     * Gets the typescript interface definiton from a thingworx defintion
+     * Gets the typescript interface type from a thingworx baseType
      */
     function getTypescriptBaseType(definition) {
         if (definition.baseType != "INFOTABLE") {
@@ -1079,7 +1079,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     /**
      * Generate the collection definitions
-     * Also adds the avalible entity definitons
+     * Also adds the available entity definitions
      */
     function registerEntityCollectionDefs() {
         if (monacoEditorLibs.entityCollection) {

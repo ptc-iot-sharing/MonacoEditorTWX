@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* global TW:false, ThingworxInvoker: false, monaco:false, $:false*/
 if (!TW.monacoEditor) {
     TW.monacoEditor = {};
 }
@@ -52,7 +54,7 @@ TW.monacoEditor.utilities.unflatten = function (data) {
 /**
  * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
-TW.monacoEditor.utilities.getDataShapeDefinitons = function () {
+TW.monacoEditor.utilities.getDataShapeDefinitions = function () {
     var invokerSpec = {
         entityType: "Things",
         entityName: "MonacoEditorHelper",
@@ -74,7 +76,7 @@ TW.monacoEditor.utilities.getDataShapeDefinitons = function () {
 };
 
 /**
- * Searches for enities in the platform using the spotlight search an retruns a new promise with the metadata
+ * Searches for entities in the platform using the spotlight search an returns a new promise with the metadata
  * @param  {string} entityType Thingworx Entity Type. 
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
