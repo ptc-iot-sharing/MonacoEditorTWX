@@ -221,7 +221,7 @@ declare namespace twx {
          */
         CopyValues(rowNumber: number): INFOTABLE<T>;
         /**
-         * Gets a 
+         * Gets a specific row in the infotable
          */
         [key: number]: T;
     } & T;
