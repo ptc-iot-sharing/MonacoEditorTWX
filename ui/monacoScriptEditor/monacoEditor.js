@@ -328,7 +328,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             });
         }
         if (mode === "twxJavascript" || mode === "twxTypescript") {
-            // if this is the first initalization attempt, then set the compiler options and load the custom settings
+            // if this is the first initialization attempt, then set the compiler options and load the custom settings
             if (!TW.monacoEditor.initializedDefaults) {
                 try {
                     // create a new language called twxJavascript
