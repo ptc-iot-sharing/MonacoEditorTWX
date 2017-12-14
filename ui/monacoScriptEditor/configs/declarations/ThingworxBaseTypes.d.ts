@@ -76,7 +76,7 @@ declare namespace twx {
     /**
      * This is a native java value collection
      */
-    export type ValueCollection<T extends {}> = T & {
+    export type ValueCollection<T extends {} = {}> = {
         /**
          * Clones this value collection into a new one
          */
@@ -93,16 +93,16 @@ declare namespace twx {
          * Transforms this value collection into a native Infotable in order to return out of a service
          */
         toInfoTable(): twx.INFOTABLE<T>;
-    }
+    } & T;
 
-    export interface InfotableJson<T = any> {
+    export interface InfotableJson<T = {}> {
         /**
          * An array of all the rows in the infotable
          */
         rows: T[];
         datashape: DataShape;
     }
-    export interface INFOTABLE<T = any> extends InfotableJson<T> {
+    export type INFOTABLE<T extends {} = {}> = InfotableJson<T> & {
         /**
          * An array of all the  rows in the infotable as ValueCollection
          */
@@ -220,5 +220,9 @@ declare namespace twx {
          * @return InfoTable containing the row copied from this InfoTable
          */
         CopyValues(rowNumber: number): INFOTABLE<T>;
-    }
+        /**
+         * Gets a 
+         */
+        [key: number]: T;
+    } & T;
 }
