@@ -78,85 +78,87 @@ task copyUiFiles {
             def XMLParser = new groovy.util.XmlParser(false, true);
             def metadata = XMLParser.parse("${buildDir}/zip/metadata.xml");
 
-            def runtimeFiles = [];
-            def designFiles = [];
-            def commonFiles = [];
+            metadata.Widgets.Widget.each { widget ->
+                def runtimeFiles = [];
+                def designFiles = [];
+                def commonFiles = [];
 
-            def nodesToRemove = [];
+                def nodesToRemove = [];
 
-            def widgetName = metadata.Widgets.Widget[0].@name;
+                def widgetName = widget.@name;
 
-            metadata.Widgets.Widget.UIResources.FileResource.each { fileResource ->
-                // Skip CSS files
-                if (fileResource.@type != "JS") return;
-                // Skip entries with URL resources
-                if (fileResource.@file == null) return;
+                widget.UIResources.FileResource.each { fileResource ->
+                    // Skip CSS files
+                    if (fileResource.@type != "JS") return;
+                    // Skip entries with URL resources
+                    if (fileResource.@file == null) return;
 
-                nodesToRemove << fileResource;
+                    nodesToRemove << fileResource;
 
-                def isDesign = fileResource.@isDevelopment == "true";
-                def isRuntime = fileResource.@isDevelopment == "true";
+                    def isDesign = fileResource.@isDevelopment == "true";
+                    def isRuntime = fileResource.@isDevelopment == "true";
 
-                if (isDesign) {
-                    if (isRuntime) {
-                        commonFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
+                    if (isDesign) {
+                        if (isRuntime) {
+                            commonFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
+                        }
+                        else {
+                            designFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
+                        }
                     }
                     else {
-                        designFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
+                        runtimeFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
                     }
                 }
-                else {
-                    runtimeFiles << "${buildDir}/zip/ui/${widgetName}/${fileResource.@file}";
+
+                // Delete the XML nodes of the files about to be combined
+                nodesToRemove.each { node ->
+                    node.parent().remove(node);
                 }
-            }
 
-            // Delete the XML nodes of the files about to be combined
-            nodesToRemove.each { node ->
-                node.parent().remove(node);
-            }
+                // Combine the files
+                task "combineRuntime${widgetName}"(type: CombineJsTask) {
+                    encoding = "UTF-8"
+                    source = runtimeFiles
+                    dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.runtime.min.js")
+                }
+                task "combineDesign${widgetName}"(type: CombineJsTask) {
+                    encoding = "UTF-8"
+                    source = designFiles
+                    dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.ide.min.js")
+                }
+                task "combineCommon${widgetName}"(type: CombineJsTask) {
+                    encoding = "UTF-8"
+                    source = commonFiles
+                    dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.min.js")
+                }
 
-            // Combine the files
-            task combineRuntime(type: CombineJsTask) {
-                encoding = "UTF-8"
-                source = runtimeFiles
-                dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.runtime.min.js")
-            }
-            task combineDesign(type: CombineJsTask) {
-                encoding = "UTF-8"
-                source = designFiles
-                dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.ide.min.js")
-            }
-            task combineCommon(type: CombineJsTask) {
-                encoding = "UTF-8"
-                source = commonFiles
-                dest = file("${buildDir}/zip/ui/${widgetName}/${widgetName}.min.js")
-            }
+                if (runtimeFiles.size() > 0) {
+                    def runtimeFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.runtime.min.js\" description=\"\" isDevelopment=\"false\" isRuntime=\"true\"/>");
+                    widget.UIResources[0].append(runtimeFileNode);
+                    tasks."combineRuntime${widgetName}".execute();
+                }
+                if (designFiles.size() > 0) {
+                    def designFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.ide.min.js\" description=\"\" isDevelopment=\"true\" isRuntime=\"false\"/>");
+                    widget.UIResources[0].append(designFileNode);
+                    tasks."combineDesign${widgetName}".execute();
+                }
+                if (commonFiles.size() > 0) {
+                    def commonFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.min.js\" description=\"\" isDevelopment=\"true\" isRuntime=\"true\"/>");
+                    widget.UIResources[0].append(commonFileNode);
+                    tasks."combineCommon${widgetName}".execute();
+                }
 
-            if (runtimeFiles.size() > 0) {
-                def runtimeFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.runtime.min.js\" description=\"\" isDevelopment=\"false\" isRuntime=\"true\"/>");
-                metadata.Widgets.Widget.UIResources[0].append(runtimeFileNode);
-                tasks.combineRuntime.execute();
-            }
-            if (designFiles.size() > 0) {
-                def designFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.ide.min.js\" description=\"\" isDevelopment=\"true\" isRuntime=\"false\"/>");
-                metadata.Widgets.Widget.UIResources[0].append(designFileNode);
-                tasks.combineDesign.execute();
-            }
-            if (commonFiles.size() > 0) {
-                def commonFileNode = XMLParser.parseText("<FileResource type=\"JS\" file=\"${widgetName}.min.js\" description=\"\" isDevelopment=\"true\" isRuntime=\"true\"/>");
-                metadata.Widgets.Widget.UIResources[0].append(commonFileNode);
-                tasks.combineCommon.execute();
-            }
-
-            // Delete the old files
-            runtimeFiles.each { name ->
-                file("${name}").delete();
-            }
-            designFiles.each { name ->
-                file("${name}").delete();
-            }
-            commonFiles.each { name ->
-                file("${name}").delete();
+                // Delete the old files
+                runtimeFiles.each { name ->
+                    file("${name}").delete();
+                }
+                designFiles.each { name ->
+                    file("${name}").delete();
+                }
+                commonFiles.each { name ->
+                    file("${name}").delete();
+                }
             }
 
             // Update metadata xml
