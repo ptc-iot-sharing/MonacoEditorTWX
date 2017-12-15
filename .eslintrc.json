@@ -21,5 +21,8 @@
         ],
         "no-unused-vars": "warn",
         "no-console": "warn"
+    },
+    "parserOptions": {
+        "ecmaVersion": 6
     }
 }

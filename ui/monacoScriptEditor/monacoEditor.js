@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* global TW:false, ThingworxInvoker: false, monaco:false, require:false, $:false*/
+/* global TW:false, ThingworxInvoker: false, monaco:false, require:false, $:false, ts:false*/
 if (!TW.monacoEditor) {
     TW.monacoEditor = {};
 }
@@ -420,36 +420,6 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         return [];
                     }
                 });
-                // generate the regex that matches the autocomplete for the entity collection enties
-                var entityMatchRegex = new RegExp("(" + entityCollections.join("|") + ")" + "\\[['\"]([^'\"]+?)['\"]\\]\\.?$");
-
-                // this handles on demand code completion for Thingworx entities medadata
-                monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
-                    triggerCharacters: ["]", "."],
-                    provideCompletionItems: function (model, position) {
-                        // find out if we are completing on a entity collection. Get the line until the current position
-                        var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
-                        // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                        var match = textUntilPosition.match(entityMatchRegex);
-                        if (match) {
-                            // get metadata for this
-                            var entityType = match[1];
-                            var entityId = match[2];
-                            var metadata = TW.IDE.getEntityMetaData(entityType, entityId);
-                            if (metadata) {
-                                // generate the typescript definition
-                                var entityName = entityType + "" + sanitizeEntityName(entityId);
-                                var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
-                                // if our definition is not yet added, then generate it
-                                if (registerEntityDefinitionLibrary(entityTypescriptDef, entityType, entityId)) {
-                                    registerEntityCollectionDefs();
-                                }
-
-                            }
-                        }
-                        return [];
-                    }
-                });
 
                 TW.monacoEditor.initializedDefaults = true;
             }
@@ -484,6 +454,17 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 // get the service model again
                 var serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 refreshMeDefinitions(serviceModel);
+                // clear the cache of the entityCollectionLibs
+                for (const entityName in monacoEditorLibs.entityCollectionLibs) {
+                    if (monacoEditorLibs.entityCollectionLibs.hasOwnProperty(entityName)) {
+                        const definitionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
+                        if (definitionInfo) {
+                            definitionInfo.disposable[0].dispose();
+                            definitionInfo.disposable[1].dispose();
+                        }
+                        delete monacoEditorLibs.entityCollectionLibs[entityName];
+                    }
+                }
             });
         }
         var transpileTypeScript = function () {
@@ -504,15 +485,50 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     });
             }, 10);
         };
+
+        let addMetadataForReferencedEntities = function () {
+            // we need the typescript compiler API, so require it
+            require(["vs/language/typescript/lib/typescriptServices"], function () {
+                if ((mode == "twxTypescript" || mode == "twxJavascript") && thisPlugin.properties) {
+                    let referencedEntities = getEntitiesInCode(thisPlugin.properties.code);
+                    for (let collection in referencedEntities) {
+                        for (let entity in referencedEntities[collection]) {
+                            let entityName = collection + "" + sanitizeEntityName(entity);
+                            if (!monacoEditorLibs.entityCollectionLibs[entityName]) {
+                                // add the metadata only if it does not exist
+                                var metadata = TW.IDE.getEntityMetaData(collection, entity);
+                                if (metadata) {
+                                    // generate the typescript definition
+                                    var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
+                                    // add the typescript definition for this entity
+                                    registerEntityDefinitionLibrary(entityTypescriptDef, collection, entity);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        if (mode == "twxTypescript" || mode == "twxJavascript") {
+            // on startup, get all the metadata entities
+            addMetadataForReferencedEntities();
+        }
         if (mode === "twxTypescript") {
             transpileTypeScript();
         }
+
         // whenever the model changes, we need to also push the changes up to the other plugins
         editor.getModel().onDidChangeContent(function (e) {
             thisPlugin.properties.code = editor.getModel().getValue();
             if (mode === "twxTypescript") {
                 transpileTypeScript();
             }
+            if (mode == "twxTypescript" || mode == "twxJavascript") {
+                // whenever new code is added, find new referenced entities
+                addMetadataForReferencedEntities();
+            }
+
             thisPlugin.properties.change(thisPlugin.properties.code);
         });
 
@@ -722,7 +738,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                     monaco.editor.setTheme(expandedOptions.editor.theme);
                                 }
                                 // changed the thingworx related stuff
-                                if(TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices != expandedOptions.thingworx.showGenericServices) {
+                                if (TW.monacoEditor.defaultEditorSettings.thingworx.showGenericServices != expandedOptions.thingworx.showGenericServices) {
                                     refreshMeDefinitions(serviceModel);
                                 }
                                 TW.monacoEditor.defaultEditorSettings = expandedOptions;
@@ -800,20 +816,29 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     /**
      * Registers a typescript definition in the extra serviceLibs
-     * If it already exists, just returns
+     * If it already exists, updates it
      */
     function registerEntityDefinitionLibrary(typescriptMetadata, entityType, entityId) {
         var entityName = entityType + "" + sanitizeEntityName(entityId);
         var definitionInfo = monacoEditorLibs.entityCollectionLibs[entityName];
-        if (!definitionInfo) {
-            monacoEditorLibs.entityCollectionLibs[entityName] = {
-                disposable: TW.monacoEditor.scriptManager.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
-                entityId: entityId,
-                entityType: entityType
-            };
-            return true;
+        if (definitionInfo) {
+            definitionInfo[0].disposable.dispose();
+            definitionInfo[1].disposable.dispose();
         }
-        return false;
+        // declare the entity under its collection
+        typescriptMetadata += "\ndeclare namespace twx { \n";
+        typescriptMetadata += "     export interface " + entityType + "Interface {\n";
+        typescriptMetadata += "    '" + entityId + "': twx." + entityName + "." + entityName + ";\n";
+        // close the class declaration
+        typescriptMetadata += "}\n";
+        // close the namespace declaration
+        typescriptMetadata += "}\n";
+
+        monacoEditorLibs.entityCollectionLibs[entityName] = {
+            disposable: TW.monacoEditor.scriptManager.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts"),
+            entityId: entityId,
+            entityType: entityType
+        };
     }
 
     /**
@@ -1086,21 +1111,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             monacoEditorLibs.entityCollection[0].dispose();
             monacoEditorLibs.entityCollection[1].dispose();
         }
-        var entityCollectionsDefs = "declare namespace twx { \n";
-        for (var i = 0; i < entityCollections.length; i++) {
-            entityCollectionsDefs += "export interface " + entityCollections[i] + "Interface {\n";
-            for (var typescriptDef in monacoEditorLibs.entityCollectionLibs) {
-                if (!monacoEditorLibs.entityCollectionLibs.hasOwnProperty(typescriptDef)) continue;
-
-                if (monacoEditorLibs.entityCollectionLibs[typescriptDef].entityType == entityCollections[i]) {
-                    entityCollectionsDefs += "    '" + monacoEditorLibs.entityCollectionLibs[typescriptDef].entityId + "': twx." + typescriptDef + "." + typescriptDef + ";\n";
-                }
-            }
-            // close the class declaration
-            entityCollectionsDefs += "}\n";
-        }
-        // close the namespace declaration
-        entityCollectionsDefs += "}\n";
+        var entityCollectionsDefs = "";
         // now add all the entity collections
         for (var j = 0; j < entityCollections.length; j++) {
             entityCollectionsDefs += "var " + entityCollections[j] + ": twx." + entityCollections[j] + "Interface;\n";
@@ -1108,6 +1119,47 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
         monacoEditorLibs.entityCollection = TW.monacoEditor.scriptManager.addExtraLib(
             entityCollectionsDefs, "thingworx/entityCollections.d.ts");
+    }
+
+    /**
+     * Uses the typescript compiler API to generate a list of all the entities referenced in a 
+     * file and their types
+     * @param {*} code Javascript/Typescript code to analyze
+     */
+    function getEntitiesInCode(code) {
+
+        let referencedEntities = {};
+        entityCollections.forEach(function (key) { referencedEntities[key] = {}; });
+        var referencedEntitiesTransformer = function (context) {
+            return function (rootNode) {
+                function visit(node) {
+                    if (node.kind == ts.SyntaxKind.PropertyAccessExpression && referencedEntities[node.name.text]) {
+                        // Matches Things.test 
+                        if (!(node.expression.text in referencedEntities[node.name.text])) {
+                            referencedEntities[node.name.text][node.expression.text] = true;
+                        }
+                    } else if (node.kind == ts.SyntaxKind.ElementAccessExpression && referencedEntities[node.expression.text] && node.argumentExpression) {
+                        if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
+                            // TODO: matches Things[me.property]
+                        } else if (node.argumentExpression.kind == ts.SyntaxKind.StringLiteral) {
+                            if (!(node.argumentExpression.text in referencedEntities[node.expression.text])) {
+                                // matches Things["test"]
+                                referencedEntities[node.expression.text][node.argumentExpression.text] = true;
+                            }
+                        }
+                    }
+                    return ts.visitEachChild(node, visit, context);
+                }
+                return ts.visitNode(rootNode, visit);
+            };
+        };
+
+        var sourceFile = ts.createSourceFile("currentFile", thisPlugin.properties.code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TS);
+        ts.transform(sourceFile, [
+            referencedEntitiesTransformer
+        ]);
+
+        return referencedEntities;
     }
 };
 
