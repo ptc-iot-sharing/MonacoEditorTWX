@@ -1140,10 +1140,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         var referencedEntitiesTransformer = function (context) {
             return function (rootNode) {
                 function visit(node) {
-                    if (node.kind == ts.SyntaxKind.PropertyAccessExpression && referencedEntities[node.name.text]) {
+                    if (node.kind == ts.SyntaxKind.PropertyAccessExpression && referencedEntities[node.expression.text]) {
                         // Matches Things.test 
-                        if (!(node.expression.text in referencedEntities[node.name.text])) {
-                            referencedEntities[node.name.text][node.expression.text] = true;
+                        if (!(node.name.text in referencedEntities[node.expression.text])) {
+                            referencedEntities[node.expression.text][node.name.text] = true;
                         }
                     } else if (node.kind == ts.SyntaxKind.ElementAccessExpression && referencedEntities[node.expression.text] && node.argumentExpression) {
                         if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
