@@ -388,24 +388,31 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     });
                 });
 
-                // generate the regex that matches the autocomplete for the entity collection
-                var entityMatchCompleteRegex = new RegExp("(" + entityCollections.join("|") + ")\\[['\"]([^'\"\\]]*)$");
+                // generate the regex that matches the autocomplete for the entity collection for element access
+                // for example Things["test
+                let entityElementAccessRegex = new RegExp("(" + entityCollections.join("|") + ")\\[['\"]([^'\"\\]]*)$");
+                // generate the regex that matches the autocomplete for the entity collection for property access
+                // for example Things.test
+                let entityPropertyAccessRegex = new RegExp("(" + entityCollections.join("|") + ")\\.([^\\.]*)$");
                 // this handles on demand code completion for Thingworx entity names
                 monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
-                    triggerCharacters: ["[", "[\""],
+                    triggerCharacters: ["[", "[\"", "."],
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
-                        var textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                        let textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
                         // matches if we have at the end of our line an entity definition. example: Things["gg"]
-                        var match = textUntilPosition.match(entityMatchCompleteRegex);
+                        let match = textUntilPosition.match(entityElementAccessRegex);
+                        if(!match) {
+                            match = textUntilPosition.match(entityPropertyAccessRegex);
+                        }
                         if (match) {
                             // get metadata for this
-                            var entityType = match[1];
-                            var entitySearch = match[2];
+                            let entityType = match[1];
+                            let entitySearch = match[2];
                             // returns a  promise to the search
                             return Utilities.spotlightSearch(entityType, entitySearch).then(function (rows) {
-                                var result = [];
-                                for (var i = 0; i < rows.length; i++) {
+                                let result = [];
+                                for (let i = 0; i < rows.length; i++) {
                                     // generate the items list
                                     result.push({
                                         label: rows[i].name,
@@ -428,7 +435,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // also refresh the me definitions
             refreshMeDefinitions(serviceModel);
         }
-        // modify the initial settions
+        // modify the initial settings
         var editorSettings = $.extend({}, TW.monacoEditor.defaultEditorSettings.editor);
         editorSettings.language = mode;
         editorSettings.readOnly = !thisPlugin.properties.editMode;
