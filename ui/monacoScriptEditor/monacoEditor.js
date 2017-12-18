@@ -78,7 +78,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
             thisPlugin.monacoEditor.dispose();
         }
     } catch (err) {
-        TW.log.error("Failed to destory the monaco editor", err);
+        TW.log.error("Monaco: Failed to destroy the monaco editor", err);
     }
     this.monacoEditor = undefined;
     thisPlugin.jqElement.off(".twCodeEditor");
@@ -217,7 +217,7 @@ TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callbac
         },
         function (invoker, xhr) {
             TW.IDE.twPopoverNotification("error", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-evaluation-error", { syntaxEvalError1: xhr.status, syntaxEvalError2: xhr.responseText }));
-            TW.log.error("CheckScript failed unexpectedly status:" + xhr.status + ", message: " + xhr.responseText);
+            TW.log.error("Monaco: CheckScript failed unexpectedly status:" + xhr.status + ", message: " + xhr.responseText);
             if (callback !== undefined) {
                 callback(false);
             }
@@ -313,7 +313,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     monaco.editor.setTheme(TW.monacoEditor.defaultEditorSettings.editor.theme);
                 }
             } catch (e) {
-                TW.log.warn("Failed to load settings from preferences. Using defaults");
+                TW.log.warn("Monaco: Failed to load settings from preferences. Using defaults", e);
             }
             $.get(extRoot + "/configs/confSchema.json", function (data) {
                 // text formatting 
@@ -403,7 +403,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         // matches if we have at the end of our line an entity definition. example: Things["gg"]
                         let match = textUntilPosition.match(entityElementAccessRegex);
                         // if that did not match, then test if it's property access
-                        if(!match) {
+                        if (!match) {
                             match = textUntilPosition.match(entityPropertyAccessRegex);
                         }
                         if (match) {
@@ -416,7 +416,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                 for (let i = 0; i < rows.length; i++) {
                                     // look in the entity collection libs and skip the elements already in there
                                     let entityName = entityType + "" + sanitizeEntityName(rows[i].name);
-                                    if(monacoEditorLibs.entityCollectionLibs[entityName]) {
+                                    if (monacoEditorLibs.entityCollectionLibs[entityName]) {
                                         continue;
                                     }
                                     // add to the result list
@@ -515,6 +515,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                     var entityTypescriptDef = generateTypeScriptDefinitions(metadata, entityName, true, true);
                                     // add the typescript definition for this entity
                                     registerEntityDefinitionLibrary(entityTypescriptDef, collection, entity);
+                                } else {
+                                    TW.log.warn("Monaco: Failed getting metadata for entity " + collection + "[" + entity + "]. Maybe it does not exist?");
                                 }
                             }
                         }
@@ -1016,7 +1018,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             addDataShapesAsInterfaces(dataShapes);
             addDataShapesCollection(dataShapes);
         }, function (reason) {
-            TW.log.error("Failed to generate typescript definitions from datashapes " + reason);
+            TW.log.error("Monaco: Failed to generate typescript definitions from dataShapes " + reason);
         });
     }
 
