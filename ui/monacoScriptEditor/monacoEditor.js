@@ -3,6 +3,7 @@
 if (!TW.monacoEditor) {
     TW.monacoEditor = {};
 }
+TW.monacoEditor.defaultVariableNameRegex = /^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g;
 TW.monacoEditor.editorLibs = {
     serviceLibs: [],
     // libs in here follow the following format:
@@ -400,11 +401,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     provideCompletionItems: function (model, position) {
                         // find out if we are completing on a entity collection. Get the line until the current position
                         let textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
+                        let isPropertyCompletion = false;
                         // matches if we have at the end of our line an entity definition. example: Things["gg"]
                         let match = textUntilPosition.match(entityElementAccessRegex);
-                        // if that did not match, then test if it's property access
+                        // if that did not match, then test if it's property access. example: Things.gg
                         if (!match) {
                             match = textUntilPosition.match(entityPropertyAccessRegex);
+                            isPropertyCompletion = true;
                         }
                         if (match) {
                             // get metadata for this
@@ -417,6 +420,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                     // look in the entity collection libs and skip the elements already in there
                                     let entityName = entityType + "" + sanitizeEntityName(rows[i].name);
                                     if (monacoEditorLibs.entityCollectionLibs[entityName]) {
+                                        continue;
+                                    }
+                                    // also filter out the entities with dots or are not valid if auto-completing
+                                    // using property completion
+                                    if(isPropertyCompletion && rows[i].name.match(TW.monacoEditor.defaultVariableNameRegex)) {
                                         continue;
                                     }
                                     // add to the result list
@@ -1114,7 +1122,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * Sanitizes an entity name to be a valid javascript declaration
      */
     function sanitizeEntityName(entityName) {
-        return entityName.replace(/^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, "");
+        return entityName.replace(TW.monacoEditor.defaultVariableNameRegex, "");
     }
 
     /**
