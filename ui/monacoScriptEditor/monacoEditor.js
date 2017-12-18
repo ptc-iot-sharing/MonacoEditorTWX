@@ -402,6 +402,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         let textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
                         // matches if we have at the end of our line an entity definition. example: Things["gg"]
                         let match = textUntilPosition.match(entityElementAccessRegex);
+                        // if that did not match, then test if it's property access
                         if(!match) {
                             match = textUntilPosition.match(entityPropertyAccessRegex);
                         }
@@ -413,7 +414,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                             return Utilities.spotlightSearch(entityType, entitySearch).then(function (rows) {
                                 let result = [];
                                 for (let i = 0; i < rows.length; i++) {
-                                    // generate the items list
+                                    // look in the entity collection libs and skip the elements already in there
+                                    let entityName = entityType + "" + sanitizeEntityName(rows[i].name);
+                                    if(monacoEditorLibs.entityCollectionLibs[entityName]) {
+                                        continue;
+                                    }
+                                    // add to the result list
                                     result.push({
                                         label: rows[i].name,
                                         kind: monaco.languages.CompletionItemKind.Field,
