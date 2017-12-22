@@ -424,7 +424,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                     }
                                     // also filter out the entities with dots or are not valid if auto-completing
                                     // using property completion
-                                    if(isPropertyCompletion && rows[i].name.match(TW.monacoEditor.defaultVariableNameRegex)) {
+                                    if (isPropertyCompletion && rows[i].name.match(TW.monacoEditor.defaultVariableNameRegex)) {
                                         continue;
                                     }
                                     // add to the result list
@@ -1162,8 +1162,16 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                             referencedEntities[node.expression.text][node.name.text] = true;
                         }
                     } else if (node.kind == ts.SyntaxKind.ElementAccessExpression && referencedEntities[node.expression.text] && node.argumentExpression) {
+                        if (node.argumentExpression.kind == ts.SyntaxKind.Identifier) {
+                            if (node.expression.text == "Users" && node.argumentExpression.text == "principal") {
+                                // a special case for Users[principal] => replace principal with "Administrator", 
+                                // since all users have the same properties and functions
+                                referencedEntities["Users"]["System"] = true;
+                            }
+                        }
                         if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
                             // TODO: matches Things[me.property]
+
                         } else if (node.argumentExpression.kind == ts.SyntaxKind.StringLiteral) {
                             if (!(node.argumentExpression.text in referencedEntities[node.expression.text])) {
                                 // matches Things["test"]

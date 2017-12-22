@@ -16,8 +16,11 @@ declare class logger {
      */
     static info(message: string)
 }
-/** The name of the currently logged in user */
-declare var principal: string;
+/** 
+ * The name of the currently logged in user. 
+ * Make this statically equal to System so completions on Users[principal] work.
+ **/
+declare const principal = "System";
 declare namespace twx {
     export type STRING = string;
     export interface LOCATION {
