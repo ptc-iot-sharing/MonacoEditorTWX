@@ -11,18 +11,18 @@ As it's based on the Visual Studio Code, most basic code editor features are inh
 
 The editor supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down` or `Ctrl+Alt+Up` that insert cursors below or above.
 
-![Multi-cursor](https://code.visualstudio.com/images/editingevolved_multicursor.gif)
+![Multi-cursor](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor.gif)
 
 `Ctrl+D` selects the word at the cursor, or the next occurrence of the current selection.
 
-![Multi-cursor-next-word](https://code.visualstudio.com/images/editingevolved_multicursor-word.gif)
+![Multi-cursor-next-word](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor-word.gif)
 
 > **Tip:** You can also add more cursors with `kb(editor.action.selectHighlights)`, which will add a selection at each occurrence of the current selected text.
 #### Column (box) selection
 
 Hold `Shift` and `Alt` while dragging to do column selection:
 
-![Column text selection](https://code.visualstudio.com/images/editingevolved_column-select.gif)
+![Column text selection](https://code.visualstudio.com/assets/docs/editor/codebasics/column-select.gif)
 #### Folding
 
 You can fold regions of source code using the folding icons on the gutter between line numbers and line start. Move the mouse over the gutter to fold and unfold regions. The folding regions are evaluated based on the indentation of lines. A folding region starts when a line has a smaller indent than one or more following lines, and ends when there is a line with the same or smaller indent.
@@ -59,4 +59,4 @@ In the case of services that return infotables, or infotable properties with kno
 * Support for SQL services
 
 ## Download the latest prebuild binary from here:
-ftp://rostorage.ptcnet.ptc.com/SHARE/Petrisor/monaco/MonacoEditor_widget.zip (guest1:guest for auth)
+http://roicentersvn/placatus/MonacoScriptEditorWidget/releases (guest1:guest for auth)
