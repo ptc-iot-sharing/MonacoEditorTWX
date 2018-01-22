@@ -32,9 +32,9 @@ IntelliSense is a general term for a variety of code editing features including:
 
 You can trigger IntelliSense in any editor by typing `Ctrl+Space` or by typing a trigger character (such as the dot character (.) in JavaScript).
 
-#### Function autocompletion
+#### Service autocompletion
 
-All the function definitions are availbe for autocomplete. For example:
+All the service and property definitions of all the refereced entities are available for autocomplete. For example:
 ![Function Completion](http://i.imgur.com/SCS4W1s.gif)
 
 #### Entity autocompletion
@@ -44,13 +44,18 @@ Metadata about the current entity is used in autocompletion.
 We also autocomplete entity names for all entity collections, as well as service parameters. The completion also includes the descriptions available.
 ![Service Completion](http://i.imgur.com/YhoaOoJ.gif)
 
-In the case of services that return infotables, or infotable properties with known datashapes, we offer advanced intellisense for the datashape fields
+In the case of services that return infotables, or infotable properties with known datashapes, we offer advanced intellisense for the datashape fields, including completion of methods on the value collection.
 ![Infotable Completion](http://i.imgur.com/3pNrEC1.gif)
+
 
 ### Keyboard Shortcuts
 * Quick actions: Save (`CTRL+S`), Cancel (`CTRL+Q`), Test (`CTRL+Y`), Save and Close (`CTRL+ENTER`)
 * Diff editor: view changes since you started editing (`CTRL+K`)
 ![DiffEditor](http://i.imgur.com/1DywhM7.png)
+
+### Typescript support
+
+Write thingworx services using [typescript](https://www.typescriptlang.org/), a typed superset of Javascript that compiles to plain Javascript. Whether you want to use all the features of typescript, or just the latest ECMAScript features, this allows you to write more concise and better code that is automatically transpiled to Javascript.
 
 ### Other Features
 * Thingworx snippets (iterate infotable, create infotable, iterate infotable fields)
