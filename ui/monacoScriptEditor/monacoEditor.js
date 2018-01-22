@@ -548,8 +548,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 transpileTypeScript();
             }
             if (mode == "twxTypescript" || mode == "twxJavascript") {
-                // whenever new code is added, find new referenced entities
-                addMetadataForReferencedEntities();
+                // whenever the new char inserted is a "." or a "]", find the related metadata
+                // TODO: find a better way of doing this, that is more precise
+                if(e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
+                    addMetadataForReferencedEntities();
+                }
             }
 
             thisPlugin.properties.change(thisPlugin.properties.code);
