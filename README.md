@@ -11,18 +11,18 @@ As it's based on the Visual Studio Code, most basic code editor features are inh
 
 The editor supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down` or `Ctrl+Alt+Up` that insert cursors below or above.
 
-![Multi-cursor](https://code.visualstudio.com/images/editingevolved_multicursor.gif)
+![Multi-cursor](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor.gif)
 
 `Ctrl+D` selects the word at the cursor, or the next occurrence of the current selection.
 
-![Multi-cursor-next-word](https://code.visualstudio.com/images/editingevolved_multicursor-word.gif)
+![Multi-cursor-next-word](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor-word.gif)
 
 > **Tip:** You can also add more cursors with `kb(editor.action.selectHighlights)`, which will add a selection at each occurrence of the current selected text.
 #### Column (box) selection
 
 Hold `Shift` and `Alt` while dragging to do column selection:
 
-![Column text selection](https://code.visualstudio.com/images/editingevolved_column-select.gif)
+![Column text selection](https://code.visualstudio.com/assets/docs/editor/codebasics/column-select.gif)
 #### Folding
 
 You can fold regions of source code using the folding icons on the gutter between line numbers and line start. Move the mouse over the gutter to fold and unfold regions. The folding regions are evaluated based on the indentation of lines. A folding region starts when a line has a smaller indent than one or more following lines, and ends when there is a line with the same or smaller indent.
@@ -32,9 +32,9 @@ IntelliSense is a general term for a variety of code editing features including:
 
 You can trigger IntelliSense in any editor by typing `Ctrl+Space` or by typing a trigger character (such as the dot character (.) in JavaScript).
 
-#### Function autocompletion
+#### Service autocompletion
 
-All the function definitions are availbe for autocomplete. For example:
+All the service and property definitions of all the refereced entities are available for autocomplete. For example:
 ![Function Completion](http://i.imgur.com/SCS4W1s.gif)
 
 #### Entity autocompletion
@@ -44,13 +44,18 @@ Metadata about the current entity is used in autocompletion.
 We also autocomplete entity names for all entity collections, as well as service parameters. The completion also includes the descriptions available.
 ![Service Completion](http://i.imgur.com/YhoaOoJ.gif)
 
-In the case of services that return infotables, or infotable properties with known datashapes, we offer advanced intellisense for the datashape fields
+In the case of services that return infotables, or infotable properties with known datashapes, we offer advanced intellisense for the datashape fields, including completion of methods on the value collection.
 ![Infotable Completion](http://i.imgur.com/3pNrEC1.gif)
+
 
 ### Keyboard Shortcuts
 * Quick actions: Save (`CTRL+S`), Cancel (`CTRL+Q`), Test (`CTRL+Y`), Save and Close (`CTRL+ENTER`)
 * Diff editor: view changes since you started editing (`CTRL+K`)
 ![DiffEditor](http://i.imgur.com/1DywhM7.png)
+
+### Typescript support
+
+Write thingworx services using [typescript](https://www.typescriptlang.org/), a typed superset of Javascript that compiles to plain Javascript. Whether you want to use all the features of typescript, or just the latest ECMAScript features, this allows you to write more concise and better code that is automatically transpiled to Javascript.
 
 ### Other Features
 * Thingworx snippets (iterate infotable, create infotable, iterate infotable fields)
@@ -59,4 +64,4 @@ In the case of services that return infotables, or infotable properties with kno
 * Support for SQL services
 
 ## Download the latest prebuild binary from here:
-ftp://rostorage.ptcnet.ptc.com/SHARE/Petrisor/monaco/MonacoEditor_widget.zip (guest1:guest for auth)
+http://roicentersvn/placatus/MonacoScriptEditorWidget/releases (guest1:guest for auth)
