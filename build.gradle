@@ -96,7 +96,7 @@ task copyUiFiles {
                     nodesToRemove << fileResource;
 
                     def isDesign = fileResource.@isDevelopment == "true";
-                    def isRuntime = fileResource.@isDevelopment == "true";
+                    def isRuntime = fileResource.@isRuntime == "true";
 
                     if (isDesign) {
                         if (isRuntime) {
