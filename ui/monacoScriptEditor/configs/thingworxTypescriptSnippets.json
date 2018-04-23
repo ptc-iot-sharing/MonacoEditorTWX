@@ -3,7 +3,7 @@
         "prefix": "infofor",
         "body": [
             "for (let ${1:i} = 0; ${1:i} < ${2:infotable}.rows.length; ${1:i}++) {",
-            "\tlet ${3:row} = ${2:infotable}.rows[${1:i}];",
+            "\tconst ${3:row} = ${2:infotable}.rows[${1:i}];",
             "\t$0",
             "}"
         ],
@@ -12,7 +12,7 @@
     "Infotable for of loop": {
         "prefix": "infoforof",
         "body": [
-            "for (let ${1:row} of ${2:infotable}.rows) {",
+            "for (const ${1:row} of ${2:infotable}.rows) {",
             "\t$0",
             "}"
         ],
@@ -33,28 +33,28 @@
     "Logger debug": {
         "prefix": "ld",
         "body": [
-            "logger.debug('${1:prefix}: '+ $0);"
+            "logger.debug(`${1:prefix}: $0`);"
         ],
         "description": "Logger debug"
     },
     "Logger warn": {
         "prefix": "lw",
         "body": [
-            "logger.warn('${1:prefix}: '+ $0);"
+            "logger.warn(`${1:prefix}: $0`);"
         ],
         "description": "Logger warn"
     },
     "Logger info": {
         "prefix": "li",
         "body": [
-            "logger.info('${1:prefix}: '+ $0);"
+            "logger.info(`${1:prefix}: $0`);"
         ],
         "description": "Logger info"
     },
     "Logger error": {
         "prefix": "le",
         "body": [
-            "logger.error('${1:prefix}: '+ $0);"
+            "logger.error(`${1:prefix}: $0`);"
         ],
         "description": "Logger error"
     },

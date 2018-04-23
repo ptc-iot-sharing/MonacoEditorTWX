@@ -1,33 +1,93 @@
 {
-	"jsdoc snippet": {
-		"prefix": "jsdoc comment",
+	"Constructor": {
+		"prefix": "ctor",
 		"body": [
 			"/**",
-			" * $0",
-			" */"
+			" *",
+			" */",
+			"constructor() {",
+			"\tsuper();",
+			"\t$0",
+			"}"
 		],
-		"description": "jsdoc snippet"
+		"description": "Constructor"
 	},
-	"Return false": {
-		"prefix": "ret0",
+	"Class Definition": {
+		"prefix": "class",
 		"body": [
-			"return false;$0"
+			"class ${1:name} {",
+			"\tconstructor(${2:parameters}) {",
+			"\t\t$0",
+			"\t}",
+			"}"
 		],
-		"description": "Return false"
+		"description": "Class Definition"
 	},
-	"Return true": {
-		"prefix": "ret1",
+	"Public Method Definition": {
+		"prefix": "public method",
 		"body": [
-			"return true;$0"
+			"/**",
+			" * ${1:name}",
+			" */",
+			"public ${1:name}() {",
+			"\t$0",
+			"}"
 		],
-		"description": "Return true"
+		"description": "Public Method Definition"
 	},
-	"Return statement": {
-		"prefix": "ret",
+	"Private Method Definition": {
+		"prefix": "private method",
 		"body": [
-			"return $1;$0"
+			"private ${1:name}() {",
+			"\t$0",
+			"}"
 		],
-		"description": "Return statement"
+		"description": "Private Method Definition"
+	},
+	"Property getter": {
+		"prefix": "get",
+		"body": [
+			"",
+			"public get ${1:value}() : ${2:string} {",
+			"\t${3:return $0}",
+			"}",
+			""
+		],
+		"description": "Property getter"
+	},
+	"Define a full property": {
+		"prefix": "prop",
+		"body": [
+			"",
+			"private _${1:value} : ${2:string};",
+			"public get ${1:value}() : ${2:string} {",
+			"\treturn this._${1:value};",
+			"}",
+			"public set ${1:value}(v : ${2:string}) {",
+			"\tthis._${1:value} = v;",
+			"}",
+			""
+		],
+		"description": "Define a full property"
+	},
+	"Triple-slash reference": {
+		"prefix": "ref",
+		"body": [
+			"/// <reference path=\"$1\" />",
+			"$0"
+		],
+		"description": "Triple-slash reference"
+	},
+	"Property setter": {
+		"prefix": "set",
+		"body": [
+			"",
+			"public set ${1:value}(v : ${2:string}) {",
+			"\tthis.$3 = v;",
+			"}",
+			""
+		],
+		"description": "Property setter"
 	},
 	"Throw Exception": {
 		"prefix": "throw",
@@ -41,7 +101,7 @@
 		"prefix": "for",
 		"body": [
 			"for (let ${1:index} = 0; ${1:index} < ${2:array}.length; ${1:index}++) {",
-			"\tlet ${3:element} = ${2:array}[${1:index}];",
+			"\tconst ${3:element} = ${2:array}[${1:index}];",
 			"\t$0",
 			"}"
 		],
@@ -59,14 +119,23 @@
 	"For-In Loop": {
 		"prefix": "forin",
 		"body": [
-			"for (let ${1:key} in ${2:object}) {",
+			"for (const ${1:key} in ${2:object}) {",
 			"\tif (${2:object}.hasOwnProperty(${1:key})) {",
-			"\t\tlet ${3:element} = ${2:object}[${1:key}];",
+			"\t\tconst ${3:element} = ${2:object}[${1:key}];",
 			"\t\t$0",
 			"\t}",
 			"}"
 		],
 		"description": "For-In Loop"
+	},
+	"For-Of Loop": {
+		"prefix": "forof",
+		"body": [
+			"for (const ${1:iterator} of ${2:object}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "For-Of Loop"
 	},
 	"Function Statement": {
 		"prefix": "function",
@@ -100,7 +169,7 @@
 	"New Statement": {
 		"prefix": "new",
 		"body": [
-			"var ${1:name} = new ${2:type}(${3:arguments});$0"
+			"const ${1:name} = new ${2:type}(${3:arguments});$0"
 		],
 		"description": "New Statement"
 	},
@@ -146,5 +215,19 @@
 			"}"
 		],
 		"description": "Try-Catch Statement"
+	},
+	"Region Start": {
+		"prefix": "region",
+		"body": [
+			"//#region $0"
+		],
+		"description": "Folding Region Start"
+	},
+	"Region End": {
+		"prefix": "endregion",
+		"body": [
+			"//#endregion"
+		],
+		"description": "Folding Region End"
 	}
 }
