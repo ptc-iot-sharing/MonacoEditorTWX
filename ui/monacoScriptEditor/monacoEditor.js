@@ -99,19 +99,18 @@ TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
 /**
  * Overridden method from the twServiceEditor. We do this because in our version, the footer has absolute positioning.
  * Because of this, it does not need to be taken into consideration when calculating sizes for the editor
- * Also, we must increase the size of the targetBodyHt from 360 to 535
+ * Also, we must increase the size of the targetBodyHt from 360 to 580
  */
 TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
     var thisPlugin = this;
     var serviceDefinitionBody;
     var detailsEl;
-    var targetBodyHt = 535;
+    var targetBodyHt = 580;
 
     if (thisPlugin.properties.isFullScreen) {
         detailsEl = thisPlugin.detachedExpandCollapseContent;
         var fullscreenContainer = thisPlugin.detachedExpandCollapseContent.closest(".full-tab-div");
         var fullscreenTitle = fullscreenContainer.find(".popover-title");
-        var fullscreenFooter = fullscreenContainer.find(".inline-footer");
         if (fullscreenContainer.length > 0) {
             targetBodyHt = (fullscreenContainer.innerHeight() - fullscreenTitle.outerHeight() - 10);
         }
@@ -123,6 +122,7 @@ TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
     }
     serviceDefinitionBody = detailsEl.find(".inline-body");
     serviceDefinitionBody.height(targetBodyHt);
+    serviceDefinitionBody.css({ overflow: "visible" });
 
     var serviceTabContent = detailsEl.find(".script-editor-tab-content");
     var inlineServiceTabHeight = detailsEl.find(".io-code-tabs");
@@ -250,7 +250,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     });
     // make sure the textArea will strech, but have a minimum height
     codeTextareaElem.height("100%");
-    codeTextareaElem.css("min-height", (thisPlugin.height || 535) + "px");
+    codeTextareaElem.css("min-height", (thisPlugin.height || 540) + "px");
     if (codeTextareaElem.find(".monaco-editor").length > 0 && thisPlugin.monacoEditor !== undefined) {
         // already done, don't init the editor again
         return;
@@ -550,7 +550,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             if (mode == "twxTypescript" || mode == "twxJavascript") {
                 // whenever the new char inserted is a "." or a "]", find the related metadata
                 // TODO: find a better way of doing this, that is more precise
-                if(e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
+                if (e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
                     addMetadataForReferencedEntities();
                 }
             }
