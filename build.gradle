@@ -30,9 +30,9 @@ project.ext {
     entitiesDir = "${baseDir}/Entities"
     zipDir = "${baseDir}/zip"
     packageVendor = "ThingWorx Customer Service"
-    thingworxServerRoot = "http://localhost:8016"
+    thingworxServerRoot = "http://localhost:8018"
     thingworxUser = "Administrator"
-    thingworxPass = "admin"
+    thingworxPass = "trUf6yuz2?_Gub"
     skipJsFiles = []
 }
 
