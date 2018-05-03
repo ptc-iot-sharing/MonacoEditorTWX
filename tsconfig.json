@@ -4,7 +4,9 @@
         "sourceMap": true,
         "noImplicitAny": false,
         "module": "esnext",
+        "allowSyntheticDefaultImports": true,
         "target": "es5",
+        "esModuleInterop": true,
         "experimentalDecorators": true,
         "lib": [
             "es2015",

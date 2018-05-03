@@ -10,7 +10,6 @@ var CleanWebpackPlugin = require('clean-webpack-plugin');
 var ZipPlugin = require('zip-webpack-plugin');
 // enable reading master data from the package.json file
 let packageJson = require('./package.json');
-var DeclarationBundlerPlugin = require('dtsbundler-webpack-plugin');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 // look if we are in initialization mode based on the --init argument
 const isInitialization = process.argv.indexOf('--env.init') !== -1;
@@ -30,7 +29,7 @@ module.exports = function (env, argv) {
             // the entry point when viewing the index.html page
             htmlDemo: './src/index.ts',
             // the entry point for the ide widget
-            widgetIde: `./src/${packageJson.name}.ts`
+          //  widgetIde: `./src/${packageJson.name}.ts`
         },
         output: {
             path: path.join(__dirname, 'build', 'ui', packageJson.name),
@@ -38,20 +37,17 @@ module.exports = function (env, argv) {
             chunkFilename: '[id].chunk.js',
             jsonpFunction: `webpackJsonp${packageJson.name}`,
             // this is the path when viewing the widget in thingworx
-            publicPath: `../Common/extensions/${packageJson.name}_ExtensionPackage/ui/${packageJson.name}/`
+            publicPath: `/Thingworx/Common/extensions/${packageJson.name}_ExtensionPackage/ui/${packageJson.name}/`
         },
         plugins: [
-            new MonacoWebpackPlugin(),
+            new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs(\/|\\)language(\/|\\)typescript(\/|\\)lib/),
+            new MonacoWebpackPlugin(webpack),
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
             // in case we just want to copy some resources directly to the widget package, then do it here
             new CopyWebpackPlugin([{ from: 'src/static', to: 'static' }]),
             // generates the metadata xml file and adds it to the archive
             new WidgetMetadataGenerator(),
-            new DeclarationBundlerPlugin({
-                moduleName:`${packageJson.name}`,
-                out: path.join('typings', `${packageJson.name}.d.ts`),
-            }),
             // create the extension zip
             new ZipPlugin({
                 path: path.join(__dirname, 'zip'), // a top level directory called zip
