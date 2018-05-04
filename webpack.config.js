@@ -29,7 +29,7 @@ module.exports = function (env, argv) {
             // the entry point when viewing the index.html page
             htmlDemo: './src/index.ts',
             // the entry point for the ide widget
-          //  widgetIde: `./src/${packageJson.name}.ts`
+            widgetIde: `./src/${packageJson.name}.ts`
         },
         output: {
             path: path.join(__dirname, 'build', 'ui', packageJson.name),
@@ -45,7 +45,7 @@ module.exports = function (env, argv) {
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
             // in case we just want to copy some resources directly to the widget package, then do it here
-            new CopyWebpackPlugin([{ from: 'src/static', to: 'static' }]),
+            new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
             // generates the metadata xml file and adds it to the archive
             new WidgetMetadataGenerator(),
             // create the extension zip
@@ -89,11 +89,11 @@ module.exports = function (env, argv) {
                 // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
                 {
                     test: /\.tsx?$/,
+                    exclude: /(\.d\.ts$|node_modules)/,
                     use: 'ts-loader',
-                    exclude: /node_modules/
                 },
                 {
-                    test: /\.(png|jp(e*)g|svg|xml)$/,
+                    test: /\.(png|jp(e*)g|svg|xml|d\.ts)$/,
                     loader: 'url-loader?limit=30000&name=images/[name].[ext]'
                 },
                 {
@@ -176,16 +176,6 @@ module.exports = function (env, argv) {
                             description: '',
                             isDevelopment: 'true',
                             isRuntime: 'false'
-                        }
-                    });
-                    // add the runtime file
-                    result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource.push({
-                        $: {
-                            type: 'JS',
-                            file: `${packageJson.name}.runtime.bundle.js`,
-                            description: '',
-                            isDevelopment: 'false',
-                            isRuntime: 'true'
                         }
                     });
                     // tranform the metadata back into xml

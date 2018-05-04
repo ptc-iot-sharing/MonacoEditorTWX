@@ -1,13 +1,17 @@
-// @ts-nocheck
-/* global TW:false, ThingworxInvoker: false, monaco:false, $:false*/
+import * as monaco from '../node_modules/monaco-editor/esm/vs/editor/editor.api';
+
+declare const ThingworxInvoker: any;
+
 if (!TW.monacoEditor) {
     TW.monacoEditor = {};
 }
 if (!TW.monacoEditor.utilities) {
     TW.monacoEditor.utilities = {};
 }
-// converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
-TW.monacoEditor.utilities.flatten = function (data) {
+/**
+ *  Converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
+ */
+export function flattenJson(data) {
     var result = {};
     function recurse(cur, prop) {
         if (Object(cur) !== cur) {
@@ -31,8 +35,10 @@ TW.monacoEditor.utilities.flatten = function (data) {
     return result;
 };
 
-// converts a flat json into a nested json. This is used for utilities reasons in order to present the configuration dialogue
-TW.monacoEditor.utilities.unflatten = function (data) {
+/**
+ *  Converts a flat json into a nested json. This is used for utilities reasons in order to present the configuration dialogue
+ */
+export function unflattenJson(data) {
     "use strict";
     if (Object(data) !== data || Array.isArray(data))
         return data;
@@ -54,7 +60,7 @@ TW.monacoEditor.utilities.unflatten = function (data) {
 /**
  * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
-TW.monacoEditor.utilities.getDataShapeDefinitions = function () {
+export function getDataShapeDefinitions() {
     var invokerSpec = {
         entityType: "Things",
         entityName: "MonacoEditorHelper",
@@ -63,7 +69,7 @@ TW.monacoEditor.utilities.getDataShapeDefinitions = function () {
         apiMethod: "post"
     };
     var invoker = new ThingworxInvoker(invokerSpec);
-    return new monaco.Promise(function (c, e, p) {
+    return new Promise(function (c, e) {
         invoker.invokeService(
             function (invoker) {
                 c(invoker.result.rows);
@@ -80,7 +86,7 @@ TW.monacoEditor.utilities.getDataShapeDefinitions = function () {
  * @param  {string} entityType Thingworx Entity Type. 
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
-TW.monacoEditor.utilities.spotlightSearch = function (entityType, searchTerm) {
+export function spotlightSearch(entityType, searchTerm): Promise<any[]> {
     var invokerSpec = {
         entityType: "Resources",
         entityName: "SearchFunctions",
@@ -101,7 +107,7 @@ TW.monacoEditor.utilities.spotlightSearch = function (entityType, searchTerm) {
         }
     };
     var invoker = new ThingworxInvoker(invokerSpec);
-    return new monaco.Promise(function (c, e, p) {
+    return new Promise(function (c, e) {
         invoker.invokeService(
             function (invoker) {
                 c(invoker.result.rows);
@@ -116,25 +122,21 @@ TW.monacoEditor.utilities.spotlightSearch = function (entityType, searchTerm) {
 /**
  * Loads a json monaco snippet file and returns a promise
  *
- * @param  {string} filePath File to load
+ * @param  {string} snippets to load
  */
-TW.monacoEditor.utilities.loadSnippets = function (filePath) {
-    return new monaco.Promise(function (c, e, p) {
-        $.get(filePath, {}, c, "json").fail(e);
-    }).then(function (data) {
-        var result = [];
-        for (var key in data) {
-            if (data.hasOwnProperty(key)) {
-                result.push({
-                    kind: monaco.languages.CompletionItemKind.Snippet,
-                    label: data[key].prefix,
-                    documentation: data[key].description,
-                    insertText: {
-                        value: data[key].body.join("\n")
-                    }
-                });
-            }
+export function loadSnippets(snippets) {
+    var result = [];
+    for (var key in snippets) {
+        if (snippets.hasOwnProperty(key)) {
+            result.push({
+                kind: monaco.languages.CompletionItemKind.Snippet,
+                label: snippets[key].prefix,
+                documentation: snippets[key].description,
+                insertText: {
+                    value: snippets[key].body.join("\n")
+                }
+            });
         }
-        return result;
-    });
+    }
+    return result;
 };

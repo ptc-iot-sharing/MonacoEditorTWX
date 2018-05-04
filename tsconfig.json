@@ -5,12 +5,13 @@
         "noImplicitAny": false,
         "module": "esnext",
         "allowSyntheticDefaultImports": true,
-        "target": "es5",
+        "target": "esnext",
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "lib": [
             "es2015",
-            "dom"
+            "dom",
+            "es2015.promise"
         ],
         "typeRoots": [
             "./typings/",
