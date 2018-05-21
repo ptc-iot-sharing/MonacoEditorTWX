@@ -1175,47 +1175,27 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * @param {*} code Javascript/Typescript code to analyze
      */
     async function getEntitiesInCode(code) {
-        var ts = await import("../node_modules/monaco-editor/esm/vs/language/typescript/lib/typescriptServices");
-
-        let referencedEntities = {};
-        entityCollections.forEach(function (key) { referencedEntities[key] = {}; });
-        var referencedEntitiesTransformer = function (context) {
-            return function (rootNode) {
-                function visit(node) {
-                    if (node.kind == ts.SyntaxKind.PropertyAccessExpression && referencedEntities[node.expression.text]) {
-                        // Matches Things.test 
-                        if (!(node.name.text in referencedEntities[node.expression.text])) {
-                            referencedEntities[node.expression.text][node.name.text] = true;
-                        }
-                    } else if (node.kind == ts.SyntaxKind.ElementAccessExpression && referencedEntities[node.expression.text] && node.argumentExpression) {
-                        if (node.argumentExpression.kind == ts.SyntaxKind.Identifier) {
-                            if (node.expression.text == "Users" && node.argumentExpression.text == "principal") {
-                                // a special case for Users[principal] => replace principal with "Administrator", 
-                                // since all users have the same properties and functions
-                                referencedEntities["Users"]["System"] = true;
-                            }
-                        }
-                        if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
-                            // TODO: matches Things[me.property]
-
-                        } else if (node.argumentExpression.kind == ts.SyntaxKind.StringLiteral) {
-                            if (!(node.argumentExpression.text in referencedEntities[node.expression.text])) {
-                                // matches Things["test"]
-                                referencedEntities[node.expression.text][node.argumentExpression.text] = true;
-                            }
-                        }
+        setTimeout(function () {
+            monaco.languages.typescript.getLanguageWorker("twxTypescript")
+                .then(function (worker) {
+                    // if there is an uri available
+                    if (editor.getModel()) {
+                        worker(editor.getModel().uri)
+                            .then(function (client) {
+                                if (editor.getModel())
+                                    client.getEmitOutput(editor.getModel().uri.toString())
+                                        .then(function (result) {
+                                            thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
+                                        });
+                            });
                     }
-                    return ts.visitEachChild(node, visit, context);
-                }
-                return ts.visitNode(rootNode, visit);
-            };
-        };
+                });
+        }, 10);
 
-        /*var sourceFile = ts.createSourceFile("currentFile", thisPlugin.properties.code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TS);
-        ts.transform(sourceFile, [
-            referencedEntitiesTransformer
-        ]);*/
-
+        let worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript"); 
+        let client = await worker(editor.getModel().uri);
+        let referencedEntities = client.getPropertiesOrAttributesOf(editor.getModel().uri.toString(), entityCollections);
+        
         return referencedEntities;
     }
 };
