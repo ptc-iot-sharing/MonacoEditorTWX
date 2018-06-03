@@ -42,6 +42,10 @@ module.exports = function (env, argv) {
         plugins: [
             new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs(\/|\\)language(\/|\\)typescript(\/|\\)lib/),
             new MonacoWebpackPlugin(webpack),
+            new webpack.ContextReplacementPlugin(
+                /monaco-editor(\\|\/)esm(\\|\/)vs(\\|\/)editor(\\|\/)common(\\|\/)services/,
+                __dirname
+            ),
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
             // in case we just want to copy some resources directly to the widget package, then do it here

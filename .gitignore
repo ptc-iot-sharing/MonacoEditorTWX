@@ -4,3 +4,6 @@ ui
 .gradle
 build
 zip
+!node_modules/monaco-editor/
+!node_modules/monaco-editor/*
+!node_modules/monaco-editor/*/**

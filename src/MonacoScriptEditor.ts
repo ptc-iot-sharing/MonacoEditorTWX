@@ -360,9 +360,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             if (!TW.monacoEditor.initializedDefaults) {
                 try {
                     // create a new language called twxJavascript
-                    monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false);
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false, undefined);
                     // create a new language called twxTypescript
-                    monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true);
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true, undefined);
                 } catch (e) {
                     alert("There was an error initializing monaco. Please clean the browser cache.");
                     throw e;
@@ -532,9 +532,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         }, 10);
     };
 
-    let addMetadataForReferencedEntities = function () {
+    let addMetadataForReferencedEntities = async function () {
         if ((mode == "twxTypescript" || mode == "twxJavascript") && thisPlugin.properties) {
-            let referencedEntities = getEntitiesInCode(thisPlugin.properties.code);
+            let referencedEntities = await getEntitiesInCode(thisPlugin.properties.code);
             for (let collection in referencedEntities) {
                 for (let entity in referencedEntities[collection]) {
                     let entityName = collection + "" + sanitizeEntityName(entity);
@@ -557,7 +557,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     if (mode == "twxTypescript" || mode == "twxJavascript") {
         // on startup, get all the metadata entities
-        addMetadataForReferencedEntities();
+       // addMetadataForReferencedEntities();
     }
     if (mode === "twxTypescript") {
         transpileTypeScript();
@@ -573,7 +573,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // whenever the new char inserted is a "." or a "]", find the related metadata
             // TODO: find a better way of doing this, that is more precise
             if (e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
-                addMetadataForReferencedEntities();
+             //   addMetadataForReferencedEntities();
             }
         }
 
@@ -1175,23 +1175,6 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * @param {*} code Javascript/Typescript code to analyze
      */
     async function getEntitiesInCode(code) {
-        setTimeout(function () {
-            monaco.languages.typescript.getLanguageWorker("twxTypescript")
-                .then(function (worker) {
-                    // if there is an uri available
-                    if (editor.getModel()) {
-                        worker(editor.getModel().uri)
-                            .then(function (client) {
-                                if (editor.getModel())
-                                    client.getEmitOutput(editor.getModel().uri.toString())
-                                        .then(function (result) {
-                                            thisPlugin.properties.javascriptCode = result.outputFiles[0].text;
-                                        });
-                            });
-                    }
-                });
-        }, 10);
-
         let worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript"); 
         let client = await worker(editor.getModel().uri);
         let referencedEntities = client.getPropertiesOrAttributesOf(editor.getModel().uri.toString(), entityCollections);
