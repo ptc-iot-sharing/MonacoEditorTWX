@@ -29,7 +29,7 @@ declare namespace twx {
         elevation?: number
         units?: string
     }
-    export interface NOTHING extends Void { }
+    export type NOTHING = void;
     export type NUMBER = number;
     export type INTEGER = number
     export type LONG = number
@@ -39,6 +39,16 @@ declare namespace twx {
     export type GUID = string
     export type HTML = string
     export type HYPERLINK = string
+    export type DASHBOARDNAME = string
+    export type STYLEDEFINITIONNAME = string
+    export type MEDIAENTITYNAME = string
+    export type APPLICATIONKEYNAME = string
+    export type NETWORKNAME = string
+    export type ORGANIZATIONNAME = string
+    export type PERSISTENCEPROVIDERNAME = string
+    export type NOTIFICATIONDEFINITIONNAME = string
+    export type NOTIFICATIONCONTENTNAME = string
+    export interface IMAGE { }
     export type IMAGELINK = string
     export type MASHUPNAME = string
     export type MENUNAME = string
@@ -201,11 +211,11 @@ declare namespace twx {
         /**
          * Limits the infotable to the top N items. This happens inplace
          */
-        topN(maxItems: int);
+        topN(maxItems: number);
         /**
          * Limits the infotable to the top N items. Returns the new infotable
          */
-        topNToNewTable(maxItems: int): INFOTABLE<T>;
+        topNToNewTable(maxItems: number): INFOTABLE<T>;
         /**
          * Clones the infotable into a new one
          */
