@@ -1,0 +1,42 @@
+.monaco-icon-label {
+    margin-left: 20px;
+}
+
+#inline-editor>.popover-property>.inline-body>.col1 {
+    width: 433px !important; 
+}
+
+#inline-editor>.popover-property>.inline-body>.col2 {
+    width: calc(100% - 433px) !important; 
+}
+
+#twServices td {
+    overflow: visible !important;
+}
+
+#inline-editor>.popover-property>.inline-footer {
+    top: auto;
+    bottom: 15px;
+    left: auto;
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* Decrease the huge pading in the service info*/
+#twServices .inline-body [tab="service-info"] .property-wrapper,
+.serviceFullScreen .inline-body [tab="service-info"] .property-wrapper,
+#twSubscriptions .inline-body [tab="service-info"] .property-wrapper,
+.subscriptionFullScreen .inline-body [tab="service-info"] .property-wrapper,
+#twServices .inline-body [tab="inputs-outputs"] .property-wrapper,
+.serviceFullScreen .inline-body [tab="inputs-outputs"] .property-wrapper,
+#twSubscriptions .inline-body [tab="inputs-outputs"] .property-wrapper,
+.subscriptionFullScreen .inline-body [tab="inputs-outputs"] .property-wrapper {
+  border-top: 1px solid #e5e5e5;
+  min-height: 20px;
+  padding: 8px 0;
+  padding-left: 100px;
+  position: relative;
+}

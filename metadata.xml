@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><Entities>
+  <ExtensionPackages>
+    <ExtensionPackage name="" description="" vendor="" packageVersion="" minimumThingWorxVersion="" buildNumber=""/>
+  </ExtensionPackages>
+  <Widgets>
+    <Widget name="">
+      <UIResources/>
+    </Widget>
+  </Widgets>
+</Entities>

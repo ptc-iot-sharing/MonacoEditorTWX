@@ -1,0 +1,79 @@
+{
+    "Infotable for loop": {
+        "prefix": "infofor",
+        "body": [
+            "for (let ${1:i} = 0; ${1:i} < ${2:infotable}.rows.length; ${1:i}++) {",
+            "\tconst ${3:row} = ${2:infotable}.rows[${1:i}];",
+            "\t$0",
+            "}"
+        ],
+        "description": "Infotable for loop"
+    },
+    "Infotable for of loop": {
+        "prefix": "infoforof",
+        "body": [
+            "for (const ${1:row} of ${2:infotable}.rows) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Infotable for of loop"
+    },
+    "Iterate infotable datashape fields": {
+        "prefix": "infofields",
+        "body": [
+            "let ${2:dataShape} = ${1:infotable}.dataShape.fields;",
+            "for (let ${3:fieldName} in ${2:dataShape}) {",
+            "\tlogger.warn('field name is ' + ${2:dataShape}[${3:fieldName}].name);",
+            "\tlogger.warn('field basetype is ' + ${2:dataShape}[${3:fieldName}].baseType);",
+            "\t$0",
+            "}"
+        ],
+        "description": "Iterate infotable datashape fields"
+    },
+    "Logger debug": {
+        "prefix": "ld",
+        "body": [
+            "logger.debug(`${1:prefix}: $0`);"
+        ],
+        "description": "Logger debug"
+    },
+    "Logger warn": {
+        "prefix": "lw",
+        "body": [
+            "logger.warn(`${1:prefix}: $0`);"
+        ],
+        "description": "Logger warn"
+    },
+    "Logger info": {
+        "prefix": "li",
+        "body": [
+            "logger.info(`${1:prefix}: $0`);"
+        ],
+        "description": "Logger info"
+    },
+    "Logger error": {
+        "prefix": "le",
+        "body": [
+            "logger.error(`${1:prefix}: $0`);"
+        ],
+        "description": "Logger error"
+    },
+    "Create Infotable": {
+        "prefix": "crinfo",
+        "body": [
+            "let ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValues();\n$0"
+        ],
+        "description": "Create infotable"
+    },
+    "Create Infotable with Values": {
+        "prefix": "crinfoval",
+        "body": [
+            "let ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValuesWithData({",
+            "\tvalues: {",
+            "\t\t$0",
+            "\t}",
+            "});\n"
+        ],
+        "description": "Create infotable"
+    }
+}
