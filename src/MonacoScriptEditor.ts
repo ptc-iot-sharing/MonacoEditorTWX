@@ -874,7 +874,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             definitionInfo[1].disposable.dispose();
         }
         // declare the entity under its collection
-        typescriptMetadata += "\ndeclare namespace twx { \n";
+        typescriptMetadata += "\ndeclare namespace twx {\n";
         typescriptMetadata += "     export interface " + entityType + "Interface {\n";
         typescriptMetadata += "    '" + entityId + "': twx." + entityName + "." + entityName + ";\n";
         // close the class declaration
@@ -914,7 +914,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         var namespaceDefinition = "declare namespace twx." + entityName + " {\n";
-        var classDefinition = "export class " + entityName + " {\n constructor(); \n";
+        var classDefinition = "export class " + entityName + " {\n constructor();\n";
 
         // generate info retated to services
         var serviceDefs = effectiveShapeMetadata.serviceDefinitions;
@@ -938,8 +938,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     if (!serviceParameterMetadata.hasOwnProperty(parameterDef)) continue;
                     var inputDef = serviceParameterMetadata[parameterDef];
 
-                    namespaceDefinition += "/** \n * " + inputDef.description +
-                        (inputDef.aspects.dataShape ? ("  \n * Datashape: " + inputDef.aspects.dataShape) : "") + " \n */ \n " +
+                    namespaceDefinition += "/**\n * " + inputDef.description +
+                        (inputDef.aspects.dataShape ? ("\n * Datashape: " + inputDef.aspects.dataShape) : "") + "\n */\n " +
                         inputDef.name + (inputDef.aspects.isRequired ? "" : "?") + ":" + getTypescriptBaseType(inputDef) + ";\n";
                     // generate a nice description of the service params
                     serviceParamDefinition += "*     " + inputDef.name + ": " + getTypescriptBaseType(inputDef) +
@@ -954,8 +954,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 outputMetadata = service.resultType;
             }
             // now generate the service definition, as well as jsdocs
-            classDefinition += "/** \n * Category: " + service.category + "\n * " + service.description +
-                "\n * " + (serviceParamDefinition ? ("Params: \n " + serviceParamDefinition) : "\n") + " **/ \n " +
+            classDefinition += "/**\n * Category: " + service.category + "\n * " + service.description +
+                "\n * " + (serviceParamDefinition ? ("Params:\n " + serviceParamDefinition) : "\n") + " **/\n " +
                 service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
                 "): " + getTypescriptBaseType(outputMetadata) + ";\n";
         }
@@ -967,7 +967,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
             var property = propertyDefs[def];
             // generate an export for each property
-            classDefinition += "/** \n * " + property.description + " \n */" + "\n" + property.name + ":" + getTypescriptBaseType(property) + ";\n";
+            classDefinition += "/**\n * " + property.description + "\n */" + "\n" + property.name + ":" + getTypescriptBaseType(property) + ";\n";
         }
         classDefinition = classDefinition + "}\n";
 
@@ -1034,7 +1034,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                         }
                     }
                     // add the return info
-                    jsDoc += "\n * @return " + functionDef.resultType.description + " \n **/";
+                    jsDoc += "\n * @return " + functionDef.resultType.description + "\n **/";
                     declaration += "):" + getTypescriptBaseType(functionDef.resultType);
                     result += "\n" + jsDoc + "\n" + declaration + ";";
                 }
@@ -1070,7 +1070,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var datashape = dataShapes[i];
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
-            datashapesDef += "/**\n * " + datashape.description + " \n**/\n";
+            if(datashape.description) {
+                datashapesDef += "/**\n * " + datashape.description + "\n**/\n";
+            }
             datashapesDef += "    '" + datashape.name + "': twx.ds<twx.ds." + validEntityName + ">;\n";
         }
         datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
@@ -1095,8 +1097,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             dataShapeTs += "\texport interface " + sanitizeEntityName(datashape.name) + " {\n";
             for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
                 var fieldDef = datashape.fieldDefinitions.rows[j];
-                // description as jsdoc
-                dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
+                if(fieldDef.description) {
+                    // description as jsdoc
+                    dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
+                }
                 // generate the definition of this field
                 dataShapeTs += "\n\t'" + fieldDef.name + "'?:" + getTypescriptBaseType({
                     baseType: fieldDef.baseType,
@@ -1136,7 +1140,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 var libraryName = "Resource" + validEntityName;
                 var resourceDefinition = generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
                 TW.monacoEditor.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
-                resourcesDef += "/**\n * " + resourceLibraries[key].description + " \n**/\n";
+                resourcesDef += "/**\n * " + resourceLibraries[key].description + "\n**/\n";
                 resourcesDef += "    '" + key + "': twx." + libraryName + "." + libraryName + ";\n";
             }
             resourcesDef += "}\n}\n var Resources: twx.ResourcesInterface;";
