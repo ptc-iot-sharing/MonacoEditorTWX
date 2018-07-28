@@ -43,6 +43,8 @@ module.exports = function (env, argv) {
             new CleanWebpackPlugin(['build', 'zip']),
             // in case we just want to copy some resources directly to the widget package, then do it here
             new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
+            // copy monaco to the correct folder
+            new CopyWebpackPlugin([{ from: `src/monaco_editor/${isProduction ? "min" : "dev"}`, to: 'vs' }]),
             // generates the metadata xml file and adds it to the archive
             new WidgetMetadataGenerator(),
             // create the extension zip

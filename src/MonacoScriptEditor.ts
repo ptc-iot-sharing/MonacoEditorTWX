@@ -2,7 +2,7 @@
 require('./styles/monacoEditor.css');
 require("./typescriptCodeSupport");
 declare const ThingworxInvoker: any;
-import * as monaco from '../node_modules/monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 import * as Utilities from "./utilities"
 
 if (!TW.monacoEditor) {
@@ -557,7 +557,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     if (mode == "twxTypescript" || mode == "twxJavascript") {
         // on startup, get all the metadata entities
-       // addMetadataForReferencedEntities();
+        // addMetadataForReferencedEntities();
     }
     if (mode === "twxTypescript") {
         transpileTypeScript();
@@ -573,7 +573,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // whenever the new char inserted is a "." or a "]", find the related metadata
             // TODO: find a better way of doing this, that is more precise
             if (e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
-             //   addMetadataForReferencedEntities();
+                //   addMetadataForReferencedEntities();
             }
         }
 
@@ -1070,7 +1070,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             var datashape = dataShapes[i];
             // generate the metadata for this resource
             var validEntityName = sanitizeEntityName(datashape.name);
-            if(datashape.description) {
+            if (datashape.description) {
                 datashapesDef += "/**\n * " + datashape.description + "\n**/\n";
             }
             datashapesDef += "    '" + datashape.name + "': twx.ds<twx.ds." + validEntityName + ">;\n";
@@ -1097,7 +1097,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             dataShapeTs += "\texport interface " + sanitizeEntityName(datashape.name) + " {\n";
             for (var j = 0; j < datashape.fieldDefinitions.rows.length; j++) {
                 var fieldDef = datashape.fieldDefinitions.rows[j];
-                if(fieldDef.description) {
+                if (fieldDef.description) {
                     // description as jsdoc
                     dataShapeTs += "\t/**\n\t *" + fieldDef.description + "\n\t*/";
                 }
@@ -1179,10 +1179,10 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * @param {*} code Javascript/Typescript code to analyze
      */
     async function getEntitiesInCode(code) {
-        let worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript"); 
+        let worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript");
         let client = await worker(editor.getModel().uri);
         let referencedEntities = client.getPropertiesOrAttributesOf(editor.getModel().uri.toString(), entityCollections);
-        
+
         return referencedEntities;
     }
 };
