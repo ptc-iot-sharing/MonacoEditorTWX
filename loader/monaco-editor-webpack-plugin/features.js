@@ -15,6 +15,10 @@ module.exports = {
     entry: 'vs/editor/contrib/clipboard/clipboard',
     worker: undefined,
   },
+  codeAction: {
+    entry: 'vs/editor/contrib/codeAction/codeActionContributions',
+    worker: undefined,
+  },
   codelens: {
     entry: 'vs/editor/contrib/codelens/codelensController',
     worker: undefined,
@@ -51,16 +55,20 @@ module.exports = {
     entry: 'vs/editor/contrib/folding/folding',
     worker: undefined,
   },
+  fontZoom: {
+    entry: 'vs/editor/contrib/fontZoom/fontZoom',
+    worker: undefined,
+  },
   format: {
     entry: 'vs/editor/contrib/format/formatActions',
     worker: undefined,
   },
-  gotoDeclarationCommands: {
-    entry: 'vs/editor/contrib/goToDeclaration/goToDeclarationCommands',
+  goToDefinitionCommands: {
+    entry: 'vs/editor/contrib/goToDefinition/goToDefinitionCommands',
     worker: undefined,
   },
-  gotoDeclarationMouse: {
-    entry: 'vs/editor/contrib/goToDeclaration/goToDeclarationMouse',
+  goToDefinitionMouse: {
+    entry: 'vs/editor/contrib/goToDefinition/goToDefinitionMouse',
     worker: undefined,
   },
   gotoError: {
@@ -107,16 +115,15 @@ module.exports = {
     entry: 'vs/editor/standalone/browser/quickOpen/quickCommand',
     worker: undefined,
   },
-  codeAction: {
-    entry: 'vs/editor/contrib/codeAction/codeActionContributions',
-    worker: undefined,
-  },
   quickOutline: {
     entry: 'vs/editor/standalone/browser/quickOpen/quickOutline',
     worker: undefined,
   },
   referenceSearch: {
-    entry: 'vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch',
+    entry: [
+      'vs/editor/contrib/referenceSearch/referenceSearch',
+      'vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch',
+    ],
     worker: undefined,
   },
   rename: {
@@ -153,6 +160,10 @@ module.exports = {
   },
   wordOperations: {
     entry: 'vs/editor/contrib/wordOperations/wordOperations',
+    worker: undefined,
+  },
+  wordPartOperations: {
+    entry: 'vs/editor/contrib/wordPartOperations/wordPartOperations',
     worker: undefined,
   },
 };

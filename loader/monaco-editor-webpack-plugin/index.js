@@ -2,21 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const AddWorkerEntryPointPlugin = require('./plugins/AddWorkerEntryPointPlugin');
 const INCLUDE_LOADER_PATH = require.resolve('./loaders/include');
-debugger
-const IGNORED_IMPORTS = {
-  [resolveMonacoPath('vs/language/typescript/lib/typescriptServices')]: [
-    'fs',
-    'path',
-    'os',
-    'crypto',
-    'source-map-support',
-  ],
-};
-const MONACO_EDITOR_API_PATHS = [
-  resolveMonacoPath('vs/editor/editor.main'),
-  resolveMonacoPath('vs/editor/editor.api')
-];
-const WORKER_LOADER_PATH = resolveMonacoPath('vs/editor/common/services/editorSimpleWorker');
+
 const EDITOR_MODULE = {
   label: 'editorWorkerService',
   entry: undefined,
@@ -84,9 +70,18 @@ function getPublicPath(compiler) {
 
 function createLoaderRules(languages, features, workers, outputPath, publicPath) {
   if (!languages.length && !features.length) { return []; }
-  const languagePaths = languages.map(({ entry }) => entry).filter(Boolean);
-  const featurePaths = features.map(({ entry }) => entry).filter(Boolean);
+  const languagePaths = flatArr(languages.map(({ entry }) => entry).filter(Boolean));
+  const featurePaths = flatArr(features.map(({ entry }) => entry).filter(Boolean));
   const workerPaths = fromPairs(workers.map(({ label, output }) => [label, path.join(outputPath, output)]));
+  if (workerPaths['typescript']) {
+    // javascript shares the same worker
+    workerPaths['javascript'] = workerPaths['typescript'];
+  }
+  if (workerPaths['css']) {
+    // scss and less share the same worker
+    workerPaths['less'] = workerPaths['css'];
+    workerPaths['scss'] = workerPaths['css'];
+  }
 
   const globals = {
     'MonacoEnvironment': `(function (paths) {
@@ -101,10 +96,9 @@ function createLoaderRules(languages, features, workers, outputPath, publicPath)
       };
     })(${JSON.stringify(workerPaths, null, 2)})`,
   };
-
   return [
     {
-      test: MONACO_EDITOR_API_PATHS,
+      test: /monaco-editor[/\\]esm[/\\]vs[/\\]editor[/\\]editor.(api|main).js/,
       use: [
         {
           loader: INCLUDE_LOADER_PATH,
@@ -120,46 +114,32 @@ function createLoaderRules(languages, features, workers, outputPath, publicPath)
 }
 
 function createPlugins(workers, outputPath) {
-  const workerFallbacks = workers.reduce((acc, { id, fallback }) => (fallback ? Object.assign(acc, {
-    [id]: resolveMonacoPath(fallback)
-  }) : acc), {});
   return (
     []
-    .concat(Object.keys(IGNORED_IMPORTS).map((id) =>
-      createIgnoreImportsPlugin(id, IGNORED_IMPORTS[id])
-    ))
     .concat(uniqBy(workers, ({ id }) => id).map(({ id, entry, output }) =>
       new AddWorkerEntryPointPlugin({
         id,
         entry: resolveMonacoPath(entry),
         filename: path.join(outputPath, output),
         plugins: [
-          createContextPlugin(WORKER_LOADER_PATH, {}),
           new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
         ],
       })
     ))
-    .concat(workerFallbacks ? [createContextPlugin(WORKER_LOADER_PATH, workerFallbacks)] : [])
-  );
-}
-
-function createContextPlugin(filePath, contextPaths) {
-  return new webpack.ContextReplacementPlugin(
-    new RegExp(`^${path.dirname(filePath).replace(/[\/\\]/g, '(/|\\\\)')}$`),
-    '',
-    contextPaths
-  );
-}
-
-function createIgnoreImportsPlugin(targetPath, ignoredModules) {
-  return new webpack.IgnorePlugin(
-    new RegExp(`^(${ignoredModules.map((id) => `(${id})`).join('|')})$`),
-    new RegExp(`^${path.dirname(targetPath).replace(/[\/\\]/g, '(/|\\\\)')}$`)
   );
 }
 
 function flatMap(items, iteratee) {
   return items.map(iteratee).reduce((acc, item) => [].concat(acc).concat(item), []);
+}
+
+function flatArr(items) {
+  return items.reduce((acc, item) => {
+    if (Array.isArray(item)) {
+      return [].concat(acc).concat(item);
+}
+    return [].concat(acc).concat([item]);
+  }, []);
 }
 
 function toPairs(object) {

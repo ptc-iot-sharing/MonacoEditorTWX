@@ -1,10 +1,10 @@
 {
     "name": "MonacoScriptEditor",
-    "version": "1.0.71",
+    "version": "1.0.103",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "thingworxServer": "http://localhost:8016/",
     "thingworxUser": "Administrator",
-    "thingworxPassword": "admin",
+    "thingworxPassword": "Administrator",
     "author": "Thingworx RoIcenter",
     "minimumThingWorxVersion": "6.0.0",
     "homepage": "http://roicentersvn/placatus/MonacoScriptEditorWidget",
@@ -37,6 +37,8 @@
         "css-loader": "^0.28.11",
         "extract-text-webpack-plugin": "^3.0.2",
         "file-loader": "^1.1.11",
+        "monaco-editor-webpack-plugin": "^1.4.0",
+        "raw-loader": "^0.5.1",
         "request": "^2.87.0",
         "source-map-loader": "^0.2.3",
         "style-loader": "^0.20.3",
@@ -49,6 +51,5 @@
         "xml2js": "^0.4.19",
         "zip-webpack-plugin": "^3.0.0"
     },
-    "dependencies": {
-    }
+    "dependencies": {}
 }

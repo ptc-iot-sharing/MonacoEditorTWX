@@ -376,11 +376,11 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     noLib: true
                 });
                 // register the rhino es5 library
-                TW.monacoEditor.scriptManager.addExtraLib(require("./configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
+                TW.monacoEditor.scriptManager.addExtraLib(require("!raw-loader!./configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
                 // register the thingworx base types and the logger class
-                TW.monacoEditor.scriptManager.addExtraLib(require("./configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
+                TW.monacoEditor.scriptManager.addExtraLib(require("!raw-loader!./configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
                 // register the thingworx datashape library
-                TW.monacoEditor.scriptManager.addExtraLib(require("./configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
+                TW.monacoEditor.scriptManager.addExtraLib(require("!raw-loader!./configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();

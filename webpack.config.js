@@ -1,7 +1,6 @@
 'use strict';
 var path = require('path');
 var fs = require('fs');
-var webpack = require('webpack');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 // enable cleaning of the build and zip directories
@@ -10,6 +9,7 @@ var CleanWebpackPlugin = require('clean-webpack-plugin');
 var ZipPlugin = require('zip-webpack-plugin');
 // enable reading master data from the package.json file
 let packageJson = require('./package.json');
+const MonacoWebpackPlugin = require('./loader/monaco-editor-webpack-plugin');
 // look if we are in initialization mode based on the --init argument
 const isInitialization = process.argv.indexOf('--env.init') !== -1;
 // look if we are in initialization mode based on the --init argument
@@ -41,10 +41,9 @@ module.exports = function (env, argv) {
         plugins: [
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
+            new MonacoWebpackPlugin({languages: ['sql', 'typescript', 'python', 'r', 'json', 'css', 'javascript', 'twxJavascript', 'twxTypescript']}),
             // in case we just want to copy some resources directly to the widget package, then do it here
             new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
-            // copy monaco to the correct folder
-            new CopyWebpackPlugin([{ from: `src/monaco_editor/${isProduction ? "min" : "dev"}`, to: 'vs' }]),
             // generates the metadata xml file and adds it to the archive
             new WidgetMetadataGenerator(),
             // create the extension zip
@@ -70,14 +69,15 @@ module.exports = function (env, argv) {
         devtool: isProduction ? undefined : 'eval-source-map',
         resolve: {
             // Add '.ts' and '.tsx' as resolvable extensions.
-            extensions: ['.ts', '.tsx', '.js', '.json']
+            extensions: ['.ts', '.tsx', '.js', '.json'],
+            modules: ['node_modules', 'src']
         },
 
         module: {
             rules: [
                 {
                     test: /(\.jsx|\.js)$/,
-                    exclude: /(node_modules|bower_components)/,
+                    exclude: /(node_modules|bower_components|src\\monaco-editor\\esm)/,
                     use: {
                         loader: 'babel-loader',
                         options: {
@@ -89,7 +89,10 @@ module.exports = function (env, argv) {
                 {
                     test: /\.tsx?$/,
                     exclude: /(\.d\.ts$|node_modules)/,
-                    use: 'ts-loader',
+                    loader: 'ts-loader',
+                    options: {
+                        transpileOnly: true
+                    }
                 },
                 {
                     test: /\.(png|jp(e*)g|svg|xml|d\.ts)$/,

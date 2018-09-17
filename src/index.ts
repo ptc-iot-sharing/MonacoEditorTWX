@@ -1,4 +1,4 @@
-import * as monaco from '../node_modules/monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 
 window.onload = function () {
   // Program starts here. Creates a sample graph in the
