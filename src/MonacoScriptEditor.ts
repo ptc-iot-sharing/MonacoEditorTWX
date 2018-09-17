@@ -360,9 +360,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             if (!TW.monacoEditor.initializedDefaults) {
                 try {
                     // create a new language called twxJavascript
-                    monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false, undefined);
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false, true);
                     // create a new language called twxTypescript
-                    monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true, undefined);
+                    monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true, true);
                 } catch (e) {
                     alert("There was an error initializing monaco. Please clean the browser cache.");
                     throw e;
