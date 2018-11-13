@@ -3,30 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import { WorkerManager } from './workerManager.js';
-import * as languageFeatures from './languageFeatures.js';
-var javaScriptWorker;
-var typeScriptWorker;
-export function setupTypeScript(defaults) {
-    typeScriptWorker = setupMode(defaults, 'typescript');
+import { WorkerManager } from './workerManager';
+import * as languageFeatures from './languageFeatures';
+var scriptWorkerMap = {};
+export function setupNamedLanguage(langaugeName, isTypescript, defaults) {
+    scriptWorkerMap[langaugeName + "Worker"] = setupMode(defaults, langaugeName);
 }
-export function setupJavaScript(defaults) {
-    javaScriptWorker = setupMode(defaults, 'javascript');
-}
-export function getJavaScriptWorker() {
+export function getNamedLanguageWorker(languageName) {
+    var workerName = languageName + "Worker";
     return new monaco.Promise(function (resolve, reject) {
-        if (!javaScriptWorker) {
-            return reject("JavaScript not registered!");
+        if (!scriptWorkerMap[workerName]) {
+            return reject(languageName + " not registered!");
         }
-        resolve(javaScriptWorker);
-    });
-}
-export function getTypeScriptWorker() {
-    return new monaco.Promise(function (resolve, reject) {
-        if (!typeScriptWorker) {
-            return reject("TypeScript not registered!");
-        }
-        resolve(typeScriptWorker);
+        resolve(scriptWorkerMap[workerName]);
     });
 }
 function setupMode(defaults, modeId) {
