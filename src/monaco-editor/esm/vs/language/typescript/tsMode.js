@@ -5,17 +5,28 @@
 'use strict';
 import { WorkerManager } from './workerManager.js';
 import * as languageFeatures from './languageFeatures.js';
-var scriptWorkerMap = {};
-export function setupNamedLanguage(langaugeName, isTypescript, defaults) {
-    scriptWorkerMap[langaugeName + "Worker"] = setupMode(defaults, langaugeName);
+var javaScriptWorker;
+var typeScriptWorker;
+export function setupTypeScript(defaults) {
+    typeScriptWorker = setupMode(defaults, 'typescript');
 }
-export function getNamedLanguageWorker(languageName) {
-    var workerName = languageName + "Worker";
+export function setupJavaScript(defaults) {
+    javaScriptWorker = setupMode(defaults, 'javascript');
+}
+export function getJavaScriptWorker() {
     return new monaco.Promise(function (resolve, reject) {
-        if (!scriptWorkerMap[workerName]) {
-            return reject(languageName + " not registered!");
+        if (!javaScriptWorker) {
+            return reject("JavaScript not registered!");
         }
-        resolve(scriptWorkerMap[workerName]);
+        resolve(javaScriptWorker);
+    });
+}
+export function getTypeScriptWorker() {
+    return new monaco.Promise(function (resolve, reject) {
+        if (!typeScriptWorker) {
+            return reject("TypeScript not registered!");
+        }
+        resolve(typeScriptWorker);
     });
 }
 function setupMode(defaults, modeId) {

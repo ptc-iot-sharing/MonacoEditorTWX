@@ -4,8 +4,6 @@ import '../../editor/editor.api.js';
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as tsDefaults from '../../basic-languages/typescript/typescript.js';
-import * as jsDefaults from '../../basic-languages/javascript/javascript.js';
 var Emitter = monaco.Emitter;
 // --- TypeScript configuration and defaults ---------
 var LanguageServiceDefaultsImpl = /** @class */ (function () {
@@ -122,32 +120,13 @@ var ModuleResolutionKind;
     ModuleResolutionKind[ModuleResolutionKind["NodeJs"] = 2] = "NodeJs";
 })(ModuleResolutionKind || (ModuleResolutionKind = {}));
 //#endregion
-var languageDefaults = {};
-languageDefaults["typescript"] = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, target: ScriptTarget.Latest }, { noSemanticValidation: false, noSyntaxValidation: false });
-languageDefaults["javascript"] = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, allowJs: true, target: ScriptTarget.Latest }, { noSemanticValidation: true, noSyntaxValidation: false });
+var typescriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, target: ScriptTarget.Latest }, { noSemanticValidation: false, noSyntaxValidation: false });
+var javascriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, allowJs: true, target: ScriptTarget.Latest }, { noSemanticValidation: true, noSyntaxValidation: false });
 function getTypeScriptWorker() {
-    return getLanguageWorker("typescript");
+    return getMode().then(function (mode) { return mode.getTypeScriptWorker(); });
 }
 function getJavaScriptWorker() {
-    return getLanguageWorker("javascript");
-}
-function getLanguageWorker(languageName) {
-    return getMode().then(function (mode) { return mode.getNamedLanguageWorker(languageName); });
-}
-function getLanguageDefaults(languageName) {
-    return languageDefaults[languageName];
-}
-function setupNamedLanguage(languageDefinition, isTypescript, registerLanguage) {
-    if (registerLanguage) {
-        monaco.languages.register(languageDefinition);
-        var langageConfig = isTypescript ? tsDefaults : jsDefaults;
-        monaco.languages.setMonarchTokensProvider(languageDefinition.id, langageConfig.language);
-        monaco.languages.setLanguageConfiguration(languageDefinition.id, langageConfig.conf);
-    }
-    languageDefaults[languageDefinition.id] = isTypescript ? languageDefaults["typescript"] : languageDefaults["javascript"];
-    monaco.languages.onLanguage(languageDefinition.id, function () {
-        return getMode().then(function (mode) { return mode.setupNamedLanguage(languageDefinition.id, isTypescript, languageDefaults[languageDefinition.id]); });
-    });
+    return getMode().then(function (mode) { return mode.getJavaScriptWorker(); });
 }
 // Export API
 function createAPI() {
@@ -157,31 +136,20 @@ function createAPI() {
         NewLineKind: NewLineKind,
         ScriptTarget: ScriptTarget,
         ModuleResolutionKind: ModuleResolutionKind,
-        typescriptDefaults: getLanguageDefaults("typescript"),
-        javascriptDefaults: getLanguageDefaults("javascript"),
-        getLanguageDefaults: getLanguageDefaults,
+        typescriptDefaults: typescriptDefaults,
+        javascriptDefaults: javascriptDefaults,
         getTypeScriptWorker: getTypeScriptWorker,
-        getJavaScriptWorker: getJavaScriptWorker,
-        getLanguageWorker: getLanguageWorker,
-        setupNamedLanguage: setupNamedLanguage
+        getJavaScriptWorker: getJavaScriptWorker
     };
 }
 monaco.languages.typescript = createAPI();
 // --- Registration to monaco editor ---
 function getMode() {
-    return monaco.Promise.wrap(import('./tsMode'));
+    return monaco.Promise.wrap(import('./tsMode.js'));
 }
-setupNamedLanguage({
-    id: 'typescript',
-    extensions: ['.ts', '.tsx'],
-    aliases: ['TypeScript', 'ts', 'typescript'],
-    mimetypes: ['text/typescript']
-}, true);
-setupNamedLanguage({
-    id: 'javascript',
-    extensions: ['.js', '.es6', '.jsx'],
-    firstLine: '^#!.*\\bnode',
-    filenames: ['jakefile'],
-    aliases: ['JavaScript', 'javascript', 'js'],
-    mimetypes: ['text/javascript'],
-}, false);
+monaco.languages.onLanguage('typescript', function () {
+    return getMode().then(function (mode) { return mode.setupTypeScript(typescriptDefaults); });
+});
+monaco.languages.onLanguage('javascript', function () {
+    return getMode().then(function (mode) { return mode.setupJavaScript(javascriptDefaults); });
+});
