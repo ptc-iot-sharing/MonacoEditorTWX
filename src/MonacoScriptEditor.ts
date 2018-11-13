@@ -478,7 +478,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     var serviceName = serviceModel.isNew ? Math.random().toString(36).substring(7) : serviceModel.serviceDefinition.name;
     editorSettings.model = monaco.editor.createModel(codeValue, mode,
-        monaco.Uri.parse("thingworxTypescript" + serviceModel.model.entityType + serviceModel.model.id + serviceName));
+        monaco.Uri.parse("twx://privateModel" + serviceModel.model.entityType + serviceModel.model.id + serviceName));
 
     var editor;
     // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
