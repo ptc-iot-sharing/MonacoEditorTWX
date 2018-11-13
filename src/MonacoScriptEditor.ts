@@ -534,7 +534,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     let addMetadataForReferencedEntities = async function () {
         if ((mode == "twxTypescript" || mode == "twxJavascript") && thisPlugin.properties) {
-            let referencedEntities = await getEntitiesInCode(thisPlugin.properties.code);
+            let referencedEntities = await getEntitiesInCode(mode);
             for (let collection in referencedEntities) {
                 for (let entity in referencedEntities[collection]) {
                     let entityName = collection + "" + sanitizeEntityName(entity);
@@ -557,7 +557,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     if (mode == "twxTypescript" || mode == "twxJavascript") {
         // on startup, get all the metadata entities
-        // addMetadataForReferencedEntities();
+        addMetadataForReferencedEntities();
     }
     if (mode === "twxTypescript") {
         transpileTypeScript();
@@ -573,7 +573,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // whenever the new char inserted is a "." or a "]", find the related metadata
             // TODO: find a better way of doing this, that is more precise
             if (e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
-                //   addMetadataForReferencedEntities();
+                addMetadataForReferencedEntities();
             }
         }
 
@@ -1178,11 +1178,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
      * file and their types
      * @param {*} code Javascript/Typescript code to analyze
      */
-    async function getEntitiesInCode(code) {
-        let worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript");
-        let client = await worker(editor.getModel().uri);
-        let referencedEntities = client.getPropertiesOrAttributesOf(editor.getModel().uri.toString(), entityCollections);
-
-        return referencedEntities;
+    async function getEntitiesInCode(mode) {
+        if (editor.getModel()) {
+            let worker = await monaco.languages.typescript.getLanguageWorker(mode);
+            let client = await worker(editor.getModel().uri);
+            return await client.getPropertiesOrAttributesOf(editor.getModel().uri.toString(), entityCollections);
+        } else {
+            return {};
+        }
     }
 };

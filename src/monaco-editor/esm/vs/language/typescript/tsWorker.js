@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as ts from './lib/typescriptServices.js';
-import { lib_dts, lib_es6_dts } from './lib/lib.js';
+import * as ts from './lib/typescriptServices';
+import { lib_dts, lib_es6_dts } from './lib/lib';
 var Promise = monaco.Promise;
 var DEFAULT_LIB = {
     NAME: 'defaultLib:lib.d.ts',
@@ -182,11 +182,9 @@ var TypeScriptWorker = /** @class */ (function () {
                 if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
                     // TODO: matches Things[me.property]
                 }
-                else if (ts.isStringLiteral(node)) {
-                    if (!(node.argumentExpression.getText() in referencedEntities[node.expression.getText()])) {
-                        // matches Things["test"]
-                        referencedEntities[node.expression.getText()][node.argumentExpression.getText()] = true;
-                    }
+                else if (ts.isStringLiteral(node.argumentExpression)) {
+                    // matches Things["test"]
+                    referencedEntities[node.expression.getText()][node.argumentExpression.getText().slice(1, -1)] = true;
                 }
             }
             return ts.forEachChild(node, visitNodes);
