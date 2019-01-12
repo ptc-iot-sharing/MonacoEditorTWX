@@ -160,6 +160,9 @@ var TypeScriptWorker = /** @class */ (function () {
     TypeScriptWorker.prototype.getEmitOutput = function (fileName) {
         return Promise.as(this._languageService.getEmitOutput(fileName));
     };
+    TypeScriptWorker.prototype.syncExtraLibs = function (extraLibs) {
+        this._extraLibs = extraLibs;
+    };
     TypeScriptWorker.prototype.getPropertiesOrAttributesOf = function (fileName, parentObjects) {
         var currentFile = this._languageService.getProgram().getSourceFile(fileName);
         var referencedEntities = {};

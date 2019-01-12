@@ -17,12 +17,15 @@ class WorkerScriptManager {
      * Create a new WorkerScriptManager that acts as a interface allowing us to more easily interact with monaco library
      */
     constructor(typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults, javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults) {
-        this.setDefaults(typescriptDefaults, javascriptDefaults);
-    }
-
-    setDefaults(typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults, javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults) {
         this.typescriptDefaults = typescriptDefaults;
         this.javascriptDefaults = javascriptDefaults;
+        typescriptDefaults.setEagerExtraLibSync(false);
+        javascriptDefaults.setEagerExtraLibSync(false);
+    }
+
+    syncExtraLibs() {
+        this.javascriptDefaults.syncExtraLibs();
+        this.typescriptDefaults.syncExtraLibs();
     }
 
     addExtraLib(code, name) {
@@ -384,6 +387,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 generateScriptFunctions();
                 generateResourceFunctions();
                 registerEntityCollectionDefs();
+                TW.monacoEditor.scriptManager.syncExtraLibs();
+
                 // generate the completion for language snippets
                 monaco.languages.registerCompletionItemProvider("twxJavascript", {
                     provideCompletionItems: function (model, position) {
@@ -452,13 +457,14 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                                         label: rows[i].name,
                                         kind: monaco.languages.CompletionItemKind.Field,
                                         documentation: rows[i].description,
-                                        detail: "Entity type: " + rows[i].type
+                                        detail: "Entity type: " + rows[i].type,
+                                        insertText: rows[i].name
                                     });
                                 }
-                                return result;
+                                return {suggestions: result};
                             });
                         }
-                        return [];
+                        return {suggestions: []};
                     }
                 });
 
@@ -478,7 +484,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     var serviceName = serviceModel.isNew ? Math.random().toString(36).substring(7) : serviceModel.serviceDefinition.name;
     editorSettings.model = monaco.editor.createModel(codeValue, mode,
-        monaco.Uri.parse("twx://privateModel" + serviceModel.model.entityType + serviceModel.model.id + serviceName));
+        monaco.Uri.parse("twx://privateModel/" + serviceModel.model.entityType + serviceModel.model.id + serviceName));
 
     var editor;
     // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
@@ -552,6 +558,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                     }
                 }
             }
+            TW.monacoEditor.scriptManager.syncExtraLibs();
         }
     };
 
@@ -859,6 +866,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             // in the current globals we have me declarations as well as input parameters
             monacoEditorLibs.serviceLibs.push(TW.monacoEditor.scriptManager.addExtraLib(generateServiceGlobals(
                 serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts"));
+            TW.monacoEditor.scriptManager.syncExtraLibs();
         }
     }
 
