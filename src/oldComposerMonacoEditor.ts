@@ -136,6 +136,7 @@ TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
  */
 TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callback, btnForPopover) {
     // TODO: syntax check
+    callback(true);
 };
 
 /**
