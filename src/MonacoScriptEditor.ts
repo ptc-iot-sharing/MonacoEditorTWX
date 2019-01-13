@@ -9,41 +9,7 @@ if (!TW.monacoEditor) {
     TW.monacoEditor = {};
 }
 
-class WorkerScriptManager {
-    typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults;
-    javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults;
 
-    /**
-     * Create a new WorkerScriptManager that acts as a interface allowing us to more easily interact with monaco library
-     */
-    constructor(typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults, javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults) {
-        this.typescriptDefaults = typescriptDefaults;
-        this.javascriptDefaults = javascriptDefaults;
-        typescriptDefaults.setEagerExtraLibSync(false);
-        javascriptDefaults.setEagerExtraLibSync(false);
-    }
-
-    syncExtraLibs() {
-        this.javascriptDefaults.syncExtraLibs();
-        this.typescriptDefaults.syncExtraLibs();
-    }
-
-    addExtraLib(code, name) {
-        return [this.typescriptDefaults.addExtraLib(code, name), this.javascriptDefaults.addExtraLib(code, name)];
-    }
-    addRemoteExtraLib(location, name) {
-        var self = this;
-        $.get(location, function (data) {
-            self.addExtraLib(data, name);
-        });
-    }
-    setCompilerOptions(options) {
-        this.typescriptDefaults.setCompilerOptions(options);
-        this.javascriptDefaults.setCompilerOptions(options);
-    }
-}
-
-TW.monacoEditor.defaultVariableNameRegex = /^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g;
 TW.monacoEditor.editorLibs = {
     serviceLibs: [],
     // libs in here follow the following format:
@@ -54,25 +20,6 @@ TW.monacoEditor.editorLibs = {
     datashapeInterfaces: undefined
 };
 
-// available options: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-TW.monacoEditor.defaultEditorSettings = {
-    editor: {
-        showFoldingControls: "mouseover",
-        folding: true,
-        fontSize: 12,
-        fontFamily: "Fira Code,Monaco,monospace",
-        fontLigatures: true,
-        mouseWheelZoom: true,
-        formatOnPaste: true,
-        scrollBeyondLastLine: true,
-        theme: "vs",
-        disableLayerHinting: true // fixes bug in FF
-    },
-    diffEditor: {},
-    thingworx: {
-        showGenericServices: false
-    }
-};
 TW.monacoEditor.initializedDefaults = false;
 
 /**
@@ -81,48 +28,35 @@ TW.monacoEditor.initializedDefaults = false;
  * @param  {string} code code to be inserted into the editor
  */
 TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
-    var thisPlugin = this;
-    var op = {
-        range: thisPlugin.monacoEditor.getSelection(),
-        text: code,
-        forceMoveMarkers: true
-    };
-    thisPlugin.monacoEditor.executeEdits("insertSnippet", [op]);
+    this.monacoEditor.insertCode(code);
 };
 
 /**
- * Build the html for the code editor. Called by other thingworx widgets. 
+ * Build the html for the code editor. Called by other thingworx widgets.
  * Only returns a div where the monaco editor goes
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     this._plugin_cleanup();
-    var thisPlugin = this;
-    var jqEl = thisPlugin.jqElement;
-    jqEl.html(
+    this.jqElement.html(
         "<div class=\"editor-container\" >" +
         "</div>"
     );
-
 };
 
 /**
  * Properly dispose the editor when needed. This is called by the thingworx editor when the editor closes or opens
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
-    var thisPlugin = this;
     try {
-        if (thisPlugin.monacoEditor !== undefined) {
-            window.removeEventListener("resize", thisPlugin.updateContainerSize.bind(thisPlugin));
-            if (thisPlugin.monacoEditor.getModel()) {
-                thisPlugin.monacoEditor.getModel().dispose();
-            }
-            thisPlugin.monacoEditor.dispose();
+        if (this.monacoEditor !== undefined) {
+            window.removeEventListener("resize", this.updateContainerSize.bind(this));
+            this.monacoEditor.dispose();
         }
     } catch (err) {
         TW.log.error("Monaco: Failed to destroy the monaco editor", err);
     }
     this.monacoEditor = undefined;
-    thisPlugin.jqElement.off(".twCodeEditor");
+    this.jqElement.off(".twCodeEditor");
 };
 
 /**
@@ -130,8 +64,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_cleanup = function () {
  * @param {int} height The height of the editor.
  */
 TW.jqPlugins.twCodeEditor.prototype.setHeight = function (height) {
-    var jqEl = this.jqElement;
-    var container = jqEl.find(".editor-container");
+    const container = this.jqElement.find(".editor-container");
     container.height(height);
     this.updateContainerSize();
 };
@@ -181,7 +114,7 @@ TW.jqPlugins.twServiceEditor.prototype.resize = function (includeCodeEditor) {
 };
 
 /**
- * Makes the monaco editor layout again
+ * Makes the monaco editor layout again, filling all the space
  */
 TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
     if (this.monacoEditor) {
@@ -238,7 +171,7 @@ TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callbac
                 TW.IDE.twPopoverNotification("warning", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-check-failed", { syntaxCheckFail: resultInfo.message }));
 
                 // NOTE: got to learn the regex stuff ... this code is ridiculous :)
-
+                // TODO: adapt this to highlight the error
                 var lineNoText = resultInfo.message.indexOf(" at line ");
                 if (lineNoText > 0) {
                     var linePlusText = resultInfo.message.substring(lineNoText + " at line ".length);
@@ -348,7 +281,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         }
         let confSchema = require("./configs/confSchema.json");
 
-        // text formatting 
+        // text formatting
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
             schemas: [{
                 uri: "http://monaco-editor/schema.json",

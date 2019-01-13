@@ -2,12 +2,6 @@ import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 
 declare const ThingworxInvoker: any;
 
-if (!TW.monacoEditor) {
-    TW.monacoEditor = {};
-}
-if (!TW.monacoEditor.utilities) {
-    TW.monacoEditor.utilities = {};
-}
 /**
  *  Converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
  */

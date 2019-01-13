@@ -3,9 +3,9 @@
         "outDir": "./dist/",
         "sourceMap": true,
         "noImplicitAny": false,
-        "module": "esnext",
+        "module": "commonjs",
         "allowSyntheticDefaultImports": true,
-        "target": "esnext",
+        "target": "es5",
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "lib": [
