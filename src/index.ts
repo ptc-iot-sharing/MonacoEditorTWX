@@ -1,4 +1,4 @@
-import { MonacoCodeEditor } from "./basicCodeEditor";
+import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 
 window.onload = function () {

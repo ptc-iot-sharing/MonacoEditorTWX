@@ -1,10 +1,10 @@
-import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from '../monaco-editor/esm/vs/editor/editor.api';
 import tingle from 'tingle.js';
 
 require("tingle.js/src/tingle.css");
-require("./styles/editorStyle.css");
+require("../styles/editorStyle.css");
 
-import { flattenJson, unflattenJson } from './utilities';
+import { flattenJson, unflattenJson } from '../utilities';
 
 export interface ActionCallbacks {
     onSave: () => void;
@@ -20,32 +20,40 @@ export interface MonacoEditorSettings {
     thingworx: any
 }
 
+export interface MonacoInstanceSettings {
+    code: string,
+    language: string,
+    readonly: boolean,
+    modelName: string
+}
+
 export class MonacoCodeEditor {
     private monacoEditor: monaco.editor.IStandaloneCodeEditor;
     private _currentEditorSettings: MonacoEditorSettings;
-    private _initialCode: string;
-    private _language: string;
+    private _instanceSettings: MonacoInstanceSettings;
 
     /**
      * Creates a new monaco editor in the given container
      * @param container HTMLElement where to initialize the new editor
      * @param initialSettings The inital options that the editor should be initialized with
      */
-    constructor(container: HTMLElement, initialSettings: MonacoEditorSettings, actionCallbacks: ActionCallbacks, code: string, language: string) {
-        // clone the settings and store them
+    constructor(container: HTMLElement, initialSettings: MonacoEditorSettings, actionCallbacks: ActionCallbacks, instanceSettings: MonacoInstanceSettings) {
         this._currentEditorSettings = initialSettings;
-        const editorSettings = JSON.parse(JSON.stringify(initialSettings));
-        editorSettings.editor.value = code;
-        editorSettings.editor.language = language;
-
-        this._initialCode = code;
-        this._language = language;
-
+        this._instanceSettings = instanceSettings;
+        // clone the settings and store them
+        const editorSettings: MonacoEditorSettings = JSON.parse(JSON.stringify(initialSettings));
+        editorSettings.editor.value = instanceSettings.code;
+        editorSettings.editor.readOnly = instanceSettings.readonly;
+        editorSettings.editor.language = instanceSettings.language;
+        editorSettings.editor.model = monaco.editor.createModel(instanceSettings.code, instanceSettings.language,
+            monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName))
+        // create the editor
         this.monacoEditor = monaco.editor.create(container, editorSettings.editor);
         this.setupActionListeners(actionCallbacks);
         this.initializePreferenceEditor(actionCallbacks.onPreferencesChanged);
         this.initializeDiffEditor();
         this.monacoEditor.layout();
+        this.monacoEditor.focus();
     }
 
     /**
@@ -101,7 +109,7 @@ export class MonacoCodeEditor {
         const self = this;
 
         // initialize the json worker with the give schema
-        let confSchema = require("./configs/confSchema.json");
+        let confSchema = require("../configs/confSchema.json");
 
         // text formatting
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -137,8 +145,6 @@ export class MonacoCodeEditor {
                         }
                         self.monacoEditor.updateOptions(expandedOptions.editor);
                         self._currentEditorSettings = expandedOptions;
-                        // propagate the preference changed to the parent for storage, etc
-                        onPreferencesChanged(expandedOptions);
                     } catch (e) {
                         return false;
                     }
@@ -146,6 +152,8 @@ export class MonacoCodeEditor {
                 });
             },
             onClose: function () {
+                // propagate the preference changed to the parent for storage, etc
+                onPreferencesChanged(self._currentEditorSettings);
                 confEditor.dispose();
             }
         });
@@ -202,7 +210,10 @@ export class MonacoCodeEditor {
         });
     }
 
-    initializeDiffEditor(): void {
+    /**
+     * Initialize the diff editor triggered by ctrl+k
+     */
+    private initializeDiffEditor(): void {
         let self = this;
 
         let diffEditor: monaco.editor.IStandaloneDiffEditor;
@@ -210,7 +221,7 @@ export class MonacoCodeEditor {
         let modal = new tingle.modal({
             cssClass: ['tingle-popup-container'],
             onOpen: function () {
-                let originalModel = monaco.editor.createModel(self._initialCode, self._language);
+                let originalModel = monaco.editor.createModel(self._instanceSettings.code, self._instanceSettings.language);
                 let modifiedModel = self.monacoEditor.getModel();
 
                 const editorSettings = Object.assign({}, self._currentEditorSettings.editor, self._currentEditorSettings.diffEditor);
