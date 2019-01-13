@@ -1,6 +1,9 @@
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 import tingle from 'tingle.js';
+
 require("tingle.js/src/tingle.css");
+require("./styles/editorStyle.css");
+
 import { flattenJson, unflattenJson } from './utilities';
 
 export interface ActionCallbacks {
@@ -11,21 +14,37 @@ export interface ActionCallbacks {
     onPreferencesChanged: (newPreferences: any) => void;
 }
 
+export interface MonacoEditorSettings {
+    editor: monaco.editor.IEditorConstructionOptions,
+    diffEditor: monaco.editor.IDiffEditorConstructionOptions,
+    thingworx: any
+}
+
 export class MonacoCodeEditor {
     private monacoEditor: monaco.editor.IStandaloneCodeEditor;
-    private _currentEditorSettings: any;
+    private _currentEditorSettings: MonacoEditorSettings;
+    private _initialCode: string;
+    private _language: string;
 
     /**
      * Creates a new monaco editor in the given container
      * @param container HTMLElement where to initialize the new editor
-     * @param initalSettings The inital options that the editor should be initialized with
+     * @param initialSettings The inital options that the editor should be initialized with
      */
-    constructor(container: HTMLElement, initalSettings: any, actionCallbacks: ActionCallbacks) {
+    constructor(container: HTMLElement, initialSettings: MonacoEditorSettings, actionCallbacks: ActionCallbacks, code: string, language: string) {
         // clone the settings and store them
-        this._currentEditorSettings = JSON.parse(JSON.stringify(initalSettings));
-        this.monacoEditor = monaco.editor.create(container, initalSettings);
+        this._currentEditorSettings = initialSettings;
+        const editorSettings = JSON.parse(JSON.stringify(initialSettings));
+        editorSettings.editor.value = code;
+        editorSettings.editor.language = language;
+
+        this._initialCode = code;
+        this._language = language;
+
+        this.monacoEditor = monaco.editor.create(container, editorSettings.editor);
         this.setupActionListeners(actionCallbacks);
         this.initializePreferenceEditor(actionCallbacks.onPreferencesChanged);
+        this.initializeDiffEditor();
         this.monacoEditor.layout();
     }
 
@@ -79,6 +98,8 @@ export class MonacoCodeEditor {
     }
 
     private initializePreferenceEditor(onPreferencesChanged: (newPreferences: any) => void) {
+        const self = this;
+
         // initialize the json worker with the give schema
         let confSchema = require("./configs/confSchema.json");
 
@@ -92,7 +113,42 @@ export class MonacoCodeEditor {
             validate: true
         });
 
-        const self = this;
+        let confEditor: monaco.editor.IStandaloneCodeEditor;
+        let modal = new tingle.modal({
+            cssClass: ['tingle-popup-container'],
+            onOpen: function () {
+                // clone the editor settings to be used for the config editor
+                let editorSettings = JSON.parse(JSON.stringify(self._currentEditorSettings.editor));
+                // set the intial text to be the current config
+                editorSettings.value = JSON.stringify(flattenJson(self._currentEditorSettings), null, "\t");
+                // set the language as json
+                editorSettings.language = "json";
+                confEditor = monaco.editor.create(this.modalBoxContent.getElementsByClassName("content")[0], editorSettings);
+                confEditor.focus();
+                // whenever the model changes, we need to also update the current editor, as well as other editors
+                confEditor.onDidChangeModelContent((e) => {
+                    try {
+                        // if the json is valid, then set it on this editor as well as the editor behind
+                        const expandedOptions = unflattenJson(JSON.parse(confEditor.getModel().getValue()));
+                        confEditor.updateOptions(expandedOptions.editor);
+                        // theme has to be updated separately
+                        if (self._currentEditorSettings.editor.theme != expandedOptions.editor.theme) {
+                            monaco.editor.setTheme(expandedOptions.editor.theme);
+                        }
+                        self.monacoEditor.updateOptions(expandedOptions.editor);
+                        self._currentEditorSettings = expandedOptions;
+                        // propagate the preference changed to the parent for storage, etc
+                        onPreferencesChanged(expandedOptions);
+                    } catch (e) {
+                        return false;
+                    }
+                    return true;
+                });
+            },
+            onClose: function () {
+                confEditor.dispose();
+            }
+        });
         // action triggered by CTRL+~
         // shows a popup with a json configuration for the editor
         this.monacoEditor.addAction({
@@ -100,40 +156,6 @@ export class MonacoCodeEditor {
             label: "View Configuration",
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_BACKTICK],
             run: () => {
-                let confEditor: monaco.editor.IStandaloneCodeEditor;
-                let modal = new tingle.modal({
-                    onOpen: function() {
-                        // clone the editor settings to be used for the config editor
-                        let editorSettings = JSON.parse(JSON.stringify(self._currentEditorSettings));
-                        // set the intial text to be the current config
-                        editorSettings.value = JSON.stringify(flattenJson(editorSettings), null, "\t");
-                        // set the language as json
-                        editorSettings.language = "json";
-                        confEditor = monaco.editor.create(this.modalBoxContent.getElementsByClassName("content")[0], editorSettings);
-                        confEditor.focus();
-                        // whenever the model changes, we need to also update the current editor, as well as other editors
-                        confEditor.onDidChangeModelContent((e) => {
-                            try {
-                                // if the json is valid, then set it on this editor as well as the editor behind
-                                const expandedOptions = unflattenJson(JSON.parse(confEditor.getModel().getValue()));
-                                confEditor.updateOptions(expandedOptions.editor);
-                                // theme has to be updated separately
-                                if (self._currentEditorSettings.editor.theme != expandedOptions.editor.theme) {
-                                    monaco.editor.setTheme(expandedOptions.editor.theme);
-                                }
-                                self.monacoEditor.updateOptions(expandedOptions.editor);
-                                // propagate the preference changed to the parent for storage, etc
-                                onPreferencesChanged(expandedOptions);
-                            } catch (e) {
-                                return false;
-                            }
-                            return true;
-                        });
-                    },
-                    onClose: () => {
-                        confEditor.dispose();
-                    }
-                });
                 modal.setContent(`<h2>Config Editor. Use Intellisense or check <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
                                 <div class="content" style="height: 30vw"/>`);
                 modal.open();
@@ -177,6 +199,48 @@ export class MonacoCodeEditor {
             contextMenuOrder: 1.8,
             contextMenuGroupId: "service",
             run: callbacks.onClose
+        });
+    }
+
+    initializeDiffEditor(): void {
+        let self = this;
+
+        let diffEditor: monaco.editor.IStandaloneDiffEditor;
+
+        let modal = new tingle.modal({
+            cssClass: ['tingle-popup-container'],
+            onOpen: function () {
+                let originalModel = monaco.editor.createModel(self._initialCode, self._language);
+                let modifiedModel = self.monacoEditor.getModel();
+
+                const editorSettings = Object.assign({}, self._currentEditorSettings.editor, self._currentEditorSettings.diffEditor);
+                // create the diff editor
+                diffEditor = monaco.editor.createDiffEditor(this.modalBoxContent.getElementsByClassName("content")[0], editorSettings);
+                diffEditor.setModel({
+                    original: originalModel,
+                    modified: modifiedModel
+                });
+                diffEditor.focus();
+            },
+            onClose: function () {
+                diffEditor.dispose();
+            }
+        });
+        // action triggered by CTRL+K
+        // shows a popup with a diff editor with the initial state of the editor
+        // reuse the current model, so changes can be made directly in the diff editor
+        this.monacoEditor.addAction({
+            id: "viewDiffAction",
+            label: "View Diff",
+            contextMenuGroupId: "service",
+            contextMenuOrder: 1.4,
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
+            keybindingContext: null,
+            run: (ed) => {
+                modal.setContent(`<h2>Diff Editor</h2>
+                            <div class="content" style="height: 30vw"/>`);
+                modal.open();
+            }
         });
     }
 }

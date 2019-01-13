@@ -19,5 +19,5 @@ window.onload = function () {
     }, onPreferencesChanged: (preferences) => {
       console.log("preferences action " + preferences)
     }
-  });
+  }, "test123", "javascript");
 };
