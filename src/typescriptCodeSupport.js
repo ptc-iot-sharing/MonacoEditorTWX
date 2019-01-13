@@ -402,8 +402,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             default:
                 TW.log.error("unknown handlerName in updateHandlerSection: \"" + newHandlerName + "\"");
         }
-        //updateCodeEditor(false/*isReadOnly*/, true);
-        // TODO: replace this with something proper
+        thisPlugin.scriptCodeElem.twCodeEditor("updateLanguage", handlerName);
+
         updateCodeEditingSpace(false/*isReadOnly*/);
     };
 

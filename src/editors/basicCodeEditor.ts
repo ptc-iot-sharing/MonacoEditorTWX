@@ -46,7 +46,7 @@ export class MonacoCodeEditor {
         editorSettings.editor.readOnly = instanceSettings.readonly;
         editorSettings.editor.language = instanceSettings.language;
         editorSettings.editor.model = monaco.editor.createModel(instanceSettings.code, instanceSettings.language,
-            monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName))
+            monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName));
         // create the editor
         this.monacoEditor = monaco.editor.create(container, editorSettings.editor);
         this.setupActionListeners(actionCallbacks);
@@ -94,6 +94,21 @@ export class MonacoCodeEditor {
             lineNumber: (x || 0),
             column: (y || 0)
         });
+    }
+
+    /**
+     * Changes the language of the editor to the given language.
+     * @param language Language to set
+     */
+    public changeLanguage(language: string) {
+        if(this._instanceSettings.language != language) {
+            let value = this.monacoEditor.getValue();
+
+            this.monacoEditor.getModel().dispose();
+            let model = monaco.editor.createModel(value, language, monaco.Uri.parse("twx://privateModel/" + this._instanceSettings.modelName));
+            this.monacoEditor.setModel(model);
+            this._instanceSettings.language = language;
+        }
     }
 
     /**

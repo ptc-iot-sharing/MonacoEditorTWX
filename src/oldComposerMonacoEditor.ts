@@ -26,6 +26,17 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     );
 };
 
+TW.jqPlugins.twCodeEditor.prototype.convertHandlerToMonacoLanguage = function (language: string): string {
+    let mapping = {
+        "SQLCommand": 'sql',
+        'SQLQuery': 'sql',
+        'TypeScript': 'typescript',
+        'Script': 'javascript',
+        'Python': 'python',
+        'R': 'r'
+    }
+    return mapping[language];
+}
 /**
  * Properly dispose the editor when needed. This is called by the thingworx editor when the editor closes or opens
  */
@@ -105,6 +116,12 @@ TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
     }
 };
 
+TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string) {
+    if (this.monacoEditor) {
+        this.monacoEditor.changeLanguage(this.convertHandlerToMonacoLanguage(language));
+    }
+}
+
 /**
  * Scrolls code to a certain location. This is not really used, but we implement it anyhow
  */
@@ -142,27 +159,9 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         return;
     }
     // handle the different modes. For sql, we also need to hide the syntax check button
-    var mode;
-    switch (thisPlugin.properties.handler) {
-        case "SQLCommand":
-        case "SQLQuery":
-            mode = "sql";
-            break;
-        case "TypeScript":
-            mode = "typescript";
-            break;
-        case "Script":
-            mode = "javascript";
-            break;
-        // experimental stuff from James Mccuen
-        case "Python":
-            mode = "python";
-            break;
-        case "R":
-            mode = "r";
-            break;
-    }
-    // begin to init our editor
+    var mode = thisPlugin.convertHandlerToMonacoLanguage(thisPlugin.properties.handler);
+
+    // begin to init the editor
 
     // get the service model from the parent twService editor
     var parentServiceEditorJqEl = jqEl.closest("tr").prev();
