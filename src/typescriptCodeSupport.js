@@ -1463,8 +1463,9 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
         thisPlugin.properties.readOnly = true;
 
         thisPlugin.scriptCodeElem = jqSecondEl.find(".actual-script-code[id=\"" + thisPlugin.scriptObject.id + "\"]");
-
-        updateCodeEditor(true /*isReadOnly*/);
+        if(!thisPlugin.properties.editMode) {
+            updateCodeEditor(true /*isReadOnly*/, true);
+        }
         updateInputOutputDefinitions(true/*isReadOnly*/);
         updateServiceDetails(true/*isReadOnly*/);
     }

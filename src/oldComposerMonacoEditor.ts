@@ -19,6 +19,29 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
  * Only returns a div where the monaco editor goes
  */
 TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
+    // if the user clicks on cancel edit on the parent entity, we don't get back any event.
+    // force it by listening for mutation events
+    let observer = new MutationObserver( (mutations) => {
+        // check for removed target
+        mutations.forEach( (mutation)  => {
+            let nodes = Array.from(mutation.removedNodes);
+            let directMatch = nodes.indexOf(this.jqElement[0]) > -1
+            let parentMatch = nodes.some(parent => parent.contains(this.jqElement[0]));
+            if (directMatch) {
+                this._plugin_cleanup();
+                observer.disconnect();
+            } else if (parentMatch) {
+                this._plugin_cleanup();
+                observer.disconnect();
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        subtree: true,
+        childList: true
+    });
+
     this._plugin_cleanup();
     this.jqElement.html(
         "<div class=\"editor-container\" >" +
