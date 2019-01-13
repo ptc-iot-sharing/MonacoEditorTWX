@@ -402,7 +402,8 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             default:
                 TW.log.error("unknown handlerName in updateHandlerSection: \"" + newHandlerName + "\"");
         }
-        updateCodeEditor(false/*isReadOnly*/);
+        //updateCodeEditor(false/*isReadOnly*/, true);
+        // TODO: replace this with something proper
         updateCodeEditingSpace(false/*isReadOnly*/);
     };
 
@@ -1021,7 +1022,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
         ioSnippetTabsEl.show();
         //set the height of the io tabs area
 
-        updateCodeEditor(false/*isReadOnly*/);
+        updateCodeEditor(false/*isReadOnly*/, true);
         updateInputOutputDefinitions(false/*isReadOnly*/);
         updateServiceDetails(false/*isReadOnly*/);
         setTimeout(function () {
@@ -1045,7 +1046,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
 
         thisPlugin.properties.readOnly = true;
 
-        updateCodeEditor(true/*isReadOnly*/);
+        updateCodeEditor(true/*isReadOnly*/, false);
         updateInputOutputDefinitions(true/*isReadOnly*/);
         updateServiceDetails(true/*isReadOnly*/);
 
@@ -1352,7 +1353,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 doneCancelTooltip.hide();
                 ioSnippetTabsEl.hide();
 
-                updateCodeEditor(true/*isReadOnly*/);
+                updateCodeEditor(true/*isReadOnly*/, false);
                 updateInputOutputDefinitions(true/*isReadOnly*/);
                 updateServiceDetails(true/*isReadOnly*/);
 
@@ -1424,7 +1425,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
 
     thisPlugin.detailsElem = jqSecondEl; //.find('.service-script');
 
-    var updateCodeEditor = function (isReadOnly) {
+    var updateCodeEditor = function (isReadOnly, recreate) {
         if (thisPlugin.scriptObject === undefined) {
             return;
         }
@@ -1448,7 +1449,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                 //markThisAsChanged();
             }
         });
-        if (thisPlugin.detailsElem.is(":visible")) {
+        if (thisPlugin.detailsElem.is(":visible") && recreate) {
             // if we haven't already put codeMirror in, put it in now
             //setTimeout(function() {
             thisPlugin.scriptCodeElem.twCodeEditor("showCodeProperly");
