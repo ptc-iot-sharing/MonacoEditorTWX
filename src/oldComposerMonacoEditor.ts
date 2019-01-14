@@ -26,6 +26,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     let observer = new MutationObserver((mutations) => {
         // check for removed target
         mutations.forEach((mutation) => {
+            if(!this.jqElement) return;
             let nodes = Array.from(mutation.removedNodes);
             let directMatch = nodes.indexOf(this.jqElement[0]) > -1
             let parentMatch = nodes.some(parent => parent.contains(this.jqElement[0]));
@@ -143,7 +144,13 @@ TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
 
 TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string) {
     if (this.monacoEditor) {
-        this.monacoEditor.changeLanguage(this.convertHandlerToMonacoLanguage(language));
+        const mode = this.convertHandlerToMonacoLanguage(language);
+        this.monacoEditor.changeLanguage(mode);
+        if (this.monacoEditor instanceof TypescriptCodeEditor && mode == 'twxTypescript') {
+            this.monacoEditor.onEditorTranspileFinised((code) => {
+                this.properties.javascriptCode = code;
+            });
+        }
     }
 }
 

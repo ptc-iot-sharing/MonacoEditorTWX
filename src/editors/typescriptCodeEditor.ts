@@ -29,6 +29,9 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
             }
         });
         this.addMetadataForReferencedEntities();
+        if (this._instanceSettings.language === "twxTypescript") {
+            this.transpileTypeScript();
+        }
     }
 
     private async transpileTypeScript() {
