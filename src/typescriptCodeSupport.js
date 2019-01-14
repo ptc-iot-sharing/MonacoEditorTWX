@@ -1186,6 +1186,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
                     scriptInfo.rows[0] = { "code": transpiledCode };
                 } else {
                     scriptInfo.rows[0]["code"] = scriptCode;
+                    delete scriptInfo.rows[1];
                 }
                 thisPlugin.scriptObject.code = scriptCode;
                 implOfThisSvc.handlerName = "Script";
