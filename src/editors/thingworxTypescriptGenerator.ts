@@ -163,7 +163,7 @@ export class ThingworxToTypescriptGenerator {
             if(serviceParamDefinition) {
                 classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * Params:\n ${serviceParamDefinition}**/\n${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
             } else {
-                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * \n **/\n${service.name}: ${this.getTypescriptBaseType(outputMetadata)};\n`;
+                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * \n **/\n${service.name}(): ${this.getTypescriptBaseType(outputMetadata)};\n`;
             }
         }
 
