@@ -118,7 +118,7 @@ export class ThingworxToTypescriptGenerator {
     * @param  {Boolean} showGenericServices Include the generic services in the results
     * @return The typescript definitions generated using this metadata
     */
-    public generateTypeScriptDefinitions(effectiveShapeMetadata, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
+    public generateTypeScriptDefinitions(effectiveShapeMetadata, propertyData, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
@@ -174,7 +174,11 @@ export class ThingworxToTypescriptGenerator {
 
             let property = propertyDefs[def];
             // generate an export for each property
-            classDefinition += `/**\n * ${property.description}\n */\n ${property.name}: ${this.getTypescriptBaseType(property)};\n`;
+            if(typeof propertyData[property.name] == "string") {
+                classDefinition += `/**\n * ${property.description}\n */\n readonly ${property.name} = "${propertyData[property.name]}";\n`;
+            } else {
+                classDefinition += `/**\n * ${property.description}\n */\n ${property.name}: ${this.getTypescriptBaseType(property)};\n`;
+            }
         }
         classDefinition = classDefinition + "}\n";
 
@@ -194,7 +198,7 @@ export class ThingworxToTypescriptGenerator {
             let resourceLibrary = resourceLibraries[key].details;
             let validEntityName = sanitizeEntityName(key);
             let libraryName = "Resource" + validEntityName;
-            let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
+            let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, {}, libraryName, true, false);
             this.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
             resourcesDef += `/**\n * ${resourceLibraries[key].description}\n**/\n`;
             resourcesDef += `\t'${key}': twx.${libraryName}.${libraryName};\n`;

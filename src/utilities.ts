@@ -165,3 +165,8 @@ export function getEntityMetadata(entityType: string, entityName: string): Promi
         resolve(TW.IDE.getEntityMetaData(entityType, entityName));
     });
 }
+
+export async function getThingPropertyValues(entityName: string): Promise<any> {
+    const response = await fetch(`/Thingworx/Things/${TW.encodeEntityName(entityName)}/Properties?Accept=application%2Fjson&method=get`);
+    return response.json();
+}

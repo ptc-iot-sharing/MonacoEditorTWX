@@ -1,7 +1,7 @@
 import { MonacoCodeEditor } from "./basicCodeEditor";
 import * as monaco from '../monaco-editor/esm/vs/editor/editor.api';
 import { WorkerScriptManager } from "./workerScriptManager";
-import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata } from '../utilities';
+import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../utilities';
 import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES } from "../constants";
 import { ThingworxToTypescriptGenerator } from "./thingworxTypescriptGenerator";
 
@@ -171,9 +171,13 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
                 if (!TypescriptCodeEditor.workerManager.containsLib("thingworx/" + entityName + ".d.ts")) {
                     // add the metadata only if it does not exist
                     let metadata = await getEntityMetadata(collection, entity);
+                    let propertyData;
+                    if(collection == "Things") {
+                        propertyData = await getThingPropertyValues(entity);
+                    }
                     if (metadata) {
                         // generate the typescript definition
-                        let entityTypescriptDef = TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(metadata, entityName, true, true);
+                        let entityTypescriptDef = TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(metadata, propertyData.rows[0], entityName, true, true);
                         // add the typescript definition for this entity
                         this.registerEntityDefinitionLibrary(entityTypescriptDef, collection, entity);
                     } else {
@@ -216,7 +220,7 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
             // we append an me in here, just in case the definition is already added by the autocomplete in another service
             var fileName = "thingworx/" + entityName + "Me.d.ts";
             TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(
-                meThingModel.attributes.effectiveShape, entityName, false, true), fileName);
+                meThingModel.attributes.effectiveShape, meThingModel.propertyData, entityName, false, true), fileName);
             // in the current globals we have me declarations as well as input parameters
             TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateServiceGlobals(
                 serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts");
