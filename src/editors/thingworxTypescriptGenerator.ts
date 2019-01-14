@@ -204,6 +204,19 @@ export class ThingworxToTypescriptGenerator {
     }
 
     /**
+    * Declares the me object and the inputs of the service
+    */
+    public generateServiceGlobals(serviceMetadata, entityName) {
+    var definition = `const me = new twx.${entityName}.${entityName}();`;
+    for (var key in serviceMetadata.parameterDefinitions) {
+        if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
+        var inputDef = serviceMetadata.parameterDefinitions[key];
+        definition += `let ${key}: ${this.getTypescriptBaseType(inputDef)};`;
+    }
+    return definition;
+}
+
+    /**
      * Gets the typescript interface type from a thingworx baseType
      */
     private getTypescriptBaseType(definition: { baseType: string, aspects?: { dataShape?: string } }) {

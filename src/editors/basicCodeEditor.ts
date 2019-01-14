@@ -121,6 +121,15 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Called whenever the editor is focused
+     */
+    public onEditorFocused(callback: () => void) {
+        this.monacoEditor.onDidFocusEditorText(() => {
+            callback();
+        });
+    }
+
+    /**
      * Perform global initialization of the monaco json
      */
     public static performGlobalInitialization() {

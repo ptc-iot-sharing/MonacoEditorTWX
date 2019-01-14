@@ -1,6 +1,7 @@
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
+import { type } from "os";
 
 // automatically import the css file
 require('./styles/oldComposerMonacoEditor.css');
@@ -22,9 +23,9 @@ TW.jqPlugins.twCodeEditor.prototype.insertCode = function (code) {
 TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     // if the user clicks on cancel edit on the parent entity, we don't get back any event.
     // force it by listening for mutation events
-    let observer = new MutationObserver( (mutations) => {
+    let observer = new MutationObserver((mutations) => {
         // check for removed target
-        mutations.forEach( (mutation)  => {
+        mutations.forEach((mutation) => {
             let nodes = Array.from(mutation.removedNodes);
             let directMatch = nodes.indexOf(this.jqElement[0]) > -1
             let parentMatch = nodes.some(parent => parent.contains(this.jqElement[0]));
@@ -223,7 +224,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         editor = thisPlugin.monacoEditor;
     } else {
         let editorClass;
-        if(mode == 'twxTypescript' || mode == 'twxJavascript') {
+        if (mode == 'twxTypescript' || mode == 'twxJavascript') {
             editorClass = TypescriptCodeEditor;
         } else {
             editorClass = MonacoCodeEditor;
@@ -296,15 +297,27 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
 
     // whenever the model changes, we need to also push the changes up to the other plugins
-    editor.onEditorContentChange(function (code) {
+    editor.onEditorContentChange((code) => {
         thisPlugin.properties.code = code;
         thisPlugin.properties.change(thisPlugin.properties.code);
     });
 
-    if(mode == 'twxTypescript' && editor instanceof TypescriptCodeEditor) {
-        editor.onEditorTranspileFinised((code) => {
-            thisPlugin.properties.javascriptCode = code;
+
+
+    if (editor instanceof TypescriptCodeEditor) {
+        const typescriptCodeEditor = editor as TypescriptCodeEditor;
+        editor.onEditorFocused(() => {
+            const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
+            typescriptCodeEditor.refreshMeDefinitions(serviceModel);
+            TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
+            TypescriptCodeEditor.workerManager.syncExtraLibs();
         });
+
+        if (mode == 'twxTypescript') {
+            typescriptCodeEditor.onEditorTranspileFinised((code) => {
+                thisPlugin.properties.javascriptCode = code;
+            });
+        }
     }
 
     thisPlugin.monacoEditor = editor;

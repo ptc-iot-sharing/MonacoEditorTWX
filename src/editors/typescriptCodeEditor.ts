@@ -152,6 +152,10 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         TypescriptCodeEditor.workerManager.syncExtraLibs();
     }
 
+    /**
+     * Listen to results of transpilation of typescript to javascript
+     * @param callback Action to execute when the transpilation is finished
+     */
     public onEditorTranspileFinised(callback: (javascriptCode: string) => void) {
         this.onTranspileFinished = callback;
     }
@@ -194,6 +198,26 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         typescriptMetadata += "}\n";
 
         TypescriptCodeEditor.workerManager.addExtraLib(typescriptMetadata, "thingworx/" + entityName + ".d.ts");
+    }
+
+
+    /**
+     * Refreshes the definitions related to the me context
+     * @param serviceModel the thingworx service model
+     */
+    public refreshMeDefinitions(serviceModel) {
+        var meThingModel = serviceModel.model;
+        // if we have a valid entity name and the effectiveShape is set
+        if (meThingModel.id && meThingModel.attributes.effectiveShape) {
+            var entityName = meThingModel.entityType + "" + sanitizeEntityName(meThingModel.id);
+            // we append an me in here, just in case the definition is already added by the autocomplete in another service
+            var fileName = "thingworx/" + entityName + "Me.d.ts";
+            TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(
+                meThingModel.attributes.effectiveShape, entityName, false, true), fileName);
+            // in the current globals we have me declarations as well as input parameters
+            TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateServiceGlobals(
+                serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts");
+        }
     }
 
       /**
