@@ -6,8 +6,8 @@
 import { WorkerManager } from './workerManager';
 import * as languageFeatures from './languageFeatures';
 var scriptWorkerMap = {};
-export function setupNamedLanguage(langaugeName, isTypescript, defaults) {
-    scriptWorkerMap[langaugeName + "Worker"] = setupMode(defaults, langaugeName);
+export function setupNamedLanguage(languageName, isTypescript, defaults) {
+    scriptWorkerMap[languageName + "Worker"] = setupMode(defaults, languageName);
 }
 export function getNamedLanguageWorker(languageName) {
     var workerName = languageName + "Worker";

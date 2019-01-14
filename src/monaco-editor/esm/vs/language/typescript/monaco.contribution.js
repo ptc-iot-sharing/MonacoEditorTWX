@@ -73,7 +73,7 @@ var LanguageServiceDefaultsImpl = /** @class */ (function () {
             filePath = "ts:extralib-" + Date.now();
         }
         if (this._extraLibs[filePath]) {
-            throw new Error(filePath + " already a extra lib");
+            // the file will be updated in place
         }
         this._extraLibs[filePath] = content;
         if (this._eagerExtraLibSync) {
