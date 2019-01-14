@@ -117,10 +117,7 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         this.codeTranslator.generateDataShapeCode();
         this.codeTranslator.generateScriptFunctionLibraries();
         this.codeTranslator.registeEntityCollectionDefs();
-        // also refresh the me definitions
-       /* refreshMeDefinitions(serviceModel);
-
-        generateResourceFunctions();*/
+        this.codeTranslator.generateResourceFunctions();
         TypescriptCodeEditor.workerManager.syncExtraLibs();
     }
 }

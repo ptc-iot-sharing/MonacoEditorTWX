@@ -1,5 +1,5 @@
 import { WorkerScriptManager } from "./workerScriptManager";
-import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries } from "../utilities";
+import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata } from "../utilities";
 import { ENTITY_TYPES } from "../constants";
 
 
@@ -58,7 +58,7 @@ export class ThingworxToTypescriptGenerator {
     */
     private addDataShapesAsInterfaces(dataShapes) {
         // declare the namespace
-        var dataShapeTs = "export as namespace twx.ds;\n";
+        let dataShapeTs = "export as namespace twx.ds;\n";
         dataShapeTs += "declare namespace twx.ds { \n";
         for (const datashape of dataShapes) {
             // description as jsdoc
@@ -110,6 +110,98 @@ export class ThingworxToTypescriptGenerator {
         this.scriptManager.addExtraLib(entityCollectionsDefs, "thingworx/entityCollections.d.ts");
     }
 
+    /**
+    * Generates a typescript class and namespace for a metadata.
+    * @param  {} effectiveShapeMetadata The enity metadata as a standard object with info about the properties. This is what thingworx responds for a object metadata request
+    * @param  {String} entityName The name of the entity that has this metadata
+    * @param  {Boolean} isGenericMetadata Specifies where to take the services definitios for. This differes if we are on the "me" metadata, or on a generic metadata
+    * @param  {Boolean} showGenericServices Include the generic services in the results
+    * @return The typescript definitions generated using this metadata
+    */
+    public generateTypeScriptDefinitions(effectiveShapeMetadata, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
+        // based on a module class declaration
+        // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
+        let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
+        let classDefinition = "export class " + entityName + " {\n constructor();\n";
+
+        // generate info retated to services
+        let serviceDefs = effectiveShapeMetadata.serviceDefinitions;
+        for (let key in serviceDefs) {
+            if (!serviceDefs.hasOwnProperty(key)) continue;
+            if (!showGenericServices && isGenericService(key)) continue;
+            // first create an interface for service params
+            let service = serviceDefs[key];
+            // metadata for the service parameters
+            let serviceParamDefinition = "";
+            let serviceParameterMetadata;
+            if (isGenericMetadata) {
+                serviceParameterMetadata = service.Inputs.fieldDefinitions;
+            } else {
+                serviceParameterMetadata = service.parameterDefinitions;
+            }
+            if (serviceParameterMetadata && Object.keys(serviceParameterMetadata).length > 0) {
+                namespaceDefinition += "export interface " + service.name + "Params {\n";
+                for (let parameterDef in serviceParameterMetadata) {
+                    if (!serviceParameterMetadata.hasOwnProperty(parameterDef)) continue;
+                    let inputDef = serviceParameterMetadata[parameterDef];
+
+                    namespaceDefinition += "/**\n * " + inputDef.description +
+                        (inputDef.aspects.dataShape ? ("\n * Datashape: " + inputDef.aspects.dataShape) : "") + "\n */\n " +
+                        inputDef.name + (inputDef.aspects.isRequired ? "" : "?") + ":" + this.getTypescriptBaseType(inputDef) + ";\n";
+                    // generate a nice description of the service params
+                    serviceParamDefinition += "*     " + inputDef.name + ": " + this.getTypescriptBaseType(inputDef) +
+                        (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
+                }
+                namespaceDefinition += "}\n";
+            }
+            let outputMetadata;
+            if (isGenericMetadata) {
+                outputMetadata = service.Outputs;
+            } else {
+                outputMetadata = service.resultType;
+            }
+            // now generate the service definition, as well as jsdocs
+            classDefinition += "/**\n * Category: " + service.category + "\n * " + service.description +
+                "\n * " + (serviceParamDefinition ? ("Params:\n " + serviceParamDefinition) : "\n") + " **/\n " +
+                service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
+                "): " + this.getTypescriptBaseType(outputMetadata) + ";\n";
+        }
+
+        // we handle property definitions here
+        let propertyDefs = effectiveShapeMetadata.propertyDefinitions;
+        for (let def in propertyDefs) {
+            if (!propertyDefs.hasOwnProperty(def)) continue;
+
+            let property = propertyDefs[def];
+            // generate an export for each property
+            classDefinition += "/**\n * " + property.description + "\n */" + "\n" + property.name + ":" + this.getTypescriptBaseType(property) + ";\n";
+        }
+        classDefinition = classDefinition + "}\n";
+
+        namespaceDefinition = namespaceDefinition + classDefinition + "}\n";
+
+        return "export as namespace twx." + entityName + ";\n" + namespaceDefinition;
+    }
+
+    public async generateResourceFunctions() {
+        let resourceLibraries = await getResourcesMetadata()
+        let resourcesDef = "declare namespace twx {\n";
+        resourcesDef += "export interface ResourcesInterface {\n";
+        // iterate through all the resources
+        for (let key in resourceLibraries) {
+            if (!resourceLibraries.hasOwnProperty(key)) continue;
+            // generate the metadata for this resource
+            let resourceLibrary = resourceLibraries[key].details;
+            let validEntityName = sanitizeEntityName(key);
+            let libraryName = "Resource" + validEntityName;
+            let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, libraryName, true, false);
+            this.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
+            resourcesDef += `/**\n * ${resourceLibraries[key].description}\n**/\n`;
+            resourcesDef += `\t'${key}': twx.${libraryName}.${libraryName};\n`;
+        }
+        resourcesDef += "}\n}\n let Resources: twx.ResourcesInterface;";
+        this.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
+    }
 
     /**
      * Gets the typescript interface type from a thingworx baseType

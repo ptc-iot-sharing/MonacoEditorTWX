@@ -150,3 +150,12 @@ export function getScriptFunctionLibraries(): Promise<any> {
         TW.IDE.getScriptFunctionLibraries(false, resolve);
     })
 }
+export function getResourcesMetadata(): Promise<any> {
+    return new Promise(function (resolve) {
+        TW.IDE.getResources(false, resolve);
+    });
+}
+
+export function isGenericService(serviceName: string) :boolean {
+    return TW.IDE.isGenericServiceName(serviceName);
+}
