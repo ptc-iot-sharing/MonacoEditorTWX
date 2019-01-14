@@ -140,17 +140,16 @@ export class ThingworxToTypescriptGenerator {
                 serviceParameterMetadata = service.parameterDefinitions;
             }
             if (serviceParameterMetadata && Object.keys(serviceParameterMetadata).length > 0) {
-                namespaceDefinition += "export interface " + service.name + "Params {\n";
+                namespaceDefinition += `export interface ${service.name}Params {\n`;
                 for (let parameterDef in serviceParameterMetadata) {
                     if (!serviceParameterMetadata.hasOwnProperty(parameterDef)) continue;
                     let inputDef = serviceParameterMetadata[parameterDef];
 
-                    namespaceDefinition += "/**\n * " + inputDef.description +
-                        (inputDef.aspects.dataShape ? ("\n * Datashape: " + inputDef.aspects.dataShape) : "") + "\n */\n " +
-                        inputDef.name + (inputDef.aspects.isRequired ? "" : "?") + ":" + this.getTypescriptBaseType(inputDef) + ";\n";
+                    const dataShapeInfo = (inputDef.aspects.dataShape ? (`\n * Datashape: ${inputDef.aspects.dataShape}`) : "");
+                    namespaceDefinition += `/**\n * ${inputDef.description} ${dataShapeInfo} \n */\n ${inputDef.name}${(inputDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(inputDef)};\n`;
                     // generate a nice description of the service params
-                    serviceParamDefinition += "*     " + inputDef.name + ": " + this.getTypescriptBaseType(inputDef) +
-                        (inputDef.aspects.dataShape ? (" datashape with " + inputDef.aspects.dataShape) : "") + " - " + inputDef.description + "\n ";
+                    const dataShapeDescription = inputDef.aspects.dataShape ? (` with datashape ${inputDef.aspects.dataShape}`) : "";
+                    serviceParamDefinition += `*\t${inputDef.name}: ${this.getTypescriptBaseType(inputDef)} ${dataShapeDescription} - ${inputDef.description}\n`;
                 }
                 namespaceDefinition += "}\n";
             }
@@ -161,10 +160,11 @@ export class ThingworxToTypescriptGenerator {
                 outputMetadata = service.resultType;
             }
             // now generate the service definition, as well as jsdocs
-            classDefinition += "/**\n * Category: " + service.category + "\n * " + service.description +
-                "\n * " + (serviceParamDefinition ? ("Params:\n " + serviceParamDefinition) : "\n") + " **/\n " +
-                service.name + "(" + (serviceParamDefinition ? ("params:" + entityName + "." + service.name + "Params") : "") +
-                "): " + this.getTypescriptBaseType(outputMetadata) + ";\n";
+            if(serviceParamDefinition) {
+                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * Params:\n ${serviceParamDefinition}**/\n${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            } else {
+                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * \n **/\n${service.name}: ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            }
         }
 
         // we handle property definitions here
@@ -174,13 +174,13 @@ export class ThingworxToTypescriptGenerator {
 
             let property = propertyDefs[def];
             // generate an export for each property
-            classDefinition += "/**\n * " + property.description + "\n */" + "\n" + property.name + ":" + this.getTypescriptBaseType(property) + ";\n";
+            classDefinition += `/**\n * ${property.description}\n */\n ${property.name}: ${this.getTypescriptBaseType(property)};\n`;
         }
         classDefinition = classDefinition + "}\n";
 
         namespaceDefinition = namespaceDefinition + classDefinition + "}\n";
 
-        return "export as namespace twx." + entityName + ";\n" + namespaceDefinition;
+        return `export as namespace twx.${entityName};\n${namespaceDefinition}`;
     }
 
     public async generateResourceFunctions() {
