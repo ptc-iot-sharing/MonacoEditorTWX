@@ -2,15 +2,9 @@ import { MonacoCodeEditor } from "./basicCodeEditor";
 import * as monaco from '../monaco-editor/esm/vs/editor/editor.api';
 import { WorkerScriptManager } from "./workerScriptManager";
 import { loadSnippets, spotlightSearch, sanitizeEntityName } from '../utilities';
-import { DISALLOWED_ENTITY_CHARS } from "../constants";
+import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES } from "../constants";
 import { ThingworxToTypescriptGenerator } from "./thingworxTypescriptGenerator";
 
-
-const ENTITY_TYPES = ["ApplicationKeys", "Authenticators", "Bindings", "Blogs", "Dashboards",
-    "DataAnalysisDefinitions", "DataTags", "ModelTags", "DirectoryServices", "Groups", "LocalizationTables",
-    "Logs", "Mashups", "MediaEntities", "Menus", "Networks", "Organizations", "Permissions", "Projects", "StateDefinitions",
-    "StyleDefinitions", "Subsystems", "Things", "ThingTemplates", "ThingShapes", "Users", "Wikis"
-];
 
 export class TypescriptCodeEditor extends MonacoCodeEditor {
     public static workerManager: WorkerScriptManager;
@@ -122,12 +116,11 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         // we regenerate all the datashape definitions when a new editor loads
         this.codeTranslator.generateDataShapeCode();
         this.codeTranslator.generateScriptFunctionLibraries();
+        this.codeTranslator.registeEntityCollectionDefs();
         // also refresh the me definitions
        /* refreshMeDefinitions(serviceModel);
 
-        generateScriptFunctions();
-        generateResourceFunctions();
-        registerEntityCollectionDefs();*/
+        generateResourceFunctions();*/
         TypescriptCodeEditor.workerManager.syncExtraLibs();
     }
 }

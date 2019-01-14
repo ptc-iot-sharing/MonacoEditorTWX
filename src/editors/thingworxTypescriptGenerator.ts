@@ -1,5 +1,6 @@
 import { WorkerScriptManager } from "./workerScriptManager";
 import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries } from "../utilities";
+import { ENTITY_TYPES } from "../constants";
 
 
 export class ThingworxToTypescriptGenerator {
@@ -99,6 +100,15 @@ export class ThingworxToTypescriptGenerator {
         this.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
+    public registeEntityCollectionDefs() {
+        let entityCollectionsDefs = "";
+        // now add all the entity collections
+        for (const entityType of ENTITY_TYPES) {
+            entityCollectionsDefs += "const " + entityType + ": twx." + entityType + "Interface;\n";
+        }
+
+        this.scriptManager.addExtraLib(entityCollectionsDefs, "thingworx/entityCollections.d.ts");
+    }
 
 
     /**
