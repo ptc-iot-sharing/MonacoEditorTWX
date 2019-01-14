@@ -116,7 +116,7 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
                         for (let i = 0; i < rows.length; i++) {
                             // look in the entity collection libs and skip the elements already in there
                             let entityName = entityType + sanitizeEntityName(rows[i].name);
-                            if (this.workerManager.containsLib(entityName)) {
+                            if (this.workerManager.containsLib("thingworx/" + entityName + ".d.ts")) {
                                 continue;
                             }
                             // also filter out the entities with dots or are not valid if auto-completing
