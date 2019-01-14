@@ -1,4 +1,5 @@
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+import { DISALLOWED_ENTITY_CHARS } from './constants';
 
 declare const ThingworxInvoker: any;
 
@@ -114,15 +115,17 @@ export function spotlightSearch(entityType, searchTerm): Promise<any[]> {
 };
 
 /**
- * Loads a json monaco snippet file and returns a promise
+ * Loads a json monaco snippet file and returns a the Completion list
  *
  * @param  {string} snippets to load
  */
-export function loadSnippets(snippets) {
-    var result = [];
-    for (var key in snippets) {
+export function loadSnippets(snippets): monaco.languages.CompletionList {
+    let result = {
+        suggestions: []
+    };
+    for (let key in snippets) {
         if (snippets.hasOwnProperty(key)) {
-            result.push({
+            result.suggestions.push({
                 kind: monaco.languages.CompletionItemKind.Snippet,
                 label: snippets[key].prefix,
                 documentation: snippets[key].description,
@@ -134,3 +137,10 @@ export function loadSnippets(snippets) {
     }
     return result;
 };
+
+/**
+ * Sanitizes an entity name to be a valid javascript declaration
+ */
+export function sanitizeEntityName(entityName: string): string {
+    return entityName.replace(DISALLOWED_ENTITY_CHARS, "");
+}

@@ -1,8 +1,12 @@
-import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from '../monaco-editor/esm/vs/editor/editor.api';
 
 export class WorkerScriptManager {
     typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults;
     javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults;
+
+    libNames: {
+        [name: string]: [monaco.IDisposable, monaco.IDisposable]
+    } = {};
 
     /**
      * Create a new WorkerScriptManager that acts as a interface allowing us to more easily interact with monaco library
@@ -19,8 +23,21 @@ export class WorkerScriptManager {
         this.typescriptDefaults.syncExtraLibs();
     }
 
-    addExtraLib(code, name) {
-        return [this.typescriptDefaults.addExtraLib(code, name), this.javascriptDefaults.addExtraLib(code, name)];
+    addExtraLib(code, name): [monaco.IDisposable, monaco.IDisposable] {
+        let disposables: [monaco.IDisposable, monaco.IDisposable] =  [this.typescriptDefaults.addExtraLib(code, name), this.javascriptDefaults.addExtraLib(code, name)];
+        this.libNames[name] = disposables;
+        return disposables;
+    }
+
+    disposeLib(name: string) {
+        if(this.libNames[name]) {
+            this.libNames[name][0].dispose();
+            this.libNames[name][0].dispose();
+        }
+    }
+
+    containsLib(name: string): boolean {
+        return this.libNames[name] != undefined;
     }
 
     async addRemoteExtraLib(location, name) {

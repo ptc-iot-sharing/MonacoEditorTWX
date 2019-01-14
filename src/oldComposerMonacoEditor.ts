@@ -1,5 +1,6 @@
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
+import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
 
 // automatically import the css file
 require('./styles/oldComposerMonacoEditor.css');
@@ -53,8 +54,8 @@ TW.jqPlugins.twCodeEditor.prototype.convertHandlerToMonacoLanguage = function (l
     let mapping = {
         "SQLCommand": 'sql',
         'SQLQuery': 'sql',
-        'TypeScript': 'typescript',
-        'Script': 'javascript',
+        'TypeScript': 'twxTypescript',
+        'Script': 'twxJavascript',
         'Python': 'python',
         'R': 'r'
     }
@@ -221,8 +222,14 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     if (thisPlugin.monacoEditor) {
         editor = thisPlugin.monacoEditor;
     } else {
+        let editorClass;
+        if(mode == 'twxTypescript' || mode == 'twxJavascript') {
+            editorClass = TypescriptCodeEditor;
+        } else {
+            editorClass = MonacoCodeEditor;
+        }
         // else create a new one
-        editor = new MonacoCodeEditor(codeTextareaElem[0], editorSettings, {
+        editor = new editorClass(codeTextareaElem[0], editorSettings, {
             onSave: () => {
                 // fake a click on the saveEntity button
                 // this is hacky... there is no other way of executing the saveService on the twServiceEditor

@@ -101,7 +101,7 @@ export class MonacoCodeEditor {
      * @param language Language to set
      */
     public changeLanguage(language: string) {
-        if(this._instanceSettings.language != language) {
+        if (this._instanceSettings.language != language) {
             let value = this.monacoEditor.getValue();
 
             this.monacoEditor.getModel().dispose();
@@ -120,9 +120,10 @@ export class MonacoCodeEditor {
         });
     }
 
-    private initializePreferenceEditor(onPreferencesChanged: (newPreferences: any) => void) {
-        const self = this;
-
+    /**
+     * Perform global initialization of the monaco json
+     */
+    public static performGlobalInitialization() {
         // initialize the json worker with the give schema
         let confSchema = require("../configs/confSchema.json");
 
@@ -135,6 +136,10 @@ export class MonacoCodeEditor {
             }],
             validate: true
         });
+    }
+
+    private initializePreferenceEditor(onPreferencesChanged: (newPreferences: any) => void) {
+        const self = this;
 
         let confEditor: monaco.editor.IStandaloneCodeEditor;
         let modal = new tingle.modal({
@@ -270,3 +275,6 @@ export class MonacoCodeEditor {
         });
     }
 }
+
+// perform the global init
+MonacoCodeEditor.performGlobalInitialization();
