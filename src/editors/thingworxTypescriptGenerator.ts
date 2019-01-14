@@ -1,5 +1,5 @@
 import { WorkerScriptManager } from "./workerScriptManager";
-import { sanitizeEntityName, getDataShapeDefinitions } from "../utilities";
+import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries } from "../utilities";
 
 
 export class ThingworxToTypescriptGenerator {
@@ -9,7 +9,7 @@ export class ThingworxToTypescriptGenerator {
         this.scriptManager = scriptManager;
     }
 
-    public async  generateDataShapeCode() {
+    public async generateDataShapeCode() {
         try {
             let dataShapes = await getDataShapeDefinitions();
             this.addDataShapesAsInterfaces(dataShapes);
@@ -18,6 +18,39 @@ export class ThingworxToTypescriptGenerator {
             console.error("Monaco: Failed to generate typescript definitions from dataShapes " + reason);
         }
     }
+
+    public async generateScriptFunctionLibraries() {
+        let scriptFunctions = await getScriptFunctionLibraries();
+        let result = "";
+        // iterate through all the script functions libraries
+        for (let key in scriptFunctions) {
+            if (!scriptFunctions.hasOwnProperty(key)) continue;
+            // iterate through all the function definitions
+            let scriptLibrary = scriptFunctions[key].details.functionDefinitions;
+            for (let def in scriptLibrary) {
+                if (!scriptLibrary.hasOwnProperty(def)) continue;
+                let functionDef = scriptLibrary[def];
+                // generate at the same time both the jsdoc as well as the function declaration
+                let jsDoc = `/**\n * ${functionDef.description}`;
+                let declaration = `declare function ${functionDef.name}(`;
+                for (let i = 0; i < functionDef.parameterDefinitions.length; i++) {
+                    let functionDefParam = functionDef.parameterDefinitions[i];
+                    jsDoc += `\n * @param ${functionDefParam.name} ${functionDefParam.description}`;
+                    declaration += `${functionDefParam.name}: ${this.getTypescriptBaseType(functionDefParam)}`;
+                    // add a comma between the parameters
+                    if (i < functionDef.parameterDefinitions.length - 1) {
+                        declaration += ", ";
+                    }
+                }
+                // add the return info
+                jsDoc += `\n * @return ${functionDef.resultType.description}\n **/`;
+                declaration += `): ${this.getTypescriptBaseType(functionDef.resultType)}`;
+                result += `\n ${jsDoc}\n${declaration};`;
+            }
+        }
+        this.scriptManager.addExtraLib(result, "thingworx/scriptFunctions.d.ts");
+    }
+
 
     /**
     * Generate a typescript lib with all the datashapes as interfaces

@@ -121,6 +121,7 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // we regenerate all the datashape definitions when a new editor loads
         this.codeTranslator.generateDataShapeCode();
+        this.codeTranslator.generateScriptFunctionLibraries();
         // also refresh the me definitions
        /* refreshMeDefinitions(serviceModel);
 

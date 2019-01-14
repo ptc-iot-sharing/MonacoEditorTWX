@@ -55,7 +55,7 @@ export function unflattenJson(data) {
 /**
  * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
-export function getDataShapeDefinitions() {
+export function getDataShapeDefinitions(): Promise<any> {
     var invokerSpec = {
         entityType: "Things",
         entityName: "MonacoEditorHelper",
@@ -143,4 +143,10 @@ export function loadSnippets(snippets): monaco.languages.CompletionList {
  */
 export function sanitizeEntityName(entityName: string): string {
     return entityName.replace(DISALLOWED_ENTITY_CHARS, "");
+}
+
+export function getScriptFunctionLibraries(): Promise<any> {
+    return new Promise(function (resolve) {
+        TW.IDE.getScriptFunctionLibraries(false, resolve);
+    })
 }
