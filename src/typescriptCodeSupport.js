@@ -402,7 +402,7 @@ TW.jqPlugins.twServiceEditor.prototype._plugin_afterSetProperties = function () 
             default:
                 TW.log.error("unknown handlerName in updateHandlerSection: \"" + newHandlerName + "\"");
         }
-        thisPlugin.scriptCodeElem.twCodeEditor("updateLanguage", handlerName);
+        thisPlugin.scriptCodeElem.twCodeEditor("updateLanguage", handlerName, thisPlugin.scriptObject.code);
 
         updateCodeEditingSpace(false/*isReadOnly*/);
     };

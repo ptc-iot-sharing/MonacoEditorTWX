@@ -100,12 +100,10 @@ export class MonacoCodeEditor {
      * Changes the language of the editor to the given language.
      * @param language Language to set
      */
-    public changeLanguage(language: string) {
+    public changeLanguage(language: string, code: string) {
         if (this._instanceSettings.language != language) {
-            let value = this.monacoEditor.getValue();
-
             this.monacoEditor.getModel().dispose();
-            let model = monaco.editor.createModel(value, language, monaco.Uri.parse("twx://privateModel/" + this._instanceSettings.modelName));
+            let model = monaco.editor.createModel(code, language, monaco.Uri.parse("twx://privateModel/" + this._instanceSettings.modelName));
             this.monacoEditor.setModel(model);
             this._instanceSettings.language = language;
         }
@@ -115,7 +113,7 @@ export class MonacoCodeEditor {
      * Called whenever the contents of the code editor have been changed.
      */
     public onEditorContentChange(callback: (code: string) => void) {
-        this.monacoEditor.getModel().onDidChangeContent(() => {
+        this.monacoEditor.onDidChangeModelContent(() => {
             callback(this.monacoEditor.getModel().getValue())
         });
     }

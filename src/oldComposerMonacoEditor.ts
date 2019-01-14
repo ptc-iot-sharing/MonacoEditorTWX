@@ -142,10 +142,10 @@ TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
     }
 };
 
-TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string) {
+TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string, code: string) {
     if (this.monacoEditor) {
         const mode = this.convertHandlerToMonacoLanguage(language);
-        this.monacoEditor.changeLanguage(mode);
+        this.monacoEditor.changeLanguage(mode, code);
         if (this.monacoEditor instanceof TypescriptCodeEditor && mode == 'twxTypescript') {
             this.monacoEditor.onEditorTranspileFinised((code) => {
                 this.properties.javascriptCode = code;
