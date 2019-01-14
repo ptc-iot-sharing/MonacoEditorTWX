@@ -1,7 +1,9 @@
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
-import { type } from "os";
+import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+// expose monaco library globally
+window["monaco"] = monaco;
 
 // automatically import the css file
 require('./styles/oldComposerMonacoEditor.css');
