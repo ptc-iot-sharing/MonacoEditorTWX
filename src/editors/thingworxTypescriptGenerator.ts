@@ -51,19 +51,18 @@ export class ThingworxToTypescriptGenerator {
     }
 
     private addDataShapesCollection(dataShapes) {
-        var datashapesDef = "declare namespace twx {\n";
+        let datashapesDef = "declare namespace twx {\n";
         datashapesDef += "interface DataShapes {\n";
         // iterate through all the datashapes
-        for (var i = 0; i < dataShapes.length; i++) {
-            var datashape = dataShapes[i];
+        for (const datashape of dataShapes) {
             // generate the metadata for this resource
-            var validEntityName = sanitizeEntityName(datashape.name);
+            let validEntityName = sanitizeEntityName(datashape.name);
             if (datashape.description) {
                 datashapesDef += `/**\n * ${datashape.description}\n**/\n`;
             }
             datashapesDef += `\t'${datashape.name}': twx.ds<twx.ds.${validEntityName}>;\n`;
         }
-        datashapesDef += "}\n}\n var DataShapes: twx.DataShapes;";
+        datashapesDef += "}\n}\n const DataShapes: twx.DataShapes;";
         this.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
@@ -73,10 +72,10 @@ export class ThingworxToTypescriptGenerator {
      * Gets the typescript interface type from a thingworx baseType
      */
     private getTypescriptBaseType(definition: { baseType: string, aspects?: { dataShape?: string } }) {
-        if (definition.baseType != "INFOTABLE") {
-            return "twx." + definition.baseType;
-        } else {
-            return "twx." + definition.baseType + (definition.aspects.dataShape ? ("<twx.ds." + sanitizeEntityName(definition.aspects.dataShape) + ">") : "");
+        let result = `twx.${definition.baseType}`;
+        if (definition.baseType == "INFOTABLE" && definition.aspects && definition.aspects.dataShape) {
+            result += `${`<twx.ds.${sanitizeEntityName(definition.aspects.dataShape)}>`}`;
         }
+        return result;
     }
 }
