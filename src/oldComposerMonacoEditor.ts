@@ -301,6 +301,12 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         thisPlugin.properties.change(thisPlugin.properties.code);
     });
 
+    if(mode == 'twxTypescript' && editor instanceof TypescriptCodeEditor) {
+        editor.onEditorTranspileFinised((code) => {
+            thisPlugin.properties.javascriptCode = code;
+        });
+    }
+
     thisPlugin.monacoEditor = editor;
 
     /**

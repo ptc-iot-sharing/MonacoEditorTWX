@@ -28,9 +28,9 @@ export interface MonacoInstanceSettings {
 }
 
 export class MonacoCodeEditor {
-    private monacoEditor: monaco.editor.IStandaloneCodeEditor;
-    private _currentEditorSettings: MonacoEditorSettings;
-    private _instanceSettings: MonacoInstanceSettings;
+    monacoEditor: monaco.editor.IStandaloneCodeEditor;
+    _currentEditorSettings: MonacoEditorSettings;
+    _instanceSettings: MonacoInstanceSettings;
 
     /**
      * Creates a new monaco editor in the given container

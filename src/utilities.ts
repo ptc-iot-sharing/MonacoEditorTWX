@@ -156,6 +156,12 @@ export function getResourcesMetadata(): Promise<any> {
     });
 }
 
-export function isGenericService(serviceName: string) :boolean {
+export function isGenericService(serviceName: string): boolean {
     return TW.IDE.isGenericServiceName(serviceName);
+}
+
+export function getEntityMetadata(entityType: string, entityName: string): Promise<any> {
+    return new Promise(function(resolve) {
+        resolve(TW.IDE.getEntityMetaData(entityType, entityName));
+    });
 }
