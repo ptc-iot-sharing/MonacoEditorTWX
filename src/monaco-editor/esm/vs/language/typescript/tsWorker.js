@@ -44,9 +44,12 @@ var TypeScriptWorker = /** @class */ (function () {
         if (model) {
             return model.version.toString();
         }
-        else if (this.isDefaultLibFileName(fileName) || fileName in this._extraLibs) {
-            // extra lib and default lib are static
+        else if (this.isDefaultLibFileName(fileName)) {
+            // default lib is static
             return '1';
+        }
+        else if (fileName in this._extraLibs) {
+            return this._extraLibs[fileName].version.toString();
         }
     };
     TypeScriptWorker.prototype.getScriptSnapshot = function (fileName) {
@@ -58,7 +61,7 @@ var TypeScriptWorker = /** @class */ (function () {
         }
         else if (fileName in this._extraLibs) {
             // static extra lib
-            text = this._extraLibs[fileName];
+            text = this._extraLibs[fileName].content;
         }
         else if (fileName === DEFAULT_LIB.NAME) {
             text = DEFAULT_LIB.CONTENTS;
