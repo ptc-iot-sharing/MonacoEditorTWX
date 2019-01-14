@@ -173,7 +173,7 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
                 if (!TypescriptCodeEditor.workerManager.containsLib("thingworx/" + entityName + ".d.ts")) {
                     // add the metadata only if it does not exist
                     let metadata = await getEntityMetadata(collection, entity);
-                    let propertyData;
+                    let propertyData = {rows: [{}]};
                     if(collection == "Things") {
                         propertyData = await getThingPropertyValues(entity);
                     }
