@@ -69,6 +69,13 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Bring focus onto the text editor
+     */
+    public focus() {
+        this.monacoEditor.focus();
+    }
+
+    /**
      * Dispose of the given editor, and release all models and used resources
      */
     public dispose() {

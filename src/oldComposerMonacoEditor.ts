@@ -4,6 +4,7 @@ import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 // expose monaco library globally
 window["monaco"] = monaco;
+declare const ThingworxInvoker: any;
 
 // automatically import the css file
 require('./styles/oldComposerMonacoEditor.css');
@@ -28,7 +29,7 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
     let observer = new MutationObserver((mutations) => {
         // check for removed target
         mutations.forEach((mutation) => {
-            if(!this.jqElement) return;
+            if (!this.jqElement) return;
             let nodes = Array.from(mutation.removedNodes);
             let directMatch = nodes.indexOf(this.jqElement[0]) > -1
             let parentMatch = nodes.some(parent => parent.contains(this.jqElement[0]));
@@ -145,6 +146,8 @@ TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
 };
 
 TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string, code: string) {
+    this.properties.handler = language;
+
     if (this.monacoEditor) {
         const mode = this.convertHandlerToMonacoLanguage(language);
         this.monacoEditor.changeLanguage(mode, code);
@@ -169,8 +172,52 @@ TW.jqPlugins.twCodeEditor.prototype.scrollCodeTo = function (x, y) {
  * Checks the syntax of the underlying code using a server based method
  */
 TW.jqPlugins.twCodeEditor.prototype.checkSyntax = function (showSuccess, callback, btnForPopover) {
-    // TODO: syntax check
-    callback(true);
+    var thisPlugin = this;
+    var jqEl = thisPlugin.jqElement;
+    var btn = jqEl.find("button[cmd=\"syntax-check\"]");
+    if (btnForPopover !== undefined) {
+        btn = btnForPopover;
+    }
+    var invoker = new ThingworxInvoker({
+        entityType: "Resources",
+        entityName: "ScriptServices",
+        characteristic: "Services",
+        target: "CheckScriptWithLinesAndColumns",
+        apiMethod: "post",
+        parameters: {
+            script: thisPlugin.properties.handler === "TypeScript" ? thisPlugin.properties.javascriptCode : thisPlugin.properties.code
+        }
+    });
+
+    invoker.invokeService(
+        function (invoker) {
+            var resultInfo = invoker.result.rows[0];
+            if (resultInfo.status === true) {
+                if (showSuccess) {
+                    TW.IDE.twPopoverNotification("info", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-check-passed"));
+                }
+                if (callback !== undefined) {
+                    callback(true);
+                }
+            } else {
+                // 	"missing ( before condition at line 6 column 2 source: [if]"
+                TW.IDE.twPopoverNotification("warning", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-check-failed", { syntaxCheckFail: resultInfo.message }));
+                thisPlugin.monacoEditor.scrollCodeTo(resultInfo.lineNumber, resultInfo.columnNumber);
+                thisPlugin.monacoEditor.focus();
+                if (callback !== undefined) {
+                    callback(false);
+                }
+
+            }
+        },
+        function (invoker, xhr) {
+            TW.IDE.twPopoverNotification("error", btn, TW.IDE.I18NController.translate("tw.code-editor.editor.syntax-evaluation-error", { syntaxEvalError1: xhr.status, syntaxEvalError2: xhr.responseText }));
+            TW.log.error("Monaco: CheckScript failed unexpectedly status:" + xhr.status + ", message: " + xhr.responseText);
+            if (callback !== undefined) {
+                callback(false);
+            }
+        }
+    );
 };
 
 /**
