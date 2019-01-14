@@ -122,13 +122,18 @@ export class ThingworxToTypescriptGenerator {
         // based on a module class declaration
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
-        let classDefinition = "export class " + entityName + " {\n constructor();\n";
+        let classDefinition: string;
+        if(showGenericServices) {
+            classDefinition = `export class ${entityName} extends twx.GenericThing {\n constructor();\n`;
+        } else {
+            classDefinition = `export class ${entityName} {\n constructor();\n`;
+        }
 
         // generate info retated to services
         let serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (let key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
-            if (!showGenericServices && isGenericService(key)) continue;
+            if (isGenericService(key)) continue;
             // first create an interface for service params
             let service = serviceDefs[key];
             // metadata for the service parameters

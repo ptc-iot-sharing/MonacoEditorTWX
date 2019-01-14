@@ -145,6 +145,8 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
         // register the thingworx datashape library
         TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
+        // register the thingworx generic thing
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxGenericThing.d.ts"), "ThingworxGenericThing.d.ts");
 
         this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // we regenerate all the datashape definitions when a new editor loads

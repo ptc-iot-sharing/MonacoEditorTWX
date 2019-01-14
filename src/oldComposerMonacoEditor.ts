@@ -362,6 +362,8 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     if (editor instanceof TypescriptCodeEditor) {
         const typescriptCodeEditor = editor as TypescriptCodeEditor;
+        const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
+        typescriptCodeEditor.refreshMeDefinitions(serviceModel);
         editor.onEditorFocused(() => {
             const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
             typescriptCodeEditor.refreshMeDefinitions(serviceModel);
