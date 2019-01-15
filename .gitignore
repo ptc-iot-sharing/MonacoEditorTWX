@@ -1,5 +1,9 @@
-.gradle/
-.vscode/
-build/
-zip/
 node_modules
+dist
+ui
+.gradle
+build
+zip
+!loader/
+!loader/*
+!loader/*/**
