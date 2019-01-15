@@ -168,6 +168,7 @@ var TypeScriptWorker = /** @class */ (function () {
     };
     TypeScriptWorker.prototype.getPropertiesOrAttributesOf = function (fileName, parentObjects) {
         var currentFile = this._languageService.getProgram().getSourceFile(fileName);
+        var typeChecker = this._languageService.getProgram().getTypeChecker();
         var referencedEntities = {};
         parentObjects.forEach(function (key) { referencedEntities[key] = {}; });
         ts.forEachChild(currentFile, function visitNodes(node) {
@@ -186,7 +187,11 @@ var TypeScriptWorker = /** @class */ (function () {
                     }
                 }
                 if (node.argumentExpression.kind == ts.SyntaxKind.PropertyAccessExpression) {
-                    // TODO: matches Things[me.property]
+                    // matches Things[me.property]
+                    var type = typeChecker.getTypeAtLocation(node.argumentExpression);
+                    if (type["value"]) {
+                        referencedEntities[node.expression.getText()][type["value"]] = true;
+                    }
                 }
                 else if (ts.isStringLiteral(node.argumentExpression)) {
                     // matches Things["test"]
