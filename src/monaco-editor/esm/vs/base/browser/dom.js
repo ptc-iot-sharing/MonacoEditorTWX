@@ -29,6 +29,11 @@ export function clearNode(node) {
         node.removeChild(node.firstChild);
     }
 }
+export function removeNode(node) {
+    if (node.parentNode) {
+        node.parentNode.removeChild(node);
+    }
+}
 export function isInDOM(node) {
     while (node) {
         if (node === document.body) {

@@ -144,7 +144,7 @@ export function renderMarkdown(markdown, options) {
         sanitize: true,
         renderer: renderer
     };
-    element.innerHTML = marked(markdown.value, markedOptions);
+    element.innerHTML = marked.parse(markdown.value, markedOptions);
     signalInnerHTML();
     return element;
 }

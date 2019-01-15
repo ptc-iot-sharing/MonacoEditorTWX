@@ -341,6 +341,8 @@ var SuggestWidget = /** @class */ (function () {
         this.onDidShow = this.onDidShowEmitter.event;
         this.maxWidgetWidth = 660;
         this.listWidth = 330;
+        this.storageServiceAvailable = true;
+        this.expandSuggestionDocs = false;
         this.firstFocusInCurrentList = false;
         var kb = keybindingService.lookupKeybinding('editor.action.triggerSuggest');
         var triggerKeybindingLabel = !kb ? '' : " (" + kb.getLabel() + ")";
@@ -348,6 +350,12 @@ var SuggestWidget = /** @class */ (function () {
         this.isAuto = false;
         this.focusedItem = null;
         this.storageService = storageService;
+        // :facepalm:
+        this.storageService.store('___suggest___', true, 0 /* GLOBAL */);
+        if (!this.storageService.get('___suggest___', 0 /* GLOBAL */)) {
+            this.storageServiceAvailable = false;
+        }
+        this.storageService.remove('___suggest___', 0 /* GLOBAL */);
         this.element = $('.editor-widget.suggest-widget');
         if (!this.editor.getConfiguration().contribInfo.iconsInSuggestions) {
             addClass(this.element, 'no-icons');
@@ -899,10 +907,20 @@ var SuggestWidget = /** @class */ (function () {
         return 'suggestion';
     };
     SuggestWidget.prototype.expandDocsSettingFromStorage = function () {
-        return this.storageService.getBoolean('expandSuggestionDocs', 0 /* GLOBAL */, expandSuggestionDocsByDefault);
+        if (this.storageServiceAvailable) {
+            return this.storageService.getBoolean('expandSuggestionDocs', 0 /* GLOBAL */, expandSuggestionDocsByDefault);
+        }
+        else {
+            return this.expandSuggestionDocs;
+        }
     };
     SuggestWidget.prototype.updateExpandDocsSetting = function (value) {
-        this.storageService.store('expandSuggestionDocs', value, 0 /* GLOBAL */);
+        if (this.storageServiceAvailable) {
+            this.storageService.store('expandSuggestionDocs', value, 0 /* GLOBAL */);
+        }
+        else {
+            this.expandSuggestionDocs = value;
+        }
     };
     SuggestWidget.prototype.dispose = function () {
         this.state = null;
