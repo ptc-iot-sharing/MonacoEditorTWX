@@ -201,6 +201,9 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         typescriptMetadata += "\ndeclare namespace twx {\n";
         typescriptMetadata += `\texport interface ${entityType}Interface {\n`;
         typescriptMetadata += `\t'${entityId}': twx.${entityName}.${entityName};\n`;
+        if(entityType == "Things") {
+            typescriptMetadata += `\t [entityName: string]: twx.GenericThing;\n`;
+        }
         // close the class declaration
         typescriptMetadata += "}\n";
         // close the namespace declaration
