@@ -36,7 +36,7 @@ module.exports = function (env, argv) {
             chunkFilename: '[id].chunk.js',
             jsonpFunction: `webpackJsonp${packageJson.name}`,
             // this is the path when viewing the widget in thingworx
-            publicPath: `/Thingworx/Common/extensions/${packageJson.name}_ExtensionPackage/ui/${packageJson.name}/`
+            publicPath: `/Thingworx/Common/extensions/${packageJson.name}/ui/${packageJson.name}/`
         },
         plugins: [
             // delete build and zip folders
@@ -150,7 +150,7 @@ module.exports = function (env, argv) {
                 xml2js.parseString(data, function (err, result) {
                     if (err) console.log('Error parsing metadata file' + err);
                     // set the name of the extension package
-                    result.Entities.ExtensionPackages[0].ExtensionPackage[0].$.name = packageJson.name + '_ExtensionPackage';
+                    result.Entities.ExtensionPackages[0].ExtensionPackage[0].$.name = packageJson.name;
                     // set the description from the package.json
                     result.Entities.ExtensionPackages[0].ExtensionPackage[0].$.description = packageJson.description;
                     // set the vendor using the author field in package json
