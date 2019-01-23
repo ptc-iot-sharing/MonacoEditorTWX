@@ -7,3 +7,4 @@ zip
 !loader/
 !loader/*
 !loader/*/**
+*.DS_Store
