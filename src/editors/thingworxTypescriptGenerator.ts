@@ -24,10 +24,9 @@ export class ThingworxToTypescriptGenerator {
         let scriptFunctions = await getScriptFunctionLibraries();
         let result = "";
         // iterate through all the script functions libraries
-        for (let key in scriptFunctions) {
-            if (!scriptFunctions.hasOwnProperty(key)) continue;
+        for (let scriptDetails of scriptFunctions) {
             // iterate through all the function definitions
-            let scriptLibrary = scriptFunctions[key].details.functionDefinitions;
+            let scriptLibrary = scriptDetails.functionDefinitions;
             for (let def in scriptLibrary) {
                 if (!scriptLibrary.hasOwnProperty(def)) continue;
                 let functionDef = scriptLibrary[def];

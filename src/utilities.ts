@@ -123,10 +123,15 @@ export function sanitizeEntityName(entityName: string): string {
     return entityName.replace(DISALLOWED_ENTITY_CHARS, "");
 }
 
-export function getScriptFunctionLibraries(): Promise<any> {
-    return new Promise(function (resolve) {
-        TW.IDE.getScriptFunctionLibraries(false, resolve);
-    })
+export async function getScriptFunctionLibraries(): Promise<any[]> {
+    const response = await fetch(`/Thingworx/ScriptFunctionLibraries?Accept=application/json`);
+    const libraries = await response.json();
+    const result = [];
+    for (const scriptFunction of libraries.rows) {
+        const scriptResponse = await fetch(`/Thingworx/ScriptFunctionLibraries/${scriptFunction.name}/FunctionDefinitions?Accept=application/json`);
+        result.push(await scriptResponse.json());
+    }
+    return result;
 }
 export async function getResourcesMetadata(): Promise<any> {
     const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetMetadataOfEntities?Accept=application%2Fjson`, {
