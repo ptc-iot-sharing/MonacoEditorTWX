@@ -1,10 +1,10 @@
 {
     "name": "MonacoScriptEditor",
-    "version": "1.5.0",
+    "version": "1.5.6",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "thingworxServer": "http://localhost:8016/",
     "thingworxUser": "Administrator",
-    "thingworxPassword": "Administrator",
+    "thingworxPassword": "admin",
     "author": "Thingworx RoIcenter",
     "minimumThingWorxVersion": "6.0.0",
     "homepage": "http://roicentersvn/placatus/MonacoScriptEditorWidget",

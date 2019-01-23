@@ -77,7 +77,7 @@ module.exports = function (env, argv) {
             rules: [
                 {
                     test: /(\.jsx|\.js)$/,
-                    exclude: /(node_modules|bower_components|src\\monaco-editor\\esm)/,
+                    exclude: /(node_modules|bower_components|src[\\/]monaco-editor[\\/]esm)/,
                     use: {
                         loader: 'babel-loader',
                         options: {
