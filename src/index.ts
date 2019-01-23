@@ -6,7 +6,7 @@ window.onload = function () {
   // DOM node with the specified ID. This function is invoked
   // from the onLoad event handler of the document (see below).
 
-  new MonacoCodeEditor(document.getElementById("container"), DEFAULT_EDITOR_SETTINGS, {
+  new MonacoCodeEditor(document.getElementById("container"), {editor: DEFAULT_EDITOR_SETTINGS}, {
     onClose: () => {
       console.log("close action")
     },
@@ -19,5 +19,5 @@ window.onload = function () {
     }, onPreferencesChanged: (preferences) => {
       console.log("preferences action " + preferences)
     }
-  }, "test123", "javascript");
+  }, {});
 };

@@ -28,7 +28,9 @@ module.exports = function (env, argv) {
             // the entry point when viewing the index.html page
             htmlDemo: './src/index.ts',
             // the entry point for the ide widget
-            widgetIde: `./src/oldComposerMonacoEditor.ts`
+            widgetIde: `./src/oldComposerMonacoEditor.ts`,
+            // the entry point for the ide widget
+            newComposer: `./src/newComposerMonacoEditor.ts`
         },
         output: {
             path: path.join(__dirname, 'build', 'ui', packageJson.name),
