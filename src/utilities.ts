@@ -55,25 +55,14 @@ export function unflattenJson(data) {
 /**
  * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
-export function getDataShapeDefinitions(): Promise<any> {
-    var invokerSpec = {
-        entityType: "Things",
-        entityName: "MonacoEditorHelper",
-        characteristic: "Services",
-        target: "GetAllDataShapes",
-        apiMethod: "post"
-    };
-    var invoker = new ThingworxInvoker(invokerSpec);
-    return new Promise(function (c, e) {
-        invoker.invokeService(
-            function (invoker) {
-                c(invoker.result.rows);
-            },
-            function (invoker, xhr) {
-                e(invoker.result.rows);
-            }
-        );
+export async function getDataShapeDefinitions(): Promise<any> {
+    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetAllDataShapes?Accept=application%2Fjson`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
+    return response.json();
 };
 
 /**
@@ -81,14 +70,10 @@ export function getDataShapeDefinitions(): Promise<any> {
  * @param  {string} entityType Thingworx Entity Type. 
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
-export function spotlightSearch(entityType, searchTerm): Promise<any[]> {
-    var invokerSpec = {
-        entityType: "Resources",
-        entityName: "SearchFunctions",
-        characteristic: "Services",
-        target: "SpotlightSearch",
-        apiMethod: "post",
-        parameters: {
+export async function spotlightSearch(entityType, searchTerm): Promise<any[]> {
+    const response = await fetch(`/Thingworx/Resources/Resources/Services/SpotlightSearch?Accept=application%2Fjson`, {
+        method: 'POST',
+        body: JSON.stringify({
             searchExpression: searchTerm + "*",
             withPermissions: false,
             isAscending: false,
@@ -99,19 +84,12 @@ export function spotlightSearch(entityType, searchTerm): Promise<any[]> {
             },
             sortBy: "lastModifiedDate",
             searchDescriptions: true
+        }),
+        headers: {
+            'Content-Type': 'application/json'
         }
-    };
-    var invoker = new ThingworxInvoker(invokerSpec);
-    return new Promise(function (c, e) {
-        invoker.invokeService(
-            function (invoker) {
-                c(invoker.result.rows);
-            },
-            function (invoker, xhr) {
-                e("failed to search" + invoker.result.rows);
-            }
-        );
     });
+    return response.json();
 };
 
 /**
@@ -150,23 +128,29 @@ export function getScriptFunctionLibraries(): Promise<any> {
         TW.IDE.getScriptFunctionLibraries(false, resolve);
     })
 }
-export function getResourcesMetadata(): Promise<any> {
-    return new Promise(function (resolve) {
-        TW.IDE.getResources(false, resolve);
+export async function getResourcesMetadata(): Promise<any> {
+    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetMetadataOfEntities?Accept=application%2Fjson`, {
+        method: 'POST',
+        body: JSON.stringify({
+            entityType: 'Resource'
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        }
     });
+    return response.json();
 }
 
-export function isGenericService(serviceName: string): boolean {
-    return TW.IDE.isGenericServiceName(serviceName);
+export function isGenericService(serviceDefinition: { sourceName: string, sourceType: string }): boolean {
+    return serviceDefinition.sourceName == "ConfiguredThing" && serviceDefinition.sourceType == "ThingPackage";
 }
 
-export function getEntityMetadata(entityType: string, entityName: string): Promise<any> {
-    return new Promise(function(resolve) {
-        resolve(TW.IDE.getEntityMetaData(entityType, entityName));
-    });
+export async function getEntityMetadata(entityType: string, entityName: string): Promise<any> {
+    const response = await fetch(`/Thingworx/${entityType}/${encodeURIComponent(entityName)}/Metadata?Accept=application%2Fjson`);
+    return response.json();
 }
 
 export async function getThingPropertyValues(entityName: string): Promise<any> {
-    const response = await fetch(`/Thingworx/Things/${TW.encodeEntityName(entityName)}/Properties?Accept=application%2Fjson&method=get`);
+    const response = await fetch(`/Thingworx/Things/${encodeURIComponent(entityName)}/Properties?Accept=application%2Fjson`);
     return response.json();
 }

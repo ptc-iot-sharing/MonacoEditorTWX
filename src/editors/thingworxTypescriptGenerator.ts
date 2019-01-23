@@ -133,9 +133,9 @@ export class ThingworxToTypescriptGenerator {
         let serviceDefs = effectiveShapeMetadata.serviceDefinitions;
         for (let key in serviceDefs) {
             if (!serviceDefs.hasOwnProperty(key)) continue;
-            if (isGenericService(key)) continue;
             // first create an interface for service params
             let service = serviceDefs[key];
+            if (isGenericService(service)) continue;
             // metadata for the service parameters
             let serviceParamDefinition = "";
             let serviceParameterMetadata;
@@ -197,16 +197,15 @@ export class ThingworxToTypescriptGenerator {
         let resourcesDef = "declare namespace twx {\n";
         resourcesDef += "export interface ResourcesInterface {\n";
         // iterate through all the resources
-        for (let key in resourceLibraries) {
-            if (!resourceLibraries.hasOwnProperty(key)) continue;
+        for (let resource of resourceLibraries.rows) {
             // generate the metadata for this resource
-            let resourceLibrary = resourceLibraries[key].details;
-            let validEntityName = sanitizeEntityName(key);
+            let resourceLibrary = resource.metadata;
+            let validEntityName = sanitizeEntityName(resource.name);
             let libraryName = "Resource" + validEntityName;
             let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, {}, libraryName, true, false);
             this.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
-            resourcesDef += `/**\n * ${resourceLibraries[key].description}\n**/\n`;
-            resourcesDef += `\t'${key}': twx.${libraryName}.${libraryName};\n`;
+            resourcesDef += `/**\n * ${resource.description}\n**/\n`;
+            resourcesDef += `\t'${resource.name}': twx.${libraryName}.${libraryName};\n`;
         }
         resourcesDef += "}\n}\n let Resources: twx.ResourcesInterface;";
         this.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
