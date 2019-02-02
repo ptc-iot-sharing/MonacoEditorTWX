@@ -13,8 +13,8 @@ export class ThingworxToTypescriptGenerator {
     public async generateDataShapeCode() {
         try {
             let dataShapes = await getDataShapeDefinitions();
-            this.addDataShapesAsInterfaces(dataShapes);
-            this.addDataShapesCollection(dataShapes);
+            this.addDataShapesAsInterfaces(dataShapes.rows);
+            this.addDataShapesCollection(dataShapes.rows);
         } catch (reason) {
             console.error("Monaco: Failed to generate typescript definitions from dataShapes " + reason);
         }
