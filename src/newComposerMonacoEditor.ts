@@ -436,6 +436,16 @@ t('thingworx-ui-platform/components/editor/abstract-editor', ['exports', 'aureli
                 console.log('CodeMirror initialization options', cmOptions);
             }
 
+            function convertHandlerToMonacoLanguage(language: string): string {
+                let mapping = {
+                    "text/x-sql": 'sql',
+                    'javascript': 'twxJavascript',
+                    'xml': 'xml',
+                    'css': 'css'
+                }
+                return mapping[language];
+            }
+
             _lodash2.default.defer(function () {
                 if (!_this2.cmTextarea) {
                     return;
@@ -444,11 +454,8 @@ t('thingworx-ui-platform/components/editor/abstract-editor', ['exports', 'aureli
                     _this2.userPreferences = prefs;
                     _this2._initEditorTheme(_this2.userPreferences);
                     cmOptions.theme = _this2.theme;
-                    var editor: MonacoCodeEditor;
-                    // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
-
                     let editorClass;
-                    if (cmOptions.mode == 'twxTypescript' || cmOptions.mode == 'javascript') {
+                    if (cmOptions.mode.name == 'twxTypescript' || cmOptions.mode.name == 'javascript') {
                         editorClass = TypescriptCodeEditor;
                     } else {
                         editorClass = MonacoCodeEditor;
@@ -472,8 +479,8 @@ t('thingworx-ui-platform/components/editor/abstract-editor', ['exports', 'aureli
                     },
                         {
                             code: _this2.cmTextarea.value,
-                            language: cmOptions.mode.name,
-                            modelName: "test",
+                            language: convertHandlerToMonacoLanguage(cmOptions.mode.name),
+                            modelName: "Test" + Math.random(),
                             readonly: cmOptions.readOnly
                         });
 
@@ -484,7 +491,6 @@ t('thingworx-ui-platform/components/editor/abstract-editor', ['exports', 'aureli
                         _this2.codeMirror.onEditorContentChange(function (code) {
                             if (code !== _this2._getValue()) {
                                 _this2._setValue(code);
-                                _this2._lintIfConfigured();
                                 _commonUtil.CommonUtil.fireChangeEvent(_this2.element, code);
                             }
                         });

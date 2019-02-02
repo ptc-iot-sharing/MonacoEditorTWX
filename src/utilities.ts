@@ -71,7 +71,7 @@ export async function getDataShapeDefinitions(): Promise<any> {
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
 export async function spotlightSearch(entityType, searchTerm): Promise<any[]> {
-    const response = await fetch(`/Thingworx/Resources/Resources/Services/SpotlightSearch?Accept=application%2Fjson`, {
+    const response = await fetch(`/Thingworx/Resources/Services/SpotlightSearch?Accept=application%2Fjson`, {
         method: 'POST',
         body: JSON.stringify({
             searchExpression: searchTerm + "*",

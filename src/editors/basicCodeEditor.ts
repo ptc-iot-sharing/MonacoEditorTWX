@@ -135,6 +135,21 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Gets the current text in the monaco editor
+     */
+    public getValue(): string {
+        return this.monacoEditor.getValue();
+    }
+
+    /**
+     * Sets some code in the editor
+     * @param code Code to set in the editor
+     */
+    public setValue(code: string): void {
+        this.monacoEditor.setValue(code);
+    }
+
+    /**
      * Perform global initialization of the monaco json
      */
     public static performGlobalInitialization() {
