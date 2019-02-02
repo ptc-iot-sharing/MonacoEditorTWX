@@ -33,13 +33,19 @@ TW.jqPlugins.twCodeEditor.prototype._plugin_afterSetProperties = function () {
             let nodes = Array.from(mutation.removedNodes);
             let directMatch = nodes.indexOf(this.jqElement[0]) > -1
             let parentMatch = nodes.some(parent => parent.contains(this.jqElement[0]));
-            if (directMatch) {
-                this._plugin_cleanup();
-                observer.disconnect();
-            } else if (parentMatch) {
-                this._plugin_cleanup();
-                observer.disconnect();
+            // check if the element still exists in the DOM because it might just be reattached somewhere else
+            // this happens when we expand/collapse the code editor
+            let reatacched = document.getElementById(this.jqElement[0].id);
+            if (reatacched == null) {
+                if (directMatch) {
+                    this._plugin_cleanup();
+                    observer.disconnect();
+                } else if (parentMatch) {
+                    this._plugin_cleanup();
+                    observer.disconnect();
+                }
             }
+
         });
     });
 
