@@ -66,7 +66,7 @@ module.exports = function (env, argv) {
                         return assetPath;
                     }
                 },
-                exclude: [/htmlDemo/, isProduction ? /(.*)\.map$/ : /a^/]
+                exclude: [/newComposer/, /htmlDemo/, isProduction ? /(.*)\.map$/ : /a^/]
             })
         ],
         // if we are in development mode, then use "eval-source-map".
