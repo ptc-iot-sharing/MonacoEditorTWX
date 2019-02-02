@@ -1,12 +1,12 @@
-import { MonacoCodeEditor } from "./basicCodeEditor";
-import * as monaco from '../monaco-editor/esm/vs/editor/editor.api';
-import { WorkerScriptManager } from "./workerScriptManager";
-import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../utilities';
-import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES } from "../constants";
+import { ServiceEditor } from "../serviceEditor/serviceEditor";
+import * as monaco from '../../monaco-editor/esm/vs/editor/editor.api';
+import { WorkerScriptManager } from "../workerScriptManager";
+import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../../utilities';
+import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES } from "../../constants";
 import { ThingworxToTypescriptGenerator } from "./thingworxTypescriptGenerator";
 
 
-export class TypescriptCodeEditor extends MonacoCodeEditor {
+export class TypescriptCodeEditor extends ServiceEditor {
     public static workerManager: WorkerScriptManager;
     public static codeTranslator: ThingworxToTypescriptGenerator;
 
@@ -65,25 +65,25 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
         // generate the completion for language snippets
         monaco.languages.registerCompletionItemProvider("twxJavascript", {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../configs/javascriptSnippets.json"));
+                return loadSnippets(require("../../configs/javascriptSnippets.json"));
             }
         });
 
         monaco.languages.registerCompletionItemProvider("twxTypescript", {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../configs/typescriptSnippets.json"));
+                return loadSnippets(require("../../configs/typescriptSnippets.json"));
             }
         });
 
         // generate the completion for twx snippets
         monaco.languages.registerCompletionItemProvider("twxJavascript", {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../configs/thingworxJavascriptSnippets.json"));
+                return loadSnippets(require("../../configs/thingworxJavascriptSnippets.json"));
             }
         });
         monaco.languages.registerCompletionItemProvider("twxTypescript", {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../configs/thingworxTypescriptSnippets.json"));
+                return loadSnippets(require("../../configs/thingworxTypescriptSnippets.json"));
             }
         });
         // generate the regex that matches the autocomplete for the entity collection for element access
@@ -140,13 +140,13 @@ export class TypescriptCodeEditor extends MonacoCodeEditor {
             }
         });
         // register the rhino es5 library
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
         // register the thingworx base types and the logger class
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
         // register the thingworx datashape library
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
         // register the thingworx generic thing
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../configs/declarations/ThingworxGenericThing.d.ts"), "ThingworxGenericThing.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxGenericThing.d.ts"), "ThingworxGenericThing.d.ts");
 
         this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // we regenerate all the datashape definitions when a new editor loads

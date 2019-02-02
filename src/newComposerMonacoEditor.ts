@@ -1,7 +1,7 @@
 
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
-import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
+import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 var t = window["define"];
 t('thingworx-ui-platform/components/editor/abstract-editor', ['exports', 'aurelia-i18n', 'aurelia-dependency-injection', 'lodash', 'jquery', 'codemirror', './codemirror-gutter-message-manager', '../../util/common-util', '../../util/object-util', '../../helpers/loader-helper', '../../events/channel-events', '../../events/event-helper', '../../services/user-service', '../../services/entity-service-base', 'codemirror/mode/css/css', 'codemirror/mode/javascript/javascript', 'codemirror/mode/xml/xml', 'codemirror/mode/sql/sql', 'codemirror/addon/selection/mark-selection', 'codemirror/addon/search/search', 'codemirror/addon/search/searchcursor', 'codemirror/addon/dialog/dialog', 'codemirror/addon/edit/matchbrackets', 'codemirror/addon/search/match-highlighter', 'codemirror/addon/hint/show-hint', 'codemirror/addon/hint/javascript-hint', 'codemirror/addon/fold/foldcode', 'codemirror/addon/fold/foldgutter', 'codemirror/addon/fold/brace-fold', 'codemirror/addon/fold/comment-fold', 'codemirror/addon/fold/indent-fold'], function (exports, _aureliaI18n, _aureliaDependencyInjection, _lodash, _jquery, _codemirror, _codemirrorGutterMessageManager, _commonUtil, _objectUtil, _loaderHelper, _channelEvents, _eventHelper, _userService, _entityServiceBase) {
     'use strict';

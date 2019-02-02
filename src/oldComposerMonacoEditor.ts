@@ -1,6 +1,6 @@
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
-import { MonacoCodeEditor } from "./editors/basicCodeEditor";
-import { TypescriptCodeEditor } from "./editors/typescriptCodeEditor";
+import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
+import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
 // expose monaco library globally
 window["monaco"] = monaco;
@@ -280,7 +280,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
 
     let modelName = `${serviceModel.model.entityType}/${serviceModel.model.id}/${serviceModel.isNew ? Math.random().toString(36).substring(7) : serviceModel.serviceDefinition.name}`;
 
-    var editor: MonacoCodeEditor;
+    var editor: ServiceEditor;
     // if we already have an editor (mostly because showCode properly is called too often by twx), then update it
     if (thisPlugin.monacoEditor) {
         editor = thisPlugin.monacoEditor;
@@ -289,7 +289,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         if (mode == 'twxTypescript' || mode == 'twxJavascript') {
             editorClass = TypescriptCodeEditor;
         } else {
-            editorClass = MonacoCodeEditor;
+            editorClass = ServiceEditor;
         }
         // else create a new one
         editor = new editorClass(codeTextareaElem[0], editorSettings, {

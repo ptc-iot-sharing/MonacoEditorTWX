@@ -1,6 +1,6 @@
-import { WorkerScriptManager } from "./workerScriptManager";
-import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata } from "../utilities";
-import { ENTITY_TYPES } from "../constants";
+import { WorkerScriptManager } from "../workerScriptManager";
+import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata } from "../../utilities";
+import { ENTITY_TYPES } from "../../constants";
 
 
 export class ThingworxToTypescriptGenerator {
