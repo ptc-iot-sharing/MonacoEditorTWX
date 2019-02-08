@@ -3,6 +3,7 @@ dist
 ui
 .gradle
 build
+package
 zip
 !loader/
 !loader/*
