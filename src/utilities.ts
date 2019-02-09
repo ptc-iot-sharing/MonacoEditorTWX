@@ -107,9 +107,7 @@ export function loadSnippets(snippets): monaco.languages.CompletionList {
                 kind: monaco.languages.CompletionItemKind.Snippet,
                 label: snippets[key].prefix,
                 documentation: snippets[key].description,
-                insertText: {
-                    value: snippets[key].body.join("\n")
-                }
+                insertText: snippets[key].body.join("\n")
             });
         }
     }
