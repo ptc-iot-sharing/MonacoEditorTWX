@@ -98,13 +98,14 @@ export async function spotlightSearch(entityType, searchTerm): Promise<any[]> {
  * @param  {string} snippets to load
  */
 export function loadSnippets(snippets): monaco.languages.CompletionList {
-    let result = {
+    let result: monaco.languages.CompletionList = {
         suggestions: []
     };
     for (let key in snippets) {
         if (snippets.hasOwnProperty(key)) {
             result.suggestions.push({
                 kind: monaco.languages.CompletionItemKind.Snippet,
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                 label: snippets[key].prefix,
                 documentation: snippets[key].description,
                 insertText: snippets[key].body.join("\n")
