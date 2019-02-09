@@ -1,5 +1,6 @@
 import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
+import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 var t = window["define"];
 t(
@@ -152,6 +153,7 @@ t(
             this._initCodeMirrorDebounced();
             this._initFontSizePopoverDebounced();
         }
+
         _initCodeMirrorDebounced(): any {
             throw new Error("Method not implemented.");
         }
@@ -160,6 +162,7 @@ t(
         }
     
         detached() {
+            this._cleanupCodeMirror();
             this.eventHelper.destroyAll();
             this.destroy();
         }
@@ -578,6 +581,16 @@ t(
             if (window.TWX.debug) {
                 console.log('CodeMirror initialization options', cmOptions);
             }
+
+            function convertHandlerToMonacoLanguage(language: string): string {
+                let mapping = {
+                    "text/x-sql": 'sql',
+                    'javascript': 'twxJavascript',
+                    'xml': 'xml',
+                    'css': 'css'
+                }
+                return mapping[language];
+            }
     
             _.defer(() => { // need to defer the composition in order for the script to show up without a click
                 if (!this.cmTextarea) {
@@ -587,7 +600,48 @@ t(
                     this.userPreferences = prefs;
                     this._initEditorTheme(this.userPreferences);
                     cmOptions.theme = this.theme;
-                    this.codeMirror = CodeMirror.fromTextArea(this.cmTextarea, cmOptions);
+                    let editorClass;
+                    if(this.entityModel) {
+                        if (cmOptions.mode.name == 'twxTypescript' || cmOptions.mode.name == 'javascript') {
+                            editorClass = TypescriptCodeEditor;
+                        } else {
+                            editorClass = ServiceEditor;
+                        }
+                    } else {
+                        editorClass = MonacoCodeEditor;
+                    }
+
+                    let container = this.cmTextarea.parentElement;
+                    let modelName;
+                    if (this.entityModel) {
+                        let editedModel = this.entityModel.servicesModel.editModel;
+                        modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${editedModel.isNew ? Math.random().toString(36).substring(7) : editedModel.name}`;
+                    } else {
+                        modelName =  Math.random().toString(36).substring(7);
+                    }
+
+                    container.innerHTML = "";
+                    // else create a new one
+                    this.codeMirror = new editorClass(container, { editor: DEFAULT_EDITOR_OPTIONS }, {
+                        onClose: () => {
+                            console.log("close action")
+                        },
+                        onSave: () => {
+                            console.log("save action")
+                        }, onDone: () => {
+                            console.log("done action")
+                        }, onTest: () => {
+                            console.log("test action")
+                        }, onPreferencesChanged: (preferences) => {
+                            console.log("preferences action " + preferences)
+                        }
+                    },
+                        {
+                            code: this.cmTextarea.value,
+                            language: convertHandlerToMonacoLanguage(cmOptions.mode.name),
+                            modelName: modelName,
+                            readonly: cmOptions.readOnly
+                        });
                     this.initialized();
     
                     if (this.element) {
@@ -595,7 +649,7 @@ t(
                             const newValue = cm.getValue();
                             if (newValue !== this._getValue()) {
                                 this._setValue(newValue);
-                                this._lintIfConfigured();
+                                //this._lintIfConfigured();
                                 CommonUtil.fireChangeEvent(this.element, newValue);
                             }
                         };
@@ -647,7 +701,7 @@ t(
             if (!this.codeMirror) {
                 return;
             }
-            this.codeMirror.toTextArea();
+            this.codeMirror.dispose();
     
         }
     
