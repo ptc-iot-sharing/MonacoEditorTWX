@@ -645,16 +645,13 @@ t(
                     this.initialized();
     
                     if (this.element) {
-                        let onChangeActionFn = (cm) => {
-                            const newValue = cm.getValue();
-                            if (newValue !== this._getValue()) {
-                                this._setValue(newValue);
+                        this.codeMirror.onEditorContentChange((code) => {
+                            if (code !== this._getValue()) {
+                                this._setValue(code);
                                 //this._lintIfConfigured();
-                                CommonUtil.fireChangeEvent(this.element, newValue);
+                                CommonUtil.fireChangeEvent(this.element, code);
                             }
-                        };
-                        let onChangeActionDebounced = _.debounce(onChangeActionFn.bind(this), 25);
-                        this.codeMirror.on('changes', onChangeActionDebounced);
+                        });
     
                         this.codeMirror.on('cursorActivity', (cm, event) => {
                             this.cursorActivity(cm, event);
