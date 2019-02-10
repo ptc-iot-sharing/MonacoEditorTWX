@@ -318,11 +318,11 @@ t(
         }
     
         commentSelection() {
-            console.assert(false, 'commentSelection invoked by not implemented!');
+           this.codeMirror.commentSelection();
         }
     
         unCommentSelection() {
-            console.assert(false, 'unCommentSelection invoked by not implemented!');
+            this.codeMirror.uncommentSelection();
         }
     
         checkSyntax(opts = {}) {
@@ -362,68 +362,34 @@ t(
         }
     
         indentSelection(dir) {
-            let range = this._getSelectedRange();
-            let scrollInfo = this.codeMirror.getScrollInfo();
-            let lines = this.codeMirror.getValue().split('\n');
-            let spacer = _.get(this.codeMirror, 'options.indentWithTabs', false) ? '\t'
-                : new Array(_.get(this.codeMirror, 'options.indentUnit', 4) + 1).join(' ');
-            let from = _.get(range, 'from');
-            let to = _.get(range, 'to');
-            let modified = [];
-    
-            _.forEach(lines, (line, index) => {
-                if (index >= from.line && index <= to.line) {
-                    if (!dir) {
-                        modified.push(line.replace(new RegExp('^' + spacer), ''));
-                    } else {
-                        modified.push(spacer + line);
-                    }
-                } else {
-                    modified.push(line);
-                }
-            });
-    
-            this._setValue(modified.join('\n'));
-            this.refreshDisplay();
-            to.ch += (dir) ? spacer.length : Math.max(0, -1 * spacer.length);
-            this.codeMirror.extendSelection(from, to);
-            this.codeMirror.scrollTo(0, scrollInfo.top);
-    
+            if(dir) {
+                this.codeMirror.indentSelection();
+            } else {
+                this.codeMirror.outdentSelection();
+            }
         }
-    
+
         autoFormatSelection() {
-            // override if you want this functionality;
+            this.codeMirror.autoFormatSelection();
         }
-    
+
         find() {
-            this.codeMirror.execCommand('find');
+            alert("Use the editor shortcut!");
         }
-    
+
         replace() {
-            this.codeMirror.execCommand('replace');
+            alert("Use the editor shortcut!");
         }
-    
+
         replaceAll(findString, replaceString) {
-            if (findString.length === 0) {
-                alert('must enter some text to search for...');
-                return;
-            }
-            this.searchCursor = this.codeMirror.getSearchCursor(findString.toLowerCase(), false/*searchAll*/, true/*caseFold*/);
-    
-            let nReplaced = 0;
-            while (this.searchCursor.findNext()) {
-                this.searchCursor.doc.cm.setSelection(this.searchCursor.pos.from, this.searchCursor.pos.to, 'CodeMirror-searching');
-                this.codeMirror.replaceSelection(replaceString);
-                nReplaced++;
-            }
-            this.codeMirror.focus();
+            alert("Use the editor shortcut!");
         }
-    
+
         insertTextIntoEditor({text, keepSelected = true}) {
             this.codeMirror.insertText(text, keepSelected);
             this.codeMirror.focus();
         }
-    
+
         showFontSizePopover() {
             this.$fontSizePopover.popover('show');
             this.$fontSizePopover.on('shown.bs.popover', () => {
@@ -681,36 +647,38 @@ t(
         _setValue(newVal) {
             _.set(this, this.valueField, newVal);
         }
-    
+
         _lintIfConfigured() {
             if (this.getLinting()) {
                 this.lint(this.editorOptions);
             }
         }
-    
+
         _cleanupCodeMirror() {
             if (!this.codeMirror) {
                 return;
             }
             this.codeMirror.dispose();
-    
+
         }
-    
+
         _getSelectedRange() {
-            return {from: this.codeMirror.getCursor(true), to: this.codeMirror.getCursor(false)};
+            // not being used internally
+            return {from: 0, to: 0};
         }
-    
+
         _setLine(text, line, originalTextLength) {
-            this.codeMirror.replaceRange(text, {line: line, ch: 0}, {line: line, ch: originalTextLength});
+            // not being used internally
         }
-    
+
         _handleFolding(action) {
-            let cm = this.codeMirror;
-            for (let i = cm.firstLine(), e = cm.lastLine(); i <= e; i++) {
-                cm.foldCode(CodeMirror.Pos(i, 0), null, action);
+            if(action == 'fold') {
+                this.codeMirror.foldAll();
+            } else if(action = 'unfold') {
+                this.codeMirror.unfoldAll();
             }
         }
-    
+
         /**
          * Retrieve user preferences.
          *

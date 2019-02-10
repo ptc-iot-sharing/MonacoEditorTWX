@@ -64,7 +64,7 @@ export class MonacoCodeEditor {
         };
         this.monacoEditor.pushUndoStop();
         this.monacoEditor.executeEdits("insertSnippet", [op]);
-        if(keepSelection){
+        if (keepSelection) {
             // Highlight the code after inserting it
             this.monacoEditor.setSelection(monaco.Selection.fromPositions(currentSelection.getStartPosition(), this.monacoEditor.getPosition()));
         }
@@ -76,6 +76,70 @@ export class MonacoCodeEditor {
      */
     public focus() {
         this.monacoEditor.focus();
+    }
+
+    public undo() {
+        this.monacoEditor.trigger('external', 'undo', undefined);
+    }
+
+    public redo() {
+        this.monacoEditor.trigger('external', 'redo', undefined);
+    }
+
+    /**
+     * Indents the current selection by 1 tab
+     */
+    public indentSelection() {
+        this.monacoEditor.trigger("external", "editor.action.indentLines", undefined);
+    }
+
+    /**
+     * Outdent the current selection by 1 tab
+     */
+    public outdentSelection() {
+        this.monacoEditor.trigger("external", "editor.action.outdentLines", undefined);
+    }
+
+    /**
+     * Comment the current selection
+     */
+    public commentSelection() {
+        this.monacoEditor.trigger("external", "editor.action.addCommentLine", undefined);
+    }
+
+    /**
+     * Uncomment the current selection
+     */
+    public uncommentSelection() {
+        this.monacoEditor.trigger("external", "editor.action.removeCommentLine", undefined);
+    }
+
+    /**
+     * Format the current selected code
+     */
+    public autoFormatSelection() {
+        this.monacoEditor.trigger("external", "editor.action.formatSelection", undefined);
+    }
+
+    /**
+     * Format the current selected code
+     */
+    public autoFormatDocument() {
+        this.monacoEditor.trigger("external", "editor.action.formatDocument", undefined);
+    }
+
+    /**
+     * Fold all the current folding indicators
+     */
+    public foldAll() {
+        this.monacoEditor.trigger("external", "editor.foldAll", undefined);
+    }
+
+    /**
+     * Unfold all the folding indicators
+     */
+    public unfoldAll() {
+        this.monacoEditor.trigger("external", "editor.unfoldAll", undefined);
     }
 
     /**
