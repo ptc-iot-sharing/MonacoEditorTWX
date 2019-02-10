@@ -4,26 +4,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Debug",
-            "type": "shell",
-            "command": "gradlew.bat packageExtension",
-            "problemMatcher": []
-        },
-        {
-            "label": "Build Release",
-            "type": "shell",
-            "command": "gradlew.bat -PbuildRelease packageExtension",
-            "problemMatcher": []
-        },
-        {
-            "label": "Run Debug",
-            "type": "shell",
-            "command": "gradlew.bat upload"
-        },
-        {
-            "label": "Run Release",
-            "type": "shell",
-            "command": "gradlew.bat -PbuildRelease upload",
+            "type": "npm",
+            "script": "upload",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": []
         }
     ]

@@ -54,14 +54,20 @@ export class MonacoCodeEditor {
     /**
      * Inserts the given text at the current cursor position.
      */
-    public insertText(code: string) {
-        var op = {
-            range: this.monacoEditor.getSelection(),
+    public insertText(code: string, keepSelection = false) {
+        // Keep track of cursor position to highlight the code after inserting it
+        const currentSelection = this.monacoEditor.getSelection();
+        const op = {
+            range: currentSelection,
             text: code,
             forceMoveMarkers: true
         };
         this.monacoEditor.pushUndoStop();
         this.monacoEditor.executeEdits("insertSnippet", [op]);
+        if(keepSelection){
+            // Highlight the code after inserting it
+            this.monacoEditor.setSelection(monaco.Selection.fromPositions(currentSelection.getStartPosition(), this.monacoEditor.getPosition()));
+        }
         this.monacoEditor.pushUndoStop();
     }
 

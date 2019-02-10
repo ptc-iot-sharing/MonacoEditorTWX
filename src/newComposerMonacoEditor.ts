@@ -120,7 +120,7 @@ t(
         valueField: string;
         $fontSizePopover: any;
         readOnly: any;
-        codeMirror: any;
+        codeMirror: MonacoCodeEditor;
         entityModel: any;
         searchCursor: any;
         gutterMsgManager: any;
@@ -420,19 +420,7 @@ t(
         }
     
         insertTextIntoEditor({text, keepSelected = true}) {
-            // Keep track of cursor position to highlight input parameter after inserting it
-            let cursorPositionBefore = this.codeMirror.getCursor(true);
-            this.codeMirror.replaceSelection(text);
-            let cursorPositionAfter = this.codeMirror.getCursor(true);
-    
-            // Highlight input parameter after inserting it
-            if (keepSelected) {
-                this.codeMirror.doc.setSelection(
-                    {line: cursorPositionBefore.line, ch: cursorPositionBefore.ch},
-                    {line: cursorPositionAfter.line, ch: cursorPositionAfter.ch}
-                );
-            }
-    
+            this.codeMirror.insertText(text, keepSelected);
             this.codeMirror.focus();
         }
     
@@ -587,7 +575,9 @@ t(
                     "text/x-sql": 'sql',
                     'javascript': 'twxJavascript',
                     'xml': 'xml',
-                    'css': 'css'
+                    'css': 'css',
+                    'expressionJs': 'javascript'
+
                 }
                 return mapping[language];
             }
@@ -601,7 +591,7 @@ t(
                     this._initEditorTheme(this.userPreferences);
                     cmOptions.theme = this.theme;
                     let editorClass;
-                    if(this.entityModel) {
+                    if(this.entityModel && this.entityModel.Area != "UI") {
                         if (cmOptions.mode.name == 'twxTypescript' || cmOptions.mode.name == 'javascript') {
                             editorClass = TypescriptCodeEditor;
                         } else {
@@ -611,9 +601,13 @@ t(
                         editorClass = MonacoCodeEditor;
                     }
 
+                    if(this.entityModel && this.entityModel.Area == "UI") {
+                        cmOptions.mode.name = "expressionJs";
+                    }
+
                     let container = this.cmTextarea.parentElement;
                     let modelName;
-                    if (this.entityModel) {
+                    if (this.entityModel && this.entityModel.Area != "UI") {
                         let editedModel = this.entityModel.servicesModel.editModel;
                         modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${editedModel.isNew ? Math.random().toString(36).substring(7) : editedModel.name}`;
                     } else {
