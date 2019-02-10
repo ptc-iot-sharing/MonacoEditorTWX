@@ -60,7 +60,9 @@ export class MonacoCodeEditor {
             text: code,
             forceMoveMarkers: true
         };
+        this.monacoEditor.pushUndoStop();
         this.monacoEditor.executeEdits("insertSnippet", [op]);
+        this.monacoEditor.pushUndoStop();
     }
 
     /**
