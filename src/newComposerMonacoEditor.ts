@@ -574,8 +574,17 @@ t(
                     let container = this.cmTextarea.parentElement;
                     let modelName;
                     if (this.entityModel && this.entityModel.Area != "UI") {
-                        let editedModel = this.entityModel.servicesModel.editModel;
-                        modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${editedModel.isNew ? Math.random().toString(36).substring(7) : editedModel.name}`;
+                        let editedModel;
+                        if(this.entityModel.subscriptionsModel.edit.subscription.name) {
+                            editedModel = this.entityModel.subscriptionsModel.edit;
+                        } else if (this.entityModel.servicesModel){
+                            editedModel = this.entityModel.servicesModel.editModel;
+                        }
+                        if(editedModel) {
+                            modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${editedModel.isNew ? Math.random().toString(36).substring(7) : editedModel.name}`;
+                        } else {
+                            modelName =  Math.random().toString(36).substring(7);
+                        }
                     } else {
                         modelName =  Math.random().toString(36).substring(7);
                     }
