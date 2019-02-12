@@ -34,8 +34,10 @@ var ViewContentWidgets = /** @class */ (function (_super) {
         _this.domNode = createFastDomNode(document.createElement('div'));
         PartFingerprints.write(_this.domNode, 1 /* ContentWidgets */);
         _this.domNode.setClassName('contentWidgets');
-        _this.domNode.setPosition('absolute');
-        _this.domNode.setTop(0);
+        if(!context.configuration.editor.viewInfo.keepWidgetsWithinEditor) {
+            _this.domNode.setPosition('absolute');
+            _this.domNode.setTop(0);
+        }
         _this.overflowingContentWidgetsDomNode = createFastDomNode(document.createElement('div'));
         PartFingerprints.write(_this.overflowingContentWidgetsDomNode, 2 /* OverflowingContentWidgets */);
         _this.overflowingContentWidgetsDomNode.setClassName('overflowingContentWidgets');
