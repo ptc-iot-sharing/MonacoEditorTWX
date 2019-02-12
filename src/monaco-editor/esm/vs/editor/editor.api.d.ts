@@ -2659,6 +2659,11 @@ export namespace editor {
          */
         fixedOverflowWidgets?: boolean;
         /**
+         * All widgets will be forced to be drawn with the editor viewport.
+         * Defaults to `false`
+         */
+        keepWidgetsWithinEditor?: boolean;
+        /**
          * The number of vertical lanes the overview ruler should render.
          * Defaults to 2.
          */
@@ -3247,6 +3252,7 @@ export namespace editor {
         readonly scrollbar: InternalEditorScrollbarOptions;
         readonly minimap: InternalEditorMinimapOptions;
         readonly fixedOverflowWidgets: boolean;
+        readonly keepWidgetsWithinEditor: boolean;
     }
 
     export interface EditorContribOptions {

@@ -281,7 +281,8 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.renderLineHighlight === b.renderLineHighlight
             && this._equalsScrollbarOptions(a.scrollbar, b.scrollbar)
             && this._equalsMinimapOptions(a.minimap, b.minimap)
-            && a.fixedOverflowWidgets === b.fixedOverflowWidgets);
+            && a.fixedOverflowWidgets === b.fixedOverflowWidgets
+            && a.keepWidgetsWithinEditor == b.keepWidgetsWithinEditor);
     };
     /**
      * @internal
@@ -796,6 +797,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             scrollbar: scrollbar,
             minimap: minimap,
             fixedOverflowWidgets: _boolean(opts.fixedOverflowWidgets, defaults.fixedOverflowWidgets),
+            keepWidgetsWithinEditor: _boolean(opts.keepWidgetsWithinEditor, defaults.keepWidgetsWithinEditor)
         };
     };
     EditorOptionsValidator._sanitizeContribInfo = function (opts, defaults) {
@@ -921,7 +923,8 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                     showSlider: opts.viewInfo.minimap.showSlider,
                     maxColumn: opts.viewInfo.minimap.maxColumn
                 },
-                fixedOverflowWidgets: opts.viewInfo.fixedOverflowWidgets
+                fixedOverflowWidgets: opts.viewInfo.fixedOverflowWidgets,
+                keepWidgetsWithinEditor: opts.viewInfo.keepWidgetsWithinEditor
             },
             contribInfo: {
                 selectionClipboard: opts.contribInfo.selectionClipboard,
@@ -1342,6 +1345,7 @@ export var EDITOR_DEFAULTS = {
             maxColumn: 120
         },
         fixedOverflowWidgets: false,
+        keepWidgetsWithinEditor: false
     },
     contribInfo: {
         selectionClipboard: true,
