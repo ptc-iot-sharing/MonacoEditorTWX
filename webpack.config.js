@@ -29,9 +29,9 @@ module.exports = function (env, argv) {
         entry: {
             // the entry point when viewing the index.html page
             htmlDemo: './src/index.ts',
-            // the entry point for the ide widget
-            widgetIde: `./src/oldComposerMonacoEditor.ts`,
-            // the entry point for the ide widget
+            // the entry point for the old composer code
+            oldComposer: `./src/oldComposerMonacoEditor.ts`,
+            // the entry point for the new composer code
             newComposer: `./src/newComposerMonacoEditor.ts`
         },
         output: {
@@ -45,7 +45,7 @@ module.exports = function (env, argv) {
         plugins: [
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
-            new MonacoWebpackPlugin({languages: ['sql', 'typescript', 'python', 'r', 'json', 'css', 'javascript', 'twxJavascript', 'twxTypescript', 'xml']}),
+            new MonacoWebpackPlugin(),
             // in case we just want to copy some resources directly to the widget package, then do it here
             // in case the extension contains entities, copy them as well
             new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
