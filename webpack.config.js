@@ -179,7 +179,7 @@ module.exports = function (env, argv) {
                     result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource.push({
                         $: {
                             type: 'JS',
-                            file: `${packageJson.name}.ide.bundle.js`,
+                            file: `oldComposer.bundle.js`,
                             description: '',
                             isDevelopment: 'true',
                             isRuntime: 'false'
