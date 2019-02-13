@@ -60,15 +60,6 @@ t(
         'css'
     ];
 
-    const DEFAULT_EDITOR_OPTIONS = {
-        lineNumbers:               true,
-        indentUnit:                4,
-        matchBrackets:             true,
-        highlightSelectionMatches: true,
-        styleSelectedText:         true,
-        foldGutter:                true,
-        messageGutter:             true
-    };
     /**
      * An abstract class implementation for code editing.
      * ---
@@ -408,7 +399,7 @@ t(
             this.entityService = container.get(EntityServiceBase);
             this.i18n = container.get(I18N);
     
-            this.editorOptions = _.defaults(opts, DEFAULT_EDITOR_OPTIONS);
+            this.editorOptions = _.defaults(opts, DEFAULT_EDITOR_SETTINGS);
             this._setGuttersOption();
             this._initCodeMirrorDebounced = _.debounce(this._initCodeMirror.bind(this), 150);
             this._initFontSizePopoverDebounced = _.debounce(this._initFontSizePopover.bind(this), 150);
@@ -542,7 +533,8 @@ t(
                     'javascript': 'twxJavascript',
                     'xml': 'xml',
                     'css': 'css',
-                    'expressionJs': 'javascript'
+                    'expressionJs': 'javascript',
+                    'json': 'json'
 
                 }
                 return mapping[language];
@@ -571,11 +563,15 @@ t(
                         cmOptions.mode.name = "expressionJs";
                     }
 
+                    if(cmOptions.mode.name == "javascript" && cmOptions.mode.json) {
+                        cmOptions.mode.name = "json";
+                    }
+
                     let container = this.cmTextarea.parentElement;
                     let modelName;
                     if (this.entityModel && this.entityModel.Area != "UI") {
                         let editedModel;
-                        if(this.entityModel.subscriptionsModel.edit.subscription.name) {
+                        if(this.entityModel.subscriptionsModel) {
                             editedModel = this.entityModel.subscriptionsModel.edit;
                         } else if (this.entityModel.servicesModel){
                             editedModel = this.entityModel.servicesModel.editModel;
@@ -591,7 +587,7 @@ t(
 
                     container.innerHTML = "";
                     // else create a new one
-                    this.codeMirror = new editorClass(container, { editor: DEFAULT_EDITOR_OPTIONS }, {
+                    this.codeMirror = new editorClass(container, { editor: DEFAULT_EDITOR_SETTINGS.editor }, {
                         onClose: () => {
                             console.log("close action")
                         },

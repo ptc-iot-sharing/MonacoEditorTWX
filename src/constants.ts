@@ -27,6 +27,8 @@ export const DEFAULT_EDITOR_SETTINGS  = {
         formatOnPaste: true,
         scrollBeyondLastLine: true,
         theme: "vs",
+        fixedOverflowWidgets: true,
+        keepWidgetsWithinEditor: false,
         disableLayerHinting: true // fixes bug in FF
     },
     diffEditor: {},
