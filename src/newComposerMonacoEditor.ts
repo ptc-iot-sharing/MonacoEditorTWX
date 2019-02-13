@@ -2,6 +2,7 @@ import { DEFAULT_EDITOR_SETTINGS } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
+import { getThingPropertyValues } from "./utilities";
 var t = window["define"];
 t(
   "thingworx-ui-platform/features/details/editor/abstract-editor",
@@ -544,7 +545,7 @@ t(
                 if (!this.cmTextarea) {
                     return;
                 }
-                this._getUserPreferences().then(prefs => {
+                this._getUserPreferences().then(async (prefs) => {
                     this.userPreferences = prefs;
                     this._initEditorTheme(this.userPreferences);
                     cmOptions.theme = this.theme;
@@ -587,26 +588,57 @@ t(
 
                     container.innerHTML = "";
                     // else create a new one
-                    this.codeMirror = new editorClass(container, { editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, {automaticLayout: true}) }, {
-                        onClose: () => {
-                            console.log("close action")
-                        },
-                        onSave: () => {
-                            console.log("save action")
-                        }, onDone: () => {
-                            console.log("done action")
-                        }, onTest: () => {
-                            console.log("test action")
-                        }, onPreferencesChanged: (preferences) => {
-                            console.log("preferences action " + preferences)
-                        }
-                    },
+                    this.codeMirror = new editorClass(container,
                         {
+                            editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true })
+                        }, {
+                            onClose: () => {
+                                console.log("close action")
+                            },
+                            onSave: () => {
+                                console.log("save action")
+                            }, onDone: () => {
+                                console.log("done action")
+                            }, onTest: () => {
+                                console.log("test action")
+                            }, onPreferencesChanged: (preferences) => {
+                                console.log("preferences action " + preferences)
+                            }
+                        }, {
                             code: this.cmTextarea.value,
                             language: convertHandlerToMonacoLanguage(cmOptions.mode.name),
                             modelName: modelName,
                             readonly: cmOptions.readOnly
                         });
+
+                    if (this.codeMirror instanceof TypescriptCodeEditor) {
+                        const typescriptCodeEditor = this.codeMirror as TypescriptCodeEditor;
+                        typescriptCodeEditor.refreshMeDefinitions({
+                            serviceDefinition:  this.entityModel.servicesModel.editModel.service,
+                            effectiveShape: this.entityModel.entity.effectiveShape,
+                            id: this.entityModel.name,
+                            entityType: this.entityModel.entityType,
+                            propertyData: await getThingPropertyValues(this.entityModel.name)
+                        });
+                        this.codeMirror.onEditorFocused(async () => {
+                            typescriptCodeEditor.refreshMeDefinitions({
+                                serviceDefinition:  this.entityModel.servicesModel.editModel.service,
+                                effectiveShape: this.entityModel.entity.effectiveShape,
+                                id: this.entityModel.name,
+                                entityType: this.entityModel.entityType,
+                                propertyData: await getThingPropertyValues(this.entityModel.name)
+                            });
+                            TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
+                            TypescriptCodeEditor.workerManager.syncExtraLibs();
+                        });
+                
+                        if (convertHandlerToMonacoLanguage(cmOptions.mode.name) == 'twxTypescript') {
+                            typescriptCodeEditor.onEditorTranspileFinised((code) => {
+                                // TODO: figure this out
+                                // this.javascriptCode = code;
+                            });
+                        }
+                    }
                     this.initialized();
     
                     if (this.element) {
