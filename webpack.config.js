@@ -45,7 +45,7 @@ module.exports = function (env, argv) {
         plugins: [
             // delete build and zip folders
             new CleanWebpackPlugin(['build', 'zip']),
-            new MonacoWebpackPlugin({languages: ['sql', 'typescript', 'python', 'r', 'json', 'css', 'javascript', 'twxJavascript', 'twxTypescript']}),
+            new MonacoWebpackPlugin({languages: ['sql', 'typescript', 'python', 'r', 'json', 'css', 'javascript', 'twxJavascript', 'twxTypescript', 'xml']}),
             // in case we just want to copy some resources directly to the widget package, then do it here
             // in case the extension contains entities, copy them as well
             new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
