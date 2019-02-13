@@ -587,7 +587,7 @@ t(
 
                     container.innerHTML = "";
                     // else create a new one
-                    this.codeMirror = new editorClass(container, { editor: DEFAULT_EDITOR_SETTINGS.editor }, {
+                    this.codeMirror = new editorClass(container, { editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, {automaticLayout: true}) }, {
                         onClose: () => {
                             console.log("close action")
                         },
