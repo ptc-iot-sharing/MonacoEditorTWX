@@ -111,26 +111,26 @@ export class TypescriptCodeEditor extends ServiceEditor {
                     let entityType = match[1];
                     let entitySearch = match[2];
                     // returns a  promise to the search
-                    return spotlightSearch(entityType, entitySearch).then((rows) => {
+                    return spotlightSearch(entityType, entitySearch).then((infotable) => {
                         let result = [];
-                        for (let i = 0; i < rows.length; i++) {
+                        for (let row of infotable.rows) {
                             // look in the entity collection libs and skip the elements already in there
-                            let entityName = entityType + sanitizeEntityName(rows[i].name);
+                            let entityName = entityType + sanitizeEntityName(row.name);
                             if (this.workerManager.containsLib("thingworx/" + entityName + ".d.ts")) {
                                 continue;
                             }
                             // also filter out the entities with dots or are not valid if auto-completing
                             // using property completion
-                            if (isPropertyCompletion && rows[i].name.match(DISALLOWED_ENTITY_CHARS)) {
+                            if (isPropertyCompletion && row.name.match(DISALLOWED_ENTITY_CHARS)) {
                                 continue;
                             }
                             // add to the result list
                             result.push({
-                                label: rows[i].name,
+                                label: row.name,
                                 kind: monaco.languages.CompletionItemKind.Field,
-                                documentation: rows[i].description,
-                                detail: "Entity type: " + rows[i].type,
-                                insertText: rows[i].name
+                                documentation: row.description,
+                                detail: "Entity type: " + row.type,
+                                insertText: row.name
                             });
                         }
                         return { suggestions: result };
@@ -179,7 +179,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
                     }
                     if (metadata) {
                         // generate the typescript definition
-                        let entityTypescriptDef = TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(metadata, propertyData.rows[0], entityName, true, true);
+                        let entityTypescriptDef = TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(metadata, propertyData, entityName, true, true);
                         // add the typescript definition for this entity
                         this.registerEntityDefinitionLibrary(entityTypescriptDef, collection, entity);
                     } else {
@@ -217,18 +217,17 @@ export class TypescriptCodeEditor extends ServiceEditor {
      * Refreshes the definitions related to the me context
      * @param serviceModel the thingworx service model
      */
-    public refreshMeDefinitions(serviceModel) {
-        var meThingModel = serviceModel.model;
+    public refreshMeDefinitions(meThingModel: {id: string, entityType: string, effectiveShape: any, propertyData: any, serviceDefinition: any}) {
         // if we have a valid entity name and the effectiveShape is set
-        if (meThingModel.id && meThingModel.attributes.effectiveShape) {
+        if (meThingModel.id && meThingModel.effectiveShape) {
             var entityName = meThingModel.entityType + "" + sanitizeEntityName(meThingModel.id);
             // we append an me in here, just in case the definition is already added by the autocomplete in another service
             var fileName = "thingworx/" + entityName + "Me.d.ts";
             TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateTypeScriptDefinitions(
-                meThingModel.attributes.effectiveShape, meThingModel.propertyData, entityName, false, true), fileName);
+                meThingModel.effectiveShape, meThingModel.propertyData, entityName, false, true), fileName);
             // in the current globals we have me declarations as well as input parameters
             TypescriptCodeEditor.workerManager.addExtraLib(TypescriptCodeEditor.codeTranslator.generateServiceGlobals(
-                serviceModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts");
+                meThingModel.serviceDefinition, entityName), "thingworx/currentGlobals.d.ts");
         }
     }
 

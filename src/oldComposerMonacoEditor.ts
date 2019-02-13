@@ -369,7 +369,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     if (editor instanceof TypescriptCodeEditor) {
         const typescriptCodeEditor = editor as TypescriptCodeEditor;
         const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
-        typescriptCodeEditor.refreshMeDefinitions(serviceModel);
+        typescriptCodeEditor.refreshMeDefinitions({
+            id: serviceModel.model.id,
+            entityType: serviceModel.model.type,
+            effectiveShape: serviceModel.model.attributes.effectiveShape,
+            propertyData: serviceModel.model.propertyData,
+            serviceDefinition: serviceModel.serviceDefinition
+        });
         editor.onEditorFocused(() => {
             const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
             typescriptCodeEditor.refreshMeDefinitions(serviceModel);

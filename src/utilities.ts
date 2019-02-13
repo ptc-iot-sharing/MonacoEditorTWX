@@ -70,8 +70,8 @@ export async function getDataShapeDefinitions(): Promise<any> {
  * @param  {string} entityType Thingworx Entity Type. 
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
-export async function spotlightSearch(entityType, searchTerm): Promise<any[]> {
-    const response = await fetch(`/Thingworx/Resources/Services/SpotlightSearch?Accept=application%2Fjson`, {
+export async function spotlightSearch(entityType, searchTerm): Promise<any> {
+    const response = await fetch(`/Thingworx/Resources/SearchFunctions/Services/SpotlightSearch?Accept=application%2Fjson`, {
         method: 'POST',
         body: JSON.stringify({
             searchExpression: searchTerm + "*",
@@ -156,5 +156,6 @@ export async function getEntityMetadata(entityType: string, entityName: string):
 
 export async function getThingPropertyValues(entityName: string): Promise<any> {
     const response = await fetch(`/Thingworx/Things/${encodeURIComponent(entityName)}/Properties?Accept=application%2Fjson`);
-    return response.json();
+    const data = await response.json();
+    return data.rows[0];
 }
