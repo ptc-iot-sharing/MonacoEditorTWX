@@ -650,34 +650,22 @@ t(
                                 CommonUtil.fireChangeEvent(this.element, code);
                             }
                         });
-    
-                        this.codeMirror.on('cursorActivity', (cm, event) => {
-                            this.cursorActivity(cm, event);
-                        });
-    
-                        this.codeMirror.on('keydown', (cm, event) => {
-                            this.keydown(cm, event);
-                        });
-    
-                        this.codeMirror.on('blur', (cm, event) => {
-                            this.blur(cm, event);
-                        });
-    
+
                         this._setEditorFont(this._getUserFontClassName(this.userPreferences));
                     }
-    
+
                     if (cmOptions.twxMsgGutterId) {
                         this.gutterMsgManager.initMessageGutter(this.codeMirror, cmOptions.twxMsgGutterId);
                         this._lintIfConfigured();
                     }
-    
+
                     this._setCursor();
                     $(this.element).find('.editor-loading').css('display', 'none');
                 });
-    
+
             });
         }
-    
+
         _getValue() {
             return _.get(this, this.valueField);
         }
