@@ -24,6 +24,7 @@ export interface MonacoInstanceSettings {
 }
 
 export class MonacoCodeEditor {
+    private modals = [];
     monacoEditor: monaco.editor.IStandaloneCodeEditor;
     _currentEditorSettings: MonacoEditorSettings;
     _instanceSettings: MonacoInstanceSettings;
@@ -149,6 +150,9 @@ export class MonacoCodeEditor {
         if (this.monacoEditor.getModel()) {
             this.monacoEditor.getModel().dispose();
         }
+        for (const modal of this.modals) {
+            modal.destroy();
+        }
         this.monacoEditor.dispose();
     }
 
@@ -273,6 +277,7 @@ export class MonacoCodeEditor {
                 confEditor.dispose();
             }
         });
+        this.modals.push(modal);
         // action triggered by CTRL+~
         // shows a popup with a json configuration for the editor
         this.monacoEditor.addAction({
@@ -314,6 +319,7 @@ export class MonacoCodeEditor {
                 diffEditor.dispose();
             }
         });
+        this.modals.push(modal);
         // action triggered by CTRL+K
         // shows a popup with a diff editor with the initial state of the editor
         // reuse the current model, so changes can be made directly in the diff editor
