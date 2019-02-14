@@ -5720,6 +5720,17 @@ export namespace languages.typescript {
          * to the worker on start or restart.
          */
         setEagerModelSync(value: boolean): void;
+
+        /**
+         * Configure if the extra libs should be eagerly synced after each addExtraLibCall.
+         * This is true by default
+         */
+        setEagerExtraLibSync(value: boolean): void;
+
+        /**
+         * If EagerExtraLibSync is disabled, call this to trigger the changes.
+         */
+        syncExtraLibs(): void;
     }
 
     export var typescriptDefaults: LanguageServiceDefaults;
@@ -5727,6 +5738,10 @@ export namespace languages.typescript {
 
     export var getTypeScriptWorker: () => Promise<any>;
     export var getJavaScriptWorker: () => Promise<any>;
+
+    export var getLanguageWorker: (langaugeName: string) => Promise<any>;
+    export var setupNamedLanguage: (languageDefinition: languages.ILanguageExtensionPoint, isTypescript: boolean, registerLanguage?: boolean) => void;
+    export var getLanguageDefaults: (languageName: string) => LanguageServiceDefaults;
 }
 
 /*---------------------------------------------------------------------------------------------
