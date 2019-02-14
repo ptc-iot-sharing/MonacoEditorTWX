@@ -39,8 +39,8 @@ t(
     "codemirror/addon/fold/brace-fold",
     "codemirror/addon/fold/comment-fold",
     "codemirror/addon/fold/indent-fold"
-  ],
-  function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageManager, CommonUtil, ObjectUtil, LoaderHelper, ChannelNames, EventHelper, u, EntityServiceBase, HotkeyManager) {
+],
+function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageManager, CommonUtil, ObjectUtil, LoaderHelper, ChannelNames, EventHelper, u, EntityServiceBase, HotkeyManager) {
     var {UserSessionInfoKeys, UserPreferenceKeys} = u;
     I18N = I18N["I18N"];
     Container = Container["Container"];
@@ -100,19 +100,18 @@ t(
      */
     class AbstractEditor {
         TWX_MSG_GUTTER_ID = 'CodeMirror-twxmsg-markers';
-    
+
         cursor = {
             line: 0,
             col:  0
         };
-    
+
         action = '';
         element: any;
         userService: any;
         eventHelper: any;
         langMode: any;
         valueField: string;
-        $fontSizePopover: any;
         readOnly: any;
         codeMirror: MonacoCodeEditor;
         entityModel: any;
@@ -123,7 +122,7 @@ t(
         userPreferences: any;
         cmTextarea: any;
         theme: any;
-    
+
         constructor(element, userService, {eventHelperGroupName=undefined, langMode=undefined, editorOptions=undefined, valueField = 'value'} = {}) {
             this.element = element;
             this.userService = userService;
@@ -133,11 +132,10 @@ t(
             if (SUPPORTED_LANG_MODES.indexOf(this.langMode.name) === -1) {
                 throw new Error(`Not supported language mode: ${this.langMode.name || 'unknown'}`);
             }
-            this.$fontSizePopover = undefined;
             this._init(editorOptions);
-    
+
         }
-    
+
         //=======================================================================================================
         // == flowing can be used as protected methods in your subclasses =======================================
         attached() {
@@ -145,22 +143,18 @@ t(
             this.eventHelper.subscribe(ChannelNames.CODE_SYNTAX_CHECK, this.checkSyntax.bind(this));
             this.eventHelper.subscribe(ChannelNames.PREFERENCE_CHANGED, this._preferenceChanged.bind(this));
             this._initCodeMirrorDebounced();
-            this._initFontSizePopoverDebounced();
         }
 
         _initCodeMirrorDebounced(): any {
             throw new Error("Method not implemented.");
         }
-        _initFontSizePopoverDebounced(): any {
-            throw new Error("Method not implemented.");
-        }
-    
+
         detached() {
             this._cleanupCodeMirror();
             this.eventHelper.destroyAll();
             this.destroy();
         }
-    
+
         readOnlyChanged(newVal, oldVal) {
             if (_.isUndefined(oldVal)) {
                 return;
@@ -168,15 +162,15 @@ t(
             this.readOnly = ObjectUtil.asBoolean(newVal) || false;
             this._initCodeMirrorDebounced();
         }
-    
+
         cursorChanged() {
             this._setCursor();
         }
-    
+
         valueChanged() {
             this.refreshDisplay();
         }
-    
+
         /**
          * Because the editor can initially be rendered inside a hidden div, this flag allows the editor to react when it becomes visible and
          * re-align all styles.
@@ -188,7 +182,7 @@ t(
                 this._initCodeMirrorDebounced();
             }
         }
-    
+
         /**
          * Sometimes when setting the value programatically - codeMirror needs special processing
          * in order to refresh the display. There is a refresh method but it doesn't seem to be functioning.
@@ -197,148 +191,155 @@ t(
             if (_.isNil(this._getValue())) {
                 return;
             }
-    
+
             if (!this.codeMirror) {
                 this._initCodeMirrorDebounced();
                 return;
             }
-    
+
             if (this.codeMirror.getValue() !== this._getValue()) {
                 this.codeMirror.setValue(this._getValue());
             }
         }
-    
+
         actionHandler = this.editAction.bind(this);
-    
+
         editAction(newVal) {
             if (!newVal) {
                 return;
             }
-    
+
             let action = _.isString(newVal) ? newVal : newVal.action;
             switch (action) {
                 case 'UNDO':
                     this.undo();
                     break;
-    
+
                 case 'REDO':
                     this.redo();
                     break;
-    
+
                 case 'COMMENT':
                     this.commentSelection();
                     break;
-    
+
                 case 'UNCOMMENT':
                     this.unCommentSelection();
                     break;
-    
+
                 case 'INDENT-LEFT':
                     this.indentSelection(false);
                     break;
-    
+
                 case 'INDENT-RIGHT':
                     this.indentSelection(true);
                     break;
-    
+
                 case 'AUTO-FORMAT':
                     this.autoFormatSelection();
                     break;
-    
+
                 case 'FIND':
                     //this.find(newVal.findString);
                     this.find();
                     break;
-    
+
                 case 'REPLACE':
                     //this.replace(newVal.replaceString);
                     this.replace();
                     break;
-    
+
                 //no longer called directly
                 case 'REPLACE-ALL':
                     this.replaceAll(newVal.findString, newVal.replaceString);
                     break;
-    
+
                 case 'FOLD-ALL':
                     this._handleFolding('fold');
                     break;
-    
+
                 case 'UNFOLD-ALL':
                     this._handleFolding('unfold');
                     break;
-    
+
                 case 'CHECK-SYNTAX':
                     this.checkSyntax({closeEditorOnValid: false});
                     break;
-    
+
                 case 'FONT-RESIZE':
-                    this.showFontSizePopover();
+                    this.showEditorConfiguration();
                     break;
-    
+
                 case 'LINT':
                     this.setLinting(true);
                     this.lint(this.editorOptions);
                     break;
-    
+
                 case 'NOLINT':
                     this.setLinting(false);
                     this.lint(this.editorOptions);
                     break;
-    
+
                 default :
                     alert(action);
                     break;
             }
         }
+
+        showEditorConfiguration(): any {
+            if(this.codeMirror) {
+                this.codeMirror.openConfiguration();
+            }
+        }
+
         editorOptions(editorOptions: any): any {
             throw new Error("Method not implemented.");
         }
-    
+
         initialized() {
             // override if you want this functionality;
         }
-    
+
         destroy() {
             // override if you want this functionality;
         }
-    
+
         undo() {
             this.codeMirror.undo();
         }
-    
+
         redo() {
             this.codeMirror.redo();
         }
-    
+
         commentSelection() {
-           this.codeMirror.commentSelection();
+            this.codeMirror.commentSelection();
         }
-    
+
         unCommentSelection() {
             this.codeMirror.uncommentSelection();
         }
-    
+
         checkSyntax(opts = {}) {
             console.assert(false, 'checkSyntax invoked by not implemented!');
         }
-    
+
         lint(opts = {}) {
             // override if you want this functionality;
         };
-    
+
         setLinting(lint) {
             // override if you want this functionality;
         }
-    
+
         getLinting() {
             return false;
         }
-    
+
         cursorActivity(cm, event) {
             // override if you want this functionality;
         }
-    
+
         keydown(cm, event) {
             // override if you want this functionality;
             if (_.has(this, 'entityModel.servicesModel.editModel.name')) {
@@ -350,11 +351,11 @@ t(
                 });
             }
         }
-    
+
         blur(cm, event) {
             // override if you want this functionality;
         }
-    
+
         indentSelection(dir) {
             if(dir) {
                 this.codeMirror.indentSelection();
@@ -384,16 +385,6 @@ t(
             this.codeMirror.focus();
         }
 
-        showFontSizePopover() {
-            this.$fontSizePopover.popover('show');
-            this.$fontSizePopover.on('shown.bs.popover', () => {
-                this._initFontSizePopoverEvent();
-            });
-            this.$fontSizePopover.on('hide.bs.popover', () => {
-                this._clearFontSizePopoverEvent();
-            });
-        }
-    
         //================================================================================================================
         //== following should be treated as private methods and subject to change without notifiying =====================
         _init(opts) {
@@ -401,130 +392,26 @@ t(
             this.gutterMsgManager = container.get(CodemirrorGutterMessageManager);
             this.entityService = container.get(EntityServiceBase);
             this.i18n = container.get(I18N);
-    
+
             this.editorOptions = _.defaults(opts, DEFAULT_EDITOR_SETTINGS);
             this._setGuttersOption();
             this._initCodeMirrorDebounced = _.debounce(this._initCodeMirror.bind(this), 150);
-            this._initFontSizePopoverDebounced = _.debounce(this._initFontSizePopover.bind(this), 150);
         }
-    
-        /**
-         * This utility uses popovers and this routine initializes the popover for usage. It uses a custom template to
-         * provide it's own set of classes for styling.
-         *
-         * @private
-         */
-    
-        _initFontSizePopover() {
-            this.$fontSizePopover = $(this.element).find('.font-resize-btn');
-            let template = '<div class="popover font-size-list-popover" role="tooltip">' +
-                           '    <div class="arrow"></div>' +
-                           '    <div class="popover-body"></div>' +
-                           '</div>';
-    
-            let smallText = this.i18n.tr('tw.font-size.small');
-            let normalText = this.i18n.tr('tw.font-size.normal');
-            let largeText = this.i18n.tr('tw.font-size.large');
-    
-            let content = '<ul class="font-size-list">' +
-                          '    <li class="editor-font-size-small">' + smallText + '</li>' +
-                          '    <li class="editor-font-size-normal">' + normalText + '</li>' +
-                          '    <li class="editor-font-size-large">' + largeText + '</li>' +
-                          '</ul>';
-    
-            let opts = {
-                content:   content,
-                html:      true,
-                placement: 'bottom',
-                template:  template,
-                trigger:   'manual'
-            };
-            this.$fontSizePopover.popover(opts);
-        }
-    
-        _captureFontClass(targetElement) {
-            let className = $(targetElement.target).attr('class');
-            this._setEditorFont(className);
-            this.userPreferences[UserPreferenceKeys.SERVICE_EDITOR_FONT_SIZE] = className;
-            this.userService.setUserPersistentValue(UserSessionInfoKeys.USER_PREFERENCES, this.userPreferences);
-            this._closeFontSizePopover();
-        }
-    
-        _getUserFontClassName(userPreferences) {
-            return _.get(userPreferences, UserPreferenceKeys.SERVICE_EDITOR_FONT_SIZE, 'editor-font-size-normal');
-        }
-    
-        _setEditorFont(fontClassName) {
-            let element = this.codeMirror.getWrapperElement();
-            _.forEach($(element).attr('class').split(' '), (className) => {
-                if (_.startsWith(className, 'editor-font-size')) {
-                    $(element).removeClass(className);
-                }
-            });
-            $(element).addClass(fontClassName);
-            this.codeMirror.refresh();
-        }
-    
-        _closeFontSizePopover() {
-            this.$fontSizePopover.popover('hide');
-            this.$fontSizePopover.off('shown.bs.popover');
-            this.$fontSizePopover.off('hide.bs.popover');
-        }
-    
-        _initFontSizePopoverEvent() {
-            $('.font-size-list li').on('click', this._captureFontClass.bind(this));
-            $('body').on('click', this._closeFontSizePopover.bind(this));
-            let element = this.codeMirror.getWrapperElement();
-            let currentFontSize = 'editor-font-size-normal';
-            _.forEach($(element).attr('class').split(' '), (className) => {
-                let retValue = true;
-                if (_.startsWith(className, 'editor-font-size')) {
-                    currentFontSize = className;
-                    retValue = false;
-                }
-                return retValue;
-            });
-            $('.font-size-list li').each((index, ele) => {
-                if ($(ele).attr('class').indexOf(currentFontSize) >= 0) {
-                    $(ele).addClass('editor-font-selected');
-                }
-            });
-        }
-    
-        _clearFontSizePopoverEvent() {
-            $('.font-size-list li').off('click');
-            $('.font-size-list li span').off('click');
-            $('body').off('click');
-        }
-    
+
         _setGuttersOption() {
-            let gutters = this.editorOptions.gutters = this.editorOptions.gutters || [];
-    
-            if (this.editorOptions.lineNumbers) {
-                gutters.push('CodeMirror-linenumbers');
-            }
-    
-            if (this.editorOptions.foldGutter) {
-                gutters.push('CodeMirror-foldgutter');
-            }
-    
-            if (this.editorOptions.messageGutter) {
-                let gutterId = this.TWX_MSG_GUTTER_ID;
-                gutters.push(gutterId);
-                this.editorOptions.twxMsgGutterId = gutterId;
-            }
+
         }
         _initCodeMirror() {
             $(this.element).find('.editor-loading').css('display', 'block');
             this._cleanupCodeMirror();
-    
+
             let opts = {
                 readOnly: this.readOnly,
                 mode:     this.langMode
             };
-    
+
             let cmOptions = Object.assign({}, this.editorOptions, opts);
-    
+
             if (window.TWX.debug) {
                 console.log('CodeMirror initialization options', cmOptions);
             }
@@ -541,7 +428,7 @@ t(
                 }
                 return mapping[language];
             }
-    
+
             _.defer(() => { // need to defer the composition in order for the script to show up without a click
                 if (!this.cmTextarea) {
                     return;
@@ -632,7 +519,7 @@ t(
                             TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
                             TypescriptCodeEditor.workerManager.syncExtraLibs();
                         });
-                
+
                         if (convertHandlerToMonacoLanguage(cmOptions.mode.name) == 'twxTypescript') {
                             typescriptCodeEditor.onEditorTranspileFinised((code) => {
                                 // TODO: figure this out
@@ -641,7 +528,7 @@ t(
                         }
                     }
                     this.initialized();
-    
+
                     if (this.element) {
                         this.codeMirror.onEditorContentChange((code) => {
                             if (code !== this._getValue()) {
@@ -651,7 +538,6 @@ t(
                             }
                         });
 
-                        this._setEditorFont(this._getUserFontClassName(this.userPreferences));
                     }
 
                     if (cmOptions.twxMsgGutterId) {
@@ -669,7 +555,7 @@ t(
         _getValue() {
             return _.get(this, this.valueField);
         }
-    
+
         _setValue(newVal) {
             _.set(this, this.valueField, newVal);
         }
@@ -714,7 +600,7 @@ t(
         _getUserPreferences() {
             return this.userService.getUserPersistentValue(UserSessionInfoKeys.USER_PREFERENCES);
         }
-    
+
         /**
          * Retrieve the editor theme.  Will lazily load the CSS if it is not yet loaded.
          *
@@ -726,7 +612,7 @@ t(
             // load the theme in case it is not loaded yet
             LoaderHelper.importCss('/resources/styles/editor-themes/' + this.theme + '.css', true);
         }
-    
+
         _preferenceChanged(data) {
             if (data.name === UserSessionInfoKeys.USER_PREFERENCES) {
                 let compKey = 'value.' + UserPreferenceKeys.SERVICE_EDITOR_THEME;
@@ -736,7 +622,7 @@ t(
                 }
             }
         }
-    
+
         /**
          * Called when the editor detects a preference change for theming
          *
@@ -750,21 +636,12 @@ t(
             }
             this._initCodeMirrorDebounced();
         }
-    
+
         _setCursor() {
-            if (CommonUtil.isEmpty(this.cursor) || CommonUtil.isEmpty(this.codeMirror)) {
-                return;
-            }
-    
-            if (this.cursor === this.codeMirror.getCursor(true)) {
-                return;
-            }
-    
-            this.codeMirror.setCursor(this.cursor);
-            this.codeMirror.focus();
+
         }
-    
+
     }
     exports.AbstractEditor = AbstractEditor;
-  }
+}
 );

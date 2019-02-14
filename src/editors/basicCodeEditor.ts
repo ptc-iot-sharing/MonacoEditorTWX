@@ -157,6 +157,13 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Opens the editor configuration panel
+     */
+    public openConfiguration() {
+        this.monacoEditor.trigger("external", "viewConfAction", undefined);
+    }
+
+    /**
      * Instructs the editor to remeasure its container. This method should
      * be called when the container of the editor gets resized.
      */
@@ -285,7 +292,8 @@ export class MonacoCodeEditor {
             label: "View Configuration",
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_BACKTICK],
             run: () => {
-                modal.setContent(`<h2>Config Editor. Use Intellisense or check <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
+                modal.setContent(`<h2>Config Editor. Use Intellisense or check 
+                                    <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
                                 <div class="content" style="height: 30vw"/>`);
                 modal.open();
             }
