@@ -21,6 +21,7 @@ t(
     "thingworx-ui-platform/events/event-helper",
     "thingworx-ui-platform/services/user-service",
     "thingworx-ui-platform/services/entity-service-base",
+    "thingworx-ui-platform/helpers/hotkeys/hotkey-manager",
     "codemirror/mode/css/css",
     "codemirror/mode/javascript/javascript",
     "codemirror/mode/xml/xml",
@@ -39,17 +40,18 @@ t(
     "codemirror/addon/fold/comment-fold",
     "codemirror/addon/fold/indent-fold"
   ],
-  function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageManager, CommonUtil, ObjectUtil, LoaderHelper, ChannelNames, EventHelper, u, EntityServiceBase) {
+  function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageManager, CommonUtil, ObjectUtil, LoaderHelper, ChannelNames, EventHelper, u, EntityServiceBase, HotkeyManager) {
     var {UserSessionInfoKeys, UserPreferenceKeys} = u;
-    I18N= I18N["I18N"];
-    Container= Container["Container"];
-    CodemirrorGutterMessageManager= CodemirrorGutterMessageManager["CodemirrorGutterMessageManager"];
-    CommonUtil= CommonUtil["CommonUtil"];
-    ObjectUtil= ObjectUtil["ObjectUtil"];
-    LoaderHelper= LoaderHelper["LoaderHelper"];
-    ChannelNames= ChannelNames["ChannelNames"];
-    EventHelper= EventHelper["EventHelper"];
-    EntityServiceBase=EntityServiceBase["EntityServiceBase"];
+    I18N = I18N["I18N"];
+    Container = Container["Container"];
+    CodemirrorGutterMessageManager = CodemirrorGutterMessageManager["CodemirrorGutterMessageManager"];
+    CommonUtil = CommonUtil["CommonUtil"];
+    ObjectUtil = ObjectUtil["ObjectUtil"];
+    LoaderHelper = LoaderHelper["LoaderHelper"];
+    ChannelNames = ChannelNames["ChannelNames"];
+    EventHelper = EventHelper["EventHelper"];
+    EntityServiceBase = EntityServiceBase["EntityServiceBase"];
+    HotkeyManager = Container.instance.get(HotkeyManager["HotkeyManager"]);
 
     LoaderHelper.importPlatformCss('/features/details/editor/codemirror-gutter-message.css');
 
@@ -512,7 +514,6 @@ t(
                 this.editorOptions.twxMsgGutterId = gutterId;
             }
         }
-    
         _initCodeMirror() {
             $(this.element).find('.editor-loading').css('display', 'block');
             this._cleanupCodeMirror();
@@ -593,14 +594,14 @@ t(
                             editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true })
                         }, {
                             onClose: () => {
-                                console.log("close action")
+                                HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
                             },
                             onSave: () => {
-                                console.log("save action")
+                                HotkeyManager._subscribers["SERVICE_SAVE"].callback.call();
                             }, onDone: () => {
-                                console.log("done action")
+                                HotkeyManager._subscribers["SERVICE_DONE"].callback.call();
                             }, onTest: () => {
-                                console.log("test action")
+                                HotkeyManager._subscribers["SERVICE_EXECUTE"].callback.call();
                             }, onPreferencesChanged: (preferences) => {
                                 console.log("preferences action " + preferences)
                             }
