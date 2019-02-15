@@ -1,1 +1,27 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><Entities build="b14" majorVersion="7" minorVersion="1" modelPersistenceProviderPackage="H2PersistenceProviderPackage" revision="3" schemaVersion="911"><DataShapes><DataShape baseDataShape="" description="" documentationContent="&lt;p&gt;&lt;br&gt;&lt;/p&gt;&#10;" homeMashup="" lastModifiedDate="2017-03-03T10:59:12.926+02:00" name="DatashapeDefinition" projectName="" tags="PTC:MonacoEditor"><Owner name="Administrator" type="User"/><avatar/><DesignTimePermissions><Create/><Read/><Update/><Delete/><Metadata/></DesignTimePermissions><RunTimePermissions/><VisibilityPermissions><Visibility/></VisibilityPermissions><ConfigurationTables/><FieldDefinitions><FieldDefinition baseType="STRING" description="" name="description" ordinal="3"/><FieldDefinition aspect.dataShape="FieldDefinition" baseType="INFOTABLE" description="" name="fieldDefinitions" ordinal="2"/><FieldDefinition baseType="DATASHAPENAME" description="" name="name" ordinal="1"/></FieldDefinitions><ConfigurationChanges></ConfigurationChanges></DataShape></DataShapes></Entities>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Entities build="b14" majorVersion="7" minorVersion="1" modelPersistenceProviderPackage="H2PersistenceProviderPackage" revision="3" schemaVersion="911">
+    <DataShapes>
+        <DataShape baseDataShape="" description="" documentationContent="&lt;p&gt;&lt;br&gt;&lt;/p&gt;&#10;" homeMashup="" lastModifiedDate="2017-03-03T10:59:12.926+02:00" name="DatashapeDefinition" projectName="" tags="PTC:MonacoEditor">
+            <Owner name="Administrator" type="User"/>
+            <avatar/>
+            <DesignTimePermissions>
+                <Create/>
+                <Read/>
+                <Update/>
+                <Delete/>
+                <Metadata/>
+            </DesignTimePermissions>
+            <RunTimePermissions/>
+            <VisibilityPermissions>
+                <Visibility/>
+            </VisibilityPermissions>
+            <ConfigurationTables/>
+            <FieldDefinitions>
+                <FieldDefinition baseType="STRING" description="" name="description" ordinal="3"/>
+                <FieldDefinition aspect.dataShape="FieldDefinition" baseType="INFOTABLE" description="" name="fieldDefinitions" ordinal="2"/>
+                <FieldDefinition baseType="DATASHAPENAME" description="" name="name" ordinal="1"/>
+            </FieldDefinitions>
+            <ConfigurationChanges></ConfigurationChanges>
+        </DataShape>
+    </DataShapes>
+</Entities>

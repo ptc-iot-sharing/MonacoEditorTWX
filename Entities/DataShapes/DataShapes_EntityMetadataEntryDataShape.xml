@@ -1,1 +1,31 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><Entities build="b349" majorVersion="8" minorVersion="3" modelPersistenceProviderPackage="H2PersistenceProviderPackage" revision="0" schemaVersion="1030" universal=""><DataShapes><DataShape baseDataShape="" description="" documentationContent="" homeMashup="" lastModifiedDate="2019-01-23T11:50:34.705+02:00" name="EntityMetadataEntryDataShape" projectName="" tags="PTC:MonacoEditor"><Owner name="Administrator" type="User"/><avatar/><DesignTimePermissions><Create/><Read/><Update/><Delete/><Metadata/></DesignTimePermissions><RunTimePermissions/><VisibilityPermissions><Visibility/></VisibilityPermissions><ConfigurationTableDefinitions/><ConfigurationTables/><FieldDefinitions><FieldDefinition baseType="STRING" description="" name="description" ordinal="3"/><FieldDefinition baseType="JSON" description="" name="metadata" ordinal="2"/><FieldDefinition baseType="STRING" description="" name="name" ordinal="1"/></FieldDefinitions><ConfigurationChanges><ConfigurationChange changeAction="CREATE" changeReason="header : documentationContent : updated, name : updated, tags : updated&#10;fields : name : Added, metadata : Added&#10;" timestamp="2019-01-23T11:48:16.516+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="fields : description : Added&#10;" timestamp="2019-01-23T11:50:34.705+02:00" user="Administrator"/></ConfigurationChanges></DataShape></DataShapes></Entities>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Entities build="b349" majorVersion="8" minorVersion="3" modelPersistenceProviderPackage="H2PersistenceProviderPackage" revision="0" schemaVersion="1030">
+    <DataShapes>
+        <DataShape baseDataShape="" description="" documentationContent="" homeMashup="" lastModifiedDate="2019-01-23T11:50:34.705+02:00" name="EntityMetadataEntryDataShape" projectName="" tags="PTC:MonacoEditor">
+            <Owner name="Administrator" type="User"/>
+            <avatar/>
+            <DesignTimePermissions>
+                <Create/>
+                <Read/>
+                <Update/>
+                <Delete/>
+                <Metadata/>
+            </DesignTimePermissions>
+            <RunTimePermissions/>
+            <VisibilityPermissions>
+                <Visibility/>
+            </VisibilityPermissions>
+            <ConfigurationTableDefinitions/>
+            <ConfigurationTables/>
+            <FieldDefinitions>
+                <FieldDefinition baseType="STRING" description="" name="description" ordinal="3"/>
+                <FieldDefinition baseType="JSON" description="" name="metadata" ordinal="2"/>
+                <FieldDefinition baseType="STRING" description="" name="name" ordinal="1"/>
+            </FieldDefinitions>
+            <ConfigurationChanges>
+                <ConfigurationChange changeAction="CREATE" changeReason="header : documentationContent : updated, name : updated, tags : updated&#10;fields : name : Added, metadata : Added&#10;" timestamp="2019-01-23T11:48:16.516+02:00" user="Administrator"/>
+                <ConfigurationChange changeAction="MODIFY" changeReason="fields : description : Added&#10;" timestamp="2019-01-23T11:50:34.705+02:00" user="Administrator"/>
+            </ConfigurationChanges>
+        </DataShape>
+    </DataShapes>
+</Entities>
