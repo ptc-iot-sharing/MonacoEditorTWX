@@ -199,7 +199,7 @@ export class MonacoCodeEditor {
      */
     public onEditorContentChange(callback: (code: string) => void) {
         this.monacoEditor.onDidChangeModelContent(() => {
-            callback(this.monacoEditor.getModel().getValue())
+            callback(this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF))
         });
     }
 
@@ -216,7 +216,7 @@ export class MonacoCodeEditor {
      * Gets the current text in the monaco editor
      */
     public getValue(): string {
-        return this.monacoEditor.getValue();
+        return this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF);
     }
 
     /**

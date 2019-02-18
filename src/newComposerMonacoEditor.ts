@@ -412,7 +412,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
 
             let cmOptions = Object.assign({}, this.editorOptions, opts);
 
-            if (window.TWX.debug) {
+            if (window['TWX'].debug) {
                 console.log('CodeMirror initialization options', cmOptions);
             }
 
@@ -420,11 +420,11 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 let mapping = {
                     "text/x-sql": 'sql',
                     'javascript': 'twxJavascript',
+                    'twxTypescript': 'twxTypescript',
                     'xml': 'xml',
                     'css': 'css',
                     'expressionJs': 'javascript',
                     'json': 'json'
-
                 }
                 return mapping[language];
             }
@@ -435,12 +435,14 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 }
                 this._getUserPreferences().then(async (prefs) => {
                     this.userPreferences = prefs;
-                    this._initEditorTheme(this.userPreferences);
-                    cmOptions.theme = this.theme;
                     let editorClass;
                     if(this.entityModel && this.entityModel.Area != "UI") {
-                        if (cmOptions.mode.name == 'twxTypescript' || cmOptions.mode.name == 'javascript') {
+                        if (cmOptions.mode.name == 'javascript') {
                             editorClass = TypescriptCodeEditor;
+                            if(this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
+                                cmOptions.mode.name = 'twxTypescript';
+                                this.cmTextarea.value = this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows[1].code;
+                            }
                         } else {
                             editorClass = ServiceEditor;
                         }
@@ -520,23 +522,38 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                             TypescriptCodeEditor.workerManager.syncExtraLibs();
                         });
 
-                        if (convertHandlerToMonacoLanguage(cmOptions.mode.name) == 'twxTypescript') {
-                            typescriptCodeEditor.onEditorTranspileFinised((code) => {
-                                // TODO: figure this out
-                                // this.javascriptCode = code;
-                            });
-                        }
-                    }
-                    this.initialized();
-
-                    if (this.element) {
-                        this.codeMirror.onEditorContentChange((code) => {
+                        typescriptCodeEditor.onEditorTranspileFinished((code) => {
                             if (code !== this._getValue()) {
                                 this._setValue(code);
                                 //this._lintIfConfigured();
                                 CommonUtil.fireChangeEvent(this.element, code);
                             }
                         });
+                    }
+                    this.initialized();
+
+                    if (this.element) {
+                        this.codeMirror.onEditorContentChange((code) => {
+                            if(convertHandlerToMonacoLanguage(cmOptions.mode.name) != 'twxTypescript') {
+                                if (code !== this._getValue()) {
+                                    this._setValue(code);
+                                    //this._lintIfConfigured();
+                                    CommonUtil.fireChangeEvent(this.element, code);
+                                }
+                            } else {
+                                this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows[1] = {
+                                    code: code
+                                }
+                            }
+                        });
+                        if(this.codeMirror instanceof TypescriptCodeEditor) {
+                            this.codeMirror.onLanguageChanged((newLanguage) => {
+                                cmOptions.mode.name = newLanguage;
+                                if(newLanguage == "twxJavascript") {
+                                    this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows.pop();
+                                }
+                            });
+                        }
 
                     }
 
@@ -599,18 +616,6 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
          */
         _getUserPreferences() {
             return this.userService.getUserPersistentValue(UserSessionInfoKeys.USER_PREFERENCES);
-        }
-
-        /**
-         * Retrieve the editor theme.  Will lazily load the CSS if it is not yet loaded.
-         *
-         * @returns {Promise}
-         * @private
-         */
-        _initEditorTheme(userPreferences) {
-            this.theme = _.get(userPreferences, UserPreferenceKeys.SERVICE_EDITOR_THEME, 'twx-editor-light');
-            // load the theme in case it is not loaded yet
-            LoaderHelper.importCss('/resources/styles/editor-themes/' + this.theme + '.css', true);
         }
 
         _preferenceChanged(data) {

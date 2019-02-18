@@ -384,7 +384,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         });
 
         if (mode == 'twxTypescript') {
-            typescriptCodeEditor.onEditorTranspileFinised((code) => {
+            typescriptCodeEditor.onEditorTranspileFinished((code) => {
                 thisPlugin.properties.javascriptCode = code;
             });
         }

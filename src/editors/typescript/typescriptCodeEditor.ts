@@ -10,8 +10,12 @@ export class TypescriptCodeEditor extends ServiceEditor {
     public static workerManager: WorkerScriptManager;
     public static codeTranslator: ThingworxToTypescriptGenerator;
 
+    private languageSwitchAction: monaco.IDisposable;
+
     javascriptCode: string;
-    private onTranspileFinished: (javascriptCode: string) => void;
+    oldTypescriptCode: string;
+    private onTranspileFinished?: (javascriptCode: string) => void;
+    private onLanguageChangedCallback?: (language: string) => void;
 
     constructor(container, initialSettings, actinoCallbacks, intanceSettings) {
         super(container, initialSettings, actinoCallbacks, intanceSettings);
@@ -32,17 +36,64 @@ export class TypescriptCodeEditor extends ServiceEditor {
         if (this._instanceSettings.language === "twxTypescript") {
             this.transpileTypeScript();
         }
+
+        this.addEditorSwitchLanguageAction();
+    }
+
+    private addEditorSwitchLanguageAction() {
+        if(this._instanceSettings.language == "twxJavascript") {
+            this.languageSwitchAction = this.monacoEditor.addAction({
+                id: "toggleTypescript",
+                label: "Swich to TypeScript",
+                run: () => {
+                    this.languageSwitchAction.dispose();
+                    this.changeLanguage("twxTypescript", this.oldTypescriptCode ? this.oldTypescriptCode : this.monacoEditor.getModel().getValue());
+                    this.addEditorSwitchLanguageAction();
+                }
+            });
+        } else if(this._instanceSettings.language == "twxTypescript") {
+            this.languageSwitchAction = this.monacoEditor.addAction({
+                id: "toggleJavascript",
+                label: "Swich to JavaScript",
+                run: async () => {
+                    await this.transpileTypeScript();
+                    this.languageSwitchAction.dispose();
+                    this.changeLanguage("twxJavascript", this.javascriptCode);
+                    this.addEditorSwitchLanguageAction();
+                }
+            });
+        }
+        if(this.onLanguageChangedCallback) {
+            this.onLanguageChangedCallback(this._instanceSettings.language);
+        }
     }
 
     private async transpileTypeScript() {
         if (this.monacoEditor.getModel() == undefined) return;
+        this.oldTypescriptCode = this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF);
         const worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript")
         // if there is an uri available
-        const client = await worker(this.monacoEditor.getModel().uri)
+        if(!this.monacoEditor.getModel().uri) {
+            return;
+        }
+        const client = await worker(this.monacoEditor.getModel().uri);
         const emitOutput = await client.getEmitOutput(this.monacoEditor.getModel().uri.toString());
-
-        this.onTranspileFinished(emitOutput.outputFiles[0].text);
+        this.javascriptCode = emitOutput.outputFiles[0].text;
+        if(this.onTranspileFinished) {
+            this.onTranspileFinished(this.javascriptCode);
+        }
     };
+
+    /**
+     * getValue - Get the latest value. This is either the written code or the transpiled one
+     */
+    public getValue(): string {
+        if(this._instanceSettings.language == "twxTypescript") {
+            return this.javascriptCode;
+        } else {
+            return super.getValue();
+        }
+    }
 
     public static performGlobalInitialization() {
         try {
@@ -60,7 +111,8 @@ export class TypescriptCodeEditor extends ServiceEditor {
         TypescriptCodeEditor.workerManager.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.ES5,
             allowNonTsExtensions: true,
-            noLib: true
+            noLib: true,
+            newLine: monaco.languages.typescript.NewLineKind.LineFeed
         });
         // generate the completion for language snippets
         monaco.languages.registerCompletionItemProvider("twxJavascript", {
@@ -161,7 +213,15 @@ export class TypescriptCodeEditor extends ServiceEditor {
      * Listen to results of transpilation of typescript to javascript
      * @param callback Action to execute when the transpilation is finished
      */
-    public onEditorTranspileFinised(callback: (javascriptCode: string) => void) {
+    public onLanguageChanged(callback: (javascriptCode: string) => void) {
+        this.onLanguageChangedCallback = callback;
+    }
+
+    /**
+     * Listen to results of transpilation of typescript to javascript
+     * @param callback Action to execute when the transpilation is finished
+     */
+    public onEditorTranspileFinished(callback: (javascriptCode: string) => void) {
         this.onTranspileFinished = callback;
     }
 
