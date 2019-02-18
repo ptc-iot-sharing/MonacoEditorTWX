@@ -32,7 +32,11 @@ module.exports = function (env, argv) {
             // the entry point for the old composer code
             oldComposer: `./src/oldComposerMonacoEditor.ts`,
             // the entry point for the new composer code
-            newComposer: `./src/newComposerMonacoEditor.ts`
+            newComposer: `./src/newComposerMonacoEditor.ts`,
+            // the entry point for the runtime widget
+            widgetRuntime: `./src/monacoScriptWidget.runtime.ts`,
+            // the entry point for the ide widget
+            widgetIde: `./src/monacoScriptWidget.ide.ts`
         },
         output: {
             path: path.join(__dirname, 'build', 'ui', packageJson.name),
@@ -175,7 +179,7 @@ module.exports = function (env, argv) {
                         result.Entities.Widgets[0].Widget[0].UIResources[0] = {};
                         result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource = [];
                     }
-                    // add the ide file
+                    // add the old composer bundle file
                     result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource.push({
                         $: {
                             type: 'JS',
@@ -183,6 +187,26 @@ module.exports = function (env, argv) {
                             description: '',
                             isDevelopment: 'true',
                             isRuntime: 'false'
+                        }
+                    });
+                    // add the ide file
+                    result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource.push({
+                        $: {
+                            type: 'JS',
+                            file: `${packageJson.name}.ide.bundle.js`,
+                            description: '',
+                            isDevelopment: 'true',
+                            isRuntime: 'false'
+                        }
+                    });
+                    // add the runtime file
+                    result.Entities.Widgets[0].Widget[0].UIResources[0].FileResource.push({
+                        $: {
+                            type: 'JS',
+                            file: `${packageJson.name}.runtime.bundle.js`,
+                            description: '',
+                            isDevelopment: 'false',
+                            isRuntime: 'true'
                         }
                     });
                     // tranform the metadata back into xml

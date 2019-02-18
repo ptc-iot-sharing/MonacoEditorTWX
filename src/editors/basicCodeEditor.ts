@@ -144,6 +144,15 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Set the editor as readonly or not
+     */
+    public setReadOnlyStatus(readOnly: boolean) {
+        this.monacoEditor.updateOptions({
+            readOnly: readOnly
+        });
+    }
+
+    /**
      * Dispose of the given editor, and release all models and used resources
      */
     public dispose() {

@@ -1,3 +1,5 @@
+import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+
 /**
  * Entity names recognized my monaco can only be valid javascript variable names
  */
@@ -16,7 +18,11 @@ export const ENTITY_TYPES = ["ApplicationKeys", "Authenticators", "Bindings", "B
  * The default editor settings with monaco.
  * The full reference is available here: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
  */
-export const DEFAULT_EDITOR_SETTINGS  = {
+export const DEFAULT_EDITOR_SETTINGS: {
+    editor: monaco.editor.IEditorConstructionOptions,
+    diffEditor: monaco.editor.IDiffEditorConstructionOptions,
+    thingworx: any
+} = {
     editor: {
         showFoldingControls: "mouseover",
         folding: true,
@@ -35,4 +41,4 @@ export const DEFAULT_EDITOR_SETTINGS  = {
     thingworx: {
         showGenericServices: false
     }
-};
+}
