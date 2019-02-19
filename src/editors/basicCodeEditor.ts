@@ -153,6 +153,13 @@ export class MonacoCodeEditor {
     }
 
     /**
+     * Set the editor settings externally
+     */
+    public setEditorSettings(settings: monaco.editor.IEditorConstructionOptions) {
+        this.monacoEditor.updateOptions(settings);
+    }
+
+    /**
      * Dispose of the given editor, and release all models and used resources
      */
     public dispose() {

@@ -37,6 +37,24 @@ class MonacoCodeEditorWidget extends TWComposerWidget {
     @property ('BOOLEAN', defaultValue(true), bindingTarget) ReadOnly: boolean;
 
     /**
+     * Editor initial settings for initialization
+     */
+    @property ('STRING', defaultValue(JSON.stringify({
+        showFoldingControls: "mouseover",
+        folding: true,
+        fontSize: 12,
+        fontFamily: "Fira Code,Monaco,monospace",
+        fontLigatures: true,
+        mouseWheelZoom: true,
+        formatOnPaste: true,
+        scrollBeyondLastLine: true,
+        theme: "vs",
+        fixedOverflowWidgets: true,
+        keepWidgetsWithinEditor: false,
+        disableLayerHinting: true // fixes bug in FF
+    }, null, " ")), bindingTarget) EditorSettings: string;
+
+    /**
      * Automatically format the code.
      */
     @description('Format the entire document')

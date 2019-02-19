@@ -1,6 +1,5 @@
 import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport';
 import { MonacoCodeEditor } from './editors/basicCodeEditor';
-import { DEFAULT_EDITOR_SETTINGS } from './constants';
 
 @ThingworxRuntimeWidget
 class MonacoCodeEditorWidget extends TWRuntimeWidget {
@@ -11,6 +10,11 @@ class MonacoCodeEditorWidget extends TWRuntimeWidget {
         if (value != this.monacoEditor.getValue()) {
             this.monacoEditor.setValue(value);
         }
+    };
+
+    @TWProperty("EditorSettings")
+    set editorSettings(value: any) {
+        this.monacoEditor.setEditorSettings(JSON.parse(value));
     };
 
     @TWProperty("ReadOnly")
@@ -29,8 +33,9 @@ class MonacoCodeEditorWidget extends TWRuntimeWidget {
 
     async afterRender(): Promise<void> {
         // auto layout should be enabled
-        DEFAULT_EDITOR_SETTINGS.editor.automaticLayout = true;
-        this.monacoEditor = new MonacoCodeEditor(this.jqElement[0], DEFAULT_EDITOR_SETTINGS, {
+        const editorSettings = JSON.parse(this.editorSettings);
+        editorSettings.automaticLayout = true;
+        this.monacoEditor = new MonacoCodeEditor(this.jqElement[0], <any>{editor: editorSettings}, {
             onPreferencesChanged: () => { }
         }, {
                 code: this.code,
