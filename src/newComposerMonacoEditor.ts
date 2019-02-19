@@ -508,7 +508,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                             effectiveShape: this.entityModel.entity.effectiveShape,
                             id: this.entityModel.name,
                             entityType: this.entityModel.entityType,
-                            propertyData: await getThingPropertyValues(this.entityModel.name)
+                            propertyData: this.entityModel.entityType == "Thing" ? await getThingPropertyValues(this.entityModel.name) : {}
                         });
                         this.codeMirror.onEditorFocused(async () => {
                             typescriptCodeEditor.refreshMeDefinitions({
@@ -516,7 +516,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                                 effectiveShape: this.entityModel.entity.effectiveShape,
                                 id: this.entityModel.name,
                                 entityType: this.entityModel.entityType,
-                                propertyData: await getThingPropertyValues(this.entityModel.name)
+                                propertyData: this.entityModel.entityType == "Thing" ? await getThingPropertyValues(this.entityModel.name) : {}
                             });
                             TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
                             TypescriptCodeEditor.workerManager.syncExtraLibs();
