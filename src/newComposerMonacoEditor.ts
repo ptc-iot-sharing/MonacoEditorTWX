@@ -230,11 +230,11 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                     break;
 
                 case 'COMMENT':
-                    this.commentSelection();
+                    this.codeMirror.commentSelection();
                     break;
 
                 case 'UNCOMMENT':
-                    this.unCommentSelection();
+                    this.codeMirror.uncommentSelection();
                     break;
 
                 case 'INDENT-LEFT':
@@ -379,11 +379,11 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
         }
 
         find() {
-            alert("Use the editor shortcut!");
+            alert("Use the editor shortcut! CTRL+F");
         }
 
         replace() {
-            alert("Use the editor shortcut!");
+            alert("Use the editor shortcut! CTRL+R");
         }
 
         replaceAll(findString, replaceString) {
