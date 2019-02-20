@@ -2,7 +2,7 @@ import { ServiceEditor } from "../serviceEditor/serviceEditor";
 import * as monaco from '../../monaco-editor/esm/vs/editor/editor.api';
 import { WorkerScriptManager } from "../workerScriptManager";
 import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../../utilities';
-import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES } from "../../constants";
+import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES, Languages } from "../../constants";
 import { ThingworxToTypescriptGenerator } from "./thingworxTypescriptGenerator";
 
 
@@ -21,10 +21,10 @@ export class TypescriptCodeEditor extends ServiceEditor {
         super(container, initialSettings, actinoCallbacks, intanceSettings);
 
         this.monacoEditor.onDidChangeModelContent((e) => {
-            if (this._instanceSettings.language === "twxTypescript") {
+            if (this._instanceSettings.language === Languages.TwxTypescript) {
                 this.transpileTypeScript();
             }
-            if (this._instanceSettings.language == "twxTypescript" || this._instanceSettings.language == "twxJavascript") {
+            if (this._instanceSettings.language == Languages.TwxTypescript || this._instanceSettings.language == Languages.TwxJavascript) {
                 // whenever the new char inserted is a "." or a "]", find the related metadata
                 // TODO: find a better way of doing this, that is more precise
                 if (e.changes && e.changes[0] && (e.changes[0].text == "." || e.changes[0].text == "]")) {
@@ -33,7 +33,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
             }
         });
         this.addMetadataForReferencedEntities();
-        if (this._instanceSettings.language === "twxTypescript") {
+        if (this._instanceSettings.language === Languages.TwxTypescript) {
             this.transpileTypeScript();
         }
 
@@ -41,24 +41,24 @@ export class TypescriptCodeEditor extends ServiceEditor {
     }
 
     private addEditorSwitchLanguageAction() {
-        if(this._instanceSettings.language == "twxJavascript") {
+        if(this._instanceSettings.language == Languages.TwxJavascript) {
             this.languageSwitchAction = this.monacoEditor.addAction({
                 id: "toggleTypescript",
                 label: "Swich to TypeScript",
                 run: () => {
                     this.languageSwitchAction.dispose();
-                    this.changeLanguage("twxTypescript", this.oldTypescriptCode ? this.oldTypescriptCode : this.monacoEditor.getModel().getValue());
+                    this.changeLanguage(Languages.TwxTypescript, this.oldTypescriptCode ? this.oldTypescriptCode : this.monacoEditor.getModel().getValue());
                     this.addEditorSwitchLanguageAction();
                 }
             });
-        } else if(this._instanceSettings.language == "twxTypescript") {
+        } else if(this._instanceSettings.language == Languages.TwxTypescript) {
             this.languageSwitchAction = this.monacoEditor.addAction({
                 id: "toggleJavascript",
                 label: "Swich to JavaScript",
                 run: async () => {
                     await this.transpileTypeScript();
                     this.languageSwitchAction.dispose();
-                    this.changeLanguage("twxJavascript", this.javascriptCode);
+                    this.changeLanguage(Languages.TwxJavascript, this.javascriptCode);
                     this.addEditorSwitchLanguageAction();
                 }
             });
@@ -71,7 +71,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
     private async transpileTypeScript() {
         if (this.monacoEditor.getModel() == undefined) return;
         this.oldTypescriptCode = this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF);
-        const worker = await monaco.languages.typescript.getLanguageWorker("twxTypescript")
+        const worker = await monaco.languages.typescript.getLanguageWorker(Languages.TwxTypescript)
         // if there is an uri available
         if(!this.monacoEditor.getModel().uri) {
             return;
@@ -88,7 +88,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
      * getValue - Get the latest value. This is either the written code or the transpiled one
      */
     public getValue(): string {
-        if(this._instanceSettings.language == "twxTypescript") {
+        if(this._instanceSettings.language == Languages.TwxTypescript) {
             return this.javascriptCode;
         } else {
             return super.getValue();
@@ -98,15 +98,15 @@ export class TypescriptCodeEditor extends ServiceEditor {
     public static performGlobalInitialization() {
         try {
             // create a new language called twxJavascript
-            monaco.languages.typescript.setupNamedLanguage({ id: "twxJavascript" }, false, true);
+            monaco.languages.typescript.setupNamedLanguage({ id: Languages.TwxJavascript }, false, true);
             // create a new language called twxTypescript
-            monaco.languages.typescript.setupNamedLanguage({ id: "twxTypescript" }, true, true);
+            monaco.languages.typescript.setupNamedLanguage({ id: Languages.TwxTypescript }, true, true);
         } catch (e) {
             alert("There was an error initializing monaco. Please clean the browser cache.");
             throw e;
         }
-        TypescriptCodeEditor.workerManager = new WorkerScriptManager(monaco.languages.typescript.getLanguageDefaults("twxTypescript"),
-            monaco.languages.typescript.getLanguageDefaults("twxJavascript"));
+        TypescriptCodeEditor.workerManager = new WorkerScriptManager(monaco.languages.typescript.getLanguageDefaults(Languages.TwxTypescript),
+            monaco.languages.typescript.getLanguageDefaults(Languages.TwxJavascript));
         // set the compiler options
         TypescriptCodeEditor.workerManager.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -115,25 +115,25 @@ export class TypescriptCodeEditor extends ServiceEditor {
             newLine: monaco.languages.typescript.NewLineKind.LineFeed
         });
         // generate the completion for language snippets
-        monaco.languages.registerCompletionItemProvider("twxJavascript", {
+        monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
             provideCompletionItems: function (model, position) {
                 return loadSnippets(require("../../configs/javascriptSnippets.json"));
             }
         });
 
-        monaco.languages.registerCompletionItemProvider("twxTypescript", {
+        monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
             provideCompletionItems: function (model, position) {
                 return loadSnippets(require("../../configs/typescriptSnippets.json"));
             }
         });
 
         // generate the completion for twx snippets
-        monaco.languages.registerCompletionItemProvider("twxJavascript", {
+        monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
             provideCompletionItems: function (model, position) {
                 return loadSnippets(require("../../configs/thingworxJavascriptSnippets.json"));
             }
         });
-        monaco.languages.registerCompletionItemProvider("twxTypescript", {
+        monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
             provideCompletionItems: function (model, position) {
                 return loadSnippets(require("../../configs/thingworxTypescriptSnippets.json"));
             }
@@ -145,7 +145,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         // for example Things.test
         let entityPropertyAccessRegex = new RegExp("(" + ENTITY_TYPES.join("|") + ")\\.([^\\.]*)$");
         // this handles on demand code completion for Thingworx entity names
-        monaco.languages.registerCompletionItemProvider(["twxJavascript", "twxTypescript"], {
+        monaco.languages.registerCompletionItemProvider([Languages.TwxJavascript, Languages.TwxTypescript], {
             triggerCharacters: ["[", "[\"", "."],
             provideCompletionItems: (model, position) => {
                 // find out if we are completing on a entity collection. Get the line until the current position

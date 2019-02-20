@@ -4367,7 +4367,7 @@ export namespace languages {
     /**
      * Register a completion item provider (use by e.g. suggestions).
      */
-    export function registerCompletionItemProvider(languageId: string, provider: CompletionItemProvider): IDisposable;
+    export function registerCompletionItemProvider(languageId: string | string[], provider: CompletionItemProvider): IDisposable;
 
     /**
      * Register a document color provider (used by Color Picker, Color Decorator).

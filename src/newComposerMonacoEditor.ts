@@ -1,4 +1,4 @@
-import { DEFAULT_EDITOR_SETTINGS } from "./constants";
+import { DEFAULT_EDITOR_SETTINGS, Languages } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
@@ -412,8 +412,8 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
         convertHandlerToMonacoLanguage(language: string): string {
             let mapping = {
                 "text/x-sql": 'sql',
-                'javascript': 'twxJavascript',
-                'twxTypescript': 'twxTypescript',
+                'javascript': Languages.TwxJavascript,
+                'twxTypescript': Languages.TwxTypescript,
                 'xml': 'xml',
                 'css': 'css',
                 'expressionJs': 'javascript',
@@ -494,7 +494,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 if (this.langMode.name == 'javascript') {
                     editorClass = TypescriptCodeEditor;
                     if (currentEditedModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
-                        this.langMode.name = 'twxTypescript';
+                        this.langMode.name = Languages.TwxTypescript;
                         this._setValue(currentEditedModel.serviceImplementation.configurationTables.Script.rows[1].code);
                     }
                 } else {
@@ -559,14 +559,14 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 });
                 this.codeMirror.onLanguageChanged((newLanguage) => {
                     this.langMode.name = newLanguage;
-                    if(newLanguage == "twxJavascript" && currentEditedModel) {
+                    if(newLanguage == Languages.TwxJavascript && currentEditedModel) {
                         currentEditedModel.serviceImplementation.configurationTables.Script.rows.pop();
                     }
                 });
             }
 
             this.codeMirror.onEditorContentChange((code) => {
-                if(this.convertHandlerToMonacoLanguage(this.langMode.name) != 'twxTypescript') {
+                if(this.convertHandlerToMonacoLanguage(this.langMode.name) != Languages.TwxTypescript) {
                     if (code !== this._getValue()) {
                         this._setValue(code);
                         //this._lintIfConfigured();

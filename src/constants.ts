@@ -42,3 +42,8 @@ export const DEFAULT_EDITOR_SETTINGS: {
         showGenericServices: false
     }
 }
+
+export enum Languages {
+    TwxTypescript = 'twxTypescript',
+    TwxJavascript = 'twxJavascript'
+}

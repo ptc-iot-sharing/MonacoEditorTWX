@@ -1,4 +1,4 @@
-import { DEFAULT_EDITOR_SETTINGS } from "./constants";
+import { DEFAULT_EDITOR_SETTINGS, Languages } from "./constants";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
@@ -65,8 +65,8 @@ TW.jqPlugins.twCodeEditor.prototype.convertHandlerToMonacoLanguage = function (l
     let mapping = {
         "SQLCommand": 'sql',
         'SQLQuery': 'sql',
-        'TypeScript': 'twxTypescript',
-        'Script': 'twxJavascript',
+        'TypeScript': Languages.TwxTypescript,
+        'Script': Languages.TwxJavascript,
         'Python': 'python',
         'R': 'r'
     }
@@ -157,7 +157,7 @@ TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string,
     if (this.monacoEditor) {
         const mode = this.convertHandlerToMonacoLanguage(language);
         this.monacoEditor.changeLanguage(mode, code);
-        if (this.monacoEditor instanceof TypescriptCodeEditor && mode == 'twxTypescript') {
+        if (this.monacoEditor instanceof TypescriptCodeEditor && mode == Languages.TwxTypescript) {
             this.monacoEditor.onEditorTranspileFinised((code) => {
                 this.properties.javascriptCode = code;
             });
@@ -286,7 +286,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         editor = thisPlugin.monacoEditor;
     } else {
         let editorClass;
-        if (mode == 'twxTypescript' || mode == 'twxJavascript') {
+        if (mode == Languages.TwxTypescript || mode == Languages.TwxJavascript) {
             editorClass = TypescriptCodeEditor;
         } else {
             editorClass = ServiceEditor;
@@ -383,7 +383,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
             TypescriptCodeEditor.workerManager.syncExtraLibs();
         });
 
-        if (mode == 'twxTypescript') {
+        if (mode == Languages.TwxTypescript) {
             typescriptCodeEditor.onEditorTranspileFinished((code) => {
                 thisPlugin.properties.javascriptCode = code;
             });
