@@ -122,7 +122,7 @@ export class ThingworxToTypescriptGenerator {
         // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
         let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
         let classDefinition: string;
-        if(showGenericServices) {
+        if (showGenericServices) {
             classDefinition = `export class ${entityName} extends twx.GenericThing {\n constructor();\n`;
         } else {
             classDefinition = `export class ${entityName} {\n constructor();\n`;
@@ -164,7 +164,7 @@ export class ThingworxToTypescriptGenerator {
                 outputMetadata = service.resultType;
             }
             // now generate the service definition, as well as jsdocs
-            if(serviceParamDefinition) {
+            if (serviceParamDefinition) {
                 classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * Params:\n ${serviceParamDefinition}**/\n${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
             } else {
                 classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * \n **/\n${service.name}(): ${this.getTypescriptBaseType(outputMetadata)};\n`;
@@ -178,7 +178,7 @@ export class ThingworxToTypescriptGenerator {
 
             let property = propertyDefs[def];
             // generate an export for each property
-            if(typeof propertyData[property.name] == "string") {
+            if (typeof propertyData[property.name] == "string") {
                 classDefinition += `/**\n * ${property.description}\n */\n readonly ${property.name} = "${propertyData[property.name]}";\n`;
             } else {
                 classDefinition += `/**\n * ${property.description}\n */\n ${property.name}: ${this.getTypescriptBaseType(property)};\n`;
@@ -213,15 +213,15 @@ export class ThingworxToTypescriptGenerator {
     /**
     * Declares the me object and the inputs of the service
     */
-    public generateServiceGlobals(serviceMetadata, entityName) {
-    var definition = `const me = new twx.${entityName}.${entityName}();`;
-    for (var key in serviceMetadata.parameterDefinitions) {
-        if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
-        var inputDef = serviceMetadata.parameterDefinitions[key];
-        definition += `let ${key}: ${this.getTypescriptBaseType(inputDef)};`;
+    public generateServiceGlobals(serviceMetadata: {parameterDefinitions: {[ name: string]:  any}}, entityName: string) {
+        var definition = `const me = new twx.${entityName}.${entityName}();`;
+        for (var key in serviceMetadata.parameterDefinitions) {
+            if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
+            var inputDef = serviceMetadata.parameterDefinitions[key];
+            definition += `let ${key}: ${this.getTypescriptBaseType(inputDef)};`;
+        }
+        return definition;
     }
-    return definition;
-}
 
     /**
      * Gets the typescript interface type from a thingworx baseType
