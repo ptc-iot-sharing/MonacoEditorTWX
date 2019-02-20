@@ -1,3 +1,7 @@
 .tingle-popup-container .tingle-modal-box__content {
     padding: 0;
 }
+
+.tingle-modal--visible .tingle-modal-box {
+    transform: unset;
+}
