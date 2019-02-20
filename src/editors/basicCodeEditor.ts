@@ -23,11 +23,25 @@ export interface MonacoInstanceSettings {
     modelName: string
 }
 
+export interface EditorPosition {
+    line: number,
+    ch: number,
+}
+
 export class MonacoCodeEditor {
     private modals = [];
     monacoEditor: monaco.editor.IStandaloneCodeEditor;
     _currentEditorSettings: MonacoEditorSettings;
     _instanceSettings: MonacoInstanceSettings;
+
+    public state = {
+        msg: {
+            gutterId: "",
+            hasGutter: true,
+            marked: [],
+            messages: []
+        }
+    };
 
     /**
      * Creates a new monaco editor in the given container
@@ -259,6 +273,56 @@ export class MonacoCodeEditor {
             }],
             validate: true
         });
+    }
+
+    /**
+     * markText - creates an text decoration at the given position
+     */
+    public markText(from: EditorPosition, to: EditorPosition, options: {
+        className: string, __annotation: { severity: string, message: any }
+    }) {
+        if (from.ch + to.ch + from.line + to.line == 0) {
+            from.line = from.ch = to.line = 1;
+            to.ch = 1000;
+        } else {
+            // just increment everything
+            from.line++;
+            from.ch++;
+            to.line++;
+            to.ch++;
+        }
+        const decorations = this.monacoEditor.deltaDecorations([], [
+            {
+                range: new monaco.Range(from.line, from.ch, to.line, to.ch),
+                options: {
+                    className: options.className,
+                    isWholeLine: from.line == to.line && to.ch == 1000,
+                    glyphMarginClassName: 'CodeMirror-twxmsg-marker-' + options.__annotation.severity,
+                    overviewRuler: <any>{
+                        color: 'red'
+                    },
+                    hoverMessage: [
+                        {
+                            value: options.__annotation.message
+                        }
+                    ],
+                    glyphMarginHoverMessage: {
+                        value: options.__annotation.message
+                    }
+                }
+            }
+        ]);
+        return {
+            clear: () => this.monacoEditor.deltaDecorations(decorations, [])
+        }
+    }
+
+    public clearGutter() {
+
+    }
+
+    public setGutterMarker() {
+
     }
 
     private initializePreferenceEditor(onPreferencesChanged: (newPreferences: any) => void) {

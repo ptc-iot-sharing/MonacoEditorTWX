@@ -467,6 +467,8 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 return;
             }
 
+            let extraSettings: any = {};
+
             this.userPreferences = await this._getUserPreferences();
 
             // depending on the context, we might need to change the language mode and decide on the editor type
@@ -491,6 +493,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
             // decide on the editor class to use based on the language
             let editorClass;
             if (this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                extraSettings.glyphMargin = true;
                 if (this.langMode.name == 'javascript') {
                     editorClass = TypescriptCodeEditor;
                     if (currentEditedModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
@@ -520,7 +523,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
             // create a new editor
             this.codeMirror = new editorClass(container,
                 {
-                    editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true })
+                    editor: Object.assign({}, DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true }, extraSettings)
                 }, {
                     onClose: () => {
                         HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
@@ -569,7 +572,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 if(this.convertHandlerToMonacoLanguage(this.langMode.name) != Languages.TwxTypescript) {
                     if (code !== this._getValue()) {
                         this._setValue(code);
-                        //this._lintIfConfigured();
+                        this._lintIfConfigured();
                         CommonUtil.fireChangeEvent(this.element, code);
                     }
                 } else {
@@ -578,12 +581,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                     }
                 }
             });
-            /*
-            if (cmOptions.twxMsgGutterId) {
-                this.gutterMsgManager.initMessageGutter(this.codeMirror, cmOptions.twxMsgGutterId);
-                this._lintIfConfigured();
-            }
-            */
+            this._lintIfConfigured();
             this.codeMirror.focus();
             this.initialized();
             $(this.element).find('.editor-loading').css('display', 'none');
