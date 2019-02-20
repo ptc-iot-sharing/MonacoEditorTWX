@@ -3,6 +3,15 @@ import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 import { getThingPropertyValues } from "./utilities";
+
+enum EditorType {
+    SERVICE_EDITOR = "service-editor",
+    SUBSCRIPTION_EDITOR = "subscription-editor",
+    EXPRESSION_EDITOR = "expression-editor",
+    CSS_EDITOR = "css-editor",
+    GENERIC_EDITOR = "generic-editor"
+}
+
 var t = window["define"];
 t(
   "thingworx-ui-platform/features/details/editor/abstract-editor",
@@ -122,6 +131,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
         userPreferences: any;
         cmTextarea: any;
         theme: any;
+        editorType: EditorType;
 
         constructor(element, userService, {eventHelperGroupName=undefined, langMode=undefined, editorOptions=undefined, valueField = 'value'} = {}) {
             this.element = element;
@@ -392,181 +402,191 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
             this.gutterMsgManager = container.get(CodemirrorGutterMessageManager);
             this.entityService = container.get(EntityServiceBase);
             this.i18n = container.get(I18N);
-
-            this.editorOptions = _.defaults(opts, DEFAULT_EDITOR_SETTINGS);
             this._setGuttersOption();
             this._initCodeMirrorDebounced = _.debounce(this._initCodeMirror.bind(this), 150);
         }
 
         _setGuttersOption() {
-
         }
-        _initCodeMirror() {
+
+        convertHandlerToMonacoLanguage(language: string): string {
+            let mapping = {
+                "text/x-sql": 'sql',
+                'javascript': 'twxJavascript',
+                'twxTypescript': 'twxTypescript',
+                'xml': 'xml',
+                'css': 'css',
+                'expressionJs': 'javascript',
+                'json': 'json'
+            }
+            return mapping[language];
+        }
+
+        async getEntityInformationForMeDefinitions(currentEditedModel) {
+            let serviceDefinition;
+            if (this.editorType == EditorType.SERVICE_EDITOR) {
+                serviceDefinition = currentEditedModel.service;
+            } else if (this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                let subscriptionFields: any[] = currentEditedModel.fieldsModel.all;
+                serviceDefinition = {
+                    parameterDefinitions: subscriptionFields.reduce(function (map, obj) {
+                        map[obj.name] = obj;
+                        return map;
+                    }, {})
+                };
+                // now also fill out the datashape for the eventData param.
+                if(serviceDefinition.parameterDefinitions["eventData"]) {
+                    const eventName = currentEditedModel.eventName;
+                    // iterate through the event definitions
+                    for(const event of currentEditedModel.eventsModel.all) {
+                        if(event.name == eventName) {
+                            serviceDefinition.parameterDefinitions["eventData"].aspects = {
+                                dataShape: event.event.dataShape
+                            };
+                        }
+                    }
+                }
+            }
+            return {
+                serviceDefinition: serviceDefinition,
+                effectiveShape: this.entityModel.entity.effectiveShape,
+                id: this.entityModel.name,
+                entityType: this.entityModel.entityType,
+                propertyData: this.entityModel.entityType == "Thing" && !currentEditedModel.isNew ? await getThingPropertyValues(this.entityModel.name) : {}
+            }
+        }
+
+        async _initCodeMirror() {
             $(this.element).find('.editor-loading').css('display', 'block');
             this._cleanupCodeMirror();
-
-            let opts = {
-                readOnly: this.readOnly,
-                mode:     this.langMode
-            };
-
-            let cmOptions = Object.assign({}, this.editorOptions, opts);
-
             if (window['TWX'].debug) {
-                console.log('CodeMirror initialization options', cmOptions);
+                console.log('Monaco is starting initialization with options...', );
             }
 
-            function convertHandlerToMonacoLanguage(language: string): string {
-                let mapping = {
-                    "text/x-sql": 'sql',
-                    'javascript': 'twxJavascript',
-                    'twxTypescript': 'twxTypescript',
-                    'xml': 'xml',
-                    'css': 'css',
-                    'expressionJs': 'javascript',
-                    'json': 'json'
-                }
-                return mapping[language];
+            if (!this.cmTextarea || !this.element) {
+                return;
             }
 
-            _.defer(() => { // need to defer the composition in order for the script to show up without a click
-                if (!this.cmTextarea) {
-                    return;
+            this.userPreferences = await this._getUserPreferences();
+
+            // depending on the context, we might need to change the language mode and decide on the editor type
+            let currentEditedModel;
+            if (this.langMode.name == 'css') {
+                this.editorType = EditorType.CSS_EDITOR;
+            } else if (this.entityModel && this.entityModel.Area == "UI") {
+                this.langMode.name = "expressionJs";
+                this.editorType = EditorType.EXPRESSION_EDITOR;
+            } else if (this.langMode.name == "javascript" && this.langMode.json) {
+                this.langMode.name = "json";
+                this.editorType = EditorType.GENERIC_EDITOR;
+            } else if (this.entityModel && this.entityModel.current3rdNav == "subscriptions") {
+                this.editorType = EditorType.SUBSCRIPTION_EDITOR;
+                currentEditedModel = this.entityModel.subscriptionsModel.edit;
+            } else if (this.entityModel && this.entityModel.current3rdNav == "services") {
+                this.editorType = EditorType.SERVICE_EDITOR;
+                currentEditedModel = this.entityModel.servicesModel.editModel;
+            } else {
+                this.editorType = EditorType.GENERIC_EDITOR;
+            }
+            // decide on the editor class to use based on the language
+            let editorClass;
+            if (this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                if (this.langMode.name == 'javascript') {
+                    editorClass = TypescriptCodeEditor;
+                    if (currentEditedModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
+                        this.langMode.name = 'twxTypescript';
+                        this._setValue(currentEditedModel.serviceImplementation.configurationTables.Script.rows[1].code);
+                    }
+                } else {
+                    editorClass = ServiceEditor;
                 }
-                this._getUserPreferences().then(async (prefs) => {
-                    this.userPreferences = prefs;
-                    let editorClass;
-                    if(this.entityModel && this.entityModel.Area != "UI") {
-                        if (cmOptions.mode.name == 'javascript') {
-                            editorClass = TypescriptCodeEditor;
-                            if(this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
-                                cmOptions.mode.name = 'twxTypescript';
-                                this.cmTextarea.value = this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows[1].code;
-                            }
-                        } else {
-                            editorClass = ServiceEditor;
-                        }
-                    } else {
-                        editorClass = MonacoCodeEditor;
+            } else {
+                editorClass = MonacoCodeEditor;
+            }
+
+            let container = this.cmTextarea.parentElement;
+            let modelName;
+            if (this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                if(currentEditedModel) {
+                    modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${currentEditedModel.isNew ? Math.random().toString(36).substring(7) : currentEditedModel.name}`;
+                } else {
+                    modelName =  Math.random().toString(36).substring(7);
+                }
+            } else {
+                modelName =  Math.random().toString(36).substring(7);
+            }
+            // empty out the existing DOM stuff
+            container.innerHTML = "";
+            // create a new editor
+            this.codeMirror = new editorClass(container,
+                {
+                    editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true })
+                }, {
+                    onClose: () => {
+                        HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
+                    },
+                    onSave: () => {
+                        HotkeyManager._subscribers["SERVICE_SAVE"].callback.call();
+                    }, onDone: () => {
+                        HotkeyManager._subscribers["SERVICE_DONE"].callback.call();
+                    }, onTest: () => {
+                        HotkeyManager._subscribers["SERVICE_EXECUTE"].callback.call();
+                    }, onPreferencesChanged: (preferences) => {
+                        console.log("preferences action " + preferences)
                     }
-
-                    if(this.entityModel && this.entityModel.Area == "UI") {
-                        cmOptions.mode.name = "expressionJs";
-                    }
-
-                    if(cmOptions.mode.name == "javascript" && cmOptions.mode.json) {
-                        cmOptions.mode.name = "json";
-                    }
-
-                    let container = this.cmTextarea.parentElement;
-                    let modelName;
-                    if (this.entityModel && this.entityModel.Area != "UI") {
-                        let editedModel;
-                        if(this.entityModel.subscriptionsModel) {
-                            editedModel = this.entityModel.subscriptionsModel.edit;
-                        } else if (this.entityModel.servicesModel){
-                            editedModel = this.entityModel.servicesModel.editModel;
-                        }
-                        if(editedModel) {
-                            modelName = `${this.entityModel.entityType}/${this.entityModel.name}/${editedModel.isNew ? Math.random().toString(36).substring(7) : editedModel.name}`;
-                        } else {
-                            modelName =  Math.random().toString(36).substring(7);
-                        }
-                    } else {
-                        modelName =  Math.random().toString(36).substring(7);
-                    }
-
-                    container.innerHTML = "";
-                    // else create a new one
-                    this.codeMirror = new editorClass(container,
-                        {
-                            editor: Object.assign(DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true })
-                        }, {
-                            onClose: () => {
-                                HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
-                            },
-                            onSave: () => {
-                                HotkeyManager._subscribers["SERVICE_SAVE"].callback.call();
-                            }, onDone: () => {
-                                HotkeyManager._subscribers["SERVICE_DONE"].callback.call();
-                            }, onTest: () => {
-                                HotkeyManager._subscribers["SERVICE_EXECUTE"].callback.call();
-                            }, onPreferencesChanged: (preferences) => {
-                                console.log("preferences action " + preferences)
-                            }
-                        }, {
-                            code: this.cmTextarea.value,
-                            language: convertHandlerToMonacoLanguage(cmOptions.mode.name),
-                            modelName: modelName,
-                            readonly: cmOptions.readOnly
-                        });
-
-                    if (this.codeMirror instanceof TypescriptCodeEditor) {
-                        const typescriptCodeEditor = this.codeMirror as TypescriptCodeEditor;
-                        typescriptCodeEditor.refreshMeDefinitions({
-                            serviceDefinition:  this.entityModel.servicesModel.editModel.service,
-                            effectiveShape: this.entityModel.entity.effectiveShape,
-                            id: this.entityModel.name,
-                            entityType: this.entityModel.entityType,
-                            propertyData: this.entityModel.entityType == "Thing" ? await getThingPropertyValues(this.entityModel.name) : {}
-                        });
-                        this.codeMirror.onEditorFocused(async () => {
-                            typescriptCodeEditor.refreshMeDefinitions({
-                                serviceDefinition:  this.entityModel.servicesModel.editModel.service,
-                                effectiveShape: this.entityModel.entity.effectiveShape,
-                                id: this.entityModel.name,
-                                entityType: this.entityModel.entityType,
-                                propertyData: this.entityModel.entityType == "Thing" ? await getThingPropertyValues(this.entityModel.name) : {}
-                            });
-                            TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
-                            TypescriptCodeEditor.workerManager.syncExtraLibs();
-                        });
-
-                        typescriptCodeEditor.onEditorTranspileFinished((code) => {
-                            if (code !== this._getValue()) {
-                                this._setValue(code);
-                                //this._lintIfConfigured();
-                                CommonUtil.fireChangeEvent(this.element, code);
-                            }
-                        });
-                    }
-                    this.initialized();
-
-                    if (this.element) {
-                        this.codeMirror.onEditorContentChange((code) => {
-                            if(convertHandlerToMonacoLanguage(cmOptions.mode.name) != 'twxTypescript') {
-                                if (code !== this._getValue()) {
-                                    this._setValue(code);
-                                    //this._lintIfConfigured();
-                                    CommonUtil.fireChangeEvent(this.element, code);
-                                }
-                            } else {
-                                this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows[1] = {
-                                    code: code
-                                }
-                            }
-                        });
-                        if(this.codeMirror instanceof TypescriptCodeEditor) {
-                            this.codeMirror.onLanguageChanged((newLanguage) => {
-                                cmOptions.mode.name = newLanguage;
-                                if(newLanguage == "twxJavascript") {
-                                    this.entityModel.servicesModel.editModel.serviceImplementation.configurationTables.Script.rows.pop();
-                                }
-                            });
-                        }
-
-                    }
-
-                    if (cmOptions.twxMsgGutterId) {
-                        this.gutterMsgManager.initMessageGutter(this.codeMirror, cmOptions.twxMsgGutterId);
-                        this._lintIfConfigured();
-                    }
-
-                    this._setCursor();
-                    $(this.element).find('.editor-loading').css('display', 'none');
+                }, {
+                    code: this._getValue(),
+                    language: this.convertHandlerToMonacoLanguage(this.langMode.name),
+                    modelName: modelName,
+                    readonly: this.readOnly
                 });
 
+            if (this.codeMirror instanceof TypescriptCodeEditor) {
+                const typescriptCodeEditor = this.codeMirror as TypescriptCodeEditor;
+                typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
+                this.codeMirror.onEditorFocused(async () => {
+                    typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
+                    TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
+                    TypescriptCodeEditor.workerManager.syncExtraLibs();
+                });
+
+                typescriptCodeEditor.onEditorTranspileFinished((code) => {
+                    if (code !== this._getValue()) {
+                        this._setValue(code);
+                        //this._lintIfConfigured();
+                        CommonUtil.fireChangeEvent(this.element, code);
+                    }
+                });
+                this.codeMirror.onLanguageChanged((newLanguage) => {
+                    this.langMode.name = newLanguage;
+                    if(newLanguage == "twxJavascript" && currentEditedModel) {
+                        currentEditedModel.serviceImplementation.configurationTables.Script.rows.pop();
+                    }
+                });
+            }
+
+            this.codeMirror.onEditorContentChange((code) => {
+                if(this.convertHandlerToMonacoLanguage(this.langMode.name) != 'twxTypescript') {
+                    if (code !== this._getValue()) {
+                        this._setValue(code);
+                        //this._lintIfConfigured();
+                        CommonUtil.fireChangeEvent(this.element, code);
+                    }
+                } else {
+                    currentEditedModel.serviceImplementation.configurationTables.Script.rows[1] = {
+                        code: code
+                    }
+                }
             });
+            /*
+            if (cmOptions.twxMsgGutterId) {
+                this.gutterMsgManager.initMessageGutter(this.codeMirror, cmOptions.twxMsgGutterId);
+                this._lintIfConfigured();
+            }
+            */
+            this.codeMirror.focus();
+            this.initialized();
+            $(this.element).find('.editor-loading').css('display', 'none');
         }
 
         _getValue() {
