@@ -9,12 +9,14 @@ This project offers compatibility with both the **Old Composer** and the **New C
 
 ##Installation
 
-1. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
+1. Download the zip package listed under the downloads section under **Releases**. It should be the one named _MonacoScriptEditor-VERSION.zip_
+
+2. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
 
    * In the old composer, the Monaco Script Editor is being used when editing services and subscriptions.
    * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
 
-2. If you want to also use Monaco Script Editor within the New Composer, also do the following steps.
+3. If you want to also use Monaco Script Editor within the New Composer, also do the following steps.
 
    1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
    2. Edit the file `index.html`.
