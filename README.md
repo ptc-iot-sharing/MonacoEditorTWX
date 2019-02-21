@@ -64,11 +64,11 @@ The editor offers optimized completions for all of the JavaScript functions, as 
 ![img](https://i.imgur.com/59jpwpZ.gif)
 
 The script editor is fully aware of the context and all of the entities in the platform, allowing search and on demand generation of completions based on what the user has written
+
 ![Function Completion](https://i.imgur.com/oU0m2pc.gif)
 
-
-
 In the case of services that return infotables, or infotable properties with known datashapes, it offers advanced intellisense for the datashape fields, including completion of methods on the value collection, as well as snippets to ease the work
+
 ![Infotable Completion](https://i.imgur.com/TJfJ5sx.gif)
 
 
@@ -78,7 +78,7 @@ In the case of services that return infotables, or infotable properties with kno
 * Diff editor: view changes since you started editing (`CTRL+K`)
   ![DiffEditor](http://i.imgur.com/1DywhM7.png)
 
-* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime
+* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime (``CTRL+```)
 
   ![Config Editor](https://i.imgur.com/sBCAPP0.png)
 
