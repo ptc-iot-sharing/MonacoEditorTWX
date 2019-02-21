@@ -9,7 +9,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
 
 ##Installation
 
-1. Download the zip package listed under the downloads section under **Releases**. It should be the one named _MonacoScriptEditor-VERSION.zip_
+1. Download the zip package listed under the downloads section under [**Releases**](/placatus/MonacoScriptEditorWidget/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
 
 2. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
 
