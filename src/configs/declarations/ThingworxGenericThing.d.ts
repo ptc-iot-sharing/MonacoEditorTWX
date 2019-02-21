@@ -2177,14 +2177,14 @@ declare namespace twx {
         *	sourceThingName: twx.STRING  - Thing name to bind to
         *	sourcePropertyName: twx.STRING  - Source property name
         **/
-        SetLocalPropertyBinding(params: ThingsGenericThing.SetLocalPropertyBindingParams): twx.NOTHING;
+        SetLocalPropertyBinding(params: SetLocalPropertyBindingParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetBooleanPropertyValue(params: ThingsGenericThing.GetBooleanPropertyValueParams): twx.BOOLEAN;
+        GetBooleanPropertyValue(params: GetBooleanPropertyValueParams): twx.BOOLEAN;
         /**
          * Category: DataLogging 
          * Get the identifier for a thing
@@ -2199,7 +2199,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        SetMultiRowConfigurationTable(params: ThingsGenericThing.SetMultiRowConfigurationTableParams): twx.NOTHING;
+        SetMultiRowConfigurationTable(params: SetMultiRowConfigurationTableParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Get a list of assigned design time permissions
@@ -2214,7 +2214,7 @@ declare namespace twx {
         *	value: twx.NUMBER  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddNumberValueStreamEntry(params: ThingsGenericThing.AddNumberValueStreamEntryParams): twx.NOTHING;
+        AddNumberValueStreamEntry(params: AddNumberValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2226,7 +2226,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryVec2PropertyHistory(params: ThingsGenericThing.QueryVec2PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec2DataShape>;
+        QueryVec2PropertyHistory(params: QueryVec2PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec2DataShape>;
         /**
          * Category: Metadata 
          * Add or update an event definition
@@ -2238,7 +2238,7 @@ declare namespace twx {
         *	remote: twx.BOOLEAN  - Is a remote service
         *	dataShape: twx.DATASHAPENAME  - Data shape
         **/
-        AddEventDefinition(params: ThingsGenericThing.AddEventDefinitionParams): twx.NOTHING;
+        AddEventDefinition(params: AddEventDefinitionParams): twx.NOTHING;
         /**
          * Category: Maintenance 
          * Purge all value stream entries for a specified date range
@@ -2246,7 +2246,7 @@ declare namespace twx {
          *	endDate: twx.DATETIME  - End time
         *	startDate: twx.DATETIME  - Start time
         **/
-        PurgeAllPropertyHistory(params: ThingsGenericThing.PurgeAllPropertyHistoryParams): twx.NOTHING;
+        PurgeAllPropertyHistory(params: PurgeAllPropertyHistoryParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Get a list of assigned visibility permissions
@@ -2261,7 +2261,7 @@ declare namespace twx {
         *	value: twx.LOCATION  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddLocationValueStreamEntry(params: ThingsGenericThing.AddLocationValueStreamEntryParams): twx.NOTHING;
+        AddLocationValueStreamEntry(params: AddLocationValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -2270,7 +2270,7 @@ declare namespace twx {
         *	value: twx.VEC3  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddVec3ValueStreamEntry(params: ThingsGenericThing.AddVec3ValueStreamEntryParams): twx.NOTHING;
+        AddVec3ValueStreamEntry(params: AddVec3ValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Get a list of assigned runtime permissions
@@ -2283,7 +2283,7 @@ declare namespace twx {
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetVec3PropertyValue(params: ThingsGenericThing.GetVec3PropertyValueParams): twx.VEC3;
+        GetVec3PropertyValue(params: GetVec3PropertyValueParams): twx.VEC3;
         /**
          * Category: Metadata 
          * Get the metadata in JSON format
@@ -2296,7 +2296,7 @@ declare namespace twx {
          * Params:
          *	serviceName: twx.STRING  - Service name
         **/
-        RemoveRemoteServiceBinding(params: ThingsGenericThing.RemoveRemoteServiceBindingParams): twx.NOTHING;
+        RemoveRemoteServiceBinding(params: RemoveRemoteServiceBindingParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get thing summary information
@@ -2309,7 +2309,7 @@ declare namespace twx {
          * Params:
          *	property: twx.STRING  - Property name
         **/
-        GetAlertDefinitions(params: ThingsGenericThing.GetAlertDefinitionsParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
+        GetAlertDefinitions(params: GetAlertDefinitionsParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
         /**
          * Category: Permissions 
          * Check to see if an entity has a specific run time permission for a specific user
@@ -2318,35 +2318,35 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type
         *	user: twx.USERNAME  - User name
         **/
-        CheckPermissionForUser(params: ThingsGenericThing.CheckPermissionForUserParams): twx.BOOLEAN;
+        CheckPermissionForUser(params: CheckPermissionForUserParams): twx.BOOLEAN;
         /**
          * Category: Alerts 
          * Acknowledge all active alerts
          * Params:
          *	message: twx.STRING  - Message (optional)
         **/
-        AcknowledgeAllAlerts(params: ThingsGenericThing.AcknowledgeAllAlertsParams): twx.NOTHING;
+        AcknowledgeAllAlerts(params: AcknowledgeAllAlertsParams): twx.NOTHING;
         /**
          * Category: Federation 
          * Set this as a published thing for federation
          * Params:
          *	publish: twx.BOOLEAN  - Publish status (true/false)
         **/
-        SetPublished(params: ThingsGenericThing.SetPublishedParams): twx.NOTHING;
+        SetPublished(params: SetPublishedParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetImagePropertyValue(params: ThingsGenericThing.GetImagePropertyValueParams): twx.IMAGE;
+        GetImagePropertyValue(params: GetImagePropertyValueParams): twx.IMAGE;
         /**
          * Category: Dependencies 
          * Get the outgoing dependencies
          * Params:
          *	maxItems: twx.NUMBER  - Maximum number of items to return
         **/
-        GetOutgoingDependencies(params: ThingsGenericThing.GetOutgoingDependenciesParams): twx.INFOTABLE<twx.ds.EntityDescriptor>;
+        GetOutgoingDependencies(params: GetOutgoingDependenciesParams): twx.INFOTABLE<twx.ds.EntityDescriptor>;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2358,7 +2358,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryStringPropertyHistory(params: ThingsGenericThing.QueryStringPropertyHistoryParams): twx.INFOTABLE<twx.ds.StringValueStream>;
+        QueryStringPropertyHistory(params: QueryStringPropertyHistoryParams): twx.INFOTABLE<twx.ds.StringValueStream>;
         /**
          * Category: Alerts 
          * Get the Statuses of the given Alerts
@@ -2377,7 +2377,7 @@ declare namespace twx {
          * Params:
          *	persistent: twx.BOOLEAN  - Persist this change
         **/
-        EnableAllAlerts(params: ThingsGenericThing.EnableAllAlertsParams): twx.NOTHING;
+        EnableAllAlerts(params: EnableAllAlertsParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2389,7 +2389,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryBooleanPropertyHistory(params: ThingsGenericThing.QueryBooleanPropertyHistoryParams): twx.INFOTABLE<twx.ds.BooleanValueStream>;
+        QueryBooleanPropertyHistory(params: QueryBooleanPropertyHistoryParams): twx.INFOTABLE<twx.ds.BooleanValueStream>;
         /**
          * Category: Permissions 
          * Add a run time permission
@@ -2400,28 +2400,28 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type (PropertyRead PropertyWrite ServiceInvoke EventInvoke EventSubscribe)
         *	principalType: twx.STRING  - Principal type (User or Group)
         **/
-        AddRunTimePermission(params: ThingsGenericThing.AddRunTimePermissionParams): twx.NOTHING;
+        AddRunTimePermission(params: AddRunTimePermissionParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Check if a configuration table is a multi-row table
          * Params:
          *	tableName: twx.STRING  - Configuration table name
         **/
-        IsMultiRowTable(params: ThingsGenericThing.IsMultiRowTableParams): twx.BOOLEAN;
+        IsMultiRowTable(params: IsMultiRowTableParams): twx.BOOLEAN;
         /**
          * Category: Bindings 
          * Remove the remote property binding for a property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        RemoveRemotePropertyBinding(params: ThingsGenericThing.RemoveRemotePropertyBindingParams): twx.NOTHING;
+        RemoveRemotePropertyBinding(params: RemoveRemotePropertyBindingParams): twx.NOTHING;
         /**
          * Category: DataLogging 
          * Get the logging status of a specific property from the effective Thing shape
          * Params:
          *	propertyName: twx.STRING  - Property name to look up on the effective shape for its logging status
         **/
-        GetEffectivePropertyLogging(params: ThingsGenericThing.GetEffectivePropertyLoggingParams): twx.BOOLEAN;
+        GetEffectivePropertyLogging(params: GetEffectivePropertyLoggingParams): twx.BOOLEAN;
         /**
          * Category: Projects 
          * Get the project name of this entity
@@ -2434,14 +2434,14 @@ declare namespace twx {
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetThingCodePropertyValue(params: ThingsGenericThing.GetThingCodePropertyValueParams): twx.THINGCODE;
+        GetThingCodePropertyValue(params: GetThingCodePropertyValueParams): twx.THINGCODE;
         /**
          * Category: Properties 
          * Write property values for a thing
          * Params:
          *	values: twx.INFOTABLE<twx.ds.NamedVTQ>  with datashape NamedVTQ - Collection of properties to be updated
         **/
-        UpdatePropertyValues(params: ThingsGenericThing.UpdatePropertyValuesParams): twx.NOTHING;
+        UpdatePropertyValues(params: UpdatePropertyValuesParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get the implemented thing shapes for this thing
@@ -2455,7 +2455,7 @@ declare namespace twx {
          *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        DeleteAllConfigurationTableRows(params: ThingsGenericThing.DeleteAllConfigurationTableRowsParams): twx.NOTHING;
+        DeleteAllConfigurationTableRows(params: DeleteAllConfigurationTableRowsParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Add or update a service definition
@@ -2469,7 +2469,7 @@ declare namespace twx {
         *	resultType: twx.INFOTABLE<twx.ds.FieldDefinition>  with datashape FieldDefinition - Service result type
         *	timeout: twx.INTEGER  - Request timeout
         **/
-        AddServiceDefinition(params: ThingsGenericThing.AddServiceDefinitionParams): twx.NOTHING;
+        AddServiceDefinition(params: AddServiceDefinitionParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Check to see if an entity has a specific design time permission for a specific group
@@ -2477,7 +2477,7 @@ declare namespace twx {
          *	type: twx.STRING  - Permission type
         *	group: twx.GROUPNAME  - Group name
         **/
-        CheckDesignTimePermissionForGroup(params: ThingsGenericThing.CheckDesignTimePermissionForGroupParams): twx.BOOLEAN;
+        CheckDesignTimePermissionForGroup(params: CheckDesignTimePermissionForGroupParams): twx.BOOLEAN;
         /**
          * Category: Alerts 
          * Add or update an alert for a property
@@ -2491,7 +2491,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist this change
         *	enabled: twx.BOOLEAN  - Alert enabled
         **/
-        AddOrUpdateAlert(params: ThingsGenericThing.AddOrUpdateAlertParams): twx.NOTHING;
+        AddOrUpdateAlert(params: AddOrUpdateAlertParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Query the alert history
@@ -2502,7 +2502,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryAlertHistory(params: ThingsGenericThing.QueryAlertHistoryParams): twx.INFOTABLE<twx.ds.AlertHistory>;
+        QueryAlertHistory(params: QueryAlertHistoryParams): twx.INFOTABLE<twx.ds.AlertHistory>;
         /**
          * Category: Permissions 
          * Check to see if an entity has a specific design time permission for a specific user
@@ -2510,14 +2510,14 @@ declare namespace twx {
          *	type: twx.STRING  - Permission type
         *	user: twx.USERNAME  - User name
         **/
-        CheckDesignTimePermissionForUser(params: ThingsGenericThing.CheckDesignTimePermissionForUserParams): twx.BOOLEAN;
+        CheckDesignTimePermissionForUser(params: CheckDesignTimePermissionForUserParams): twx.BOOLEAN;
         /**
          * Category: Queries 
          * Get the difference between this entity and another
          * Params:
          *	otherEntity: twx.STRING  - Entity to compare
         **/
-        GetDifferencesAsJSON(params: ThingsGenericThing.GetDifferencesAsJSONParams): twx.JSON;
+        GetDifferencesAsJSON(params: GetDifferencesAsJSONParams): twx.JSON;
         /**
          * Category: Metadata 
          * Add multiple property definitions at once
@@ -2525,7 +2525,7 @@ declare namespace twx {
          *	ignoreInvalidDefinitions: twx.BOOLEAN  - True will skip over any invalid definitions provided, false indicates to fail the whole transaction when at least one invalid definition is found
         *	values: twx.INFOTABLE<twx.ds.PropertyDefinitionWithDetails>  with datashape PropertyDefinitionWithDetails - Infotable where each row defines a property, using the PropertyDefinitionWithDetails data shape
         **/
-        AddPropertyDefinitions(params: ThingsGenericThing.AddPropertyDefinitionsParams): twx.INFOTABLE<twx.ds.BulkProcessingReport>;
+        AddPropertyDefinitions(params: AddPropertyDefinitionsParams): twx.INFOTABLE<twx.ds.BulkProcessingReport>;
         /**
          * Category: Alerts 
          * Disable alert(s) for a property. Specify alertName for a specific property alert; otherwise, all alerts are disabled.
@@ -2534,7 +2534,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	persistent: twx.BOOLEAN  - Persist this change
         **/
-        DisableAlertsForProperty(params: ThingsGenericThing.DisableAlertsForPropertyParams): twx.NOTHING;
+        DisableAlertsForProperty(params: DisableAlertsForPropertyParams): twx.NOTHING;
         /**
          * Category: Lifecycle 
          * Get Enabled Status
@@ -2547,7 +2547,7 @@ declare namespace twx {
          * Params:
          *	thingShapeName: twx.THINGSHAPENAME  - Thing shape name
         **/
-        ImplementsShape(params: ThingsGenericThing.ImplementsShapeParams): twx.BOOLEAN;
+        ImplementsShape(params: ImplementsShapeParams): twx.BOOLEAN;
         /**
          * Category: Properties 
          * Get the current property values for this thing as VTQ
@@ -2561,14 +2561,14 @@ declare namespace twx {
          *	propertyName: twx.STRING  - Property name
         *	enabled: twx.BOOLEAN  - Enable/disable logging
         **/
-        SetPropertyLogging(params: ThingsGenericThing.SetPropertyLoggingParams): twx.NOTHING;
+        SetPropertyLogging(params: SetPropertyLoggingParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Get the difference between this entity and another
          * Params:
          *	otherEntity: twx.STRING  - Entity to compare
         **/
-        GetDifferences(params: ThingsGenericThing.GetDifferencesParams): twx.INFOTABLE<twx.ds.Difference>;
+        GetDifferences(params: GetDifferencesParams): twx.INFOTABLE<twx.ds.Difference>;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -2577,7 +2577,7 @@ declare namespace twx {
         *	value: twx.LONG  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddLongValueStreamEntry(params: ThingsGenericThing.AddLongValueStreamEntryParams): twx.NOTHING;
+        AddLongValueStreamEntry(params: AddLongValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Adds a ConfigurationTableDefinition and creates and ConfigurationTable from the definition
@@ -2590,7 +2590,7 @@ declare namespace twx {
         *	ordinal: twx.INTEGER  - Controls the order in which the configuration tables should be rendered. Any non-negative integer is permitted, where lower values take higher precedence over larger values. If several tables share the same ordinal, then the order is non-deterministic
         *	isHidden: twx.BOOLEAN  - Controls whether the configuration table should be hidden by Composer (e.g. if the configuration is for internal purposes only) 
         **/
-        AddConfigurationTableDefinition(params: ThingsGenericThing.AddConfigurationTableDefinitionParams): twx.NOTHING;
+        AddConfigurationTableDefinition(params: AddConfigurationTableDefinitionParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get a list of logged properties for this thing that are of a numeric data type
@@ -2603,7 +2603,7 @@ declare namespace twx {
          * Params:
          *	propertyNames: twx.JSON  - List of property names
         **/
-        GetNamedProperties(params: ThingsGenericThing.GetNamedPropertiesParams): twx.INFOTABLE;
+        GetNamedProperties(params: GetNamedPropertiesParams): twx.INFOTABLE;
         /**
          * Category: Bindings 
          * Set the remote property binding for a property
@@ -2617,7 +2617,7 @@ declare namespace twx {
         *	pushType: twx.STRING  - Push type
         *	cacheTime: twx.INTEGER  - Property's cache time value at the server in milliseconds
         **/
-        SetRemotePropertyBinding(params: ThingsGenericThing.SetRemotePropertyBindingParams): twx.NOTHING;
+        SetRemotePropertyBinding(params: SetRemotePropertyBindingParams): twx.NOTHING;
         /**
          * Category: Lifecycle 
          * Restart this thing
@@ -2630,7 +2630,7 @@ declare namespace twx {
          * Params:
          *	name: twx.STRING  - Name
         **/
-        GetEventDefinition(params: ThingsGenericThing.GetEventDefinitionParams): twx.INFOTABLE<twx.ds.EventDefinition>;
+        GetEventDefinition(params: GetEventDefinitionParams): twx.INFOTABLE<twx.ds.EventDefinition>;
         /**
          * Category: Alerts 
          * Set a numeric alert parameter
@@ -2641,7 +2641,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.INTEGER  - Parameter value
         **/
-        SetIntegerAlertParameter(params: ThingsGenericThing.SetIntegerAlertParameterParams): twx.NOTHING;
+        SetIntegerAlertParameter(params: SetIntegerAlertParameterParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Add a property definition
@@ -2664,7 +2664,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist property value
         *	dataShape: twx.DATASHAPENAME  - Data shape
         **/
-        AddPropertyDefinition(params: ThingsGenericThing.AddPropertyDefinitionParams): twx.NOTHING;
+        AddPropertyDefinition(params: AddPropertyDefinitionParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get a date alert parameter
@@ -2673,7 +2673,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetDateTimeAlertParameter(params: ThingsGenericThing.GetDateTimeAlertParameterParams): twx.DATETIME;
+        GetDateTimeAlertParameter(params: GetDateTimeAlertParameterParams): twx.DATETIME;
         /**
          * Category: Configuration 
          * Set an entire configuration table
@@ -2682,14 +2682,14 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        SetConfigurationTable(params: ThingsGenericThing.SetConfigurationTableParams): twx.NOTHING;
+        SetConfigurationTable(params: SetConfigurationTableParams): twx.NOTHING;
         /**
          * Category: Networks 
          * Check to see if a thing is in a specific network
          * Params:
          *	network: twx.STRING  - Network name
         **/
-        IsInNetwork(params: ThingsGenericThing.IsInNetworkParams): twx.BOOLEAN;
+        IsInNetwork(params: IsInNetworkParams): twx.BOOLEAN;
         /**
          * Category: Subscriptions 
          * Remove a dynamic subscription
@@ -2699,28 +2699,28 @@ declare namespace twx {
         *	eventName: twx.STRING  - Event name
         *	serviceName: twx.STRING  - Local service name
         **/
-        RemoveDynamicSubscription(params: ThingsGenericThing.RemoveDynamicSubscriptionParams): twx.NOTHING;
+        RemoveDynamicSubscription(params: RemoveDynamicSubscriptionParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Remove tags from an entity
          * Params:
          *	tags: twx.TAGS  - Tags to remove from the entity
         **/
-        RemoveTags(params: ThingsGenericThing.RemoveTagsParams): twx.NOTHING;
+        RemoveTags(params: RemoveTagsParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetNumberPropertyValue(params: ThingsGenericThing.GetNumberPropertyValueParams): twx.NUMBER;
+        GetNumberPropertyValue(params: GetNumberPropertyValueParams): twx.NUMBER;
         /**
          * Category: Metadata 
          * Get a list of logged properties for this thing
          * Params:
          *	type: twx.BASETYPENAME  - Type to filter on
         **/
-        GetLoggedProperties(params: ThingsGenericThing.GetLoggedPropertiesParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
+        GetLoggedProperties(params: GetLoggedPropertiesParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
         /**
          * Category: Metadata 
          * Get avatar image
@@ -2739,7 +2739,7 @@ declare namespace twx {
          * Params:
          *	name: twx.STRING  - Name
         **/
-        GetServiceDefinition(params: ThingsGenericThing.GetServiceDefinitionParams): twx.INFOTABLE<twx.ds.ServiceDefinition>;
+        GetServiceDefinition(params: GetServiceDefinitionParams): twx.INFOTABLE<twx.ds.ServiceDefinition>;
         /**
          * Category: Editing 
          * Get the configuration change history
@@ -2752,7 +2752,7 @@ declare namespace twx {
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetStringPropertyValue(params: ThingsGenericThing.GetStringPropertyValueParams): twx.STRING;
+        GetStringPropertyValue(params: GetStringPropertyValueParams): twx.STRING;
         /**
          * Category: Permissions 
          * Delete a run time permission
@@ -2762,7 +2762,7 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type
         *	principalType: twx.STRING  - Principal type (User or Group)
         **/
-        DeleteRunTimePermission(params: ThingsGenericThing.DeleteRunTimePermissionParams): twx.NOTHING;
+        DeleteRunTimePermission(params: DeleteRunTimePermissionParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Get a specific configuration table row as an InfoTable
@@ -2770,7 +2770,7 @@ declare namespace twx {
          *	key: twx.STRING  - Row key value
         *	tableName: twx.STRING  - Configuration table name
         **/
-        GetConfigurationTableRow(params: ThingsGenericThing.GetConfigurationTableRowParams): twx.INFOTABLE;
+        GetConfigurationTableRow(params: GetConfigurationTableRowParams): twx.INFOTABLE;
         /**
          * Category: Metadata 
          * Get the instance metadata in JSON format
@@ -2790,7 +2790,7 @@ declare namespace twx {
          *	property: twx.STRING  - Property name
         *	message: twx.STRING  - Message (optional)
         **/
-        AcknowledgeAlert(params: ThingsGenericThing.AcknowledgeAlertParams): twx.NOTHING;
+        AcknowledgeAlert(params: AcknowledgeAlertParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2802,7 +2802,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryLocationPropertyHistory(params: ThingsGenericThing.QueryLocationPropertyHistoryParams): twx.INFOTABLE<twx.ds.LocationValueStream>;
+        QueryLocationPropertyHistory(params: QueryLocationPropertyHistoryParams): twx.INFOTABLE<twx.ds.LocationValueStream>;
         /**
          * Category: Bindings 
          * Set the remote service binding for a service
@@ -2811,7 +2811,7 @@ declare namespace twx {
         *	serviceName: twx.STRING  - Service name
         *	timeout: twx.INTEGER  - Request timeout
         **/
-        SetRemoteServiceBinding(params: ThingsGenericThing.SetRemoteServiceBindingParams): twx.NOTHING;
+        SetRemoteServiceBinding(params: SetRemoteServiceBindingParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2823,14 +2823,14 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryVec4PropertyHistory(params: ThingsGenericThing.QueryVec4PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec4DataShape>;
+        QueryVec4PropertyHistory(params: QueryVec4PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec4DataShape>;
         /**
          * Category: Metadata 
          * Check to see if a thing is derived from a particular thing template
          * Params:
          *	thingTemplateName: twx.THINGTEMPLATENAME  - Thing template name
         **/
-        IsDerivedFromTemplate(params: ThingsGenericThing.IsDerivedFromTemplateParams): twx.BOOLEAN;
+        IsDerivedFromTemplate(params: IsDerivedFromTemplateParams): twx.BOOLEAN;
         /**
          * Category: Data 
          * Store properties of this thing to a stream
@@ -2838,14 +2838,14 @@ declare namespace twx {
          *	name: twx.THINGNAME  - Stream name
         *	tags: twx.TAGS  - Tags
         **/
-        WritePropertiesToStream(params: ThingsGenericThing.WritePropertiesToStreamParams): twx.NOTHING;
+        WritePropertiesToStream(params: WritePropertiesToStreamParams): twx.NOTHING;
         /**
          * Category: Relationships 
          * Return a list of all the things referenced by this thing
          * Params:
          *	maxDepth: twx.INTEGER  - Maximum depth to search
         **/
-        GetThingRelationships(params: ThingsGenericThing.GetThingRelationshipsParams): twx.INFOTABLE<twx.ds.ThingRelationship>;
+        GetThingRelationships(params: GetThingRelationshipsParams): twx.INFOTABLE<twx.ds.ThingRelationship>;
         /**
          * Category: Configuration 
          * Get a list of configuration tables
@@ -2860,7 +2860,7 @@ declare namespace twx {
         *	value: twx.VEC4  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddVec4ValueStreamEntry(params: ThingsGenericThing.AddVec4ValueStreamEntryParams): twx.NOTHING;
+        AddVec4ValueStreamEntry(params: AddVec4ValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -2869,7 +2869,7 @@ declare namespace twx {
         *	value: twx.DATETIME  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddDateTimeValueStreamEntry(params: ThingsGenericThing.AddDateTimeValueStreamEntryParams): twx.NOTHING;
+        AddDateTimeValueStreamEntry(params: AddDateTimeValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get the current service definitions for this thing
@@ -2878,7 +2878,7 @@ declare namespace twx {
         *	type: twx.BASETYPENAME  - Type to filter on
         *	dataShape: twx.DATASHAPENAME  - Data shape to filter on if InfoTable base type
         **/
-        GetServiceDefinitions(params: ThingsGenericThing.GetServiceDefinitionsParams): twx.INFOTABLE<twx.ds.ServiceDefinition>;
+        GetServiceDefinitions(params: GetServiceDefinitionsParams): twx.INFOTABLE<twx.ds.ServiceDefinition>;
         /**
          * Category: Maintenance 
          * Purge all value stream entries for a specified date range for a given list of properties
@@ -2887,21 +2887,21 @@ declare namespace twx {
         *	endDate: twx.DATETIME  - End time
         *	startDate: twx.DATETIME  - Start time
         **/
-        PurgeSelectedPropertyHistory(params: ThingsGenericThing.PurgeSelectedPropertyHistoryParams): twx.NOTHING;
+        PurgeSelectedPropertyHistory(params: PurgeSelectedPropertyHistoryParams): twx.NOTHING;
         /**
          * Category: Mashups 
          * Set home mashup
          * Params:
          *	name: twx.MASHUPNAME  - Home mashup name
         **/
-        SetHomeMashup(params: ThingsGenericThing.SetHomeMashupParams): twx.NOTHING;
+        SetHomeMashup(params: SetHomeMashupParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Assign an owner to this entity
          * Params:
          *	name: twx.USERNAME  - User name
         **/
-        SetOwner(params: ThingsGenericThing.SetOwnerParams): twx.NOTHING;
+        SetOwner(params: SetOwnerParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -2913,7 +2913,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryNumberPropertyHistory(params: ThingsGenericThing.QueryNumberPropertyHistoryParams): twx.INFOTABLE<twx.ds.NumberValueStream>;
+        QueryNumberPropertyHistory(params: QueryNumberPropertyHistoryParams): twx.INFOTABLE<twx.ds.NumberValueStream>;
         /**
          * Category: Alerts 
          * Set a numeric alert parameter
@@ -2924,7 +2924,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.NUMBER  - Parameter value
         **/
-        SetNumberAlertParameter(params: ThingsGenericThing.SetNumberAlertParameterParams): twx.NOTHING;
+        SetNumberAlertParameter(params: SetNumberAlertParameterParams): twx.NOTHING;
         /**
          * Category: Mashups 
          * Get home mashup
@@ -2944,7 +2944,7 @@ declare namespace twx {
          *	alertName: twx.STRING  - Alert name
         *	property: twx.STRING  - Property name
         **/
-        GetAlertStatus(params: ThingsGenericThing.GetAlertStatusParams): twx.STRING;
+        GetAlertStatus(params: GetAlertStatusParams): twx.STRING;
         /**
          * Category: Alerts 
          * Set a boolean alert parameter
@@ -2955,7 +2955,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.BOOLEAN  - Parameter value
         **/
-        SetBooleanAlertParameter(params: ThingsGenericThing.SetBooleanAlertParameterParams): twx.NOTHING;
+        SetBooleanAlertParameter(params: SetBooleanAlertParameterParams): twx.NOTHING;
         /**
          * Category: Networks 
          * Get the networks associated with a thing
@@ -2969,7 +2969,7 @@ declare namespace twx {
          *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        DeleteConfigurationTable(params: ThingsGenericThing.DeleteConfigurationTableParams): twx.NOTHING;
+        DeleteConfigurationTable(params: DeleteConfigurationTableParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get the tags for an entity as an InfoTable
@@ -2983,7 +2983,7 @@ declare namespace twx {
          *	name: twx.STRING  - Target name (or wildcard)
         *	permissionName: twx.STRING  - Permission name
         **/
-        GetPermissionsForCurrentUser(params: ThingsGenericThing.GetPermissionsForCurrentUserParams): twx.INFOTABLE<twx.ds.UserPermissions>;
+        GetPermissionsForCurrentUser(params: GetPermissionsForCurrentUserParams): twx.INFOTABLE<twx.ds.UserPermissions>;
         /**
          * Category: Queries 
          * Query stream entries (without data), along with filter and sort criteria
@@ -2994,35 +2994,35 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryPropertyHistory(params: ThingsGenericThing.QueryPropertyHistoryParams): twx.INFOTABLE;
+        QueryPropertyHistory(params: QueryPropertyHistoryParams): twx.INFOTABLE;
         /**
          * Category: Permissions 
          * Check to see if an entity has a specific design time permission for the current user
          * Params:
          *	type: twx.STRING  - Permission type
         **/
-        CheckDesignTimePermission(params: ThingsGenericThing.CheckDesignTimePermissionParams): twx.BOOLEAN;
+        CheckDesignTimePermission(params: CheckDesignTimePermissionParams): twx.BOOLEAN;
         /**
          * Category: Configuration 
          * Get a specific configuration table definition as an InfoTable
          * Params:
          *	tableName: twx.STRING  - Configuration table name
         **/
-        GetConfigurationTableDefinition(params: ThingsGenericThing.GetConfigurationTableDefinitionParams): twx.INFOTABLE;
+        GetConfigurationTableDefinition(params: GetConfigurationTableDefinitionParams): twx.INFOTABLE;
         /**
          * Category: Bindings 
          * Remove the local property binding for a property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        RemoveLocalPropertyBinding(params: ThingsGenericThing.RemoveLocalPropertyBindingParams): twx.NOTHING;
+        RemoveLocalPropertyBinding(params: RemoveLocalPropertyBindingParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetVec2PropertyValue(params: ThingsGenericThing.GetVec2PropertyValueParams): twx.VEC2;
+        GetVec2PropertyValue(params: GetVec2PropertyValueParams): twx.VEC2;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -3034,14 +3034,14 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryLongPropertyHistory(params: ThingsGenericThing.QueryLongPropertyHistoryParams): twx.INFOTABLE<twx.ds.LongValueStream>;
+        QueryLongPropertyHistory(params: QueryLongPropertyHistoryParams): twx.INFOTABLE<twx.ds.LongValueStream>;
         /**
          * Category: Permissions 
          * Set a list of assigned design time permissions
          * Params:
          *	permissions: twx.JSON  - Permissions in JSON format
         **/
-        SetDesignTimePermissionsAsJSON(params: ThingsGenericThing.SetDesignTimePermissionsAsJSONParams): twx.NOTHING;
+        SetDesignTimePermissionsAsJSON(params: SetDesignTimePermissionsAsJSONParams): twx.NOTHING;
         /**
          * Category: Dependencies 
          * Has outgoing dependencies
@@ -3054,7 +3054,7 @@ declare namespace twx {
          * Params:
          *	eventName: twx.STRING  - Event name
         **/
-        GetRemoteEventBinding(params: ThingsGenericThing.GetRemoteEventBindingParams): twx.INFOTABLE<twx.ds.RemoteEventBinding>;
+        GetRemoteEventBinding(params: GetRemoteEventBindingParams): twx.INFOTABLE<twx.ds.RemoteEventBinding>;
         /**
          * Category: Permissions 
          * Get group permissions
@@ -3063,7 +3063,7 @@ declare namespace twx {
         *	group: twx.STRING  - Group name
         *	permissionName: twx.STRING  - Permission name
         **/
-        GetPermissionsForGroup(params: ThingsGenericThing.GetPermissionsForGroupParams): twx.INFOTABLE<twx.ds.UserPermissions>;
+        GetPermissionsForGroup(params: GetPermissionsForGroupParams): twx.INFOTABLE<twx.ds.UserPermissions>;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -3072,14 +3072,14 @@ declare namespace twx {
         *	value: twx.INTEGER  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddIntegerValueStreamEntry(params: ThingsGenericThing.AddIntegerValueStreamEntryParams): twx.NOTHING;
+        AddIntegerValueStreamEntry(params: AddIntegerValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Bindings 
          * Get the remote property binding for a property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetRemotePropertyBinding(params: ThingsGenericThing.GetRemotePropertyBindingParams): twx.INFOTABLE<twx.ds.RemotePropertyBinding>;
+        GetRemotePropertyBinding(params: GetRemotePropertyBindingParams): twx.INFOTABLE<twx.ds.RemotePropertyBinding>;
         /**
          * Category: Metadata 
          * Get the metadata in JSON format
@@ -3092,14 +3092,14 @@ declare namespace twx {
          * Params:
          *	tags: twx.TAGS  - Tags for an entity
         **/
-        SetTags(params: ThingsGenericThing.SetTagsParams): twx.NOTHING;
+        SetTags(params: SetTagsParams): twx.NOTHING;
         /**
          * Category: Dependencies 
          * Get the incoming dependencies
          * Params:
          *	maxItems: twx.NUMBER  - Maximum number of items to return
         **/
-        GetIncomingDependencies(params: ThingsGenericThing.GetIncomingDependenciesParams): twx.INFOTABLE<twx.ds.EntityDescriptor>;
+        GetIncomingDependencies(params: GetIncomingDependenciesParams): twx.INFOTABLE<twx.ds.EntityDescriptor>;
         /**
          * Category: Metadata 
          * Get the metadata in InfoTable format
@@ -3119,14 +3119,14 @@ declare namespace twx {
          *	propertyName: twx.STRING  - Property name
         *	alertName: twx.STRING  - Alert name
         **/
-        PromoteAlert(params: ThingsGenericThing.PromoteAlertParams): twx.NOTHING;
+        PromoteAlert(params: PromoteAlertParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Append additional tags to an entity
          * Params:
          *	tags: twx.TAGS  - Tags for an entity
         **/
-        AddTags(params: ThingsGenericThing.AddTagsParams): twx.NOTHING;
+        AddTags(params: AddTagsParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Get user permissions
@@ -3135,7 +3135,7 @@ declare namespace twx {
         *	user: twx.STRING  - User name
         *	permissionName: twx.STRING  - Permission name
         **/
-        GetPermissionsForUser(params: ThingsGenericThing.GetPermissionsForUserParams): twx.INFOTABLE<twx.ds.UserPermissions>;
+        GetPermissionsForUser(params: GetPermissionsForUserParams): twx.INFOTABLE<twx.ds.UserPermissions>;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -3144,14 +3144,14 @@ declare namespace twx {
         *	value: twx.BOOLEAN  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddBooleanValueStreamEntry(params: ThingsGenericThing.AddBooleanValueStreamEntryParams): twx.NOTHING;
+        AddBooleanValueStreamEntry(params: AddBooleanValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get a subset of the current property values for this thing
          * Params:
          *	propertyNames: twx.INFOTABLE<twx.ds.EntityList>  with datashape EntityList - Property names
         **/
-        GetNamedPropertyValues(params: ThingsGenericThing.GetNamedPropertyValuesParams): twx.INFOTABLE;
+        GetNamedPropertyValues(params: GetNamedPropertyValuesParams): twx.INFOTABLE;
         /**
          * Category: Permissions 
          * Get a list of assigned designtime permissions
@@ -3166,21 +3166,21 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type
         *	group: twx.GROUPNAME  - Group name
         **/
-        CheckPermissionForGroup(params: ThingsGenericThing.CheckPermissionForGroupParams): twx.BOOLEAN;
+        CheckPermissionForGroup(params: CheckPermissionForGroupParams): twx.BOOLEAN;
         /**
          * Category: Identifier 
          * Set the identifier for a thing
          * Params:
          *	identifier: twx.STRING  - Thing identifier for remote things
         **/
-        SetIdentifier(params: ThingsGenericThing.SetIdentifierParams): twx.NOTHING;
+        SetIdentifier(params: SetIdentifierParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetDateTimePropertyValue(params: ThingsGenericThing.GetDateTimePropertyValueParams): twx.DATETIME;
+        GetDateTimePropertyValue(params: GetDateTimePropertyValueParams): twx.DATETIME;
         /**
          * Category: Alerts 
          * Get Training Statistics for given Alert
@@ -3188,7 +3188,7 @@ declare namespace twx {
          *	alertName: twx.STRING  - Alert name
         *	property: twx.STRING  - Property name
         **/
-        GetAnomalyAlertTrainingStatisticsForAlert(params: ThingsGenericThing.GetAnomalyAlertTrainingStatisticsForAlertParams): twx.INFOTABLE<twx.ds.AnomalyAlertTrainingStatistics>;
+        GetAnomalyAlertTrainingStatisticsForAlert(params: GetAnomalyAlertTrainingStatisticsForAlertParams): twx.INFOTABLE<twx.ds.AnomalyAlertTrainingStatistics>;
         /**
          * Category: Subscriptions 
          * Disable Subscription
@@ -3197,14 +3197,14 @@ declare namespace twx {
         *	thingName: twx.THINGNAME  - Thing name
         *	eventName: twx.STRING  - Event name
         **/
-        DisableSubscription(params: ThingsGenericThing.DisableSubscriptionParams): twx.NOTHING;
+        DisableSubscription(params: DisableSubscriptionParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Has any property changed since a given time
          * Params:
          *	timestamp: twx.DATETIME  - Timestamp to compare
         **/
-        HavePropertiesChangedSince(params: ThingsGenericThing.HavePropertiesChangedSinceParams): twx.BOOLEAN;
+        HavePropertiesChangedSince(params: HavePropertiesChangedSinceParams): twx.BOOLEAN;
         /**
          * Category: Identifier 
          * Get the identifier for a thing
@@ -3222,14 +3222,14 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryImagePropertyHistory(params: ThingsGenericThing.QueryImagePropertyHistoryParams): twx.INFOTABLE<twx.ds.ImageValueStream>;
+        QueryImagePropertyHistory(params: QueryImagePropertyHistoryParams): twx.INFOTABLE<twx.ds.ImageValueStream>;
         /**
          * Category: Permissions 
          * Set a list of assigned visibility permissions
          * Params:
          *	permissions: twx.JSON  - Permissions in JSON format
         **/
-        SetVisibilityPermissionsAsJSON(params: ThingsGenericThing.SetVisibilityPermissionsAsJSONParams): twx.NOTHING;
+        SetVisibilityPermissionsAsJSON(params: SetVisibilityPermissionsAsJSONParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get alert definition for a property
@@ -3237,7 +3237,7 @@ declare namespace twx {
          *	alertName: twx.STRING  - Alert name
         *	property: twx.STRING  - Property name
         **/
-        GetAlertDefinition(params: ThingsGenericThing.GetAlertDefinitionParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
+        GetAlertDefinition(params: GetAlertDefinitionParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
         /**
          * Category: Permissions 
          * Add a visibility permission
@@ -3245,7 +3245,7 @@ declare namespace twx {
          *	principal: twx.STRING  - Principal name (name of organization or organization unit)
         *	principalType: twx.STRING  - Principal type (Organization or Organization Unit)
         **/
-        AddVisibilityPermission(params: ThingsGenericThing.AddVisibilityPermissionParams): twx.NOTHING;
+        AddVisibilityPermission(params: AddVisibilityPermissionParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Remove an alert for a property
@@ -3254,7 +3254,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	persistent: twx.BOOLEAN  - Persist this change
         **/
-        RemoveAlert(params: ThingsGenericThing.RemoveAlertParams): twx.NOTHING;
+        RemoveAlert(params: RemoveAlertParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get a location alert parameter
@@ -3263,7 +3263,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetLocationAlertParameter(params: ThingsGenericThing.GetLocationAlertParameterParams): twx.LOCATION;
+        GetLocationAlertParameter(params: GetLocationAlertParameterParams): twx.LOCATION;
         /**
          * Category: Mashups 
          * Get the mashups related to this thing
@@ -3285,7 +3285,7 @@ declare namespace twx {
         *	eventName: twx.STRING  - Event name
         *	serviceName: twx.STRING  - Local service name
         **/
-        AddDynamicSubscription(params: ThingsGenericThing.AddDynamicSubscriptionParams): twx.NOTHING;
+        AddDynamicSubscription(params: AddDynamicSubscriptionParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get a numeric alert parameter
@@ -3294,28 +3294,28 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetIntegerAlertParameter(params: ThingsGenericThing.GetIntegerAlertParameterParams): twx.INTEGER;
+        GetIntegerAlertParameter(params: GetIntegerAlertParameterParams): twx.INTEGER;
         /**
          * Category: Bindings 
          * Get incoming local bindings to this thing for the given property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetIncomingLocalPropertyBinding(params: ThingsGenericThing.GetIncomingLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.IncomingLocalPropertyBinding>;
+        GetIncomingLocalPropertyBinding(params: GetIncomingLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.IncomingLocalPropertyBinding>;
         /**
          * Category: DataLogging 
          * Set the value stream for a thing
          * Params:
          *	name: twx.THINGNAME  - Value stream name
         **/
-        SetValueStream(params: ThingsGenericThing.SetValueStreamParams): twx.NOTHING;
+        SetValueStream(params: SetValueStreamParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Remove a service definition
          * Params:
          *	name: twx.STRING  - Service name
         **/
-        RemoveServiceDefinition(params: ThingsGenericThing.RemoveServiceDefinitionParams): twx.NOTHING;
+        RemoveServiceDefinition(params: RemoveServiceDefinitionParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get a long alert parameter
@@ -3324,7 +3324,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetLongAlertParameter(params: ThingsGenericThing.GetLongAlertParameterParams): twx.LONG;
+        GetLongAlertParameter(params: GetLongAlertParameterParams): twx.LONG;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -3333,7 +3333,7 @@ declare namespace twx {
         *	value: twx.STRING  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddStringValueStreamEntry(params: ThingsGenericThing.AddStringValueStreamEntryParams): twx.NOTHING;
+        AddStringValueStreamEntry(params: AddStringValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property values for this thing
@@ -3346,7 +3346,7 @@ declare namespace twx {
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetLocalPropertyBinding(params: ThingsGenericThing.GetLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.LocalPropertyBinding>;
+        GetLocalPropertyBinding(params: GetLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.LocalPropertyBinding>;
         /**
          * Category: Alerts 
          * Get alert summary status
@@ -3355,7 +3355,7 @@ declare namespace twx {
         *	onlyUnacknowledged: twx.BOOLEAN  - Show only unacknowledged alerts
         *	onlyAcknowledged: twx.BOOLEAN  - Show only acknowledged alerts
         **/
-        GetAlertSummary(params: ThingsGenericThing.GetAlertSummaryParams): twx.INFOTABLE<twx.ds.AlertSummary>;
+        GetAlertSummary(params: GetAlertSummaryParams): twx.INFOTABLE<twx.ds.AlertSummary>;
         /**
          * Category: Alerts 
          * Query the alert summary
@@ -3365,7 +3365,7 @@ declare namespace twx {
         *	onlyUnacknowledged: twx.BOOLEAN  - Show only unacknowledged alerts
         *	onlyAcknowledged: twx.BOOLEAN  - Show only acknowledged alerts
         **/
-        QueryAlertSummary(params: ThingsGenericThing.QueryAlertSummaryParams): twx.INFOTABLE<twx.ds.AlertSummary>;
+        QueryAlertSummary(params: QueryAlertSummaryParams): twx.INFOTABLE<twx.ds.AlertSummary>;
         /**
          * Category: Alerts 
          * Set a location alert parameter
@@ -3376,14 +3376,14 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.LOCATION  - Parameter value
         **/
-        SetLocationAlertParameter(params: ThingsGenericThing.SetLocationAlertParameterParams): twx.NOTHING;
+        SetLocationAlertParameter(params: SetLocationAlertParameterParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetLongPropertyValue(params: ThingsGenericThing.GetLongPropertyValueParams): twx.LONG;
+        GetLongPropertyValue(params: GetLongPropertyValueParams): twx.LONG;
         /**
          * Category: Metadata 
          * Get the current event definitions for this thing
@@ -3391,7 +3391,7 @@ declare namespace twx {
          *	category: twx.STRING  - Category to filter on
         *	dataShape: twx.DATASHAPENAME  - Data shape to filter on if InfoTable base type
         **/
-        GetEventDefinitions(params: ThingsGenericThing.GetEventDefinitionsParams): twx.INFOTABLE<twx.ds.EventDefinition>;
+        GetEventDefinitions(params: GetEventDefinitionsParams): twx.INFOTABLE<twx.ds.EventDefinition>;
         /**
          * Category: Metadata 
          * Get the thing template for this thing
@@ -3409,21 +3409,21 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryNamedPropertyHistory(params: ThingsGenericThing.QueryNamedPropertyHistoryParams): twx.INFOTABLE;
+        QueryNamedPropertyHistory(params: QueryNamedPropertyHistoryParams): twx.INFOTABLE;
         /**
          * Category: Properties 
          * Get a subset of the current property values for this thing
          * Params:
          *	values: twx.INFOTABLE  - Property values
         **/
-        SetPropertyValues(params: ThingsGenericThing.SetPropertyValuesParams): twx.NOTHING;
+        SetPropertyValues(params: SetPropertyValuesParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get AnomalyAlert Training Statistics for given Property
          * Params:
          *	property: twx.STRING  - Property name
         **/
-        GetAnomalyAlertTrainingStatisticsForProperty(params: ThingsGenericThing.GetAnomalyAlertTrainingStatisticsForPropertyParams): twx.INFOTABLE<twx.ds.AnomalyAlertTrainingStatistics>;
+        GetAnomalyAlertTrainingStatisticsForProperty(params: GetAnomalyAlertTrainingStatisticsForPropertyParams): twx.INFOTABLE<twx.ds.AnomalyAlertTrainingStatistics>;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -3435,7 +3435,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryIntegerPropertyHistory(params: ThingsGenericThing.QueryIntegerPropertyHistoryParams): twx.INFOTABLE<twx.ds.IntegerValueStream>;
+        QueryIntegerPropertyHistory(params: QueryIntegerPropertyHistoryParams): twx.INFOTABLE<twx.ds.IntegerValueStream>;
         /**
          * Category: Lifecycle 
          * Disable this thing
@@ -3448,7 +3448,7 @@ declare namespace twx {
          * Params:
          *	name: twx.STRING  - Name
         **/
-        GetPropertyDefinition(params: ThingsGenericThing.GetPropertyDefinitionParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
+        GetPropertyDefinition(params: GetPropertyDefinitionParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
         /**
          * Category: Alerts 
          * Get alert summary for a property
@@ -3458,7 +3458,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	onlyAcknowledged: twx.BOOLEAN  - Show only acknowledged alerts
         **/
-        GetAlertSummaryForProperty(params: ThingsGenericThing.GetAlertSummaryForPropertyParams): twx.INFOTABLE<twx.ds.PropertyAlertSummary>;
+        GetAlertSummaryForProperty(params: GetAlertSummaryForPropertyParams): twx.INFOTABLE<twx.ds.PropertyAlertSummary>;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -3467,14 +3467,14 @@ declare namespace twx {
         *	value: twx.THINGCODE  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddThingCodeValueStreamEntry(params: ThingsGenericThing.AddThingCodeValueStreamEntryParams): twx.NOTHING;
+        AddThingCodeValueStreamEntry(params: AddThingCodeValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the timestamp for a specific property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetPropertyTime(params: ThingsGenericThing.GetPropertyTimeParams): twx.DATETIME;
+        GetPropertyTime(params: GetPropertyTimeParams): twx.DATETIME;
         /**
          * Category: Bindings 
          * Get all things and their properties that have local bindings on this thing
@@ -3489,7 +3489,7 @@ declare namespace twx {
         *	value: twx.VEC2  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddVec2ValueStreamEntry(params: ThingsGenericThing.AddVec2ValueStreamEntryParams): twx.NOTHING;
+        AddVec2ValueStreamEntry(params: AddVec2ValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get avatar image url
@@ -3504,7 +3504,7 @@ declare namespace twx {
         *	value: twx.IMAGE  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddImageValueStreamEntry(params: ThingsGenericThing.AddImageValueStreamEntryParams): twx.NOTHING;
+        AddImageValueStreamEntry(params: AddImageValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Metadata 
          * Get the current property definitions for this thing
@@ -3513,7 +3513,7 @@ declare namespace twx {
         *	type: twx.BASETYPENAME  - Type to filter on
         *	dataShape: twx.DATASHAPENAME  - Data shape to filter on if InfoTable base type
         **/
-        GetPropertyDefinitions(params: ThingsGenericThing.GetPropertyDefinitionsParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
+        GetPropertyDefinitions(params: GetPropertyDefinitionsParams): twx.INFOTABLE<twx.ds.PropertyDefinition>;
         /**
          * Category: Metadata 
          * Get summary information
@@ -3531,14 +3531,14 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryThingCodePropertyHistory(params: ThingsGenericThing.QueryThingCodePropertyHistoryParams): twx.INFOTABLE<twx.ds.ThingCodeDataShape>;
+        QueryThingCodePropertyHistory(params: QueryThingCodePropertyHistoryParams): twx.INFOTABLE<twx.ds.ThingCodeDataShape>;
         /**
          * Category: Bindings 
          * Remove the remote event binding for a event
          * Params:
          *	eventName: twx.STRING  - Event name
         **/
-        RemoveRemoteEventBinding(params: ThingsGenericThing.RemoveRemoteEventBindingParams): twx.NOTHING;
+        RemoveRemoteEventBinding(params: RemoveRemoteEventBindingParams): twx.NOTHING;
         /**
          * Category: Dependencies 
          * Get the outgoing dependencies as a network
@@ -3546,21 +3546,21 @@ declare namespace twx {
          *	maxDepth: twx.NUMBER  - Maximum depth to traverse
         *	maxItems: twx.NUMBER  - Maximum number of items to return
         **/
-        GetOutgoingDependenciesAsNetwork(params: ThingsGenericThing.GetOutgoingDependenciesAsNetworkParams): twx.INFOTABLE<twx.ds.EntityNetwork>;
+        GetOutgoingDependenciesAsNetwork(params: GetOutgoingDependenciesAsNetworkParams): twx.INFOTABLE<twx.ds.EntityNetwork>;
         /**
          * Category: Alerts 
          * Get local alert definitions for a property
          * Params:
          *	property: twx.STRING  - Property name
         **/
-        GetLocalAlertDefinitions(params: ThingsGenericThing.GetLocalAlertDefinitionsParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
+        GetLocalAlertDefinitions(params: GetLocalAlertDefinitionsParams): twx.INFOTABLE<twx.ds.AlertDefinition>;
         /**
          * Category: Alerts 
          * Get the Statuses of the given Alerts
          * Params:
          *	property: twx.STRING  - Property name
         **/
-        GetAlertStatusesForProperty(params: ThingsGenericThing.GetAlertStatusesForPropertyParams): twx.INFOTABLE;
+        GetAlertStatusesForProperty(params: GetAlertStatusesForPropertyParams): twx.INFOTABLE;
         /**
          * Category: Alerts 
          * Get a numeric alert parameter
@@ -3569,7 +3569,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetNumberAlertParameter(params: ThingsGenericThing.GetNumberAlertParameterParams): twx.NUMBER;
+        GetNumberAlertParameter(params: GetNumberAlertParameterParams): twx.NUMBER;
         /**
          * Category: Alerts 
          * Get All AnomalyAlert Training Statistics on this Thing
@@ -3582,7 +3582,7 @@ declare namespace twx {
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetPropertyQuality(params: ThingsGenericThing.GetPropertyQualityParams): twx.STRING;
+        GetPropertyQuality(params: GetPropertyQualityParams): twx.STRING;
         /**
          * Category: Metadata 
          * Get the instance metadata in JSON format
@@ -3602,7 +3602,7 @@ declare namespace twx {
          *	maxDepth: twx.NUMBER  - Maximum depth to traverse
         *	maxItems: twx.NUMBER  - Maximum number of items to return
         **/
-        GetIncomingDependenciesAsNetwork(params: ThingsGenericThing.GetIncomingDependenciesAsNetworkParams): twx.INFOTABLE<twx.ds.EntityNetwork>;
+        GetIncomingDependenciesAsNetwork(params: GetIncomingDependenciesAsNetworkParams): twx.INFOTABLE<twx.ds.EntityNetwork>;
         /**
          * Category: Alerts 
          * Check to see if an alert is defined for a property
@@ -3610,21 +3610,21 @@ declare namespace twx {
          *	alertName: twx.STRING  - Alert name
         *	property: twx.STRING  - Property name
         **/
-        HasAlert(params: ThingsGenericThing.HasAlertParams): twx.BOOLEAN;
+        HasAlert(params: HasAlertParams): twx.BOOLEAN;
         /**
          * Category: Metadata 
          * Remove a event definition
          * Params:
          *	name: twx.STRING  - Event name
         **/
-        RemoveEventDefinition(params: ThingsGenericThing.RemoveEventDefinitionParams): twx.NOTHING;
+        RemoveEventDefinition(params: RemoveEventDefinitionParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Set a list of assigned runtime permissions
          * Params:
          *	permissions: twx.JSON  - Permissions in JSON format
         **/
-        SetRunTimePermissionsAsJSON(params: ThingsGenericThing.SetRunTimePermissionsAsJSONParams): twx.NOTHING;
+        SetRunTimePermissionsAsJSON(params: SetRunTimePermissionsAsJSONParams): twx.NOTHING;
         /**
          * Category: Subscriptions 
          * Enable Subscription
@@ -3633,7 +3633,7 @@ declare namespace twx {
         *	thingName: twx.THINGNAME  - Thing name
         *	eventName: twx.STRING  - Event name
         **/
-        EnableSubscription(params: ThingsGenericThing.EnableSubscriptionParams): twx.NOTHING;
+        EnableSubscription(params: EnableSubscriptionParams): twx.NOTHING;
         /**
          * Category: Editing 
          * Get the date edit was last modified
@@ -3651,7 +3651,7 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryDateTimePropertyHistory(params: ThingsGenericThing.QueryDateTimePropertyHistoryParams): twx.INFOTABLE<twx.ds.DateTimeValueStream>;
+        QueryDateTimePropertyHistory(params: QueryDateTimePropertyHistoryParams): twx.INFOTABLE<twx.ds.DateTimeValueStream>;
         /**
          * Category: Bindings 
          * Set the remote event binding for a event
@@ -3659,7 +3659,7 @@ declare namespace twx {
          *	sourceEventName: twx.STRING  - Source event name
         *	eventName: twx.STRING  - Event name
         **/
-        SetRemoteEventBinding(params: ThingsGenericThing.SetRemoteEventBindingParams): twx.NOTHING;
+        SetRemoteEventBinding(params: SetRemoteEventBindingParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Enable alert(s) for a property. Specify alertName for a specific property alert; otherwise, all alerts are enabled.
@@ -3668,7 +3668,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	persistent: twx.BOOLEAN  - Persist this change
         **/
-        EnableAlertsForProperty(params: ThingsGenericThing.EnableAlertsForPropertyParams): twx.NOTHING;
+        EnableAlertsForProperty(params: EnableAlertsForPropertyParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Get a string alert parameter
@@ -3677,14 +3677,14 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetStringAlertParameter(params: ThingsGenericThing.GetStringAlertParameterParams): twx.STRING;
+        GetStringAlertParameter(params: GetStringAlertParameterParams): twx.STRING;
         /**
          * Category: Metadata 
          * Remove a property definition
          * Params:
          *	name: twx.STRING  - Property name
         **/
-        RemovePropertyDefinition(params: ThingsGenericThing.RemovePropertyDefinitionParams): twx.NOTHING;
+        RemovePropertyDefinition(params: RemovePropertyDefinitionParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Delete one or more rows from a multi-row configuration table
@@ -3693,7 +3693,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        DeleteConfigurationTableRows(params: ThingsGenericThing.DeleteConfigurationTableRowsParams): twx.NOTHING;
+        DeleteConfigurationTableRows(params: DeleteConfigurationTableRowsParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Update/add one or more rows in a multi-row configuration table
@@ -3702,7 +3702,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Persist these changes
         *	tableName: twx.STRING  - Configuration table name
         **/
-        SetConfigurationTableRows(params: ThingsGenericThing.SetConfigurationTableRowsParams): twx.NOTHING;
+        SetConfigurationTableRows(params: SetConfigurationTableRowsParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Set a string alert parameter
@@ -3713,7 +3713,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.STRING  - Parameter value
         **/
-        SetStringAlertParameter(params: ThingsGenericThing.SetStringAlertParameterParams): twx.NOTHING;
+        SetStringAlertParameter(params: SetStringAlertParameterParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Add a design time permission
@@ -3723,7 +3723,7 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type (Create, Read, Update, Delete)
         *	principalType: twx.STRING  - Principal type (User or Group)
         **/
-        AddDesignTimePermission(params: ThingsGenericThing.AddDesignTimePermissionParams): twx.NOTHING;
+        AddDesignTimePermission(params: AddDesignTimePermissionParams): twx.NOTHING;
         /**
          * Category: Permissions 
          * Check to see if an entity has a specific run time permission for the current user
@@ -3731,7 +3731,7 @@ declare namespace twx {
          *	name: twx.STRING  - Name of the resource (i.e. property, service, event) to check
         *	type: twx.STRING  - Permission type
         **/
-        CheckPermission(params: ThingsGenericThing.CheckPermissionParams): twx.BOOLEAN;
+        CheckPermission(params: CheckPermissionParams): twx.BOOLEAN;
         /**
          * Category: Alerts 
          * Set a date alert parameter
@@ -3742,7 +3742,7 @@ declare namespace twx {
         *	persistent: twx.BOOLEAN  - Make it persistent
         *	value: twx.DATETIME  - Parameter value
         **/
-        SetDateTimeAlertParameter(params: ThingsGenericThing.SetDateTimeAlertParameterParams): twx.NOTHING;
+        SetDateTimeAlertParameter(params: SetDateTimeAlertParameterParams): twx.NOTHING;
         /**
          * Category: Bindings 
          * Get the effective local property bindings
@@ -3757,7 +3757,7 @@ declare namespace twx {
         *	property: twx.STRING  - Property name
         *	parameterName: twx.STRING  - Parameter name
         **/
-        GetBooleanAlertParameter(params: ThingsGenericThing.GetBooleanAlertParameterParams): twx.BOOLEAN;
+        GetBooleanAlertParameter(params: GetBooleanAlertParameterParams): twx.BOOLEAN;
         /**
          * Category: Metadata 
          * Get the description for an entity
@@ -3770,21 +3770,21 @@ declare namespace twx {
          * Params:
          *	persistent: twx.BOOLEAN  - Persist this change
         **/
-        DisableAllAlerts(params: ThingsGenericThing.DisableAllAlertsParams): twx.NOTHING;
+        DisableAllAlerts(params: DisableAllAlertsParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetLocationPropertyValue(params: ThingsGenericThing.GetLocationPropertyValueParams): twx.LOCATION;
+        GetLocationPropertyValue(params: GetLocationPropertyValueParams): twx.LOCATION;
         /**
          * Category: Properties 
          * Get the current property values for this thing as VTQ
          * Params:
          *	propertyNames: twx.INFOTABLE<twx.ds.EntityList>  with datashape EntityList - Property names
         **/
-        GetNamedPropertyValuesVTQ(params: ThingsGenericThing.GetNamedPropertyValuesVTQParams): twx.INFOTABLE;
+        GetNamedPropertyValuesVTQ(params: GetNamedPropertyValuesVTQParams): twx.INFOTABLE;
         /**
          * Category: Dependencies 
          * Has incoming dependencies
@@ -3797,7 +3797,7 @@ declare namespace twx {
          * Params:
          *	propertyNames: twx.INFOTABLE<twx.ds.EntityList>  with datashape EntityList - Property names
         **/
-        GetNamedPropertyValuesVTQA(params: ThingsGenericThing.GetNamedPropertyValuesVTQAParams): twx.INFOTABLE;
+        GetNamedPropertyValuesVTQA(params: GetNamedPropertyValuesVTQAParams): twx.INFOTABLE;
         /**
          * Category: StreamEntries 
          * Add a new stream entry
@@ -3806,21 +3806,21 @@ declare namespace twx {
         *	value: twx.INFOTABLE  - Data value
         *	timestamp: twx.DATETIME  - Event time (optional)
         **/
-        AddInfoTableValueStreamEntry(params: ThingsGenericThing.AddInfoTableValueStreamEntryParams): twx.NOTHING;
+        AddInfoTableValueStreamEntry(params: AddInfoTableValueStreamEntryParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetVec4PropertyValue(params: ThingsGenericThing.GetVec4PropertyValueParams): twx.VEC4;
+        GetVec4PropertyValue(params: GetVec4PropertyValueParams): twx.VEC4;
         /**
          * Category: Metadata 
          * Set the avatar icon for the entity
          * Params:
          *	content: twx.IMAGE  - Base 64 Encoded Content
         **/
-        SetAvatar(params: ThingsGenericThing.SetAvatarParams): twx.NOTHING;
+        SetAvatar(params: SetAvatarParams): twx.NOTHING;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -3832,14 +3832,14 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryInfoTablePropertyHistory(params: ThingsGenericThing.QueryInfoTablePropertyHistoryParams): twx.INFOTABLE<twx.ds.InfoTableValueStream>;
+        QueryInfoTablePropertyHistory(params: QueryInfoTablePropertyHistoryParams): twx.INFOTABLE<twx.ds.InfoTableValueStream>;
         /**
          * Category: Projects 
          * Set the project name of this entity
          * Params:
          *	projectName: twx.PROJECTNAME  - Project name
         **/
-        SetProjectName(params: ThingsGenericThing.SetProjectNameParams): twx.NOTHING;
+        SetProjectName(params: SetProjectNameParams): twx.NOTHING;
         /**
          * Category: Alerts 
          * Retrain an Anomaly Alert
@@ -3847,14 +3847,14 @@ declare namespace twx {
          *	propertyName: twx.STRING  - Property name
         *	alertName: twx.STRING  - Alert name
         **/
-        RetrainAlert(params: ThingsGenericThing.RetrainAlertParams): twx.NOTHING;
+        RetrainAlert(params: RetrainAlertParams): twx.NOTHING;
         /**
          * Category: DataLogging 
          * Get property logging status for a specific property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetPropertyLogging(params: ThingsGenericThing.GetPropertyLoggingParams): twx.BOOLEAN;
+        GetPropertyLogging(params: GetPropertyLoggingParams): twx.BOOLEAN;
         /**
          * Category: Queries 
          * Query stream entries, along with filter and sort criteria
@@ -3866,21 +3866,21 @@ declare namespace twx {
         *	query: twx.QUERY  - Query definition
         *	startDate: twx.DATETIME  - Start time
         **/
-        QueryVec3PropertyHistory(params: ThingsGenericThing.QueryVec3PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec3DataShape>;
+        QueryVec3PropertyHistory(params: QueryVec3PropertyHistoryParams): twx.INFOTABLE<twx.ds.Vec3DataShape>;
         /**
          * Category: Metadata 
          * Overwrite/set the description for an entity
          * Params:
          *	description: twx.STRING  - Description for an entity
         **/
-        SetDescription(params: ThingsGenericThing.SetDescriptionParams): twx.NOTHING;
+        SetDescription(params: SetDescriptionParams): twx.NOTHING;
         /**
          * Category: Configuration 
          * Get a specific configuration table as an InfoTable
          * Params:
          *	tableName: twx.STRING  - Configuration table name
         **/
-        GetConfigurationTable(params: ThingsGenericThing.GetConfigurationTableParams): twx.INFOTABLE;
+        GetConfigurationTable(params: GetConfigurationTableParams): twx.INFOTABLE;
         /**
          * Category: Permissions 
          * Delete a design time permission
@@ -3889,14 +3889,14 @@ declare namespace twx {
         *	type: twx.STRING  - Permission type
         *	principalType: twx.STRING  - Principal type (User or Group)
         **/
-        DeleteDesignTimePermission(params: ThingsGenericThing.DeleteDesignTimePermissionParams): twx.NOTHING;
+        DeleteDesignTimePermission(params: DeleteDesignTimePermissionParams): twx.NOTHING;
         /**
          * Category: Bindings 
          * Get the remote service binding for a service
          * Params:
          *	serviceName: twx.STRING  - Service name
         **/
-        GetRemoteServiceBinding(params: ThingsGenericThing.GetRemoteServiceBindingParams): twx.INFOTABLE<twx.ds.RemoteServiceBinding>;
+        GetRemoteServiceBinding(params: GetRemoteServiceBindingParams): twx.INFOTABLE<twx.ds.RemoteServiceBinding>;
         /**
          * Category: Maintenance 
          * Purge stream entries for a specified date range
@@ -3906,7 +3906,7 @@ declare namespace twx {
         *	immediate: twx.BOOLEAN  - Delete immediately
         *	startDate: twx.DATETIME  - Start time
         **/
-        PurgePropertyHistory(params: ThingsGenericThing.PurgePropertyHistoryParams): twx.NOTHING;
+        PurgePropertyHistory(params: PurgePropertyHistoryParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property values (VTQ) and the highest alert for this thing
@@ -3920,26 +3920,30 @@ declare namespace twx {
          *	principal: twx.STRING  - Principal name (name of organization or organization unit)
         *	principalType: twx.STRING  - Principal type (Organization or Organization Unit)
         **/
-        DeleteVisibilityPermission(params: ThingsGenericThing.DeleteVisibilityPermissionParams): twx.NOTHING;
+        DeleteVisibilityPermission(params: DeleteVisibilityPermissionParams): twx.NOTHING;
         /**
          * Category: Properties 
          * Get the current property value
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetIntegerPropertyValue(params: ThingsGenericThing.GetIntegerPropertyValueParams): twx.INTEGER;
+        GetIntegerPropertyValue(params: GetIntegerPropertyValueParams): twx.INTEGER;
         /**
          * Category: Bindings 
          * Get the effective local property binding for a property
          * Params:
          *	propertyName: twx.STRING  - Property name
         **/
-        GetEffectiveLocalPropertyBinding(params: ThingsGenericThing.GetEffectiveLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.LocalPropertyBinding>;
+        GetEffectiveLocalPropertyBinding(params: GetEffectiveLocalPropertyBindingParams): twx.INFOTABLE<twx.ds.LocalPropertyBinding>;
         /**
          * Category: Properties 
          * Get the current property values for this thing
          * 
          **/
         GetPropertyValuesAsMultiRowTable(): twx.INFOTABLE;
+    }
+
+    export interface ThingsInterface {
+        [entityName: string]: twx.GenericThing;
     }
 }
