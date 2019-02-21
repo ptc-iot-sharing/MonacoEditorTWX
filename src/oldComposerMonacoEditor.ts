@@ -1,4 +1,4 @@
-import { DEFAULT_EDITOR_SETTINGS, Languages } from "./constants";
+import { DEFAULT_EDITOR_SETTINGS, Languages, MONACO_EDITOR_SETTINGS_KEY } from "./constants";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
 import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
@@ -272,7 +272,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
     let codeValue = thisPlugin.properties.code;
     let editorSettings;
     try {
-        editorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData("MONACO_EDITOR_SETTINGS"));
+        editorSettings = JSON.parse(TW.IDE.synchronouslyLoadPreferenceData(MONACO_EDITOR_SETTINGS_KEY));
     } catch (e) {
         TW.log.warn("Monaco: Failed to load settings from preferences. Using defaults...", e);
         editorSettings = DEFAULT_EDITOR_SETTINGS;
@@ -316,7 +316,7 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
                 doneButton.click();
             },
             onPreferencesChanged: (preferences) => {
-                TW.IDE.savePreferenceData("MONACO_EDITOR_SETTINGS", JSON.stringify(preferences));
+                TW.IDE.savePreferenceData(MONACO_EDITOR_SETTINGS_KEY, JSON.stringify(preferences));
             },
             onTest: () => {
                 if (serviceModel.isNew) {

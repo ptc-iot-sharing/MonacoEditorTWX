@@ -1,4 +1,4 @@
-import { DEFAULT_EDITOR_SETTINGS, Languages } from "./constants";
+import { DEFAULT_EDITOR_SETTINGS, Languages, MONACO_EDITOR_SETTINGS_KEY } from "./constants";
 import { MonacoCodeEditor } from "./editors/basicCodeEditor";
 import { ServiceEditor } from "./editors/serviceEditor/serviceEditor";
 import { TypescriptCodeEditor } from "./editors/typescript/typescriptCodeEditor";
@@ -132,6 +132,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
         cmTextarea: any;
         theme: any;
         editorType: EditorType;
+        savedEditorPreferences: any;
 
         constructor(element, userService, {eventHelperGroupName=undefined, langMode=undefined, editorOptions=undefined, valueField = 'value'} = {}) {
             this.element = element;
@@ -471,6 +472,13 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
 
             this.userPreferences = await this._getUserPreferences();
 
+            try {
+                this.savedEditorPreferences = await this.userService.getUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY);
+            } catch (e) {
+                console.warn("Monaco: Failed to load settings from preferences. Using defaults...", e);
+                this.savedEditorPreferences = DEFAULT_EDITOR_SETTINGS;
+            }
+
             // depending on the context, we might need to change the language mode and decide on the editor type
             let currentEditedModel;
             if (this.langMode.name == 'css') {
@@ -523,7 +531,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
             // create a new editor
             this.codeMirror = new editorClass(container,
                 {
-                    editor: Object.assign({}, DEFAULT_EDITOR_SETTINGS.editor, { automaticLayout: true }, extraSettings)
+                    editor: Object.assign({}, this.savedEditorPreferences.editor, { automaticLayout: true }, extraSettings)
                 }, {
                     onClose: () => {
                         HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
@@ -535,7 +543,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                     }, onTest: () => {
                         HotkeyManager._subscribers["SERVICE_EXECUTE"].callback.call();
                     }, onPreferencesChanged: (preferences) => {
-                        console.log("preferences action " + preferences)
+                        this.userService.setUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY, preferences);
                     }
                 }, {
                     code: this._getValue(),

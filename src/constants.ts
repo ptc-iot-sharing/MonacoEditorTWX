@@ -5,6 +5,8 @@ import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
  */
 export const DISALLOWED_ENTITY_CHARS = /^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g;
 
+export const MONACO_EDITOR_SETTINGS_KEY = "MONACO_EDITOR_SETTINGS";
+
 /**
  * List of all the collections in thingworx
  */
