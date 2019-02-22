@@ -158,7 +158,7 @@ TW.jqPlugins.twCodeEditor.prototype.updateLanguage = function (language: string,
         const mode = this.convertHandlerToMonacoLanguage(language);
         this.monacoEditor.changeLanguage(mode, code);
         if (this.monacoEditor instanceof TypescriptCodeEditor && mode == Languages.TwxTypescript) {
-            this.monacoEditor.onEditorTranspileFinised((code) => {
+            this.monacoEditor.onEditorTranspileFinished((code) => {
                 this.properties.javascriptCode = code;
             });
         }
@@ -378,7 +378,13 @@ TW.jqPlugins.twCodeEditor.prototype.showCodeProperly = function () {
         });
         editor.onEditorFocused(() => {
             const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
-            typescriptCodeEditor.refreshMeDefinitions(serviceModel);
+            typescriptCodeEditor.refreshMeDefinitions({
+                id: serviceModel.model.id,
+                entityType: serviceModel.model.type,
+                effectiveShape: serviceModel.model.attributes.effectiveShape,
+                propertyData: serviceModel.model.propertyData,
+                serviceDefinition: serviceModel.serviceDefinition
+            });
             TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
             TypescriptCodeEditor.workerManager.syncExtraLibs();
         });
