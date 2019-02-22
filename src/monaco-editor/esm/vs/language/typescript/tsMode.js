@@ -11,7 +11,7 @@ export function setupNamedLanguage(languageName, isTypescript, defaults) {
 }
 export function getNamedLanguageWorker(languageName) {
     var workerName = languageName + "Worker";
-    return new monaco.Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         if (!scriptWorkerMap[workerName]) {
             return reject(languageName + " not registered!");
         }

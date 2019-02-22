@@ -46,6 +46,7 @@ var Emitter = monaco.Emitter;
 var LanguageServiceDefaultsImpl = /** @class */ (function () {
     function LanguageServiceDefaultsImpl(langualgeId, compilerOptions, diagnosticsOptions) {
         this._onDidChange = new Emitter();
+        this._onDidExtraLibsChange = new Emitter();
         this._eagerExtraLibSync = true;
         this._extraLibs = Object.create(null);
         this._workerMaxIdleTime = 2 * 60 * 1000;
@@ -56,6 +57,13 @@ var LanguageServiceDefaultsImpl = /** @class */ (function () {
     Object.defineProperty(LanguageServiceDefaultsImpl.prototype, "onDidChange", {
         get: function () {
             return this._onDidChange.event;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(LanguageServiceDefaultsImpl.prototype, "onDidExtraLibsChange", {
+        get: function () {
+            return this._onDidExtraLibsChange.event;
         },
         enumerable: true,
         configurable: true
@@ -115,6 +123,8 @@ var LanguageServiceDefaultsImpl = /** @class */ (function () {
                     case 5:
                         client = _a.sent();
                         client.syncExtraLibs(this._extraLibs);
+                        // let all listeners know that the extra libs have changed
+                        this._onDidExtraLibsChange.fire(this);
                         return [3 /*break*/, 7];
                     case 6:
                         error_1 = _a.sent();
@@ -217,8 +227,20 @@ function setupLanguageServiceDefaults(languageId, isTypescript) {
     var languageOptions = languageDefaultOptions[isTypescript ? "typescript" : "javascript"];
     languageDefaults[languageId] = new LanguageServiceDefaultsImpl(languageId, languageOptions.compilerOptions, languageOptions.diagnosticsOptions);
 }
-setupLanguageServiceDefaults("typescript", true);
-setupLanguageServiceDefaults("javascript", false);
+setupNamedLanguage({
+    id: 'typescript',
+    extensions: ['.ts', '.tsx'],
+    aliases: ['TypeScript', 'ts', 'typescript'],
+    mimetypes: ['text/typescript']
+}, true, true);
+setupNamedLanguage({
+    id: 'javascript',
+    extensions: ['.js', '.es6', '.jsx'],
+    firstLine: '^#!.*\\bnode',
+    filenames: ['jakefile'],
+    aliases: ['JavaScript', 'javascript', 'js'],
+    mimetypes: ['text/javascript'],
+}, false, true);
 function getTypeScriptWorker() {
     return getLanguageWorker("typescript");
 }
@@ -263,19 +285,5 @@ function createAPI() {
 monaco.languages.typescript = createAPI();
 // --- Registration to monaco editor ---
 function getMode() {
-    return monaco.Promise.wrap(import('./tsMode'));
+    return import('./tsMode');
 }
-setupNamedLanguage({
-    id: 'typescript',
-    extensions: ['.ts', '.tsx'],
-    aliases: ['TypeScript', 'ts', 'typescript'],
-    mimetypes: ['text/typescript']
-}, true);
-setupNamedLanguage({
-    id: 'javascript',
-    extensions: ['.js', '.es6', '.jsx'],
-    firstLine: '^#!.*\\bnode',
-    filenames: ['jakefile'],
-    aliases: ['JavaScript', 'javascript', 'js'],
-    mimetypes: ['text/javascript'],
-}, false);
