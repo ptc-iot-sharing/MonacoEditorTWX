@@ -1,7 +1,7 @@
 {
     "name": "MonacoScriptEditor",
     "packageName": "MonacoScriptEditor",
-    "version": "1.10.0",
+    "version": "1.10.1",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "thingworxServer": "http://localhost:8015",
     "thingworxUser": "Administrator",
