@@ -9,12 +9,14 @@ This project offers compatibility with both the **Old Composer** and the **New C
 
 ##Installation
 
-1. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
+1. Download the zip package listed under the downloads section under [**Releases**](/placatus/MonacoScriptEditorWidget/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
+
+2. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
 
    * In the old composer, the Monaco Script Editor is being used when editing services and subscriptions.
    * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
 
-2. If you want to also use Monaco Script Editor within the New Composer, also do the following steps.
+3. If you want to also use Monaco Script Editor within the New Composer, also do the following steps.
 
    1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
    2. Edit the file `index.html`.
@@ -62,11 +64,11 @@ The editor offers optimized completions for all of the JavaScript functions, as 
 ![img](https://i.imgur.com/59jpwpZ.gif)
 
 The script editor is fully aware of the context and all of the entities in the platform, allowing search and on demand generation of completions based on what the user has written
+
 ![Function Completion](https://i.imgur.com/oU0m2pc.gif)
 
-
-
 In the case of services that return infotables, or infotable properties with known datashapes, it offers advanced intellisense for the datashape fields, including completion of methods on the value collection, as well as snippets to ease the work
+
 ![Infotable Completion](https://i.imgur.com/TJfJ5sx.gif)
 
 
@@ -76,7 +78,7 @@ In the case of services that return infotables, or infotable properties with kno
 * Diff editor: view changes since you started editing (`CTRL+K`)
   ![DiffEditor](http://i.imgur.com/1DywhM7.png)
 
-* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime
+* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime (``CTRL+```)
 
   ![Config Editor](https://i.imgur.com/sBCAPP0.png)
 
