@@ -1,4 +1,36 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><Entities build="b349" majorVersion="8" minorVersion="3" modelPersistenceProviderPackage="H2PersistenceProviderPackage" revision="0" schemaVersion="1030" universal=""><Things><Thing description="Helper  thing used by the monaco script editor.&#10;This contains some services used to get metadata from the platform.&#10;&#10;In a security environment, make sure that developers can view this thing and can execute it's non-generic services" documentationContent="" effectiveThingPackage="ConfiguredThing" enabled="true" homeMashup="" identifier="" lastModifiedDate="2019-01-23T12:13:18.818+02:00" name="MonacoEditorHelper" projectName="" published="false" tags="PTC:MonacoEditor" thingTemplate="GenericThing" valueStream=""><Owner name="Administrator" type="User"/><avatar/><DesignTimePermissions><Create/><Read/><Update/><Delete/><Metadata/></DesignTimePermissions><RunTimePermissions><Permissions resourceName="GetAllDataShapes"><PropertyRead/><PropertyWrite/><ServiceInvoke><Principal isPermitted="true" name="Users" type="Group"/></ServiceInvoke><EventInvoke/><EventSubscribe/></Permissions></RunTimePermissions><VisibilityPermissions><Visibility/></VisibilityPermissions><ConfigurationTableDefinitions/><ConfigurationTables/><ThingShape><PropertyDefinitions/><ServiceDefinitions><ServiceDefinition aspect.isAsync="false" category="" description="" isAllowOverride="false" isLocalOnly="false" isOpen="false" isPrivate="false" name="GetAllDataShapes"><ResultType aspect.dataShape="DatashapeDefinition" baseType="INFOTABLE" description="" name="result" ordinal="0"/><ParameterDefinitions/></ServiceDefinition><ServiceDefinition aspect.isAsync="false" category="" description="" isAllowOverride="false" isLocalOnly="false" isOpen="false" isPrivate="false" name="GetMetadataOfEntities"><ResultType aspect.dataShape="DatashapeDefinition" baseType="INFOTABLE" description="" name="result" ordinal="0"/><ParameterDefinitions><FieldDefinition baseType="STRING" description="" name="entityType" ordinal="1"/></ParameterDefinitions></ServiceDefinition></ServiceDefinitions><EventDefinitions/><ServiceMappings/><ServiceImplementations><ServiceImplementation description="" handlerName="Script" name="GetAllDataShapes"><ConfigurationTables><ConfigurationTable description="Script" isMultiRow="false" name="Script" ordinal="0"><DataShape><FieldDefinitions><FieldDefinition baseType="STRING" description="code" name="code" ordinal="0"/></FieldDefinitions></DataShape><Rows><Row><code><![CDATA[// get a list of datashapes
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Entities>
+	<Things>
+		<Thing description="Helper  thing used by the monaco script editor.&#10;This contains some services used to get metadata from the platform.&#10;&#10;In a security environment, make sure that developers can view this thing and can execute it's non-generic services" documentationContent="" effectiveThingPackage="ConfiguredThing" enabled="true" homeMashup="" identifier="" lastModifiedDate="2019-01-23T12:13:18.818+02:00" name="MonacoEditorHelper" published="false" tags="PTC:MonacoEditor" thingTemplate="GenericThing" valueStream="">
+			<Owner name="Administrator" type="User"/>
+			<ThingShape>
+				<PropertyDefinitions/>
+				<ServiceDefinitions>
+					<ServiceDefinition aspect.isAsync="false" category="" description="" isAllowOverride="false" isLocalOnly="false" isOpen="false" isPrivate="false" name="GetAllDataShapes">
+						<ResultType aspect.dataShape="DatashapeDefinition" baseType="INFOTABLE" description="" name="result" ordinal="0"/>
+						<ParameterDefinitions/>
+					</ServiceDefinition>
+					<ServiceDefinition aspect.isAsync="false" category="" description="" isAllowOverride="false" isLocalOnly="false" isOpen="false" isPrivate="false" name="GetMetadataOfEntities">
+						<ResultType aspect.dataShape="DatashapeDefinition" baseType="INFOTABLE" description="" name="result" ordinal="0"/>
+						<ParameterDefinitions>
+							<FieldDefinition baseType="STRING" description="" name="entityType" ordinal="1"/>
+						</ParameterDefinitions>
+					</ServiceDefinition>
+				</ServiceDefinitions>
+				<EventDefinitions/>
+				<ServiceMappings/>
+				<ServiceImplementations>
+					<ServiceImplementation description="" handlerName="Script" name="GetAllDataShapes">
+						<ConfigurationTables>
+							<ConfigurationTable description="Script" isMultiRow="false" name="Script" ordinal="0">
+								<DataShape>
+									<FieldDefinitions>
+										<FieldDefinition baseType="STRING" description="code" name="code" ordinal="0"/>
+									</FieldDefinitions>
+								</DataShape>
+								<Rows>
+									<Row>
+										<code><![CDATA[// get a list of datashapes
 var datashapes = Resources["SearchFunctions"].SpotlightSearch({
 	maxItems: 1000,
 	types: {
@@ -17,7 +49,23 @@ for (var i = 0; i < datashapes.rows.length; i++) {
 	})
 };
 
-]]></code></Row></Rows></ConfigurationTable></ConfigurationTables></ServiceImplementation><ServiceImplementation description="" handlerName="Script" name="GetMetadataOfEntities"><ConfigurationTables><ConfigurationTable description="Script" isMultiRow="false" name="Script" ordinal="0"><DataShape><FieldDefinitions><FieldDefinition baseType="STRING" description="code" name="code" ordinal="0"/></FieldDefinitions></DataShape><Rows><Row><code><![CDATA[// get a list of datashapes
+]]>										</code>
+									</Row>
+								</Rows>
+							</ConfigurationTable>
+						</ConfigurationTables>
+					</ServiceImplementation>
+					<ServiceImplementation description="" handlerName="Script" name="GetMetadataOfEntities">
+						<ConfigurationTables>
+							<ConfigurationTable description="Script" isMultiRow="false" name="Script" ordinal="0">
+								<DataShape>
+									<FieldDefinitions>
+										<FieldDefinition baseType="STRING" description="code" name="code" ordinal="0"/>
+									</FieldDefinitions>
+								</DataShape>
+								<Rows>
+									<Row>
+										<code><![CDATA[// get a list of datashapes
 var resources = Resources["SearchFunctions"].SpotlightSearch({
 	maxItems: 1000,
 	types: {
@@ -36,4 +84,15 @@ for (var i = 0; i < resources.rows.length; i++) {
 		description: resource.description,
 		metadata: this[collectionName][resource.name].GetInstanceMetadataAsJSON()
 	})
-};]]></code></Row></Rows></ConfigurationTable></ConfigurationTables></ServiceImplementation></ServiceImplementations><Subscriptions/></ThingShape><PropertyBindings/><RemotePropertyBindings/><RemoteServiceBindings/><RemoteEventBindings/><AlertConfigurations/><ImplementedShapes/><ThingProperties/><ConfigurationChanges><ConfigurationChange changeAction="CREATE" changeReason="header : name : updated&#10;" timestamp="2019-01-21T15:50:45.666+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetAllResources : Code Updated, Service Added&#10;" timestamp="2019-01-23T10:54:17.464+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetAllResources : Code Updated, Input parameter entityType Added, Inputs updated&#10;" timestamp="2019-01-23T11:50:45.636+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetMetadataOfEntities : Code Updated, Service Added&#10;" timestamp="2019-01-23T11:51:34.606+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetMetadataOfEntities : Code Updated&#10;" timestamp="2019-01-23T11:51:54.776+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="" timestamp="2019-01-23T12:01:32.089+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="" timestamp="2019-01-23T12:01:53.821+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="" timestamp="2019-01-23T12:02:41.655+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetMetadataOfEntities : Code Updated&#10;" timestamp="2019-01-23T12:13:13.917+02:00" user="Administrator"/><ConfigurationChange changeAction="MODIFY" changeReason="services : GetAllResources : removed&#10;" timestamp="2019-01-23T12:13:18.817+02:00" user="Administrator"/></ConfigurationChanges></Thing></Things></Entities>
+};]]></code>
+									</Row>
+								</Rows>
+							</ConfigurationTable>
+						</ConfigurationTables>
+					</ServiceImplementation>
+				</ServiceImplementations>
+				<Subscriptions/>
+			</ThingShape>
+		</Thing>
+	</Things>
+</Entities>
