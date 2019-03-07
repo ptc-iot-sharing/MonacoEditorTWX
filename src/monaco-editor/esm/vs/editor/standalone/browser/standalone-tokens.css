@@ -241,15 +241,3 @@
 		background: transparent !important;
 	}
 }
-
-/*.monaco-editor.vs [tabindex="0"]:focus {
-	outline: 1px solid rgba(0, 122, 204, 0.4);
-	outline-offset: -1px;
-	opacity: 1 !important;
-}
-
-.monaco-editor.vs-dark [tabindex="0"]:focus {
-	outline: 1px solid rgba(14, 99, 156, 0.6);
-	outline-offset: -1px;
-	opacity: 1 !important;
-}*/
