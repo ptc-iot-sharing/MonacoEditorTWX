@@ -2,8 +2,9 @@
     "compilerOptions": {
         "outDir": "./dist/",
         "sourceMap": true,
+        "moduleResolution": "node",
         "noImplicitAny": false,
-        "module": "commonjs",
+        "module": "esnext",
         "allowSyntheticDefaultImports": true,
         "target": "es5",
         "esModuleInterop": true,

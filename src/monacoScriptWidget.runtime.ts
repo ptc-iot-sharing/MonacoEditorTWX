@@ -1,9 +1,8 @@
 import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport';
-import { MonacoCodeEditor } from './editors/basicCodeEditor';
 
 @ThingworxRuntimeWidget
 class MonacoCodeEditorWidget extends TWRuntimeWidget {
-    monacoEditor: MonacoCodeEditor;
+    monacoEditor: import("./editors/basicCodeEditor").MonacoCodeEditor;
 
     @TWProperty("Code")
     set code(value: string) {
@@ -35,7 +34,8 @@ class MonacoCodeEditorWidget extends TWRuntimeWidget {
         // auto layout should be enabled
         const editorSettings = JSON.parse(this.editorSettings);
         editorSettings.automaticLayout = true;
-        this.monacoEditor = new MonacoCodeEditor(this.jqElement[0], <any>{editor: editorSettings}, {
+        const editorNamespace = await import("./editors/basicCodeEditor");
+        this.monacoEditor = new editorNamespace.MonacoCodeEditor(this.jqElement[0], <any>{editor: editorSettings}, {
             onPreferencesChanged: () => { }
         }, {
                 code: this.code,
