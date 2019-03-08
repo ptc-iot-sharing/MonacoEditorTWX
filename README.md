@@ -23,7 +23,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
    3. After _line 9_, after the existing `<script>` tag, add the following: 
 
    ```html
-   <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js"></script>
+   <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
    ```
 
 Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.

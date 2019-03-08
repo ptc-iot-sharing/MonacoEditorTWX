@@ -3,6 +3,7 @@ var path = require('path');
 var fs = require('fs');
 const TerserPlugin = require('terser-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
+var EncodingPlugin = require('webpack-encoding-plugin');
 // enable cleaning of the build and zip directories
 var CleanWebpackPlugin = require('clean-webpack-plugin');
 // enable building of the widget
@@ -71,6 +72,9 @@ module.exports = function (env, argv) {
                     }
                 },
                 exclude: [/htmlDemo/, isProduction ? /(.*)\.map$/ : /a^/]
+            }),
+            new EncodingPlugin({
+                encoding: 'utf8'
             })
         ],
         // if we are in development mode, then use "eval-source-map".
