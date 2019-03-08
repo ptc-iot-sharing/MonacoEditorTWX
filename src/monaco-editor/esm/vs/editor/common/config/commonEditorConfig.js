@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -221,6 +221,11 @@ var editorConfiguration = {
             'default': 'on',
             'description': nls.localize('lineNumbers', "Controls the display of line numbers.")
         },
+        'editor.renderFinalNewline': {
+            'type': 'boolean',
+            'default': EDITOR_DEFAULTS.viewInfo.renderFinalNewline,
+            'description': nls.localize('renderFinalNewline', "Render last line number when the file ends with a newline.")
+        },
         'editor.rulers': {
             'type': 'array',
             'items': {
@@ -240,6 +245,20 @@ var editorConfiguration = {
             'minimum': 1,
             'markdownDescription': nls.localize('tabSize', "The number of spaces a tab is equal to. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on.")
         },
+        // 'editor.indentSize': {
+        // 	'anyOf': [
+        // 		{
+        // 			'type': 'string',
+        // 			'enum': ['tabSize']
+        // 		},
+        // 		{
+        // 			'type': 'number',
+        // 			'minimum': 1
+        // 		}
+        // 	],
+        // 	'default': 'tabSize',
+        // 	'markdownDescription': nls.localize('indentSize', "The number of spaces used for indentation or 'tabSize' to use the value from `#editor.tabSize#`. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on.")
+        // },
         'editor.insertSpaces': {
             'type': 'boolean',
             'default': EDITOR_MODEL_DEFAULTS.insertSpaces,
@@ -328,6 +347,11 @@ var editorConfiguration = {
             'description': nls.localize('find.globalFindClipboard', "Controls whether the Find Widget should read or modify the shared find clipboard on macOS."),
             'included': platform.isMacintosh
         },
+        'editor.find.addExtraSpaceOnTop': {
+            'type': 'boolean',
+            'default': true,
+            'description': nls.localize('find.addExtraSpaceOnTop', "Controls whether the Find Widget should add extra lines on top of the editor. When true, you can scroll beyond the first line when the Find Widget is visible.")
+        },
         'editor.wordWrap': {
             'type': 'string',
             'enum': ['off', 'on', 'wordWrapColumn', 'bounded'],
@@ -385,6 +409,11 @@ var editorConfiguration = {
             'type': 'number',
             'default': EDITOR_DEFAULTS.viewInfo.scrollbar.mouseWheelScrollSensitivity,
             'markdownDescription': nls.localize('mouseWheelScrollSensitivity', "A multiplier to be used on the `deltaX` and `deltaY` of mouse wheel scroll events.")
+        },
+        'editor.fastScrollSensitivity': {
+            'type': 'number',
+            'default': EDITOR_DEFAULTS.viewInfo.scrollbar.fastScrollSensitivity,
+            'markdownDescription': nls.localize('fastScrollSensitivity', "Scrolling speed mulitiplier when pressing `Alt`.")
         },
         'editor.multiCursorModifier': {
             'type': 'string',
@@ -595,6 +624,11 @@ var editorConfiguration = {
             default: false,
             description: nls.localize('suggest.localityBonus', "Controls whether sorting favours words that appear close to the cursor.")
         },
+        'editor.suggest.shareSuggestSelections': {
+            type: 'boolean',
+            default: false,
+            markdownDescription: nls.localize('suggest.shareSuggestSelections', "Controls whether remembered suggestion selections are shared between multiple workspaces and windows (needs `#editor.suggestSelection#`).")
+        },
         'editor.suggest.snippetsPreventQuickSuggestions': {
             type: 'boolean',
             default: true,
@@ -603,7 +637,7 @@ var editorConfiguration = {
         'editor.selectionHighlight': {
             'type': 'boolean',
             'default': EDITOR_DEFAULTS.contribInfo.selectionHighlight,
-            'description': nls.localize('selectionHighlight', "Controls whether the editor should highlight matches similar to the selection")
+            'description': nls.localize('selectionHighlight', "Controls whether the editor should highlight matches similar to the selection.")
         },
         'editor.occurrencesHighlight': {
             'type': 'boolean',
@@ -630,6 +664,11 @@ var editorConfiguration = {
             'type': 'boolean',
             'default': EDITOR_DEFAULTS.viewInfo.mouseWheelZoom,
             'markdownDescription': nls.localize('mouseWheelZoom', "Zoom the font of the editor when using mouse wheel and holding `Ctrl`.")
+        },
+        'editor.cursorSmoothCaretAnimation': {
+            'type': 'boolean',
+            'default': EDITOR_DEFAULTS.viewInfo.cursorSmoothCaretAnimation,
+            'description': nls.localize('cursorSmoothCaretAnimation', "Controls whether the smooth caret animation should be enabled.")
         },
         'editor.cursorStyle': {
             'type': 'string',
@@ -693,12 +732,12 @@ var editorConfiguration = {
         'editor.codeLens': {
             'type': 'boolean',
             'default': EDITOR_DEFAULTS.contribInfo.codeLens,
-            'description': nls.localize('codeLens', "Controls whether the editor shows CodeLens")
+            'description': nls.localize('codeLens', "Controls whether the editor shows CodeLens.")
         },
         'editor.folding': {
             'type': 'boolean',
             'default': EDITOR_DEFAULTS.contribInfo.folding,
-            'description': nls.localize('folding', "Controls whether the editor has code folding enabled")
+            'description': nls.localize('folding', "Controls whether the editor has code folding enabled.")
         },
         'editor.foldingStrategy': {
             'type': 'string',
@@ -773,12 +812,21 @@ var editorConfiguration = {
             'default': EDITOR_DEFAULTS.contribInfo.lightbulbEnabled,
             'description': nls.localize('codeActions', "Enables the code action lightbulb in the editor.")
         },
+        'editor.maxTokenizationLineLength': {
+            'type': 'integer',
+            'default': 20000,
+            'description': nls.localize('maxTokenizationLineLength', "Lines above this length will not be tokenized for performance reasons")
+        },
         'editor.codeActionsOnSave': {
             'type': 'object',
             'properties': {
                 'source.organizeImports': {
                     'type': 'boolean',
                     'description': nls.localize('codeActionsOnSave.organizeImports', "Controls whether organize imports action should be run on file save.")
+                },
+                'source.fixAll': {
+                    'type': 'boolean',
+                    'description': nls.localize('codeActionsOnSave.fixAll', "Controls whether auto fix action should be run on file save.")
                 }
             },
             'additionalProperties': {

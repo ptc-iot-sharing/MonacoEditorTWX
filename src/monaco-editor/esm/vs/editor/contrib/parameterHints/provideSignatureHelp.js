@@ -18,9 +18,10 @@ export function provideSignatureHelp(model, position, context, token) {
         return Promise.resolve(support.provideSignatureHelp(model, position, token, context)).catch(onUnexpectedExternalError);
     }; }));
 }
-registerDefaultLanguageCommand('_executeSignatureHelpProvider', function (model, position) {
+registerDefaultLanguageCommand('_executeSignatureHelpProvider', function (model, position, args) {
     return provideSignatureHelp(model, position, {
-        triggerReason: modes.SignatureHelpTriggerReason.Invoke,
-        isRetrigger: false
+        triggerKind: modes.SignatureHelpTriggerKind.Invoke,
+        isRetrigger: false,
+        triggerCharacter: args['triggerCharacter']
     }, CancellationToken.None);
 });

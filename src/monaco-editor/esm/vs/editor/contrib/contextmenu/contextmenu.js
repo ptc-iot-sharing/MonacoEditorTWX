@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -30,7 +30,7 @@ import { ActionItem, Separator } from '../../../base/browser/ui/actionbar/action
 import { dispose } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { IMenuService, MenuId } from '../../../platform/actions/common/actions.js';
+import { IMenuService } from '../../../platform/actions/common/actions.js';
 import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IContextMenuService, IContextViewService } from '../../../platform/contextview/browser/contextView.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
@@ -47,7 +47,7 @@ var ContextMenuController = /** @class */ (function () {
         this._editor = editor;
         this._toDispose.push(this._editor.onContextMenu(function (e) { return _this._onContextMenu(e); }));
         this._toDispose.push(this._editor.onDidScrollChange(function (e) {
-            if (_this._contextMenuIsBeingShownCount > 0) {
+            if (_this._contextMenuIsBeingShownCount > 0 && e.scrollTopChanged) {
                 _this._contextViewService.hideContextView();
             }
         }));
@@ -64,6 +64,9 @@ var ContextMenuController = /** @class */ (function () {
         return editor.getContribution(ContextMenuController.ID);
     };
     ContextMenuController.prototype._onContextMenu = function (e) {
+        if (!this._editor.hasModel()) {
+            return;
+        }
         if (!this._editor.getConfiguration().contribInfo.contextmenu) {
             this._editor.focus();
             // Ensure the cursor is at the position of the mouse click
@@ -86,7 +89,7 @@ var ContextMenuController = /** @class */ (function () {
             this._editor.setPosition(e.target.position);
         }
         // Unless the user triggerd the context menu through Shift+F10, use the mouse position as menu position
-        var anchor;
+        var anchor = null;
         if (e.target.type !== 1 /* TEXTAREA */) {
             anchor = { x: e.event.posx - 1, width: 2, y: e.event.posy - 1, height: 2 };
         }
@@ -97,21 +100,24 @@ var ContextMenuController = /** @class */ (function () {
         if (!this._editor.getConfiguration().contribInfo.contextmenu) {
             return; // Context menu is turned off through configuration
         }
+        if (!this._editor.hasModel()) {
+            return;
+        }
         if (!this._contextMenuService) {
             this._editor.focus();
             return; // We need the context menu service to function
         }
         // Find actions available for menu
-        var menuActions = this._getMenuActions();
+        var menuActions = this._getMenuActions(this._editor.getModel());
         // Show menu if we have actions to show
         if (menuActions.length > 0) {
             this._doShowContextMenu(menuActions, anchor);
         }
     };
-    ContextMenuController.prototype._getMenuActions = function () {
+    ContextMenuController.prototype._getMenuActions = function (model) {
         var result = [];
-        var contextMenu = this._menuService.createMenu(MenuId.EditorContext, this._contextKeyService);
-        var groups = contextMenu.getActions({ arg: this._editor.getModel().uri });
+        var contextMenu = this._menuService.createMenu(7 /* EditorContext */, this._contextKeyService);
+        var groups = contextMenu.getActions({ arg: model.uri });
         contextMenu.dispose();
         for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
             var group = groups_1[_i];
@@ -125,6 +131,9 @@ var ContextMenuController = /** @class */ (function () {
     ContextMenuController.prototype._doShowContextMenu = function (actions, anchor) {
         var _this = this;
         if (anchor === void 0) { anchor = null; }
+        if (!this._editor.hasModel()) {
+            return;
+        }
         // Disable hover
         var oldHoverSetting = this._editor.getConfiguration().contribInfo.hover;
         this._editor.updateOptions({
@@ -147,9 +156,7 @@ var ContextMenuController = /** @class */ (function () {
         this._contextMenuIsBeingShownCount++;
         this._contextMenuService.showContextMenu({
             getAnchor: function () { return anchor; },
-            getActions: function () {
-                return Promise.resolve(actions);
-            },
+            getActions: function () { return actions; },
             getActionItem: function (action) {
                 var keybinding = _this._keybindingFor(action);
                 if (keybinding) {
@@ -162,7 +169,7 @@ var ContextMenuController = /** @class */ (function () {
                 return new ActionItem(action, action, { icon: true, label: true, isMenu: true });
             },
             getKeyBinding: function (action) {
-                return _this._keybindingFor(action);
+                return _this._keybindingFor(action) || undefined;
             },
             onHide: function (wasCancelled) {
                 _this._contextMenuIsBeingShownCount--;

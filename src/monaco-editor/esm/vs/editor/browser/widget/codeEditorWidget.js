@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -54,6 +54,7 @@ import { IInstantiationService } from '../../../platform/instantiation/common/in
 import { ServiceCollection } from '../../../platform/instantiation/common/serviceCollection.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
+import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 var EDITOR_ID = 0;
 var SHOW_UNUSED_ENABLED_CLASS = 'showUnused';
 var ModelData = /** @class */ (function () {
@@ -78,7 +79,7 @@ var ModelData = /** @class */ (function () {
 }());
 var CodeEditorWidget = /** @class */ (function (_super) {
     __extends(CodeEditorWidget, _super);
-    function CodeEditorWidget(domElement, options, codeEditorWidgetOptions, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService) {
+    function CodeEditorWidget(domElement, options, codeEditorWidgetOptions, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService, accessibilityService) {
         var _this = _super.call(this) || this;
         //#region Eventing
         _this._onDidDispose = _this._register(new Emitter());
@@ -148,9 +149,9 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         _this._decorationTypeKeysToIds = {};
         _this._decorationTypeSubtypes = {};
         _this.isSimpleWidget = codeEditorWidgetOptions.isSimpleWidget || false;
-        _this._telemetryData = codeEditorWidgetOptions.telemetryData || null;
+        _this._telemetryData = codeEditorWidgetOptions.telemetryData;
         options = options || {};
-        _this._configuration = _this._register(_this._createConfiguration(options));
+        _this._configuration = _this._register(_this._createConfiguration(options, accessibilityService));
         _this._register(_this._configuration.onDidChange(function (e) {
             _this._onDidChangeConfiguration.fire(e);
             if (e.layoutInfo) {
@@ -208,8 +209,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         _this._codeEditorService.addCodeEditor(_this);
         return _this;
     }
-    CodeEditorWidget.prototype._createConfiguration = function (options) {
-        return new Configuration(options, this._domElement);
+    CodeEditorWidget.prototype._createConfiguration = function (options, accessibilityService) {
+        return new Configuration(options, this._domElement, accessibilityService);
     };
     CodeEditorWidget.prototype.getId = function () {
         return this.getEditorType() + ':' + this._id;
@@ -269,8 +270,9 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
         return this._modelData.model;
     };
-    CodeEditorWidget.prototype.setModel = function (model) {
-        if (model === void 0) { model = null; }
+    CodeEditorWidget.prototype.setModel = function (_model) {
+        if (_model === void 0) { _model = null; }
+        var model = _model;
         if (this._modelData === null && model === null) {
             // Current model is the new model
             return;
@@ -567,8 +569,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
         var contributionsState = {};
         var keys = Object.keys(this._contributions);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var id = keys[i];
+        for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
+            var id = keys_1[_i];
             var contribution = this._contributions[id];
             if (typeof contribution.saveViewState === 'function') {
                 contributionsState[id] = contribution.saveViewState();
@@ -586,8 +588,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         if (!this._modelData || !this._modelData.hasRealView) {
             return;
         }
-        if (s && s.cursorState && s.viewState) {
-            var codeEditorState = s;
+        var codeEditorState = s;
+        if (codeEditorState && codeEditorState.cursorState && codeEditorState.viewState) {
             var cursorState = codeEditorState.cursorState;
             if (Array.isArray(cursorState)) {
                 this._modelData.cursor.restoreState(cursorState);
@@ -596,7 +598,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
                 // Backwards compatibility
                 this._modelData.cursor.restoreState([cursorState]);
             }
-            var contributionsState = s.contributionsState || {};
+            var contributionsState = codeEditorState.contributionsState || {};
             var keys = Object.keys(this._contributions);
             for (var i = 0, len = keys.length; i < len; i++) {
                 var id = keys[i];
@@ -605,11 +607,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
                     contribution.restoreViewState(contributionsState[id]);
                 }
             }
-            var reducedState = this._modelData.viewModel.reduceRestoreState(s.viewState);
-            var linesViewportData = this._modelData.viewModel.viewLayout.getLinesViewportDataAtScrollTop(reducedState.scrollTop);
-            var startPosition = this._modelData.viewModel.coordinatesConverter.convertViewPositionToModelPosition(new Position(linesViewportData.startLineNumber, 1));
-            var endPosition = this._modelData.viewModel.coordinatesConverter.convertViewPositionToModelPosition(new Position(linesViewportData.endLineNumber, 1));
-            this._modelData.model.tokenizeViewport(startPosition.lineNumber, endPosition.lineNumber);
+            var reducedState = this._modelData.viewModel.reduceRestoreState(codeEditorState.viewState);
             this._modelData.view.restoreState(reducedState);
         }
     };
@@ -672,7 +670,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
         var action = this.getAction(handlerId);
         if (action) {
-            Promise.resolve(action.run()).then(null, onUnexpectedError);
+            Promise.resolve(action.run()).then(undefined, onUnexpectedError);
             return;
         }
         if (!this._modelData) {
@@ -690,7 +688,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             payload = payload || {};
             payload.source = source;
             this._instantiationService.invokeFunction(function (accessor) {
-                Promise.resolve(command.runEditorCommand(accessor, _this, payload)).then(null, onUnexpectedError);
+                Promise.resolve(command.runEditorCommand(accessor, _this, payload)).then(undefined, onUnexpectedError);
             });
             return true;
         }
@@ -917,11 +915,12 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
         return this._modelData.view.getOffsetForColumn(lineNumber, column);
     };
-    CodeEditorWidget.prototype.render = function () {
+    CodeEditorWidget.prototype.render = function (forceRedraw) {
+        if (forceRedraw === void 0) { forceRedraw = false; }
         if (!this._modelData || !this._modelData.hasRealView) {
             return;
         }
-        this._modelData.view.render(true, false);
+        this._modelData.view.render(true, forceRedraw);
     };
     CodeEditorWidget.prototype.applyFontInfo = function (target) {
         Configuration.applyFontInfoSlow(target, this._configuration.editor.fontInfo);
@@ -953,7 +952,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             _this._notificationService.warn(nls.localize('cursors.maximum', "The number of cursors has been limited to {0}.", Cursor.MAX_CURSOR_COUNT));
         }));
         listenersToRemove.push(cursor.onDidAttemptReadOnlyEdit(function () {
-            _this._onDidAttemptReadOnlyEdit.fire(void 0);
+            _this._onDidAttemptReadOnlyEdit.fire(undefined);
         }));
         listenersToRemove.push(cursor.onDidChange(function (e) {
             var positions = [];
@@ -1112,7 +1111,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         __param(5, ICommandService),
         __param(6, IContextKeyService),
         __param(7, IThemeService),
-        __param(8, INotificationService)
+        __param(8, INotificationService),
+        __param(9, IAccessibilityService)
     ], CodeEditorWidget);
     return CodeEditorWidget;
 }(Disposable));
@@ -1211,6 +1211,7 @@ var EditorModeContext = /** @class */ (function (_super) {
         _this._hasCodeActionsProvider = EditorContextKeys.hasCodeActionsProvider.bindTo(contextKeyService);
         _this._hasCodeLensProvider = EditorContextKeys.hasCodeLensProvider.bindTo(contextKeyService);
         _this._hasDefinitionProvider = EditorContextKeys.hasDefinitionProvider.bindTo(contextKeyService);
+        _this._hasDeclarationProvider = EditorContextKeys.hasDeclarationProvider.bindTo(contextKeyService);
         _this._hasImplementationProvider = EditorContextKeys.hasImplementationProvider.bindTo(contextKeyService);
         _this._hasTypeDefinitionProvider = EditorContextKeys.hasTypeDefinitionProvider.bindTo(contextKeyService);
         _this._hasHoverProvider = EditorContextKeys.hasHoverProvider.bindTo(contextKeyService);
@@ -1231,6 +1232,7 @@ var EditorModeContext = /** @class */ (function (_super) {
         _this._register(modes.CodeActionProviderRegistry.onDidChange(update));
         _this._register(modes.CodeLensProviderRegistry.onDidChange(update));
         _this._register(modes.DefinitionProviderRegistry.onDidChange(update));
+        _this._register(modes.DeclarationProviderRegistry.onDidChange(update));
         _this._register(modes.ImplementationProviderRegistry.onDidChange(update));
         _this._register(modes.TypeDefinitionProviderRegistry.onDidChange(update));
         _this._register(modes.HoverProviderRegistry.onDidChange(update));
@@ -1253,6 +1255,7 @@ var EditorModeContext = /** @class */ (function (_super) {
         this._hasCodeActionsProvider.reset();
         this._hasCodeLensProvider.reset();
         this._hasDefinitionProvider.reset();
+        this._hasDeclarationProvider.reset();
         this._hasImplementationProvider.reset();
         this._hasTypeDefinitionProvider.reset();
         this._hasHoverProvider.reset();
@@ -1276,6 +1279,7 @@ var EditorModeContext = /** @class */ (function (_super) {
         this._hasCodeActionsProvider.set(modes.CodeActionProviderRegistry.has(model));
         this._hasCodeLensProvider.set(modes.CodeLensProviderRegistry.has(model));
         this._hasDefinitionProvider.set(modes.DefinitionProviderRegistry.has(model));
+        this._hasDeclarationProvider.set(modes.DeclarationProviderRegistry.has(model));
         this._hasImplementationProvider.set(modes.ImplementationProviderRegistry.has(model));
         this._hasTypeDefinitionProvider.set(modes.TypeDefinitionProviderRegistry.has(model));
         this._hasHoverProvider.set(modes.HoverProviderRegistry.has(model));
@@ -1301,11 +1305,11 @@ var CodeEditorWidgetFocusTracker = /** @class */ (function (_super) {
         _this._domFocusTracker = _this._register(dom.trackFocus(domElement));
         _this._register(_this._domFocusTracker.onDidFocus(function () {
             _this._hasFocus = true;
-            _this._onChange.fire(void 0);
+            _this._onChange.fire(undefined);
         }));
         _this._register(_this._domFocusTracker.onDidBlur(function () {
             _this._hasFocus = false;
-            _this._onChange.fire(void 0);
+            _this._onChange.fire(undefined);
         }));
         return _this;
     }
@@ -1359,7 +1363,7 @@ registerThemingParticipant(function (theme, collector) {
     }
     var unnecessaryForeground = theme.getColor(editorUnnecessaryCodeOpacity);
     if (unnecessaryForeground) {
-        collector.addRule("." + SHOW_UNUSED_ENABLED_CLASS + " .monaco-editor ." + "squiggly-inline-unnecessary" /* EditorUnnecessaryInlineDecoration */ + " { opacity: " + unnecessaryForeground.rgba.a + "; will-change: opacity; }"); // TODO@Ben: 'will-change: opacity' is a workaround for https://github.com/Microsoft/vscode/issues/52196
+        collector.addRule("." + SHOW_UNUSED_ENABLED_CLASS + " .monaco-editor ." + "squiggly-inline-unnecessary" /* EditorUnnecessaryInlineDecoration */ + " { opacity: " + unnecessaryForeground.rgba.a + "; }");
     }
     var unnecessaryBorder = theme.getColor(editorUnnecessaryCodeBorder);
     if (unnecessaryBorder) {

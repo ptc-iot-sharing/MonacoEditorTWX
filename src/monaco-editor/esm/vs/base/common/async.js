@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -17,8 +17,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { CancellationTokenSource } from './cancellation.js';
 import * as errors from './errors.js';
-import { Disposable } from './lifecycle.js';
-import { TPromise } from './winjs.base.js';
+import { Disposable, toDisposable } from './lifecycle.js';
 export function isThenable(obj) {
     return obj && typeof obj.then === 'function';
 }
@@ -48,6 +47,9 @@ export function createCancelablePromise(callback) {
         };
         class_1.prototype.catch = function (reject) {
             return this.then(undefined, reject);
+        };
+        class_1.prototype.finally = function (onfinally) {
+            return promise.finally(onfinally);
         };
         return class_1;
     }());
@@ -89,7 +91,7 @@ var Delayer = /** @class */ (function () {
         this.task = task;
         this.cancelTimeout();
         if (!this.completionPromise) {
-            this.completionPromise = new TPromise(function (c, e) {
+            this.completionPromise = new Promise(function (c, e) {
                 _this.doResolve = c;
                 _this.doReject = e;
             }).then(function () {
@@ -105,6 +107,9 @@ var Delayer = /** @class */ (function () {
             _this.doResolve(null);
         }, delay);
         return this.completionPromise;
+    };
+    Delayer.prototype.isTriggered = function () {
+        return this.timeout !== null;
     };
     Delayer.prototype.cancel = function () {
         this.cancelTimeout();
@@ -137,24 +142,10 @@ export function timeout(millis, token) {
         });
     });
 }
-/**
- * Returns a new promise that joins the provided promise. Upon completion of
- * the provided promise the provided function will always be called. This
- * method is comparable to a try-finally code block.
- * @param promise a promise
- * @param callback a function that will be call in the success and error case.
- */
-export function always(promise, callback) {
-    function safeCallback() {
-        try {
-            callback();
-        }
-        catch (err) {
-            errors.onUnexpectedError(err);
-        }
-    }
-    promise.then(function (_) { return safeCallback(); }, function (_) { return safeCallback(); });
-    return Promise.resolve(promise);
+export function disposableTimeout(handler, timeout) {
+    if (timeout === void 0) { timeout = 0; }
+    var timer = setTimeout(handler, timeout);
+    return toDisposable(function () { return clearTimeout(timer); });
 }
 export function first(promiseFactories, shouldStop, defaultValue) {
     if (shouldStop === void 0) { shouldStop = function (t) { return !!t; }; }
@@ -305,9 +296,8 @@ export var runWhenIdle;
             didTimeout: true,
             timeRemaining: function () { return 15; }
         });
-        runWhenIdle = function (runner, timeout) {
-            if (timeout === void 0) { timeout = 0; }
-            var handle = setTimeout(function () { return runner(dummyIdle_1); }, timeout);
+        runWhenIdle = function (runner) {
+            var handle = setTimeout(function () { return runner(dummyIdle_1); });
             var disposed = false;
             return {
                 dispose: function () {

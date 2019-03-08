@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -70,9 +70,10 @@ var GlobalMouseMoveMonitor = /** @class */ (function (_super) {
         this.mouseMoveCallback = mouseMoveCallback;
         this.onStopCallback = onStopCallback;
         var windowChain = IframeUtils.getSameOriginWindowChain();
-        for (var i = 0; i < windowChain.length; i++) {
-            this.hooks.push(dom.addDisposableThrottledListener(windowChain[i].window.document, 'mousemove', function (data) { return _this.mouseMoveCallback(data); }, function (lastEvent, currentEvent) { return _this.mouseMoveEventMerger(lastEvent, currentEvent); }));
-            this.hooks.push(dom.addDisposableListener(windowChain[i].window.document, 'mouseup', function (e) { return _this.stopMonitoring(true); }));
+        for (var _i = 0, windowChain_1 = windowChain; _i < windowChain_1.length; _i++) {
+            var element = windowChain_1[_i];
+            this.hooks.push(dom.addDisposableThrottledListener(element.window.document, 'mousemove', function (data) { return _this.mouseMoveCallback(data); }, function (lastEvent, currentEvent) { return _this.mouseMoveEventMerger(lastEvent, currentEvent); }));
+            this.hooks.push(dom.addDisposableListener(element.window.document, 'mouseup', function (e) { return _this.stopMonitoring(true); }));
         }
         if (IframeUtils.hasDifferentOriginAncestor()) {
             var lastSameOriginAncestor = windowChain[windowChain.length - 1];

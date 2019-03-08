@@ -2,13 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 import * as Parser from '../parser/jsonParser.js';
 import * as Strings from '../utils/strings.js';
 import { colorFromHex } from '../utils/colors.js';
-import * as nls from './../../../fillers/vscode-nls.js';
-import { SymbolKind, Range, Location, TextEdit } from './../../vscode-languageserver-types/main.js';
-var localize = nls.loadMessageBundle();
+import { SymbolKind, Range, Location, TextEdit } from '../../vscode-languageserver-types/main.js';
 var JSONDocumentSymbols = /** @class */ (function () {
     function JSONDocumentSymbols(schemaService) {
         this.schemaService = schemaService;
@@ -53,7 +50,7 @@ var JSONDocumentSymbols = /** @class */ (function () {
                     var valueNode = property.valueNode;
                     if (valueNode) {
                         var childContainerName = containerName ? containerName + '.' + property.keyNode.value : property.keyNode.value;
-                        result.push({ name: property.keyNode.value, kind: _this.getSymbolKind(valueNode.type), location: location, containerName: containerName });
+                        result.push({ name: _this.getKeyLabel(property), kind: _this.getSymbolKind(valueNode.type), location: location, containerName: containerName });
                         collectOutlineEntries(result, valueNode, childContainerName);
                     }
                 });
@@ -110,9 +107,8 @@ var JSONDocumentSymbols = /** @class */ (function () {
                     if (valueNode) {
                         var range = getRange(document, property);
                         var selectionRange = getRange(document, property.keyNode);
-                        var name = property.keyNode.value;
                         var children = collectOutlineEntries([], valueNode);
-                        result.push({ name: name, kind: _this.getSymbolKind(valueNode.type), range: range, selectionRange: selectionRange, children: children });
+                        result.push({ name: _this.getKeyLabel(property), kind: _this.getSymbolKind(valueNode.type), range: range, selectionRange: selectionRange, children: children });
                     }
                 });
             }
@@ -137,21 +133,15 @@ var JSONDocumentSymbols = /** @class */ (function () {
                 return SymbolKind.Variable;
         }
     };
-    JSONDocumentSymbols.prototype.getSymbolDetail = function (nodeType) {
-        switch (nodeType) {
-            case 'object':
-                return localize('kind.object', 'object');
-            case 'string':
-                return localize('kind.string', 'string');
-            case 'number':
-                return localize('kind.number', 'number');
-            case 'array':
-                return localize('kind.array', 'array');
-            case 'boolean':
-                return localize('kind.boolean', 'boolean');
-            default: // 'null'
-                return localize('kind.null', 'null');
+    JSONDocumentSymbols.prototype.getKeyLabel = function (property) {
+        var name = property.keyNode.value;
+        if (name) {
+            name = name.replace(/[\n]/g, '↵');
         }
+        if (name && name.trim()) {
+            return name;
+        }
+        return "\"" + name + "\"";
     };
     JSONDocumentSymbols.prototype.findDocumentColors = function (document, doc) {
         return this.schemaService.getSchemaForResource(document.uri, doc).then(function (schema) {
@@ -200,4 +190,3 @@ export { JSONDocumentSymbols };
 function getRange(document, node) {
     return Range.create(document.positionAt(node.offset), document.positionAt(node.offset + node.length));
 }
-//# sourceMappingURL=jsonDocumentSymbols.js.map

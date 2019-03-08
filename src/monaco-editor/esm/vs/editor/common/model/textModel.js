@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -123,6 +123,7 @@ var TextModel = /** @class */ (function (_super) {
             }
             _this._resetTokenizationState();
             _this.emitModelTokensChangedEvent({
+                tokenizationSupportChanged: true,
                 ranges: [{
                         fromLineNumber: 1,
                         toLineNumber: _this.getLineCount()
@@ -160,6 +161,7 @@ var TextModel = /** @class */ (function (_super) {
             var guessedIndentation = guessIndentation(textBuffer, options.tabSize, options.insertSpaces);
             return new model.TextModelResolvedOptions({
                 tabSize: guessedIndentation.tabSize,
+                indentSize: guessedIndentation.tabSize,
                 insertSpaces: guessedIndentation.insertSpaces,
                 trimAutoWhitespace: options.trimAutoWhitespace,
                 defaultEOL: options.defaultEOL
@@ -167,6 +169,7 @@ var TextModel = /** @class */ (function (_super) {
         }
         return new model.TextModelResolvedOptions({
             tabSize: options.tabSize,
+            indentSize: options.indentSize,
             insertSpaces: options.insertSpaces,
             trimAutoWhitespace: options.trimAutoWhitespace,
             defaultEOL: options.defaultEOL
@@ -366,13 +369,21 @@ var TextModel = /** @class */ (function (_super) {
         this._assertNotDisposed();
         return this._options;
     };
+    TextModel.prototype.getFormattingOptions = function () {
+        return {
+            tabSize: this._options.indentSize,
+            insertSpaces: this._options.insertSpaces
+        };
+    };
     TextModel.prototype.updateOptions = function (_newOpts) {
         this._assertNotDisposed();
         var tabSize = (typeof _newOpts.tabSize !== 'undefined') ? _newOpts.tabSize : this._options.tabSize;
+        var indentSize = (typeof _newOpts.indentSize !== 'undefined') ? _newOpts.indentSize : this._options.indentSize;
         var insertSpaces = (typeof _newOpts.insertSpaces !== 'undefined') ? _newOpts.insertSpaces : this._options.insertSpaces;
         var trimAutoWhitespace = (typeof _newOpts.trimAutoWhitespace !== 'undefined') ? _newOpts.trimAutoWhitespace : this._options.trimAutoWhitespace;
         var newOpts = new model.TextModelResolvedOptions({
             tabSize: tabSize,
+            indentSize: indentSize,
             insertSpaces: insertSpaces,
             defaultEOL: this._options.defaultEOL,
             trimAutoWhitespace: trimAutoWhitespace
@@ -389,14 +400,15 @@ var TextModel = /** @class */ (function (_super) {
         var guessedIndentation = guessIndentation(this._buffer, defaultTabSize, defaultInsertSpaces);
         this.updateOptions({
             insertSpaces: guessedIndentation.insertSpaces,
-            tabSize: guessedIndentation.tabSize
+            tabSize: guessedIndentation.tabSize,
+            indentSize: guessedIndentation.tabSize,
         });
     };
-    TextModel._normalizeIndentationFromWhitespace = function (str, tabSize, insertSpaces) {
+    TextModel._normalizeIndentationFromWhitespace = function (str, indentSize, insertSpaces) {
         var spacesCnt = 0;
         for (var i = 0; i < str.length; i++) {
             if (str.charAt(i) === '\t') {
-                spacesCnt += tabSize;
+                spacesCnt += indentSize;
             }
             else {
                 spacesCnt++;
@@ -404,8 +416,8 @@ var TextModel = /** @class */ (function (_super) {
         }
         var result = '';
         if (!insertSpaces) {
-            var tabsCnt = Math.floor(spacesCnt / tabSize);
-            spacesCnt = spacesCnt % tabSize;
+            var tabsCnt = Math.floor(spacesCnt / indentSize);
+            spacesCnt = spacesCnt % indentSize;
             for (var i = 0; i < tabsCnt; i++) {
                 result += '\t';
             }
@@ -415,31 +427,16 @@ var TextModel = /** @class */ (function (_super) {
         }
         return result;
     };
-    TextModel.normalizeIndentation = function (str, tabSize, insertSpaces) {
+    TextModel.normalizeIndentation = function (str, indentSize, insertSpaces) {
         var firstNonWhitespaceIndex = strings.firstNonWhitespaceIndex(str);
         if (firstNonWhitespaceIndex === -1) {
             firstNonWhitespaceIndex = str.length;
         }
-        return TextModel._normalizeIndentationFromWhitespace(str.substring(0, firstNonWhitespaceIndex), tabSize, insertSpaces) + str.substring(firstNonWhitespaceIndex);
+        return TextModel._normalizeIndentationFromWhitespace(str.substring(0, firstNonWhitespaceIndex), indentSize, insertSpaces) + str.substring(firstNonWhitespaceIndex);
     };
     TextModel.prototype.normalizeIndentation = function (str) {
         this._assertNotDisposed();
-        return TextModel.normalizeIndentation(str, this._options.tabSize, this._options.insertSpaces);
-    };
-    TextModel.prototype.getOneIndent = function () {
-        this._assertNotDisposed();
-        var tabSize = this._options.tabSize;
-        var insertSpaces = this._options.insertSpaces;
-        if (insertSpaces) {
-            var result = '';
-            for (var i = 0; i < tabSize; i++) {
-                result += ' ';
-            }
-            return result;
-        }
-        else {
-            return '\t';
-        }
+        return TextModel.normalizeIndentation(str, this._options.indentSize, this._options.insertSpaces);
     };
     //#endregion
     //#region Reading
@@ -1362,44 +1359,43 @@ var TextModel = /** @class */ (function (_super) {
     //#region Tokenization
     TextModel.prototype.tokenizeViewport = function (startLineNumber, endLineNumber) {
         if (!this._tokens.tokenizationSupport) {
+            // nothing to do
             return;
         }
-        // we tokenize `this._tokens.inValidLineStartIndex` lines in around 20ms so it's a good baseline.
-        var contextBefore = Math.floor(this._tokens.inValidLineStartIndex * 0.3);
-        startLineNumber = Math.max(1, startLineNumber - contextBefore);
+        startLineNumber = Math.max(1, startLineNumber);
+        endLineNumber = Math.min(this.getLineCount(), endLineNumber);
+        if (endLineNumber <= this._tokens.inValidLineStartIndex) {
+            // nothing to do
+            return;
+        }
         if (startLineNumber <= this._tokens.inValidLineStartIndex) {
+            // tokenization has reached the viewport start...
             this.forceTokenization(endLineNumber);
             return;
         }
-        var eventBuilder = new ModelTokensChangedEventBuilder();
         var nonWhitespaceColumn = this.getLineFirstNonWhitespaceColumn(startLineNumber);
         var fakeLines = [];
-        var i = startLineNumber - 1;
         var initialState = null;
-        if (nonWhitespaceColumn > 0) {
-            while (nonWhitespaceColumn > 0 && i >= 1) {
-                var newNonWhitespaceIndex = this.getLineFirstNonWhitespaceColumn(i);
-                if (newNonWhitespaceIndex === 0) {
-                    i--;
-                    continue;
+        for (var i = startLineNumber - 1; nonWhitespaceColumn > 0 && i >= 1; i--) {
+            var newNonWhitespaceIndex = this.getLineFirstNonWhitespaceColumn(i);
+            if (newNonWhitespaceIndex === 0) {
+                continue;
+            }
+            if (newNonWhitespaceIndex < nonWhitespaceColumn) {
+                initialState = this._tokens._getState(i - 1);
+                if (initialState) {
+                    break;
                 }
-                if (newNonWhitespaceIndex < nonWhitespaceColumn) {
-                    initialState = this._tokens._getState(i - 1);
-                    if (initialState) {
-                        break;
-                    }
-                    fakeLines.push(this.getLineContent(i));
-                    nonWhitespaceColumn = newNonWhitespaceIndex;
-                }
-                i--;
+                fakeLines.push(this.getLineContent(i));
+                nonWhitespaceColumn = newNonWhitespaceIndex;
             }
         }
         if (!initialState) {
             initialState = this._tokens.tokenizationSupport.getInitialState();
         }
         var state = initialState.clone();
-        for (var i_2 = fakeLines.length - 1; i_2 >= 0; i_2--) {
-            var r = this._tokens._tokenizeText(this._buffer, fakeLines[i_2], state);
+        for (var i = fakeLines.length - 1; i >= 0; i--) {
+            var r = this._tokens._tokenizeText(this._buffer, fakeLines[i], state);
             if (r) {
                 state = r.endState.clone();
             }
@@ -1407,22 +1403,18 @@ var TextModel = /** @class */ (function (_super) {
                 state = initialState.clone();
             }
         }
-        var contextAfter = Math.floor(this._tokens.inValidLineStartIndex * 0.4);
-        endLineNumber = Math.min(this.getLineCount(), endLineNumber + contextAfter);
-        for (var i_3 = startLineNumber; i_3 <= endLineNumber; i_3++) {
-            var text = this.getLineContent(i_3);
+        var eventBuilder = new ModelTokensChangedEventBuilder();
+        for (var i = startLineNumber; i <= endLineNumber; i++) {
+            var text = this.getLineContent(i);
             var r = this._tokens._tokenizeText(this._buffer, text, state);
             if (r) {
-                this._tokens._setTokens(this._tokens.languageIdentifier.id, i_3 - 1, text.length, r.tokens);
-                /*
-                 * we think it's valid and give it a state but we don't update `_invalidLineStartIndex` then the top-to-bottom tokenization
-                 * goes through the viewport, it can skip them if they already have correct tokens and state, and the lines after the viewport
-                 * can still be tokenized.
-                 */
-                this._tokens._setIsInvalid(i_3 - 1, false);
-                this._tokens._setState(i_3 - 1, state);
+                this._tokens._setTokens(this._tokens.languageIdentifier.id, i - 1, text.length, r.tokens);
+                // We cannot trust these states/tokens to be valid!
+                // (see https://github.com/Microsoft/vscode/issues/67607)
+                this._tokens._setIsInvalid(i - 1, true);
+                this._tokens._setState(i - 1, state);
                 state = r.endState.clone();
-                eventBuilder.registerChangedTokens(i_3);
+                eventBuilder.registerChangedTokens(i);
             }
             else {
                 state = initialState.clone();
@@ -1432,6 +1424,16 @@ var TextModel = /** @class */ (function (_super) {
         if (e) {
             this._onDidChangeTokens.fire(e);
         }
+    };
+    TextModel.prototype.flushTokens = function () {
+        this._resetTokenizationState();
+        this.emitModelTokensChangedEvent({
+            tokenizationSupportChanged: false,
+            ranges: [{
+                    fromLineNumber: 1,
+                    toLineNumber: this.getLineCount()
+                }]
+        });
     };
     TextModel.prototype.forceTokenization = function (lineNumber) {
         if (lineNumber < 1 || lineNumber > this.getLineCount()) {
@@ -1490,6 +1492,7 @@ var TextModel = /** @class */ (function (_super) {
         // Cancel tokenization, clear all tokens and begin tokenizing
         this._resetTokenizationState();
         this.emitModelTokensChangedEvent({
+            tokenizationSupportChanged: true,
             ranges: [{
                     fromLineNumber: 1,
                     toLineNumber: this.getLineCount()
@@ -1802,6 +1805,43 @@ var TextModel = /** @class */ (function (_super) {
         }
         return null;
     };
+    TextModel.prototype.findPrevBracket = function (_position) {
+        var position = this.validatePosition(_position);
+        var languageId = -1;
+        var modeBrackets = null;
+        for (var lineNumber = position.lineNumber; lineNumber >= 1; lineNumber--) {
+            var lineTokens = this._getLineTokens(lineNumber);
+            var tokenCount = lineTokens.getCount();
+            var lineText = this._buffer.getLineContent(lineNumber);
+            var tokenIndex = tokenCount - 1;
+            var searchStopOffset = -1;
+            if (lineNumber === position.lineNumber) {
+                tokenIndex = lineTokens.findTokenIndexAtOffset(position.column - 1);
+                searchStopOffset = position.column - 1;
+            }
+            for (; tokenIndex >= 0; tokenIndex--) {
+                var tokenLanguageId = lineTokens.getLanguageId(tokenIndex);
+                var tokenType = lineTokens.getStandardTokenType(tokenIndex);
+                var tokenStartOffset = lineTokens.getStartOffset(tokenIndex);
+                var tokenEndOffset = lineTokens.getEndOffset(tokenIndex);
+                if (searchStopOffset === -1) {
+                    searchStopOffset = tokenEndOffset;
+                }
+                if (languageId !== tokenLanguageId) {
+                    languageId = tokenLanguageId;
+                    modeBrackets = LanguageConfigurationRegistry.getBracketsSupport(languageId);
+                }
+                if (modeBrackets && !ignoreBracketsInToken(tokenType)) {
+                    var r = BracketsUtils.findPrevBracketInToken(modeBrackets.reversedRegex, lineNumber, lineText, tokenStartOffset, searchStopOffset);
+                    if (r) {
+                        return this._toFoundBracket(modeBrackets, r);
+                    }
+                }
+                searchStopOffset = -1;
+            }
+        }
+        return null;
+    };
     TextModel.prototype.findNextBracket = function (_position) {
         var position = this.validatePosition(_position);
         var languageId = -1;
@@ -1987,7 +2027,7 @@ var TextModel = /** @class */ (function (_super) {
                     // Use the line's indent
                     up_belowContentLineIndex = upLineNumber - 1;
                     up_belowContentLineIndent = currentIndent;
-                    upLineIndentLevel = Math.ceil(currentIndent / this._options.tabSize);
+                    upLineIndentLevel = Math.ceil(currentIndent / this._options.indentSize);
                 }
                 else {
                     up_resolveIndents(upLineNumber);
@@ -2020,7 +2060,7 @@ var TextModel = /** @class */ (function (_super) {
                     // Use the line's indent
                     down_aboveContentLineIndex = downLineNumber - 1;
                     down_aboveContentLineIndent = currentIndent;
-                    downLineIndentLevel = Math.ceil(currentIndent / this._options.tabSize);
+                    downLineIndentLevel = Math.ceil(currentIndent / this._options.indentSize);
                 }
                 else {
                     down_resolveIndents(downLineNumber);
@@ -2060,7 +2100,7 @@ var TextModel = /** @class */ (function (_super) {
                 // Use the line's indent
                 aboveContentLineIndex = lineNumber - 1;
                 aboveContentLineIndent = currentIndent;
-                result[resultIndex] = Math.ceil(currentIndent / this._options.tabSize);
+                result[resultIndex] = Math.ceil(currentIndent / this._options.indentSize);
                 continue;
             }
             if (aboveContentLineIndex === -2) {
@@ -2100,20 +2140,20 @@ var TextModel = /** @class */ (function (_super) {
         }
         else if (aboveContentLineIndent < belowContentLineIndent) {
             // we are inside the region above
-            return (1 + Math.floor(aboveContentLineIndent / this._options.tabSize));
+            return (1 + Math.floor(aboveContentLineIndent / this._options.indentSize));
         }
         else if (aboveContentLineIndent === belowContentLineIndent) {
             // we are in between two regions
-            return Math.ceil(belowContentLineIndent / this._options.tabSize);
+            return Math.ceil(belowContentLineIndent / this._options.indentSize);
         }
         else {
             if (offSide) {
                 // same level as region below
-                return Math.ceil(belowContentLineIndent / this._options.tabSize);
+                return Math.ceil(belowContentLineIndent / this._options.indentSize);
             }
             else {
                 // we are inside the region that ends below
-                return (1 + Math.floor(belowContentLineIndent / this._options.tabSize));
+                return (1 + Math.floor(belowContentLineIndent / this._options.indentSize));
             }
         }
     };
@@ -2123,6 +2163,7 @@ var TextModel = /** @class */ (function (_super) {
     TextModel.DEFAULT_CREATION_OPTIONS = {
         isForSimpleWidget: false,
         tabSize: EDITOR_MODEL_DEFAULTS.tabSize,
+        indentSize: EDITOR_MODEL_DEFAULTS.indentSize,
         insertSpaces: EDITOR_MODEL_DEFAULTS.insertSpaces,
         detectIndentation: false,
         defaultEOL: 1 /* LF */,

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -514,8 +514,8 @@ var ViewLines = /** @class */ (function (_super) {
                 maxHorizontalOffset: maxHorizontalOffset
             };
         }
-        for (var i = 0; i < visibleRanges.length; i++) {
-            var visibleRange = visibleRanges[i];
+        for (var _i = 0, visibleRanges_1 = visibleRanges; _i < visibleRanges_1.length; _i++) {
+            var visibleRange = visibleRanges_1[_i];
             if (visibleRange.left < boxStartX) {
                 boxStartX = visibleRange.left;
             }

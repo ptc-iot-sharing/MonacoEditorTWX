@@ -250,7 +250,7 @@ var LanguageConfigurationRegistryImpl = /** @class */ (function () {
     LanguageConfigurationRegistryImpl.prototype.getPrecedingValidLine = function (model, lineNumber, indentRulesSupport) {
         var languageID = model.getLanguageIdAtPosition(lineNumber, 0);
         if (lineNumber > 1) {
-            var lastLineNumber = lineNumber - 1;
+            var lastLineNumber = void 0;
             var resultLineNumber = -1;
             for (lastLineNumber = lineNumber - 1; lastLineNumber >= 1; lastLineNumber--) {
                 if (model.getLanguageIdAtPosition(lastLineNumber, 0) !== languageID) {

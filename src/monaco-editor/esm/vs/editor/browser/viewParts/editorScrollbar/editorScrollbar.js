@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -42,6 +42,7 @@ var EditorScrollbar = /** @class */ (function (_super) {
             handleMouseWheel: configScrollbarOpts.handleMouseWheel,
             arrowSize: configScrollbarOpts.arrowSize,
             mouseWheelScrollSensitivity: configScrollbarOpts.mouseWheelScrollSensitivity,
+            fastScrollSensitivity: configScrollbarOpts.fastScrollSensitivity,
         };
         _this.scrollbar = _this._register(new SmoothScrollableElement(linesContent.domNode, scrollbarOptions, _this._context.viewLayout.scrollable));
         PartFingerprints.write(_this.scrollbar.getDomNode(), 5 /* ScrollableElement */);
@@ -106,7 +107,8 @@ var EditorScrollbar = /** @class */ (function (_super) {
             var editor = this._context.configuration.editor;
             var newOpts = {
                 handleMouseWheel: editor.viewInfo.scrollbar.handleMouseWheel,
-                mouseWheelScrollSensitivity: editor.viewInfo.scrollbar.mouseWheelScrollSensitivity
+                mouseWheelScrollSensitivity: editor.viewInfo.scrollbar.mouseWheelScrollSensitivity,
+                fastScrollSensitivity: editor.viewInfo.scrollbar.fastScrollSensitivity
             };
             this.scrollbar.updateOptions(newOpts);
         }

@@ -2,15 +2,15 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+export var LANGUAGE_DEFAULT = 'en';
 var _isWindows = false;
 var _isMacintosh = false;
 var _isLinux = false;
 var _isNative = false;
 var _isWeb = false;
 var _locale = undefined;
-var _language = undefined;
+var _language = LANGUAGE_DEFAULT;
 var _translationsConfigFile = undefined;
-export var LANGUAGE_DEFAULT = 'en';
 var isElectronRenderer = (typeof process !== 'undefined' && typeof process.versions !== 'undefined' && typeof process.versions.electron !== 'undefined' && process.type === 'renderer');
 // OS detection
 if (typeof navigator === 'object' && !isElectronRenderer) {

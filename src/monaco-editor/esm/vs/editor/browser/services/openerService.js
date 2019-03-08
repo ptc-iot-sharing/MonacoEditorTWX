@@ -17,34 +17,29 @@ import { Schemas } from '../../../base/common/network.js';
 import * as resources from '../../../base/common/resources.js';
 import { ICodeEditorService } from './codeEditorService.js';
 import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
-import { optional } from '../../../platform/instantiation/common/instantiation.js';
-import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
-import { NullTelemetryService } from '../../../platform/telemetry/common/telemetryUtils.js';
 var OpenerService = /** @class */ (function () {
-    function OpenerService(_editorService, _commandService, _telemetryService) {
-        if (_telemetryService === void 0) { _telemetryService = NullTelemetryService; }
+    function OpenerService(_editorService, _commandService) {
         this._editorService = _editorService;
         this._commandService = _commandService;
-        this._telemetryService = _telemetryService;
         //
     }
     OpenerService.prototype.open = function (resource, options) {
         var _a;
-        if (this._telemetryService) {
-            /* __GDPR__
-                "openerService" : {
-                    "scheme" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
-                }
-            */
-            this._telemetryService.publicLog('openerService', { scheme: resource.scheme });
-        }
         var scheme = resource.scheme, path = resource.path, query = resource.query, fragment = resource.fragment;
-        var promise = undefined;
-        if (scheme === Schemas.http || scheme === Schemas.https || scheme === Schemas.mailto) {
+        if (!scheme) {
+            // no scheme ?!?
+            return Promise.resolve(false);
+        }
+        else if (scheme === Schemas.http || scheme === Schemas.https || scheme === Schemas.mailto) {
             // open http or default mail application
             dom.windowOpenNoOpener(resource.toString(true));
+            return Promise.resolve(true);
         }
-        else if (scheme === 'command' && CommandsRegistry.getCommand(path)) {
+        else if (scheme === Schemas.command) {
+            // run command or bail out if command isn't known
+            if (!CommandsRegistry.getCommand(path)) {
+                return Promise.reject("command '" + path + "' NOT known");
+            }
             // execute as command
             var args = [];
             try {
@@ -56,7 +51,7 @@ var OpenerService = /** @class */ (function () {
             catch (e) {
                 //
             }
-            promise = (_a = this._commandService).executeCommand.apply(_a, [path].concat(args));
+            return (_a = this._commandService).executeCommand.apply(_a, [path].concat(args)).then(function () { return true; });
         }
         else {
             var selection = undefined;
@@ -71,21 +66,15 @@ var OpenerService = /** @class */ (function () {
                 // remove fragment
                 resource = resource.with({ fragment: '' });
             }
-            if (!resource.scheme) {
-                // we cannot handle those
-                return Promise.resolve(undefined);
-            }
-            else if (resource.scheme === Schemas.file) {
+            if (resource.scheme === Schemas.file) {
                 resource = resources.normalizePath(resource); // workaround for non-normalized paths (https://github.com/Microsoft/vscode/issues/12954)
             }
-            promise = this._editorService.openCodeEditor({ resource: resource, options: { selection: selection, } }, this._editorService.getFocusedCodeEditor(), options && options.openToSide);
+            return this._editorService.openCodeEditor({ resource: resource, options: { selection: selection, } }, this._editorService.getFocusedCodeEditor(), options && options.openToSide).then(function () { return true; });
         }
-        return Promise.resolve(promise);
     };
     OpenerService = __decorate([
         __param(0, ICodeEditorService),
-        __param(1, ICommandService),
-        __param(2, optional(ITelemetryService))
+        __param(1, ICommandService)
     ], OpenerService);
     return OpenerService;
 }());

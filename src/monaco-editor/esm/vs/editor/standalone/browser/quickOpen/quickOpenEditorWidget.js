@@ -19,7 +19,7 @@ var QuickOpenEditorWidget = /** @class */ (function () {
             onCancel: onCancel,
             onType: onType
         }, {
-            inputPlaceHolder: null,
+            inputPlaceHolder: undefined,
             inputAriaLabel: configuration.inputAriaLabel,
             keyboardSupport: true
         });

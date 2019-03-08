@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 import * as nodes from '../parser/cssNodes.js';
-import * as languageFacts from './languageFacts.js';
-import { Range, MarkedString } from './../../vscode-languageserver-types/main.js';
+import * as languageFacts from '../languageFacts/facts.js';
+import { Range, MarkedString } from '../../vscode-languageserver-types/main.js';
 import { selectorToMarkedString, simpleSelectorToMarkedString } from './selectorPrinting.js';
 var CSSHover = /** @class */ (function () {
     function CSSHover() {
@@ -32,7 +32,7 @@ var CSSHover = /** @class */ (function () {
             }
             if (node instanceof nodes.Declaration) {
                 var propertyName = node.getFullPropertyName();
-                var entry = languageFacts.getProperties()[propertyName];
+                var entry = languageFacts.cssDataManager.getProperty(propertyName);
                 if (entry) {
                     var contents = [];
                     if (entry.description) {
@@ -56,4 +56,3 @@ var CSSHover = /** @class */ (function () {
     return CSSHover;
 }());
 export { CSSHover };
-//# sourceMappingURL=cssHover.js.map

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -48,8 +48,9 @@ var MonacoWebWorkerImpl = /** @class */ (function (_super) {
                         };
                     };
                     var foreignProxy = {};
-                    for (var i = 0; i < foreignMethods.length; i++) {
-                        foreignProxy[foreignMethods[i]] = createProxyMethod(foreignMethods[i], proxyMethodRequest);
+                    for (var _i = 0, foreignMethods_1 = foreignMethods; _i < foreignMethods_1.length; _i++) {
+                        var foreignMethod = foreignMethods_1[_i];
+                        foreignProxy[foreignMethod] = createProxyMethod(foreignMethod, proxyMethodRequest);
                     }
                     return foreignProxy;
                 });

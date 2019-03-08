@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -34,7 +34,6 @@ import { CONTEXT_FIND_INPUT_FOCUSED, CONTEXT_FIND_WIDGET_VISIBLE, FIND_IDS, Find
 import { FindOptionsWidget } from './findOptionsWidget.js';
 import { FindReplaceState } from './findState.js';
 import { FindWidget } from './findWidget.js';
-import { MenuId } from '../../../platform/actions/common/actions.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
 import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IContextViewService } from '../../../platform/contextview/browser/contextView.js';
@@ -44,6 +43,9 @@ import { IStorageService } from '../../../platform/storage/common/storage.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
 var SEARCH_STRING_MAX_LENGTH = 524288;
 export function getSelectionSearchString(editor) {
+    if (!editor.hasModel()) {
+        return null;
+    }
     var selection = editor.getSelection();
     // if selection spans multiple lines, default search string to empty
     if (selection.startLineNumber === selection.endLineNumber) {
@@ -147,7 +149,7 @@ var CommonFindController = /** @class */ (function (_super) {
         }, false);
     };
     CommonFindController.prototype.isFindInputFocused = function () {
-        return CONTEXT_FIND_INPUT_FOCUSED.getValue(this._contextKeyService);
+        return !!CONTEXT_FIND_INPUT_FOCUSED.getValue(this._contextKeyService);
     };
     CommonFindController.prototype.getState = function () {
         return this._state;
@@ -182,12 +184,14 @@ var CommonFindController = /** @class */ (function (_super) {
             this._state.change({ searchScope: null }, true);
         }
         else {
-            var selection = this._editor.getSelection();
-            if (selection.endColumn === 1 && selection.endLineNumber > selection.startLineNumber) {
-                selection = selection.setEndPosition(selection.endLineNumber - 1, this._editor.getModel().getLineMaxColumn(selection.endLineNumber - 1));
-            }
-            if (!selection.isEmpty()) {
-                this._state.change({ searchScope: selection }, true);
+            if (this._editor.hasModel()) {
+                var selection = this._editor.getSelection();
+                if (selection.endColumn === 1 && selection.endLineNumber > selection.startLineNumber) {
+                    selection = selection.setEndPosition(selection.endLineNumber - 1, this._editor.getModel().getLineMaxColumn(selection.endLineNumber - 1));
+                }
+                if (!selection.isEmpty()) {
+                    this._state.change({ searchScope: selection }, true);
+                }
             }
         }
     };
@@ -202,7 +206,7 @@ var CommonFindController = /** @class */ (function (_super) {
     };
     CommonFindController.prototype._start = function (opts) {
         this.disposeModel();
-        if (!this._editor.getModel()) {
+        if (!this._editor.hasModel()) {
             // cannot do anything with an editor that doesn't have a model...
             return;
         }
@@ -286,6 +290,7 @@ var CommonFindController = /** @class */ (function (_super) {
     CommonFindController.prototype.getGlobalBufferTerm = function () {
         if (this._editor.getConfiguration().contribInfo.find.globalFindClipboard
             && this._clipboardService
+            && this._editor.hasModel()
             && !this._editor.getModel().isTooLargeForSyncing()) {
             return this._clipboardService.readFindText();
         }
@@ -294,6 +299,7 @@ var CommonFindController = /** @class */ (function (_super) {
     CommonFindController.prototype.setGlobalBufferTerm = function (text) {
         if (this._editor.getConfiguration().contribInfo.find.globalFindClipboard
             && this._clipboardService
+            && this._editor.hasModel()
             && !this._editor.getModel().isTooLargeForSyncing()) {
             this._clipboardService.writeFindText(text);
         }
@@ -372,7 +378,7 @@ var StartFindAction = /** @class */ (function (_super) {
                 weight: 100 /* EditorContrib */
             },
             menubarOpts: {
-                menuId: MenuId.MenubarEditMenu,
+                menuId: 14 /* MenubarEditMenu */,
                 group: '3_find',
                 title: nls.localize({ key: 'miFind', comment: ['&& denotes a mnemonic'] }, "&&Find"),
                 order: 1
@@ -582,7 +588,7 @@ var StartFindReplaceAction = /** @class */ (function (_super) {
                 weight: 100 /* EditorContrib */
             },
             menubarOpts: {
-                menuId: MenuId.MenubarEditMenu,
+                menuId: 14 /* MenubarEditMenu */,
                 group: '3_find',
                 title: nls.localize({ key: 'miReplace', comment: ['&& denotes a mnemonic'] }, "&&Replace"),
                 order: 2
@@ -590,7 +596,7 @@ var StartFindReplaceAction = /** @class */ (function (_super) {
         }) || this;
     }
     StartFindReplaceAction.prototype.run = function (accessor, editor) {
-        if (editor.getConfiguration().readOnly) {
+        if (!editor.hasModel() || editor.getConfiguration().readOnly) {
             return;
         }
         var controller = CommonFindController.get(editor);

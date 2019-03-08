@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -73,7 +73,7 @@ var DiffReview = /** @class */ (function (_super) {
         _this._actionBar = _this._register(new ActionBar(_this.actionBarContainer.domNode));
         _this._actionBar.push(new Action('diffreview.close', nls.localize('label.close', "Close"), 'close-diff-review', true, function () {
             _this.hide();
-            return null;
+            return Promise.resolve(null);
         }), { label: false, icon: true });
         _this.domNode = createFastDomNode(document.createElement('div'));
         _this.domNode.setClassName('diff-review monaco-editor-background');
@@ -436,8 +436,7 @@ var DiffReview = /** @class */ (function (_super) {
             this.scrollbar.scanDomNode();
             return;
         }
-        var pos = this._diffEditor.getPosition();
-        var diffIndex = this._findDiffIndex(pos);
+        var diffIndex = this._findDiffIndex(this._diffEditor.getPosition());
         if (this._diffs[diffIndex] === this._currentDiff) {
             return;
         }
@@ -595,7 +594,7 @@ var DiffReview = /** @class */ (function (_super) {
             if (lineContent.length === 0) {
                 lineContent = nls.localize('blankLine', "blank");
             }
-            var ariaLabel = void 0;
+            var ariaLabel = '';
             switch (type) {
                 case 0 /* Equal */:
                     ariaLabel = nls.localize('equalLine', "original {0}, modified {1}: {2}", originalLine, modifiedLine, lineContent);

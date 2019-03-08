@@ -38,7 +38,7 @@ var MinimapTokensColorTracker = /** @class */ (function () {
         }
         var backgroundLuminosity = colorMap[2 /* DefaultBackground */].getRelativeLuminance();
         this._backgroundIsLight = (backgroundLuminosity >= 0.5);
-        this._onDidChange.fire(void 0);
+        this._onDidChange.fire(undefined);
     };
     MinimapTokensColorTracker.prototype.getColor = function (colorId) {
         if (colorId < 1 || colorId >= this._colors.length) {

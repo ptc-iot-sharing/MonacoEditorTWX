@@ -21,8 +21,13 @@ var ConfigurationRegistry = /** @class */ (function () {
     function ConfigurationRegistry() {
         this.overrideIdentifiers = [];
         this._onDidSchemaChange = new Emitter();
-        this._onDidRegisterConfiguration = new Emitter();
-        this.configurationContributors = [];
+        this._onDidUpdateConfiguration = new Emitter();
+        this.defaultOverridesConfigurationNode = {
+            id: 'defaultOverrides',
+            title: nls.localize('defaultConfigurations.title', "Default Configuration Overrides"),
+            properties: {}
+        };
+        this.configurationContributors = [this.defaultOverridesConfigurationNode];
         this.editorConfigurationSchema = { properties: {}, patternProperties: {}, additionalProperties: false, errorMessage: 'Unknown editor configuration setting' };
         this.configurationProperties = {};
         this.excludedConfigurationProperties = {};
@@ -31,15 +36,11 @@ var ConfigurationRegistry = /** @class */ (function () {
     }
     ConfigurationRegistry.prototype.registerConfiguration = function (configuration, validate) {
         if (validate === void 0) { validate = true; }
-        this.registerConfigurations([configuration], [], validate);
+        this.registerConfigurations([configuration], validate);
     };
-    ConfigurationRegistry.prototype.registerConfigurations = function (configurations, defaultConfigurations, validate) {
+    ConfigurationRegistry.prototype.registerConfigurations = function (configurations, validate) {
         var _this = this;
         if (validate === void 0) { validate = true; }
-        var configurationNode = this.toConfiguration(defaultConfigurations);
-        if (configurationNode) {
-            configurations.push(configurationNode);
-        }
         var properties = [];
         configurations.forEach(function (configuration) {
             properties.push.apply(properties, _this.validateAndRegisterProperties(configuration, validate)); // fills in defaults
@@ -47,34 +48,13 @@ var ConfigurationRegistry = /** @class */ (function () {
             _this.registerJSONConfiguration(configuration);
             _this.updateSchemaForOverrideSettingsConfiguration(configuration);
         });
-        this._onDidRegisterConfiguration.fire(properties);
+        this._onDidSchemaChange.fire();
+        this._onDidUpdateConfiguration.fire(properties);
     };
     ConfigurationRegistry.prototype.registerOverrideIdentifiers = function (overrideIdentifiers) {
         var _a;
         (_a = this.overrideIdentifiers).push.apply(_a, overrideIdentifiers);
         this.updateOverridePropertyPatternKey();
-    };
-    ConfigurationRegistry.prototype.toConfiguration = function (defaultConfigurations) {
-        var configurationNode = {
-            id: 'defaultOverrides',
-            title: nls.localize('defaultConfigurations.title', "Default Configuration Overrides"),
-            properties: {}
-        };
-        for (var _i = 0, defaultConfigurations_1 = defaultConfigurations; _i < defaultConfigurations_1.length; _i++) {
-            var defaultConfiguration = defaultConfigurations_1[_i];
-            for (var key in defaultConfiguration.defaults) {
-                var defaultValue = defaultConfiguration.defaults[key];
-                if (OVERRIDE_PROPERTY_PATTERN.test(key) && typeof defaultValue === 'object') {
-                    configurationNode.properties[key] = {
-                        type: 'object',
-                        default: defaultValue,
-                        description: nls.localize('overrideSettings.description', "Configure editor settings to be overridden for {0} language.", key),
-                        $ref: editorConfigurationSchemaId
-                    };
-                }
-            }
-        }
-        return Object.keys(configurationNode.properties).length ? configurationNode : null;
     };
     ConfigurationRegistry.prototype.validateAndRegisterProperties = function (configuration, validate, scope, overridable) {
         if (validate === void 0) { validate = true; }
@@ -103,7 +83,7 @@ var ConfigurationRegistry = /** @class */ (function () {
                     property.overridable = true;
                 }
                 if (OVERRIDE_PROPERTY_PATTERN.test(key)) {
-                    property.scope = void 0; // No scope for overridable properties `[${identifier}]`
+                    property.scope = undefined; // No scope for overridable properties `[${identifier}]`
                 }
                 else {
                     property.scope = types.isUndefinedOrNull(property.scope) ? scope : property.scope;
@@ -158,7 +138,6 @@ var ConfigurationRegistry = /** @class */ (function () {
             }
         }
         register(configuration);
-        this._onDidSchemaChange.fire();
     };
     ConfigurationRegistry.prototype.updateSchemaForOverrideSettingsConfiguration = function (configuration) {
         if (configuration.id !== SETTINGS_OVERRRIDE_NODE_ID) {
@@ -211,7 +190,7 @@ var SETTINGS_OVERRRIDE_NODE_ID = 'override';
 var OVERRIDE_PROPERTY = '\\[.*\\]$';
 var OVERRIDE_PATTERN_WITH_SUBSTITUTION = '\\[(${0})\\]$';
 export var OVERRIDE_PROPERTY_PATTERN = new RegExp(OVERRIDE_PROPERTY);
-function getDefaultValue(type) {
+export function getDefaultValue(type) {
     var t = Array.isArray(type) ? type[0] : type;
     switch (t) {
         case 'boolean':
@@ -235,7 +214,7 @@ export function validateProperty(property) {
     if (OVERRIDE_PROPERTY_PATTERN.test(property)) {
         return nls.localize('config.property.languageDefault', "Cannot register '{0}'. This matches property pattern '\\\\[.*\\\\]$' for describing language specific editor settings. Use 'configurationDefaults' contribution.", property);
     }
-    if (configurationRegistry.getConfigurationProperties()[property] !== void 0) {
+    if (configurationRegistry.getConfigurationProperties()[property] !== undefined) {
         return nls.localize('config.property.duplicate', "Cannot register '{0}'. This property is already registered.", property);
     }
     return null;

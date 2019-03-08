@@ -271,7 +271,7 @@ var ZoneWidget = /** @class */ (function () {
         viewZoneDomNode.style.overflow = 'hidden';
         var lineHeight = this.editor.getConfiguration().lineHeight;
         // adjust heightInLines to viewport
-        var maxHeightInLines = (this.editor.getLayoutInfo().height / lineHeight) * .8;
+        var maxHeightInLines = (this.editor.getLayoutInfo().height / lineHeight) * 0.8;
         if (heightInLines >= maxHeightInLines) {
             heightInLines = maxHeightInLines;
         }

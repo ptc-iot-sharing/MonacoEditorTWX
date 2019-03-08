@@ -215,8 +215,9 @@ var LineCommentCommand = /** @class */ (function () {
             }
         }
         this._selectionId = builder.trackSelection(s);
-        for (var i = 0; i < ops.length; i++) {
-            builder.addEditOperation(ops[i].range, ops[i].text);
+        for (var _i = 0, ops_1 = ops; _i < ops_1.length; _i++) {
+            var op = ops_1[_i];
+            builder.addEditOperation(op.range, op.text);
         }
     };
     LineCommentCommand.prototype.getEditOperations = function (model, builder) {

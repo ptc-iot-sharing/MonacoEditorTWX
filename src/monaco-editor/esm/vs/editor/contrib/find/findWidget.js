@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -29,7 +29,7 @@ import { Range } from '../../common/core/range.js';
 import { CONTEXT_FIND_INPUT_FOCUSED, CONTEXT_REPLACE_INPUT_FOCUSED, FIND_IDS, MATCHES_LIMIT } from './findModel.js';
 import { contrastBorder, editorFindMatch, editorFindMatchBorder, editorFindMatchHighlight, editorFindMatchHighlightBorder, editorFindRangeHighlight, editorFindRangeHighlightBorder, editorWidgetBackground, editorWidgetBorder, editorWidgetResizeBorder, errorForeground, inputActiveOptionBorder, inputBackground, inputBorder, inputForeground, inputValidationErrorBackground, inputValidationErrorBorder, inputValidationErrorForeground, inputValidationInfoBackground, inputValidationInfoBorder, inputValidationInfoForeground, inputValidationWarningBackground, inputValidationWarningBorder, inputValidationWarningForeground, widgetShadow } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { ContextScopedFindInput, ContextScopedHistoryInputBox } from '../../../platform/widget/browser/contextScopedHistoryWidget.js';
+import { ContextScopedFindInput, ContextScopedHistoryInputBox } from '../../../platform/browser/contextScopedHistoryWidget.js';
 var NLS_FIND_INPUT_LABEL = nls.localize('label.find', "Find");
 var NLS_FIND_INPUT_PLACEHOLDER = nls.localize('placeholder.find', "Find");
 var NLS_PREVIOUS_MATCH_BTN_LABEL = nls.localize('label.previousMatchButton', "Previous match");
@@ -96,6 +96,16 @@ var FindWidget = /** @class */ (function (_super) {
             if (e.accessibilitySupport) {
                 _this.updateAccessibilitySupport();
             }
+            if (e.contribInfo) {
+                var addExtraSpaceOnTop = _this._codeEditor.getConfiguration().contribInfo.find.addExtraSpaceOnTop;
+                if (addExtraSpaceOnTop && !_this._viewZone) {
+                    _this._viewZone = new FindWidgetViewZone(0);
+                    _this._showViewZone();
+                }
+                if (!addExtraSpaceOnTop && _this._viewZone) {
+                    _this._removeViewZone();
+                }
+            }
         }));
         _this.updateAccessibilitySupport();
         _this._register(_this._codeEditor.onDidChangeCursorSelection(function () {
@@ -131,7 +141,9 @@ var FindWidget = /** @class */ (function (_super) {
             _this._replaceInputFocused.set(false);
         }));
         _this._codeEditor.addOverlayWidget(_this);
-        _this._viewZone = new FindWidgetViewZone(0); // Put it before the first line then users can scroll beyond the first line.
+        if (_this._codeEditor.getConfiguration().contribInfo.find.addExtraSpaceOnTop) {
+            _this._viewZone = new FindWidgetViewZone(0); // Put it before the first line then users can scroll beyond the first line.
+        }
         _this._applyTheme(themeService.getTheme());
         _this._register(themeService.onThemeChange(_this._applyTheme.bind(_this)));
         _this._register(_this._codeEditor.onDidChangeModel(function () {
@@ -142,7 +154,9 @@ var FindWidget = /** @class */ (function (_super) {
                 return;
             }
             _this._codeEditor.changeViewZones(function (accessor) {
-                accessor.removeZone(_this._viewZoneId);
+                if (_this._viewZoneId) {
+                    accessor.removeZone(_this._viewZoneId);
+                }
                 _this._viewZoneId = undefined;
             });
         }));
@@ -337,22 +351,25 @@ var FindWidget = /** @class */ (function (_super) {
             this._codeEditor.layoutOverlayWidget(this);
             var adjustEditorScrollTop = true;
             if (this._codeEditor.getConfiguration().contribInfo.find.seedSearchStringFromSelection && selection) {
-                var editorCoords = dom.getDomNodePagePosition(this._codeEditor.getDomNode());
-                var startCoords = this._codeEditor.getScrolledVisiblePosition(selection.getStartPosition());
-                var startLeft = editorCoords.left + startCoords.left;
-                var startTop = startCoords.top;
-                if (startTop < this._viewZone.heightInPx) {
-                    if (selection.endLineNumber > selection.startLineNumber) {
-                        adjustEditorScrollTop = false;
-                    }
-                    var leftOfFindWidget = dom.getTopLeftOffset(this._domNode).left;
-                    if (startLeft > leftOfFindWidget) {
-                        adjustEditorScrollTop = false;
-                    }
-                    var endCoords = this._codeEditor.getScrolledVisiblePosition(selection.getEndPosition());
-                    var endLeft = editorCoords.left + endCoords.left;
-                    if (endLeft > leftOfFindWidget) {
-                        adjustEditorScrollTop = false;
+                var domNode = this._codeEditor.getDomNode();
+                if (domNode) {
+                    var editorCoords = dom.getDomNodePagePosition(domNode);
+                    var startCoords = this._codeEditor.getScrolledVisiblePosition(selection.getStartPosition());
+                    var startLeft = editorCoords.left + (startCoords ? startCoords.left : 0);
+                    var startTop = startCoords ? startCoords.top : 0;
+                    if (this._viewZone && startTop < this._viewZone.heightInPx) {
+                        if (selection.endLineNumber > selection.startLineNumber) {
+                            adjustEditorScrollTop = false;
+                        }
+                        var leftOfFindWidget = dom.getTopLeftOffset(this._domNode).left;
+                        if (startLeft > leftOfFindWidget) {
+                            adjustEditorScrollTop = false;
+                        }
+                        var endCoords = this._codeEditor.getScrolledVisiblePosition(selection.getEndPosition());
+                        var endLeft = editorCoords.left + (endCoords ? endCoords.left : 0);
+                        if (endLeft > leftOfFindWidget) {
+                            adjustEditorScrollTop = false;
+                        }
                     }
                 }
             }
@@ -360,7 +377,6 @@ var FindWidget = /** @class */ (function (_super) {
         }
     };
     FindWidget.prototype._hide = function (focusTheEditor) {
-        var _this = this;
         if (this._isVisible) {
             this._isVisible = false;
             this._updateButtons();
@@ -371,60 +387,74 @@ var FindWidget = /** @class */ (function (_super) {
                 this._codeEditor.focus();
             }
             this._codeEditor.layoutOverlayWidget(this);
-            this._codeEditor.changeViewZones(function (accessor) {
-                if (_this._viewZoneId !== undefined) {
-                    accessor.removeZone(_this._viewZoneId);
-                    _this._viewZoneId = undefined;
-                    _this._codeEditor.setScrollTop(_this._codeEditor.getScrollTop() - _this._viewZone.heightInPx);
-                }
-            });
+            this._removeViewZone();
         }
     };
     FindWidget.prototype._layoutViewZone = function () {
         var _this = this;
+        var addExtraSpaceOnTop = this._codeEditor.getConfiguration().contribInfo.find.addExtraSpaceOnTop;
+        if (!addExtraSpaceOnTop) {
+            this._removeViewZone();
+            return;
+        }
         if (!this._isVisible) {
             return;
         }
-        if (this._viewZoneId !== undefined) {
+        var viewZone = this._viewZone;
+        if (this._viewZoneId !== undefined || !viewZone) {
             return;
         }
         this._codeEditor.changeViewZones(function (accessor) {
             if (_this._state.isReplaceRevealed) {
-                _this._viewZone.heightInPx = FIND_REPLACE_AREA_HEIGHT;
+                viewZone.heightInPx = FIND_REPLACE_AREA_HEIGHT;
             }
             else {
-                _this._viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
+                viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
             }
-            _this._viewZoneId = accessor.addZone(_this._viewZone);
+            _this._viewZoneId = accessor.addZone(viewZone);
             // scroll top adjust to make sure the editor doesn't scroll when adding viewzone at the beginning.
-            _this._codeEditor.setScrollTop(_this._codeEditor.getScrollTop() + _this._viewZone.heightInPx);
+            _this._codeEditor.setScrollTop(_this._codeEditor.getScrollTop() + viewZone.heightInPx);
         });
     };
     FindWidget.prototype._showViewZone = function (adjustScroll) {
         var _this = this;
         if (adjustScroll === void 0) { adjustScroll = true; }
-        if (!this._isVisible) {
+        var viewZone = this._viewZone;
+        if (!this._isVisible || !viewZone) {
             return;
         }
         this._codeEditor.changeViewZones(function (accessor) {
             var scrollAdjustment = FIND_INPUT_AREA_HEIGHT;
             if (_this._viewZoneId !== undefined) {
                 if (_this._state.isReplaceRevealed) {
-                    _this._viewZone.heightInPx = FIND_REPLACE_AREA_HEIGHT;
+                    viewZone.heightInPx = FIND_REPLACE_AREA_HEIGHT;
                     scrollAdjustment = FIND_REPLACE_AREA_HEIGHT - FIND_INPUT_AREA_HEIGHT;
                 }
                 else {
-                    _this._viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
+                    viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
                     scrollAdjustment = FIND_INPUT_AREA_HEIGHT - FIND_REPLACE_AREA_HEIGHT;
                 }
                 accessor.removeZone(_this._viewZoneId);
             }
             else {
-                _this._viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
+                viewZone.heightInPx = FIND_INPUT_AREA_HEIGHT;
             }
-            _this._viewZoneId = accessor.addZone(_this._viewZone);
+            _this._viewZoneId = accessor.addZone(viewZone);
             if (adjustScroll) {
                 _this._codeEditor.setScrollTop(_this._codeEditor.getScrollTop() + scrollAdjustment);
+            }
+        });
+    };
+    FindWidget.prototype._removeViewZone = function () {
+        var _this = this;
+        this._codeEditor.changeViewZones(function (accessor) {
+            if (_this._viewZoneId !== undefined) {
+                accessor.removeZone(_this._viewZoneId);
+                _this._viewZoneId = undefined;
+                if (_this._viewZone) {
+                    _this._codeEditor.setScrollTop(_this._codeEditor.getScrollTop() - _this._viewZone.heightInPx);
+                    _this._viewZone = undefined;
+                }
             }
         });
     };
@@ -442,7 +472,7 @@ var FindWidget = /** @class */ (function (_super) {
             inputValidationWarningBorder: theme.getColor(inputValidationWarningBorder),
             inputValidationErrorBackground: theme.getColor(inputValidationErrorBackground),
             inputValidationErrorForeground: theme.getColor(inputValidationErrorForeground),
-            inputValidationErrorBorder: theme.getColor(inputValidationErrorBorder)
+            inputValidationErrorBorder: theme.getColor(inputValidationErrorBorder),
         };
         this._findInput.style(inputStyles);
         this._replaceInputBox.style(inputStyles);
@@ -503,6 +533,9 @@ var FindWidget = /** @class */ (function (_super) {
         this._findInput.highlightFindOptions();
     };
     FindWidget.prototype._updateSearchScope = function () {
+        if (!this._codeEditor.hasModel()) {
+            return;
+        }
         if (this._toggleSelectionFind.checked) {
             var selection = this._codeEditor.getSelection();
             if (selection.endColumn === 1 && selection.endLineNumber > selection.startLineNumber) {
@@ -525,12 +558,12 @@ var FindWidget = /** @class */ (function (_super) {
     };
     FindWidget.prototype._onFindInputKeyDown = function (e) {
         if (e.equals(3 /* Enter */)) {
-            this._codeEditor.getAction(FIND_IDS.NextMatchFindAction).run().then(null, onUnexpectedError);
+            this._codeEditor.getAction(FIND_IDS.NextMatchFindAction).run().then(undefined, onUnexpectedError);
             e.preventDefault();
             return;
         }
         if (e.equals(1024 /* Shift */ | 3 /* Enter */)) {
-            this._codeEditor.getAction(FIND_IDS.PreviousMatchFindAction).run().then(null, onUnexpectedError);
+            this._codeEditor.getAction(FIND_IDS.PreviousMatchFindAction).run().then(undefined, onUnexpectedError);
             e.preventDefault();
             return;
         }
@@ -659,7 +692,7 @@ var FindWidget = /** @class */ (function (_super) {
             label: NLS_PREVIOUS_MATCH_BTN_LABEL + this._keybindingLabelFor(FIND_IDS.PreviousMatchFindAction),
             className: 'previous',
             onTrigger: function () {
-                _this._codeEditor.getAction(FIND_IDS.PreviousMatchFindAction).run().then(null, onUnexpectedError);
+                _this._codeEditor.getAction(FIND_IDS.PreviousMatchFindAction).run().then(undefined, onUnexpectedError);
             }
         }));
         // Next button
@@ -667,7 +700,7 @@ var FindWidget = /** @class */ (function (_super) {
             label: NLS_NEXT_MATCH_BTN_LABEL + this._keybindingLabelFor(FIND_IDS.NextMatchFindAction),
             className: 'next',
             onTrigger: function () {
-                _this._codeEditor.getAction(FIND_IDS.NextMatchFindAction).run().then(null, onUnexpectedError);
+                _this._codeEditor.getAction(FIND_IDS.NextMatchFindAction).run().then(undefined, onUnexpectedError);
             }
         }));
         var findPart = document.createElement('div');
@@ -682,12 +715,14 @@ var FindWidget = /** @class */ (function (_super) {
             title: NLS_TOGGLE_SELECTION_FIND_TITLE + this._keybindingLabelFor(FIND_IDS.ToggleSearchScopeCommand),
             onChange: function () {
                 if (_this._toggleSelectionFind.checked) {
-                    var selection = _this._codeEditor.getSelection();
-                    if (selection.endColumn === 1 && selection.endLineNumber > selection.startLineNumber) {
-                        selection = selection.setEndPosition(selection.endLineNumber - 1, _this._codeEditor.getModel().getLineMaxColumn(selection.endLineNumber - 1));
-                    }
-                    if (!selection.isEmpty()) {
-                        _this._state.change({ searchScope: selection }, true);
+                    if (_this._codeEditor.hasModel()) {
+                        var selection = _this._codeEditor.getSelection();
+                        if (selection.endColumn === 1 && selection.endLineNumber > selection.startLineNumber) {
+                            selection = selection.setEndPosition(selection.endLineNumber - 1, _this._codeEditor.getModel().getLineMaxColumn(selection.endLineNumber - 1));
+                        }
+                        if (!selection.isEmpty()) {
+                            _this._state.change({ searchScope: selection }, true);
+                        }
                     }
                 }
                 else {
@@ -725,7 +760,7 @@ var FindWidget = /** @class */ (function (_super) {
         var replaceInput = document.createElement('div');
         replaceInput.className = 'replace-input';
         replaceInput.style.width = REPLACE_INPUT_AREA_WIDTH + 'px';
-        this._replaceInputBox = this._register(new ContextScopedHistoryInputBox(replaceInput, null, {
+        this._replaceInputBox = this._register(new ContextScopedHistoryInputBox(replaceInput, undefined, {
             ariaLabel: NLS_REPLACE_INPUT_LABEL,
             placeholder: NLS_REPLACE_INPUT_PLACEHOLDER,
             history: []

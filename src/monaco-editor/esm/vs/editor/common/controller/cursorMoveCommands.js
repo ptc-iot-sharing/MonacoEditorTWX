@@ -503,7 +503,29 @@ export var CursorMove;
             {
                 name: 'Cursor move argument object',
                 description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t* 'to': A mandatory logical position value providing where to move the cursor.\n\t\t\t\t\t\t```\n\t\t\t\t\t\t'left', 'right', 'up', 'down'\n\t\t\t\t\t\t'wrappedLineStart', 'wrappedLineEnd', 'wrappedLineColumnCenter'\n\t\t\t\t\t\t'wrappedLineFirstNonWhitespaceCharacter', 'wrappedLineLastNonWhitespaceCharacter'\n\t\t\t\t\t\t'viewPortTop', 'viewPortCenter', 'viewPortBottom', 'viewPortIfOutside'\n\t\t\t\t\t\t```\n\t\t\t\t\t* 'by': Unit to move. Default is computed based on 'to' value.\n\t\t\t\t\t\t```\n\t\t\t\t\t\t'line', 'wrappedLine', 'character', 'halfLine'\n\t\t\t\t\t\t```\n\t\t\t\t\t* 'value': Number of units to move. Default is '1'.\n\t\t\t\t\t* 'select': If 'true' makes the selection. Default is 'false'.\n\t\t\t\t",
-                constraint: isCursorMoveArgs
+                constraint: isCursorMoveArgs,
+                schema: {
+                    'type': 'object',
+                    'required': ['to'],
+                    'properties': {
+                        'to': {
+                            'type': 'string',
+                            'enum': ['left', 'right', 'up', 'down', 'wrappedLineStart', 'wrappedLineEnd', 'wrappedLineColumnCenter', 'wrappedLineFirstNonWhitespaceCharacter', 'wrappedLineLastNonWhitespaceCharacter', 'viewPortTop', 'viewPortCenter', 'viewPortBottom', 'viewPortIfOutside']
+                        },
+                        'by': {
+                            'type': 'string',
+                            'enum': ['line', 'wrappedLine', 'character', 'halfLine']
+                        },
+                        'value': {
+                            'type': 'number',
+                            'default': 1
+                        },
+                        'select': {
+                            'type': 'boolean',
+                            'default': false
+                        }
+                    }
+                }
             }
         ]
     };

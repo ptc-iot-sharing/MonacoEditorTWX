@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -92,7 +92,7 @@ var QuickFixController = /** @class */ (function () {
         this._codeActionContextMenu = new CodeActionContextMenu(editor, contextMenuService, function (action) { return _this._onApplyCodeAction(action); });
         this._lightBulbWidget = new LightBulbWidget(editor);
         this._updateLightBulbTitle();
-        this._disposables.push(this._codeActionContextMenu.onDidExecuteCodeAction(function (_) { return _this._model.trigger({ type: 'auto', filter: {} }); }), this._lightBulbWidget.onClick(this._handleLightBulbSelect, this), this._model.onDidChangeFixes(function (e) { return _this._onCodeActionsEvent(e); }), this._keybindingService.onDidUpdateKeybindings(this._updateLightBulbTitle, this));
+        this._disposables.push(this._codeActionContextMenu.onDidExecuteCodeAction(function (_) { return _this._model.trigger({ type: 'auto', filter: {} }); }), this._lightBulbWidget.onClick(this._handleLightBulbSelect, this), this._model.onDidChangeState(function (e) { return _this._onDidChangeCodeActionsState(e); }), this._keybindingService.onDidUpdateKeybindings(this._updateLightBulbTitle, this));
     }
     QuickFixController.get = function (editor) {
         return editor.getContribution(QuickFixController.ID);
@@ -101,40 +101,40 @@ var QuickFixController = /** @class */ (function () {
         this._model.dispose();
         dispose(this._disposables);
     };
-    QuickFixController.prototype._onCodeActionsEvent = function (e) {
+    QuickFixController.prototype._onDidChangeCodeActionsState = function (newState) {
         var _this = this;
         if (this._activeRequest) {
             this._activeRequest.cancel();
             this._activeRequest = undefined;
         }
-        if (e && e.actions) {
-            this._activeRequest = e.actions;
-        }
-        if (e && e.actions && e.trigger.filter && e.trigger.filter.kind) {
-            // Triggered for specific scope
-            // Apply if we only have one action or requested autoApply, otherwise show menu
-            e.actions.then(function (fixes) {
-                if (e.trigger.autoApply === 2 /* First */ || (e.trigger.autoApply === 1 /* IfSingle */ && fixes.length === 1)) {
-                    _this._onApplyCodeAction(fixes[0]);
-                }
-                else {
-                    _this._codeActionContextMenu.show(e.actions, e.position);
-                }
-            }).catch(onUnexpectedError);
-            return;
-        }
-        if (e && e.trigger.type === 'manual') {
-            this._codeActionContextMenu.show(e.actions, e.position);
-        }
-        else if (e && e.actions) {
-            // auto magically triggered
-            // * update an existing list of code actions
-            // * manage light bulb
-            if (this._codeActionContextMenu.isVisible) {
-                this._codeActionContextMenu.show(e.actions, e.position);
+        if (newState.type === 1 /* Triggered */) {
+            this._activeRequest = newState.actions;
+            if (newState.trigger.filter && newState.trigger.filter.kind) {
+                // Triggered for specific scope
+                newState.actions.then(function (fixes) {
+                    if (fixes.length > 0) {
+                        // Apply if we only have one action or requested autoApply
+                        if (newState.trigger.autoApply === 1 /* First */ || (newState.trigger.autoApply === 0 /* IfSingle */ && fixes.length === 1)) {
+                            _this._onApplyCodeAction(fixes[0]);
+                            return;
+                        }
+                    }
+                    _this._codeActionContextMenu.show(newState.actions, newState.position);
+                }).catch(onUnexpectedError);
+            }
+            else if (newState.trigger.type === 'manual') {
+                this._codeActionContextMenu.show(newState.actions, newState.position);
             }
             else {
-                this._lightBulbWidget.model = e;
+                // auto magically triggered
+                // * update an existing list of code actions
+                // * manage light bulb
+                if (this._codeActionContextMenu.isVisible) {
+                    this._codeActionContextMenu.show(newState.actions, newState.position);
+                }
+                else {
+                    this._lightBulbWidget.tryShow(newState);
+                }
             }
         }
         else {
@@ -144,10 +144,8 @@ var QuickFixController = /** @class */ (function () {
     QuickFixController.prototype.getId = function () {
         return QuickFixController.ID;
     };
-    QuickFixController.prototype._handleLightBulbSelect = function (coords) {
-        if (this._lightBulbWidget.model && this._lightBulbWidget.model.actions) {
-            this._codeActionContextMenu.show(this._lightBulbWidget.model.actions, coords);
-        }
+    QuickFixController.prototype._handleLightBulbSelect = function (e) {
+        this._codeActionContextMenu.show(e.state.actions, e);
     };
     QuickFixController.prototype.triggerFromEditorSelection = function (filter, autoApply) {
         return this._model.trigger({ type: 'manual', filter: filter, autoApply: autoApply });
@@ -191,7 +189,7 @@ export function applyCodeAction(action, bulkEditService, commandService, editor)
                     _a.label = 2;
                 case 2:
                     if (!action.command) return [3 /*break*/, 4];
-                    return [4 /*yield*/, commandService.executeCommand.apply(commandService, [action.command.id].concat(action.command.arguments))];
+                    return [4 /*yield*/, commandService.executeCommand.apply(commandService, [action.command.id].concat((action.command.arguments || [])))];
                 case 3:
                     _a.sent();
                     _a.label = 4;
@@ -201,6 +199,9 @@ export function applyCodeAction(action, bulkEditService, commandService, editor)
     });
 }
 function showCodeActionsForEditorSelection(editor, notAvailableMessage, filter, autoApply) {
+    if (!editor.hasModel()) {
+        return;
+    }
     var controller = QuickFixController.get(editor);
     if (!controller) {
         return;
@@ -235,31 +236,34 @@ var QuickFixAction = /** @class */ (function (_super) {
 }(EditorAction));
 export { QuickFixAction };
 var CodeActionCommandArgs = /** @class */ (function () {
-    function CodeActionCommandArgs(kind, apply) {
+    function CodeActionCommandArgs(kind, apply, preferred) {
         this.kind = kind;
         this.apply = apply;
+        this.preferred = preferred;
     }
-    CodeActionCommandArgs.fromUser = function (arg) {
+    CodeActionCommandArgs.fromUser = function (arg, defaults) {
         if (!arg || typeof arg !== 'object') {
-            return new CodeActionCommandArgs(CodeActionKind.Empty, 1 /* IfSingle */);
+            return new CodeActionCommandArgs(defaults.kind, defaults.apply, false);
         }
-        return new CodeActionCommandArgs(CodeActionCommandArgs.getKindFromUser(arg), CodeActionCommandArgs.getApplyFromUser(arg));
+        return new CodeActionCommandArgs(CodeActionCommandArgs.getKindFromUser(arg, defaults.kind), CodeActionCommandArgs.getApplyFromUser(arg, defaults.apply), CodeActionCommandArgs.getPreferredUser(arg));
     };
-    CodeActionCommandArgs.getApplyFromUser = function (arg) {
+    CodeActionCommandArgs.getApplyFromUser = function (arg, defaultAutoApply) {
         switch (typeof arg.apply === 'string' ? arg.apply.toLowerCase() : '') {
-            case 'first':
-                return 2 /* First */;
-            case 'never':
-                return 3 /* Never */;
-            case 'ifsingle':
-            default:
-                return 1 /* IfSingle */;
+            case 'first': return 1 /* First */;
+            case 'never': return 2 /* Never */;
+            case 'ifsingle': return 0 /* IfSingle */;
+            default: return defaultAutoApply;
         }
     };
-    CodeActionCommandArgs.getKindFromUser = function (arg) {
+    CodeActionCommandArgs.getKindFromUser = function (arg, defaultKind) {
         return typeof arg.kind === 'string'
             ? new CodeActionKind(arg.kind)
-            : CodeActionKind.Empty;
+            : defaultKind;
+    };
+    CodeActionCommandArgs.getPreferredUser = function (arg) {
+        return typeof arg.preferred === 'boolean'
+            ? arg.preferred
+            : false;
     };
     return CodeActionCommandArgs;
 }());
@@ -268,12 +272,39 @@ var CodeActionCommand = /** @class */ (function (_super) {
     function CodeActionCommand() {
         return _super.call(this, {
             id: CodeActionCommand.Id,
-            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider)
+            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider),
+            description: {
+                description: "Trigger a code action",
+                args: [{
+                        name: 'args',
+                        schema: {
+                            'type': 'object',
+                            'required': ['kind'],
+                            'properties': {
+                                'kind': {
+                                    'type': 'string'
+                                },
+                                'apply': {
+                                    'type': 'string',
+                                    'default': 'ifSingle',
+                                    'enum': ['first', 'ifSingle', 'never']
+                                }
+                            }
+                        }
+                    }]
+            }
         }) || this;
     }
     CodeActionCommand.prototype.runEditorCommand = function (_accessor, editor, userArg) {
-        var args = CodeActionCommandArgs.fromUser(userArg);
-        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.quickFix.noneMessage', "No code actions available"), { kind: args.kind, includeSourceActions: true }, args.apply);
+        var args = CodeActionCommandArgs.fromUser(userArg, {
+            kind: CodeActionKind.Empty,
+            apply: 0 /* IfSingle */,
+        });
+        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.quickFix.noneMessage', "No code actions available"), {
+            kind: args.kind,
+            includeSourceActions: true,
+            onlyIncludePreferredActions: args.preferred,
+        }, args.apply);
     };
     CodeActionCommand.Id = 'editor.action.codeAction';
     return CodeActionCommand;
@@ -299,11 +330,37 @@ var RefactorAction = /** @class */ (function (_super) {
                 group: '1_modification',
                 order: 2,
                 when: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.Refactor)),
+            },
+            description: {
+                description: 'Refactor...',
+                args: [{
+                        name: 'args',
+                        schema: {
+                            'type': 'object',
+                            'properties': {
+                                'kind': {
+                                    'type': 'string'
+                                },
+                                'apply': {
+                                    'type': 'string',
+                                    'default': 'never',
+                                    'enum': ['first', 'ifSingle', 'never']
+                                }
+                            }
+                        }
+                    }]
             }
         }) || this;
     }
-    RefactorAction.prototype.run = function (_accessor, editor) {
-        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.refactor.noneMessage', "No refactorings available"), { kind: CodeActionKind.Refactor }, 3 /* Never */);
+    RefactorAction.prototype.run = function (_accessor, editor, userArg) {
+        var args = CodeActionCommandArgs.fromUser(userArg, {
+            kind: CodeActionKind.Refactor,
+            apply: 2 /* Never */
+        });
+        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.refactor.noneMessage', "No refactorings available"), {
+            kind: CodeActionKind.Refactor.contains(args.kind) ? args.kind : CodeActionKind.Empty,
+            onlyIncludePreferredActions: args.preferred,
+        }, args.apply);
     };
     RefactorAction.Id = 'editor.action.refactor';
     return RefactorAction;
@@ -321,11 +378,38 @@ var SourceAction = /** @class */ (function (_super) {
                 group: '1_modification',
                 order: 2.1,
                 when: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.Source)),
+            },
+            description: {
+                description: 'Source Action...',
+                args: [{
+                        name: 'args',
+                        schema: {
+                            'type': 'object',
+                            'properties': {
+                                'kind': {
+                                    'type': 'string'
+                                },
+                                'apply': {
+                                    'type': 'string',
+                                    'default': 'never',
+                                    'enum': ['first', 'ifSingle', 'never']
+                                }
+                            }
+                        }
+                    }]
             }
         }) || this;
     }
-    SourceAction.prototype.run = function (_accessor, editor) {
-        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.source.noneMessage', "No source actions available"), { kind: CodeActionKind.Source, includeSourceActions: true }, 3 /* Never */);
+    SourceAction.prototype.run = function (_accessor, editor, userArg) {
+        var args = CodeActionCommandArgs.fromUser(userArg, {
+            kind: CodeActionKind.Source,
+            apply: 2 /* Never */
+        });
+        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.source.noneMessage', "No source actions available"), {
+            kind: CodeActionKind.Source.contains(args.kind) ? args.kind : CodeActionKind.Empty,
+            includeSourceActions: true,
+            onlyIncludePreferredActions: args.preferred,
+        }, args.apply);
     };
     SourceAction.Id = 'editor.action.sourceAction';
     return SourceAction;
@@ -347,9 +431,37 @@ var OrganizeImportsAction = /** @class */ (function (_super) {
         }) || this;
     }
     OrganizeImportsAction.prototype.run = function (_accessor, editor) {
-        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.organize.noneMessage', "No organize imports action available"), { kind: CodeActionKind.SourceOrganizeImports, includeSourceActions: true }, 1 /* IfSingle */);
+        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.organize.noneMessage', "No organize imports action available"), { kind: CodeActionKind.SourceOrganizeImports, includeSourceActions: true }, 0 /* IfSingle */);
     };
     OrganizeImportsAction.Id = 'editor.action.organizeImports';
     return OrganizeImportsAction;
 }(EditorAction));
 export { OrganizeImportsAction };
+var AutoFixAction = /** @class */ (function (_super) {
+    __extends(AutoFixAction, _super);
+    function AutoFixAction() {
+        return _super.call(this, {
+            id: AutoFixAction.Id,
+            label: nls.localize('autoFix.label', "Auto Fix..."),
+            alias: 'Auto Fix',
+            precondition: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.QuickFix)),
+            kbOpts: {
+                kbExpr: EditorContextKeys.editorTextFocus,
+                primary: 512 /* Alt */ | 1024 /* Shift */ | 84 /* US_DOT */,
+                mac: {
+                    primary: 2048 /* CtrlCmd */ | 512 /* Alt */ | 84 /* US_DOT */
+                },
+                weight: 100 /* EditorContrib */
+            }
+        }) || this;
+    }
+    AutoFixAction.prototype.run = function (_accessor, editor) {
+        return showCodeActionsForEditorSelection(editor, nls.localize('editor.action.autoFix.noneMessage', "No auto fixes available"), {
+            kind: CodeActionKind.QuickFix,
+            onlyIncludePreferredActions: true
+        }, 0 /* IfSingle */);
+    };
+    AutoFixAction.Id = 'editor.action.autoFix';
+    return AutoFixAction;
+}(EditorAction));
+export { AutoFixAction };

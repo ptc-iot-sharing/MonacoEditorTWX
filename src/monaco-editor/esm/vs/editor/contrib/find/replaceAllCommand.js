@@ -38,8 +38,9 @@ var ReplaceAllCommand = /** @class */ (function () {
                 }
             }
             resultOps.push(previousOp);
-            for (var i = 0; i < resultOps.length; i++) {
-                builder.addEditOperation(resultOps[i].range, resultOps[i].text);
+            for (var _i = 0, resultOps_1 = resultOps; _i < resultOps_1.length; _i++) {
+                var op = resultOps_1[_i];
+                builder.addEditOperation(op.range, op.text);
             }
         }
         this._trackedEditorSelectionId = builder.trackSelection(this._editorSelection);

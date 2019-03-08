@@ -2,8 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as paths from './paths.js';
-import * as strings from './strings.js';
+import { basename, posix } from './path.js';
+import { endsWith, startsWithUTF8BOM } from './strings.js';
 import { match } from './glob.js';
 export var MIME_TEXT = 'text/plain';
 export var MIME_UNKNOWN = 'application/unknown';
@@ -54,10 +54,10 @@ function toTextMimeAssociationItem(association) {
         filepattern: association.filepattern,
         firstline: association.firstline,
         userConfigured: association.userConfigured,
-        filenameLowercase: association.filename ? association.filename.toLowerCase() : void 0,
-        extensionLowercase: association.extension ? association.extension.toLowerCase() : void 0,
-        filepatternLowercase: association.filepattern ? association.filepattern.toLowerCase() : void 0,
-        filepatternOnPath: association.filepattern ? association.filepattern.indexOf(paths.sep) >= 0 : false
+        filenameLowercase: association.filename ? association.filename.toLowerCase() : undefined,
+        extensionLowercase: association.extension ? association.extension.toLowerCase() : undefined,
+        filepatternLowercase: association.filepattern ? association.filepattern.toLowerCase() : undefined,
+        filepatternOnPath: association.filepattern ? association.filepattern.indexOf(posix.sep) >= 0 : false
     };
 }
 /**
@@ -68,7 +68,7 @@ export function guessMimeTypes(path, firstLine) {
         return [MIME_UNKNOWN];
     }
     path = path.toLowerCase();
-    var filename = paths.basename(path);
+    var filename = basename(path);
     // 1.) User configured mappings have highest priority
     var configuredMime = guessMimeTypeByPath(path, filename, userRegisteredAssociations);
     if (configuredMime) {
@@ -113,7 +113,7 @@ function guessMimeTypeByPath(path, filename, associations) {
         // Longest extension match
         if (association.extension) {
             if (!extensionMatch || association.extension.length > extensionMatch.extension.length) {
-                if (strings.endsWith(filename, association.extensionLowercase)) {
+                if (endsWith(filename, association.extensionLowercase)) {
                     extensionMatch = association;
                 }
             }
@@ -134,12 +134,12 @@ function guessMimeTypeByPath(path, filename, associations) {
     return null;
 }
 function guessMimeTypeByFirstline(firstLine) {
-    if (strings.startsWithUTF8BOM(firstLine)) {
+    if (startsWithUTF8BOM(firstLine)) {
         firstLine = firstLine.substr(1);
     }
     if (firstLine.length > 0) {
-        for (var i = 0; i < registeredAssociations.length; ++i) {
-            var association = registeredAssociations[i];
+        for (var _i = 0, registeredAssociations_1 = registeredAssociations; _i < registeredAssociations_1.length; _i++) {
+            var association = registeredAssociations_1[_i];
             if (!association.firstline) {
                 continue;
             }

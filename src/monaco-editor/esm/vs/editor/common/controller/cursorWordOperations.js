@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -198,8 +198,10 @@ var WordOperations = /** @class */ (function () {
     WordOperations.moveWordRight = function (wordSeparators, model, position, wordNavigationType) {
         var lineNumber = position.lineNumber;
         var column = position.column;
+        var movedDown = false;
         if (column === model.getLineMaxColumn(lineNumber)) {
             if (lineNumber < model.getLineCount()) {
+                movedDown = true;
                 lineNumber = lineNumber + 1;
                 column = 1;
             }
@@ -220,7 +222,7 @@ var WordOperations = /** @class */ (function () {
             }
         }
         else {
-            if (nextWordOnLine && column >= nextWordOnLine.start + 1) {
+            if (nextWordOnLine && !movedDown && column >= nextWordOnLine.start + 1) {
                 nextWordOnLine = WordOperations._findNextWordOnLine(wordSeparators, model, new Position(lineNumber, nextWordOnLine.end + 1));
             }
             if (nextWordOnLine) {

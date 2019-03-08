@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
-import { Diagnostic, DiagnosticSeverity, Range } from './../../vscode-languageserver-types/main.js';
+import { UnresolvedSchema } from './jsonSchemaService.js';
+import { Diagnostic, DiagnosticSeverity, Range } from '../../vscode-languageserver-types/main.js';
 import { ErrorCode } from '../jsonLanguageTypes.js';
-import * as nls from './../../../fillers/vscode-nls.js';
+import * as nls from '../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var JSONValidation = /** @class */ (function () {
     function JSONValidation(jsonSchemaService, promiseConstructor) {
@@ -61,15 +61,16 @@ var JSONValidation = /** @class */ (function () {
                     trailingCommaSeverity = commentSeverity = void 0;
                 }
             }
-            jsonDocument.syntaxErrors.forEach(function (p) {
+            for (var _i = 0, _a = jsonDocument.syntaxErrors; _i < _a.length; _i++) {
+                var p = _a[_i];
                 if (p.code === ErrorCode.TrailingComma) {
-                    if (typeof commentSeverity !== 'number') {
-                        return;
+                    if (typeof trailingCommaSeverity !== 'number') {
+                        continue;
                     }
                     p.severity = trailingCommaSeverity;
                 }
                 addProblem(p);
-            });
+            }
             if (typeof commentSeverity === 'number') {
                 var message_1 = localize('InvalidCommentToken', 'Comments are not permitted in JSON.');
                 jsonDocument.comments.forEach(function (c) {
@@ -79,7 +80,10 @@ var JSONValidation = /** @class */ (function () {
             return diagnostics;
         };
         if (schema) {
-            return this.promise.resolve(getDiagnostics(schema));
+            var id = schema.id || ('schemaservice://untitled/' + idCounter++);
+            return this.jsonSchemaService.resolveSchemaContent(new UnresolvedSchema(schema), id, {}).then(function (resolvedSchema) {
+                return getDiagnostics(resolvedSchema);
+            });
         }
         return this.jsonSchemaService.getSchemaForResource(textDocument.uri, jsonDocument).then(function (schema) {
             return getDiagnostics(schema);
@@ -88,6 +92,7 @@ var JSONValidation = /** @class */ (function () {
     return JSONValidation;
 }());
 export { JSONValidation };
+var idCounter = 0;
 function schemaAllowsComments(schemaRef) {
     if (schemaRef && typeof schemaRef === 'object') {
         if (schemaRef.allowComments) {
@@ -107,4 +112,3 @@ function toDiagnosticSeverity(severityLevel) {
     }
     return void 0;
 }
-//# sourceMappingURL=jsonValidation.js.map

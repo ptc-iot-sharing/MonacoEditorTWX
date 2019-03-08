@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -121,16 +121,16 @@ var DecorationTypeOptionsProvider = /** @class */ (function () {
         this._disposables = [];
         var createCSSRules = function (type) {
             var rules = new DecorationCSSRules(type, providerArgs, themeService);
+            _this._disposables.push(rules);
             if (rules.hasContent) {
-                _this._disposables.push(rules);
                 return rules.className;
             }
-            return void 0;
+            return undefined;
         };
         var createInlineCSSRules = function (type) {
             var rules = new DecorationCSSRules(type, providerArgs, themeService);
+            _this._disposables.push(rules);
             if (rules.hasContent) {
-                _this._disposables.push(rules);
                 return { className: rules.className, hasLetterSpacing: rules.hasLetterSpacing };
             }
             return null;
@@ -180,7 +180,7 @@ var DecorationTypeOptionsProvider = /** @class */ (function () {
 }());
 var _CSS_MAP = {
     color: 'color:{0} !important;',
-    opacity: 'opacity:{0}; will-change: opacity;',
+    opacity: 'opacity:{0};',
     backgroundColor: 'background-color:{0};',
     outline: 'outline:{0};',
     outlineColor: 'outline-color:{0};',
@@ -352,12 +352,7 @@ var DecorationCSSRules = /** @class */ (function () {
         if (typeof opts !== 'undefined') {
             this.collectBorderSettingsCSSText(opts, cssTextArr);
             if (typeof opts.contentIconPath !== 'undefined') {
-                if (typeof opts.contentIconPath === 'string') {
-                    cssTextArr.push(strings.format(_CSS_MAP.contentIconPath, URI.file(opts.contentIconPath).toString().replace(/'/g, '%27')));
-                }
-                else {
-                    cssTextArr.push(strings.format(_CSS_MAP.contentIconPath, URI.revive(opts.contentIconPath).toString(true).replace(/'/g, '%27')));
-                }
+                cssTextArr.push(strings.format(_CSS_MAP.contentIconPath, URI.revive(opts.contentIconPath).toString(true).replace(/'/g, '%27')));
             }
             if (typeof opts.contentText === 'string') {
                 var truncated = opts.contentText.match(/^.*$/m)[0]; // only take first line
@@ -380,12 +375,7 @@ var DecorationCSSRules = /** @class */ (function () {
         }
         var cssTextArr = [];
         if (typeof opts.gutterIconPath !== 'undefined') {
-            if (typeof opts.gutterIconPath === 'string') {
-                cssTextArr.push(strings.format(_CSS_MAP.gutterIconPath, URI.file(opts.gutterIconPath).toString()));
-            }
-            else {
-                cssTextArr.push(strings.format(_CSS_MAP.gutterIconPath, URI.revive(opts.gutterIconPath).toString(true).replace(/'/g, '%27')));
-            }
+            cssTextArr.push(strings.format(_CSS_MAP.gutterIconPath, URI.revive(opts.gutterIconPath).toString(true).replace(/'/g, '%27')));
             if (typeof opts.gutterIconSize !== 'undefined') {
                 cssTextArr.push(strings.format(_CSS_MAP.gutterIconSize, opts.gutterIconSize));
             }

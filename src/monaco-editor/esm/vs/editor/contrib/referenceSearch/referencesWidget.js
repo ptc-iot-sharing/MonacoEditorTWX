@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -60,32 +60,27 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import * as dom from '../../../base/browser/dom.js';
-import { CountBadge } from '../../../base/browser/ui/countBadge/countBadge.js';
-import { IconLabel } from '../../../base/browser/ui/iconLabel/iconLabel.js';
 import { Sash } from '../../../base/browser/ui/sash/sash.js';
 import { Color } from '../../../base/common/color.js';
-import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
-import { getBaseLabel } from '../../../base/common/labels.js';
 import { dispose } from '../../../base/common/lifecycle.js';
 import { Schemas } from '../../../base/common/network.js';
 import { basenameOrAuthority, dirname } from '../../../base/common/resources.js';
-import * as strings from '../../../base/common/strings.js';
 import './media/referencesWidget.css';
 import { EmbeddedCodeEditorWidget } from '../../browser/widget/embeddedCodeEditorWidget.js';
 import { Range } from '../../common/core/range.js';
 import { ModelDecorationOptions, TextModel } from '../../common/model/textModel.js';
 import { ITextModelService } from '../../common/services/resolverService.js';
+import { AriaProvider, DataSource, Delegate, FileReferencesRenderer, OneReferenceRenderer, StringRepresentationProvider, IdentityProvider } from './referencesTree.js';
 import * as nls from '../../../nls.js';
 import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { ILabelService } from '../../../platform/label/common/label.js';
-import { WorkbenchTree, WorkbenchTreeController } from '../../../platform/list/browser/listService.js';
+import { WorkbenchAsyncDataTree } from '../../../platform/list/browser/listService.js';
 import { activeContrastBorder, contrastBorder, registerColor } from '../../../platform/theme/common/colorRegistry.js';
-import { attachBadgeStyler } from '../../../platform/theme/common/styler.js';
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import { PeekViewWidget } from './peekViewWidget.js';
-import { FileReferences, OneReference, ReferencesModel } from './referencesModel.js';
+import { FileReferences, OneReference } from './referencesModel.js';
 var DecorationsManager = /** @class */ (function () {
     function DecorationsManager(_editor, _model) {
         var _this = this;
@@ -118,6 +113,9 @@ var DecorationsManager = /** @class */ (function () {
     };
     DecorationsManager.prototype._addDecorations = function (reference) {
         var _this = this;
+        if (!this._editor.hasModel()) {
+            return;
+        }
         this._callOnModelChange.push(this._editor.getModel().onDidChangeDecorations(function (event) { return _this._onDecorationChanged(); }));
         var newDecorations = [];
         var newDecorationsActualIndex = [];
@@ -140,8 +138,12 @@ var DecorationsManager = /** @class */ (function () {
     DecorationsManager.prototype._onDecorationChanged = function () {
         var _this = this;
         var toRemove = [];
+        var model = this._editor.getModel();
+        if (!model) {
+            return;
+        }
         this._decorations.forEach(function (reference, decorationId) {
-            var newRange = _this._editor.getModel().getDecorationRange(decorationId);
+            var newRange = model.getDecorationRange(decorationId);
             if (!newRange) {
                 return;
             }
@@ -185,263 +187,6 @@ var DecorationsManager = /** @class */ (function () {
         className: 'reference-decoration'
     });
     return DecorationsManager;
-}());
-var DataSource = /** @class */ (function () {
-    function DataSource(_textModelResolverService) {
-        this._textModelResolverService = _textModelResolverService;
-        //
-    }
-    DataSource.prototype.getId = function (tree, element) {
-        if (element instanceof ReferencesModel) {
-            return 'root';
-        }
-        else if (element instanceof FileReferences) {
-            return element.id;
-        }
-        else if (element instanceof OneReference) {
-            return element.id;
-        }
-        return undefined;
-    };
-    DataSource.prototype.hasChildren = function (tree, element) {
-        if (element instanceof ReferencesModel) {
-            return true;
-        }
-        if (element instanceof FileReferences && !element.failure) {
-            return true;
-        }
-        return false;
-    };
-    DataSource.prototype.getChildren = function (tree, element) {
-        if (element instanceof ReferencesModel) {
-            return Promise.resolve(element.groups);
-        }
-        else if (element instanceof FileReferences) {
-            return element.resolve(this._textModelResolverService).then(function (val) {
-                if (element.failure) {
-                    // refresh the element on failure so that
-                    // we can update its rendering
-                    return tree.refresh(element).then(function () { return val.children; });
-                }
-                return val.children;
-            });
-        }
-        else {
-            return Promise.resolve([]);
-        }
-    };
-    DataSource.prototype.getParent = function (tree, element) {
-        var result = null;
-        if (element instanceof FileReferences) {
-            result = element.parent;
-        }
-        else if (element instanceof OneReference) {
-            result = element.parent;
-        }
-        return Promise.resolve(result);
-    };
-    DataSource = __decorate([
-        __param(0, ITextModelService)
-    ], DataSource);
-    return DataSource;
-}());
-var Controller = /** @class */ (function (_super) {
-    __extends(Controller, _super);
-    function Controller() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._onDidFocus = new Emitter();
-        _this.onDidFocus = _this._onDidFocus.event;
-        _this._onDidSelect = new Emitter();
-        _this.onDidSelect = _this._onDidSelect.event;
-        _this._onDidOpenToSide = new Emitter();
-        _this.onDidOpenToSide = _this._onDidOpenToSide.event;
-        return _this;
-    }
-    Controller.prototype.onTap = function (tree, element, event) {
-        if (element instanceof FileReferences) {
-            event.preventDefault();
-            event.stopPropagation();
-            return this._expandCollapse(tree, element);
-        }
-        var result = _super.prototype.onTap.call(this, tree, element, event);
-        this._onDidFocus.fire(element);
-        return result;
-    };
-    Controller.prototype.onMouseDown = function (tree, element, event) {
-        var isDoubleClick = event.detail === 2;
-        if (event.leftButton) {
-            if (element instanceof FileReferences) {
-                if (this.openOnSingleClick || isDoubleClick || this.isClickOnTwistie(event)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    return this._expandCollapse(tree, element);
-                }
-            }
-            var result = _super.prototype.onClick.call(this, tree, element, event);
-            var openToSide = event.ctrlKey || event.metaKey || event.altKey;
-            if (openToSide && (isDoubleClick || this.openOnSingleClick)) {
-                this._onDidOpenToSide.fire(element);
-            }
-            else if (isDoubleClick) {
-                this._onDidSelect.fire(element);
-            }
-            else if (this.openOnSingleClick) {
-                this._onDidFocus.fire(element);
-            }
-            return result;
-        }
-        return false;
-    };
-    Controller.prototype.onClick = function (tree, element, event) {
-        if (event.leftButton) {
-            return false; // Already handled by onMouseDown
-        }
-        return _super.prototype.onClick.call(this, tree, element, event);
-    };
-    Controller.prototype._expandCollapse = function (tree, element) {
-        if (tree.isExpanded(element)) {
-            tree.collapse(element).then(null, onUnexpectedError);
-        }
-        else {
-            tree.expand(element).then(null, onUnexpectedError);
-        }
-        return true;
-    };
-    Controller.prototype.onEscape = function (tree, event) {
-        return false;
-    };
-    Controller.prototype.dispose = function () {
-        this._onDidFocus.dispose();
-        this._onDidSelect.dispose();
-        this._onDidOpenToSide.dispose();
-    };
-    return Controller;
-}(WorkbenchTreeController));
-var FileReferencesTemplate = /** @class */ (function () {
-    function FileReferencesTemplate(container, _uriLabel, themeService) {
-        var _this = this;
-        this._uriLabel = _uriLabel;
-        var parent = document.createElement('div');
-        dom.addClass(parent, 'reference-file');
-        container.appendChild(parent);
-        this.file = new IconLabel(parent);
-        this.badge = new CountBadge(dom.append(parent, dom.$('.count')));
-        var styler = attachBadgeStyler(this.badge, themeService);
-        this.dispose = function () {
-            _this.file.dispose();
-            styler.dispose();
-        };
-    }
-    FileReferencesTemplate.prototype.set = function (element) {
-        var parent = dirname(element.uri);
-        this.file.setValue(getBaseLabel(element.uri), parent ? this._uriLabel.getUriLabel(parent, { relative: true }) : undefined, { title: this._uriLabel.getUriLabel(element.uri) });
-        var len = element.children.length;
-        this.badge.setCount(len);
-        if (element.failure) {
-            this.badge.setTitleFormat(nls.localize('referencesFailre', "Failed to resolve file."));
-        }
-        else if (len > 1) {
-            this.badge.setTitleFormat(nls.localize('referencesCount', "{0} references", len));
-        }
-        else {
-            this.badge.setTitleFormat(nls.localize('referenceCount', "{0} reference", len));
-        }
-    };
-    FileReferencesTemplate = __decorate([
-        __param(1, ILabelService),
-        __param(2, IThemeService)
-    ], FileReferencesTemplate);
-    return FileReferencesTemplate;
-}());
-var OneReferenceTemplate = /** @class */ (function () {
-    function OneReferenceTemplate(container) {
-        var parent = document.createElement('div');
-        this.before = document.createElement('span');
-        this.inside = document.createElement('span');
-        this.after = document.createElement('span');
-        dom.addClass(this.inside, 'referenceMatch');
-        dom.addClass(parent, 'reference');
-        parent.appendChild(this.before);
-        parent.appendChild(this.inside);
-        parent.appendChild(this.after);
-        container.appendChild(parent);
-    }
-    OneReferenceTemplate.prototype.set = function (element) {
-        var _a = element.parent.preview.preview(element.range), before = _a.before, inside = _a.inside, after = _a.after;
-        this.before.innerHTML = strings.escape(before);
-        this.inside.innerHTML = strings.escape(inside);
-        this.after.innerHTML = strings.escape(after);
-    };
-    return OneReferenceTemplate;
-}());
-var Renderer = /** @class */ (function () {
-    function Renderer(_themeService, _uriLabel) {
-        this._themeService = _themeService;
-        this._uriLabel = _uriLabel;
-        //
-    }
-    Renderer.prototype.getHeight = function (tree, element) {
-        return 23;
-    };
-    Renderer.prototype.getTemplateId = function (tree, element) {
-        if (element instanceof FileReferences) {
-            return Renderer._ids.FileReferences;
-        }
-        else if (element instanceof OneReference) {
-            return Renderer._ids.OneReference;
-        }
-        throw element;
-    };
-    Renderer.prototype.renderTemplate = function (tree, templateId, container) {
-        if (templateId === Renderer._ids.FileReferences) {
-            return new FileReferencesTemplate(container, this._uriLabel, this._themeService);
-        }
-        else if (templateId === Renderer._ids.OneReference) {
-            return new OneReferenceTemplate(container);
-        }
-        throw templateId;
-    };
-    Renderer.prototype.renderElement = function (tree, element, templateId, templateData) {
-        if (element instanceof FileReferences) {
-            templateData.set(element);
-        }
-        else if (element instanceof OneReference) {
-            templateData.set(element);
-        }
-        else {
-            throw templateId;
-        }
-    };
-    Renderer.prototype.disposeTemplate = function (tree, templateId, templateData) {
-        if (templateData instanceof FileReferencesTemplate) {
-            templateData.dispose();
-        }
-    };
-    Renderer._ids = {
-        FileReferences: 'FileReferences',
-        OneReference: 'OneReference'
-    };
-    Renderer = __decorate([
-        __param(0, IThemeService),
-        __param(1, ILabelService)
-    ], Renderer);
-    return Renderer;
-}());
-var AriaProvider = /** @class */ (function () {
-    function AriaProvider() {
-    }
-    AriaProvider.prototype.getAriaLabel = function (tree, element) {
-        if (element instanceof FileReferences) {
-            return element.getAriaMessage();
-        }
-        else if (element instanceof OneReference) {
-            return element.getAriaMessage();
-        }
-        else {
-            return undefined;
-        }
-    };
-    return AriaProvider;
 }());
 var VSash = /** @class */ (function () {
     function VSash(container, ratio) {
@@ -548,7 +293,7 @@ var ReferenceWidget = /** @class */ (function (_super) {
         });
     };
     ReferenceWidget.prototype.dispose = function () {
-        this.setModel(null);
+        this.setModel(undefined);
         this._callOnDispose = dispose(this._callOnDispose);
         dispose(this._preview, this._previewNotAvailableMessage, this._tree, this._sash, this._previewModelReference);
         _super.prototype.dispose.call(this);
@@ -603,30 +348,30 @@ var ReferenceWidget = /** @class */ (function (_super) {
         dom.hide(this._previewContainer);
         this._previewNotAvailableMessage = TextModel.createFromString(nls.localize('missingPreviewMessage', "no preview available"));
         // sash
-        this._sash = new VSash(containerElement, this.layoutData.ratio || .8);
+        this._sash = new VSash(containerElement, this.layoutData.ratio || 0.8);
         this._sash.onDidChangePercentages(function () {
             var _a = _this._sash.percentages, left = _a[0], right = _a[1];
             _this._previewContainer.style.width = left;
             _this._treeContainer.style.width = right;
             _this._preview.layout();
-            _this._tree.layout();
+            _this._tree.layout(_this.height, _this.width && _this.width * (1 - _this._sash.ratio));
             _this.layoutData.ratio = _this._sash.ratio;
         });
         // tree
         this._treeContainer = dom.append(containerElement, dom.$('div.ref-tree.inline'));
-        var controller = this._instantiationService.createInstance(Controller, { keyboardSupport: this._defaultTreeKeyboardSupport, clickBehavior: 1 /* ON_MOUSE_UP */ /* our controller already deals with this */ });
-        this._callOnDispose.push(controller);
-        var config = {
-            dataSource: this._instantiationService.createInstance(DataSource),
-            renderer: this._instantiationService.createInstance(Renderer),
-            controller: controller,
-            accessibilityProvider: new AriaProvider()
-        };
+        var renderers = [
+            this._instantiationService.createInstance(FileReferencesRenderer),
+            this._instantiationService.createInstance(OneReferenceRenderer),
+        ];
         var treeOptions = {
-            twistiePixels: 20,
-            ariaLabel: nls.localize('treeAriaLabel', "References")
+            ariaLabel: nls.localize('treeAriaLabel', "References"),
+            keyboardSupport: this._defaultTreeKeyboardSupport,
+            accessibilityProvider: new AriaProvider(),
+            keyboardNavigationLabelProvider: this._instantiationService.createInstance(StringRepresentationProvider),
+            identityProvider: new IdentityProvider()
         };
-        this._tree = this._instantiationService.createInstance(WorkbenchTree, this._treeContainer, config, treeOptions);
+        var treeDataSource = this._instantiationService.createInstance(DataSource);
+        this._tree = this._instantiationService.createInstance(WorkbenchAsyncDataTree, this._treeContainer, new Delegate(), renderers, treeDataSource, treeOptions);
         ctxReferenceWidgetSearchTreeFocused.bindTo(this._tree.contextKeyService);
         // listen on selection and focus
         var onEvent = function (element, kind) {
@@ -637,23 +382,49 @@ var ReferenceWidget = /** @class */ (function (_super) {
                 _this._onDidSelectReference.fire({ element: element, kind: kind, source: 'tree' });
             }
         };
-        this._disposables.push(this._tree.onDidChangeFocus(function (event) {
-            if (event && event.payload && event.payload.origin === 'keyboard') {
-                onEvent(event.focus, 'show'); // only handle events from keyboard, mouse/touch is handled by other listeners below
+        this._tree.onDidChangeFocus(function (e) {
+            onEvent(e.elements[0], 'show');
+        });
+        this._tree.onDidChangeSelection(function (e) {
+            var aside = false;
+            var goto = false;
+            if (e.browserEvent instanceof KeyboardEvent) {
+                // todo@joh make this a command
+                goto = true;
             }
-        }));
-        this._disposables.push(this._tree.onDidChangeSelection(function (event) {
-            if (event && event.payload && event.payload.origin === 'keyboard') {
-                onEvent(event.selection[0], 'goto'); // only handle events from keyboard, mouse/touch is handled by other listeners below
+            else if (e.browserEvent instanceof MouseEvent) {
+                aside = e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey;
+                goto = e.browserEvent.detail === 2;
             }
-        }));
-        this._disposables.push(controller.onDidFocus(function (element) { return onEvent(element, 'show'); }));
-        this._disposables.push(controller.onDidSelect(function (element) { return onEvent(element, 'goto'); }));
-        this._disposables.push(controller.onDidOpenToSide(function (element) { return onEvent(element, 'side'); }));
+            if (aside) {
+                onEvent(e.elements[0], 'side');
+            }
+            else if (goto) {
+                onEvent(e.elements[0], 'goto');
+            }
+            else {
+                onEvent(e.elements[0], 'show');
+            }
+        });
+        this._tree.onMouseDblClick(function (e) {
+            var aside = e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey;
+            var goto = e.browserEvent.detail === 2;
+            if (aside) {
+                onEvent(e.element, 'side');
+            }
+            else if (goto) {
+                onEvent(e.element, 'goto');
+            }
+            else {
+                onEvent(e.element, 'show');
+            }
+        });
         dom.hide(this._treeContainer);
     };
     ReferenceWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
         _super.prototype._doLayoutBody.call(this, heightInPixel, widthInPixel);
+        this.height = heightInPixel;
+        this.width = widthInPixel;
         var height = heightInPixel + 'px';
         this._sash.height = heightInPixel;
         this._sash.width = widthInPixel;
@@ -664,11 +435,11 @@ var ReferenceWidget = /** @class */ (function (_super) {
         this._treeContainer.style.height = height;
         this._treeContainer.style.width = right;
         // forward
-        this._tree.layout(heightInPixel);
+        this._tree.layout(heightInPixel, widthInPixel * (1 - this._sash.ratio));
         this._preview.layout();
         // store layout data
         this.layoutData = {
-            heightInLines: this._viewZone.heightInLines,
+            heightInLines: this._viewZone ? this._viewZone.heightInLines : 0,
             ratio: this._sash.ratio
         };
     };
@@ -685,7 +456,7 @@ var ReferenceWidget = /** @class */ (function (_super) {
             }
             // show in tree
             _this._tree.setSelection([selection]);
-            _this._tree.setFocus(selection);
+            _this._tree.setFocus([selection]);
         });
     };
     ReferenceWidget.prototype.setModel = function (newModel) {
@@ -695,31 +466,39 @@ var ReferenceWidget = /** @class */ (function (_super) {
         if (this._model) {
             return this._onNewModel();
         }
-        return undefined;
+        return Promise.resolve();
     };
     ReferenceWidget.prototype._onNewModel = function () {
         var _this = this;
+        if (!this._model) {
+            return Promise.resolve(undefined);
+        }
         if (this._model.empty) {
             this.setTitle('');
             this._messageContainer.innerHTML = nls.localize('noResults', "No results");
             dom.show(this._messageContainer);
-            return Promise.resolve(void 0);
+            return Promise.resolve(undefined);
         }
         dom.hide(this._messageContainer);
         this._decorationsManager = new DecorationsManager(this._preview, this._model);
         this._disposeOnNewModel.push(this._decorationsManager);
         // listen on model changes
-        this._disposeOnNewModel.push(this._model.onDidChangeReferenceRange(function (reference) { return _this._tree.refresh(reference); }));
+        this._disposeOnNewModel.push(this._model.onDidChangeReferenceRange(function (reference) { return _this._tree.rerender(reference); }));
         // listen on editor
         this._disposeOnNewModel.push(this._preview.onMouseDown(function (e) {
             var event = e.event, target = e.target;
-            if (event.detail === 2) {
-                _this._onDidSelectReference.fire({
-                    element: { uri: _this._getFocusedReference().uri, range: target.range },
-                    kind: (event.ctrlKey || event.metaKey || event.altKey) ? 'side' : 'open',
-                    source: 'editor'
-                });
+            if (event.detail !== 2) {
+                return;
             }
+            var element = _this._getFocusedReference();
+            if (!element) {
+                return;
+            }
+            _this._onDidSelectReference.fire({
+                element: { uri: element.uri, range: target.range },
+                kind: (event.ctrlKey || event.metaKey || event.altKey) ? 'side' : 'open',
+                source: 'editor'
+            });
         }));
         // make sure things are rendered
         dom.addClass(this.container, 'results-loaded');
@@ -729,11 +508,10 @@ var ReferenceWidget = /** @class */ (function (_super) {
         this._tree.layout();
         this.focus();
         // pick input and a reference to begin with
-        var input = this._model.groups.length === 1 ? this._model.groups[0] : this._model;
-        return this._tree.setInput(input);
+        return this._tree.setInput(this._model.groups.length === 1 ? this._model.groups[0] : this._model);
     };
     ReferenceWidget.prototype._getFocusedReference = function () {
-        var element = this._tree.getFocus();
+        var element = this._tree.getFocus()[0];
         if (element instanceof OneReference) {
             return element;
         }
@@ -746,11 +524,15 @@ var ReferenceWidget = /** @class */ (function (_super) {
     };
     ReferenceWidget.prototype._revealReference = function (reference, revealParent) {
         return __awaiter(this, void 0, void 0, function () {
-            var promise;
-            var _this = this;
+            var promise, ref, model, scrollType, sel;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        // check if there is anything to do...
+                        if (this._revealedReference === reference) {
+                            return [2 /*return*/];
+                        }
+                        this._revealedReference = reference;
                         // Update widget header
                         if (reference.uri.scheme !== Schemas.inMemory) {
                             this.setTitle(basenameOrAuthority(reference.uri), this._uriLabel.getUriLabel(dirname(reference.uri)));
@@ -759,34 +541,41 @@ var ReferenceWidget = /** @class */ (function (_super) {
                             this.setTitle(nls.localize('peekView.alternateTitle', "References"));
                         }
                         promise = this._textModelResolverService.createModelReference(reference.uri);
-                        if (!revealParent) return [3 /*break*/, 2];
-                        return [4 /*yield*/, this._tree.reveal(reference.parent)];
+                        if (!(this._tree.getInput() === reference.parent)) return [3 /*break*/, 1];
+                        this._tree.reveal(reference);
+                        return [3 /*break*/, 3];
                     case 1:
+                        if (revealParent) {
+                            this._tree.reveal(reference.parent);
+                        }
+                        return [4 /*yield*/, this._tree.expand(reference.parent)];
+                    case 2:
                         _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, Promise.all([promise, this._tree.reveal(reference)]).then(function (values) {
-                            var ref = values[0];
-                            if (!_this._model) {
-                                ref.dispose();
-                                // disposed
-                                return;
-                            }
-                            dispose(_this._previewModelReference);
-                            // show in editor
-                            var model = ref.object;
-                            if (model) {
-                                _this._previewModelReference = ref;
-                                var isSameModel = (_this._preview.getModel() === model.textEditorModel);
-                                _this._preview.setModel(model.textEditorModel);
-                                var sel = Range.lift(reference.range).collapseToStart();
-                                _this._preview.setSelection(sel);
-                                _this._preview.revealRangeInCenter(sel, isSameModel ? 0 /* Smooth */ : 1 /* Immediate */);
-                            }
-                            else {
-                                _this._preview.setModel(_this._previewNotAvailableMessage);
-                                ref.dispose();
-                            }
-                        }, onUnexpectedError)];
+                        this._tree.reveal(reference);
+                        _a.label = 3;
+                    case 3: return [4 /*yield*/, promise];
+                    case 4:
+                        ref = _a.sent();
+                        if (!this._model) {
+                            // disposed
+                            ref.dispose();
+                            return [2 /*return*/];
+                        }
+                        dispose(this._previewModelReference);
+                        model = ref.object;
+                        if (model) {
+                            scrollType = this._preview.getModel() === model.textEditorModel ? 0 /* Smooth */ : 1 /* Immediate */;
+                            sel = Range.lift(reference.range).collapseToStart();
+                            this._previewModelReference = ref;
+                            this._preview.setModel(model.textEditorModel);
+                            this._preview.setSelection(sel);
+                            this._preview.revealRangeInCenter(sel, scrollType);
+                        }
+                        else {
+                            this._preview.setModel(this._previewNotAvailableMessage);
+                            ref.dispose();
+                        }
+                        return [2 /*return*/];
                 }
             });
         });
@@ -846,11 +635,11 @@ registerThemingParticipant(function (theme, collector) {
     }
     var resultsSelectedBackground = theme.getColor(peekViewResultsSelectionBackground);
     if (resultsSelectedBackground) {
-        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .monaco-tree.focused .monaco-tree-rows > .monaco-tree-row.selected:not(.highlighted) { background-color: " + resultsSelectedBackground + "; }");
+        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .monaco-list:focus .monaco-list-rows > .monaco-list-row.selected:not(.highlighted) { background-color: " + resultsSelectedBackground + "; }");
     }
     var resultsSelectedForeground = theme.getColor(peekViewResultsSelectionForeground);
     if (resultsSelectedForeground) {
-        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .monaco-tree.focused .monaco-tree-rows > .monaco-tree-row.selected:not(.highlighted) { color: " + resultsSelectedForeground + " !important; }");
+        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .monaco-list:focus .monaco-list-rows > .monaco-list-row.selected:not(.highlighted) { color: " + resultsSelectedForeground + " !important; }");
     }
     var editorBackground = theme.getColor(peekViewEditorBackground);
     if (editorBackground) {

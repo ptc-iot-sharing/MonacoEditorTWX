@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -20,6 +20,8 @@ import { isEmptyMarkdownString } from '../../../base/common/htmlContent.js';
 import { dispose } from '../../../base/common/lifecycle.js';
 import { HoverOperation } from './hoverOperation.js';
 import { GlyphHoverWidget } from './hoverWidgets.js';
+import { MarkdownRenderer } from '../markdown/markdownRenderer.js';
+import { NullOpenerService } from '../../../platform/opener/common/opener.js';
 var MarginComputer = /** @class */ (function () {
     function MarginComputer(editor) {
         this._editor = editor;
@@ -43,8 +45,8 @@ var MarginComputer = /** @class */ (function () {
         if (!lineDecorations) {
             return result;
         }
-        for (var i = 0, len = lineDecorations.length; i < len; i++) {
-            var d = lineDecorations[i];
+        for (var _i = 0, lineDecorations_1 = lineDecorations; _i < lineDecorations_1.length; _i++) {
+            var d = lineDecorations_1[_i];
             if (!d.options.glyphMarginClassName) {
                 continue;
             }
@@ -53,7 +55,7 @@ var MarginComputer = /** @class */ (function () {
                 continue;
             }
             if (Array.isArray(hoverMessage)) {
-                result = result.concat(hoverMessage.map(toHoverMessage));
+                result.push.apply(result, hoverMessage.map(toHoverMessage));
             }
             else {
                 result.push(toHoverMessage(hoverMessage));
@@ -74,12 +76,13 @@ var MarginComputer = /** @class */ (function () {
 }());
 var ModesGlyphHoverWidget = /** @class */ (function (_super) {
     __extends(ModesGlyphHoverWidget, _super);
-    function ModesGlyphHoverWidget(editor, markdownRenderer) {
+    function ModesGlyphHoverWidget(editor, modeService, openerService) {
+        if (openerService === void 0) { openerService = NullOpenerService; }
         var _this = _super.call(this, ModesGlyphHoverWidget.ID, editor) || this;
         _this._lastLineNumber = -1;
-        _this._markdownRenderer = markdownRenderer;
+        _this._markdownRenderer = new MarkdownRenderer(_this._editor, modeService, openerService);
         _this._computer = new MarginComputer(_this._editor);
-        _this._hoverOperation = new HoverOperation(_this._computer, function (result) { return _this._withResult(result); }, undefined, function (result) { return _this._withResult(result); });
+        _this._hoverOperation = new HoverOperation(_this._computer, function (result) { return _this._withResult(result); }, undefined, function (result) { return _this._withResult(result); }, 300);
         return _this;
     }
     ModesGlyphHoverWidget.prototype.dispose = function () {

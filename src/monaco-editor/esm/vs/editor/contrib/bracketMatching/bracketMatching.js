@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,6 +28,7 @@ import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { editorBracketMatchBackground, editorBracketMatchBorder } from '../../common/view/editorColorRegistry.js';
 import { registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant, themeColorFromId } from '../../../platform/theme/common/themeService.js';
+import { MenuRegistry } from '../../../platform/actions/common/actions.js';
 var overviewRulerBracketMatchForeground = registerColor('editorOverviewRuler.bracketMatchForeground', { dark: '#A0A0A0', light: '#A0A0A0', hc: '#A0A0A0' }, nls.localize('overviewRulerBracketMatchForeground', 'Overview ruler marker color for matching brackets.'));
 var JumpToBracketAction = /** @class */ (function (_super) {
     __extends(JumpToBracketAction, _super);
@@ -283,4 +284,13 @@ registerThemingParticipant(function (theme, collector) {
     if (bracketMatchBorder) {
         collector.addRule(".monaco-editor .bracket-match { border: 1px solid " + bracketMatchBorder + "; }");
     }
+});
+// Go to menu
+MenuRegistry.appendMenuItem(16 /* MenubarGoMenu */, {
+    group: '5_infile_nav',
+    command: {
+        id: 'editor.action.jumpToBracket',
+        title: nls.localize({ key: 'miGoToBracket', comment: ['&& denotes a mnemonic'] }, "Go to &&Bracket")
+    },
+    order: 2
 });

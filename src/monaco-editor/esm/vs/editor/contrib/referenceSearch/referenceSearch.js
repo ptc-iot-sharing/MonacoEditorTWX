@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -47,7 +47,7 @@ import { ICodeEditorService } from '../../browser/services/codeEditorService.js'
 import { CancellationToken } from '../../../base/common/cancellation.js';
 export var defaultReferenceSearchOptions = {
     getMetaTitle: function (model) {
-        return model.references.length > 1 && nls.localize('meta.titleReference', " – {0} references", model.references.length);
+        return model.references.length > 1 ? nls.localize('meta.titleReference', " – {0} references", model.references.length) : '';
     }
 };
 var ReferenceController = /** @class */ (function () {
@@ -73,7 +73,7 @@ var ReferenceAction = /** @class */ (function (_super) {
     function ReferenceAction() {
         return _super.call(this, {
             id: 'editor.action.referenceSearch.trigger',
-            label: nls.localize('references.action.label', "Find All References"),
+            label: nls.localize('references.action.label', "Peek References"),
             alias: 'Find All References',
             precondition: ContextKeyExpr.and(EditorContextKeys.hasReferenceProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInEmbeddedEditor.toNegated()),
             kbOpts: {
@@ -87,15 +87,17 @@ var ReferenceAction = /** @class */ (function (_super) {
             }
         }) || this;
     }
-    ReferenceAction.prototype.run = function (accessor, editor) {
+    ReferenceAction.prototype.run = function (_accessor, editor) {
         var controller = ReferencesController.get(editor);
         if (!controller) {
             return;
         }
-        var range = editor.getSelection();
-        var model = editor.getModel();
-        var references = createCancelablePromise(function (token) { return provideReferences(model, range.getStartPosition(), token).then(function (references) { return new ReferencesModel(references); }); });
-        controller.toggleWidget(range, references, defaultReferenceSearchOptions);
+        if (editor.hasModel()) {
+            var range_1 = editor.getSelection();
+            var model_1 = editor.getModel();
+            var references = createCancelablePromise(function (token) { return provideReferences(model_1, range_1.getStartPosition(), token).then(function (references) { return new ReferencesModel(references); }); });
+            controller.toggleWidget(range_1, references, defaultReferenceSearchOptions);
+        }
     };
     return ReferenceAction;
 }(EditorAction));
@@ -111,7 +113,7 @@ var findReferencesCommand = function (accessor, resource, position) {
     }
     var codeEditorService = accessor.get(ICodeEditorService);
     return codeEditorService.openCodeEditor({ resource: resource }, codeEditorService.getFocusedCodeEditor()).then(function (control) {
-        if (!isCodeEditor(control)) {
+        if (!isCodeEditor(control) || !control.hasModel()) {
             return undefined;
         }
         var controller = ReferencesController.get(control);
@@ -139,7 +141,7 @@ var showReferencesCommand = function (accessor, resource, position, references) 
         if (!controller) {
             return undefined;
         }
-        return Promise.resolve(controller.toggleWidget(new Range(position.lineNumber, position.column, position.lineNumber, position.column), createCancelablePromise(function (_) { return Promise.resolve(new ReferencesModel(references)); }), defaultReferenceSearchOptions)).then(function () { return true; });
+        return controller.toggleWidget(new Range(position.lineNumber, position.column, position.lineNumber, position.column), createCancelablePromise(function (_) { return Promise.resolve(new ReferencesModel(references)); }), defaultReferenceSearchOptions);
     });
 };
 // register commands

@@ -13,7 +13,7 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import { inputBackground, inputForeground, inputBorder, foreground, editorBackground, contrastBorder, listFocusBackground, listFocusForeground, listActiveSelectionBackground, listActiveSelectionForeground, listInactiveSelectionForeground, listInactiveSelectionBackground, listInactiveFocusBackground, listHoverBackground, listHoverForeground, listDropBackground, pickerGroupBorder, pickerGroupForeground, widgetShadow, inputValidationInfoBorder, inputValidationInfoBackground, inputValidationWarningBorder, inputValidationWarningBackground, inputValidationErrorBorder, inputValidationErrorBackground, activeContrastBorder, badgeBackground, badgeForeground, progressBarBackground, inputValidationInfoForeground, inputValidationWarningForeground, inputValidationErrorForeground, menuForeground, menuBackground, menuSelectionForeground, menuSelectionBackground, menuSelectionBorder, menuBorder, menuSeparatorBackground } from './colorRegistry.js';
+import { inputBackground, inputForeground, inputBorder, foreground, editorBackground, contrastBorder, listFocusBackground, listFocusForeground, listActiveSelectionBackground, listActiveSelectionForeground, listInactiveSelectionForeground, listInactiveSelectionBackground, listInactiveFocusBackground, listHoverBackground, listHoverForeground, listDropBackground, pickerGroupBorder, pickerGroupForeground, widgetShadow, inputValidationInfoBorder, inputValidationInfoBackground, inputValidationWarningBorder, inputValidationWarningBackground, inputValidationErrorBorder, inputValidationErrorBackground, activeContrastBorder, badgeBackground, badgeForeground, progressBarBackground, inputValidationInfoForeground, inputValidationWarningForeground, inputValidationErrorForeground, menuForeground, menuBackground, menuSelectionForeground, menuSelectionBackground, menuSelectionBorder, menuBorder, menuSeparatorBackground, darken, listFilterWidgetOutline, listFilterWidgetNoMatchesOutline, listFilterWidgetBackground } from './colorRegistry.js';
 import { mixin } from '../../../base/common/objects.js';
 export function computeStyles(theme, styleMap) {
     var styles = Object.create(null);
@@ -71,7 +71,7 @@ export function attachQuickOpenStyler(widget, themeService, style) {
         inputValidationErrorForeground: (style && style.inputValidationErrorForeground) || inputValidationErrorForeground,
         listFocusBackground: (style && style.listFocusBackground) || listFocusBackground,
         listFocusForeground: (style && style.listFocusForeground) || listFocusForeground,
-        listActiveSelectionBackground: (style && style.listActiveSelectionBackground) || listActiveSelectionBackground,
+        listActiveSelectionBackground: (style && style.listActiveSelectionBackground) || darken(listActiveSelectionBackground, 0.1),
         listActiveSelectionForeground: (style && style.listActiveSelectionForeground) || listActiveSelectionForeground,
         listFocusAndSelectionBackground: style && style.listFocusAndSelectionBackground || listActiveSelectionBackground,
         listFocusAndSelectionForeground: (style && style.listFocusAndSelectionForeground) || listActiveSelectionForeground,
@@ -92,7 +92,7 @@ export function attachListStyler(widget, themeService, overrides) {
 export var defaultListStyles = {
     listFocusBackground: listFocusBackground,
     listFocusForeground: listFocusForeground,
-    listActiveSelectionBackground: listActiveSelectionBackground,
+    listActiveSelectionBackground: darken(listActiveSelectionBackground, 0.1),
     listActiveSelectionForeground: listActiveSelectionForeground,
     listFocusAndSelectionBackground: listActiveSelectionBackground,
     listFocusAndSelectionForeground: listActiveSelectionForeground,
@@ -104,7 +104,11 @@ export var defaultListStyles = {
     listDropBackground: listDropBackground,
     listFocusOutline: activeContrastBorder,
     listSelectionOutline: activeContrastBorder,
-    listHoverOutline: activeContrastBorder
+    listHoverOutline: activeContrastBorder,
+    listFilterWidgetBackground: listFilterWidgetBackground,
+    listFilterWidgetOutline: listFilterWidgetOutline,
+    listFilterWidgetNoMatchesOutline: listFilterWidgetNoMatchesOutline,
+    listMatchesShadow: widgetShadow
 };
 export var defaultMenuStyles = {
     shadowColor: widgetShadow,
@@ -117,9 +121,5 @@ export var defaultMenuStyles = {
     separatorColor: menuSeparatorBackground
 };
 export function attachMenuStyler(widget, themeService, style) {
-    var styles = __assign({}, defaultMenuStyles, style);
-    var fallback = {
-        foregroundColor: !!styles.foregroundColor && !!themeService && !!themeService.getTheme().getColor(styles.foregroundColor) ? styles.foregroundColor : foreground
-    };
-    return attachStyler(themeService, __assign({}, styles, fallback), widget);
+    return attachStyler(themeService, __assign({}, defaultMenuStyles, style), widget);
 }

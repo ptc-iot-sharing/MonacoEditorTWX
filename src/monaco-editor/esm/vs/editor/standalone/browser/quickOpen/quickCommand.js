@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -26,9 +26,10 @@ import { BaseEditorQuickOpenAction } from './editorQuickOpen.js';
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
 var EditorActionCommandEntry = /** @class */ (function (_super) {
     __extends(EditorActionCommandEntry, _super);
-    function EditorActionCommandEntry(key, highlights, action, editor) {
+    function EditorActionCommandEntry(key, keyAriaLabel, highlights, action, editor) {
         var _this = _super.call(this) || this;
         _this.key = key;
+        _this.keyAriaLabel = keyAriaLabel;
         _this.setHighlights(highlights);
         _this.action = action;
         _this.editor = editor;
@@ -38,6 +39,9 @@ var EditorActionCommandEntry = /** @class */ (function (_super) {
         return this.action.label;
     };
     EditorActionCommandEntry.prototype.getAriaLabel = function () {
+        if (this.keyAriaLabel) {
+            return nls.localize('ariaLabelEntryWithKey', "{0}, {1}, commands", this.getLabel(), this.keyAriaLabel);
+        }
         return nls.localize('ariaLabelEntry', "{0}, commands", this.getLabel());
     };
     EditorActionCommandEntry.prototype.getGroupLabel = function () {
@@ -52,7 +56,7 @@ var EditorActionCommandEntry = /** @class */ (function (_super) {
                 _this.editor.focus();
                 try {
                     var promise = _this.action.run() || Promise.resolve();
-                    promise.then(null, onUnexpectedError);
+                    promise.then(undefined, onUnexpectedError);
                 }
                 catch (error) {
                     onUnexpectedError(error);
@@ -100,20 +104,20 @@ var QuickCommandAction = /** @class */ (function (_super) {
         });
     };
     QuickCommandAction.prototype._sort = function (elementA, elementB) {
-        var elementAName = elementA.getLabel().toLowerCase();
-        var elementBName = elementB.getLabel().toLowerCase();
+        var elementAName = (elementA.getLabel() || '').toLowerCase();
+        var elementBName = (elementB.getLabel() || '').toLowerCase();
         return elementAName.localeCompare(elementBName);
     };
     QuickCommandAction.prototype._editorActionsToEntries = function (keybindingService, editor, searchValue) {
         var actions = editor.getSupportedActions();
         var entries = [];
-        for (var i = 0; i < actions.length; i++) {
-            var action = actions[i];
-            var keybind = keybindingService.lookupKeybinding(action.id);
+        for (var _i = 0, actions_1 = actions; _i < actions_1.length; _i++) {
+            var action = actions_1[_i];
+            var keybinding = keybindingService.lookupKeybinding(action.id);
             if (action.label) {
                 var highlights = matchesFuzzy(searchValue, action.label);
                 if (highlights) {
-                    entries.push(new EditorActionCommandEntry(keybind ? keybind.getLabel() : '', highlights, action, editor));
+                    entries.push(new EditorActionCommandEntry(keybinding ? keybinding.getLabel() || '' : '', keybinding ? keybinding.getAriaLabel() || '' : '', highlights, action, editor));
                 }
             }
         }

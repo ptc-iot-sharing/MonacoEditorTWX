@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,6 +28,7 @@ import { ensureValidWordDefinition, getWordAtText } from '../model/wordHelper.js
 import { computeLinks } from '../modes/linkComputer.js';
 import { BasicInplaceReplace } from '../modes/supports/inplaceReplaceSupport.js';
 import { createMonacoBaseAPI } from '../standalone/standaloneBase.js';
+import { getAllPropertyNames } from '../../../base/common/types.js';
 /**
  * @internal
  */
@@ -301,8 +302,8 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
             if (typeof eol === 'number') {
                 lastEol = eol;
             }
-            if (!range) {
-                // eol-change only
+            if (Range.isEmpty(range) && !text) {
+                // empty change
                 continue;
             }
             var original = model.getValueInRange(range);
@@ -333,7 +334,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
             }
         }
         if (typeof lastEol === 'number') {
-            result.push({ eol: lastEol, text: undefined, range: undefined });
+            result.push({ eol: lastEol, text: '', range: { startLineNumber: 0, startColumn: 0, endLineNumber: 0, endColumn: 0 } });
         }
         return Promise.resolve(result);
     };
@@ -440,7 +441,8 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
             this._foreignModule = this._foreignModuleFactory(ctx, createData);
             // static foreing module
             var methods = [];
-            for (var prop in this._foreignModule) {
+            for (var _i = 0, _a = getAllPropertyNames(this._foreignModule); _i < _a.length; _i++) {
+                var prop = _a[_i];
                 if (typeof this._foreignModule[prop] === 'function') {
                     methods.push(prop);
                 }
@@ -453,7 +455,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         // 				this._foreignModule = foreignModule.create(ctx, createData);
         // 
         // 				let methods: string[] = [];
-        // 				for (let prop in this._foreignModule) {
+        // 				for (const prop of getAllPropertyNames(this._foreignModule)) {
         // 					if (typeof this._foreignModule[prop] === 'function') {
         // 						methods.push(prop);
         // 					}

@@ -92,7 +92,7 @@ export function computeRanges(model, offSide, markers, foldingRangesLimit) {
     if (foldingRangesLimit === void 0) { foldingRangesLimit = MAX_FOLDING_REGIONS_FOR_INDENT_LIMIT; }
     var tabSize = model.getOptions().tabSize;
     var result = new RangesCollector(foldingRangesLimit);
-    var pattern = void 0;
+    var pattern = undefined;
     if (markers) {
         pattern = new RegExp("(" + markers.start.source + ")|(?:" + markers.end.source + ")");
     }

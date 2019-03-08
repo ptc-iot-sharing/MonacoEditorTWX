@@ -2,34 +2,34 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 import { createScanner } from '../parser/htmlScanner.js';
-import { MarkedString } from './../../vscode-languageserver-types/main.js';
-import { allTagProviders } from './tagProviders.js';
+import { MarkedString } from '../../vscode-languageserver-types/main.js';
 import { TokenType } from '../htmlLanguageTypes.js';
+import { getAllDataProviders } from '../languageFacts/builtinDataProviders.js';
 export function doHover(document, position, htmlDocument) {
     var offset = document.offsetAt(position);
     var node = htmlDocument.findNodeAt(offset);
     if (!node || !node.tag) {
         return null;
     }
-    var tagProviders = allTagProviders.filter(function (p) { return p.isApplicable(document.languageId); });
-    function getTagHover(tag, range, open) {
-        tag = tag.toLowerCase();
+    var dataProviders = getAllDataProviders().filter(function (p) { return p.isApplicable(document.languageId); });
+    function getTagHover(currTag, range, open) {
+        currTag = currTag.toLowerCase();
         var _loop_1 = function (provider) {
             var hover = null;
-            provider.collectTags(function (t, label) {
-                if (t === tag) {
-                    var tagLabel = open ? '<' + tag + '>' : '</' + tag + '>';
-                    hover = { contents: [{ language: 'html', value: tagLabel }, MarkedString.fromPlainText(label)], range: range };
+            provider.provideTags().forEach(function (tag) {
+                if (tag.name.toLowerCase() === currTag.toLowerCase()) {
+                    var tagLabel = open ? '<' + currTag + '>' : '</' + currTag + '>';
+                    var tagDescription = tag.description || '';
+                    hover = { contents: [{ language: 'html', value: tagLabel }, MarkedString.fromPlainText(tagDescription)], range: range };
                 }
             });
             if (hover) {
                 return { value: hover };
             }
         };
-        for (var _i = 0, tagProviders_1 = tagProviders; _i < tagProviders_1.length; _i++) {
-            var provider = tagProviders_1[_i];
+        for (var _i = 0, dataProviders_1 = dataProviders; _i < dataProviders_1.length; _i++) {
+            var provider = dataProviders_1[_i];
             var state_1 = _loop_1(provider);
             if (typeof state_1 === "object")
                 return state_1.value;

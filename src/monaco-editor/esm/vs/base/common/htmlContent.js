@@ -13,10 +13,6 @@ var MarkdownString = /** @class */ (function () {
         this.value += value.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
         return this;
     };
-    MarkdownString.prototype.appendMarkdown = function (value) {
-        this.value += value;
-        return this;
-    };
     MarkdownString.prototype.appendCodeblock = function (langId, code) {
         this.value += '\n```';
         this.value += langId;
@@ -45,7 +41,7 @@ export function isMarkdownString(thing) {
     }
     else if (thing && typeof thing === 'object') {
         return typeof thing.value === 'string'
-            && (typeof thing.isTrusted === 'boolean' || thing.isTrusted === void 0);
+            && (typeof thing.isTrusted === 'boolean' || thing.isTrusted === undefined);
     }
     return false;
 }

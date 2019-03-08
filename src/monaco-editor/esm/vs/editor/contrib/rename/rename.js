@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -61,11 +61,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import * as nls from '../../../nls.js';
 import { illegalArgument, onUnexpectedError } from '../../../base/common/errors.js';
-import { RawContextKey, IContextKeyService, ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { IContextKeyService, ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
 import { IProgressService } from '../../../platform/progress/common/progress.js';
 import { registerEditorAction, registerEditorContribution, EditorAction, EditorCommand, registerEditorCommand, registerDefaultLanguageCommand } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import RenameInputField from './renameInputField.js';
+import { RenameInputField, CONTEXT_RENAME_INPUT_VISIBLE } from './renameInputField.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { RenameProviderRegistry } from '../../common/modes.js';
 import { Position } from '../../common/core/position.js';
@@ -78,24 +78,29 @@ import { IBulkEditService } from '../../browser/services/bulkEditService.js';
 import { URI } from '../../../base/common/uri.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { createCancelablePromise } from '../../../base/common/async.js';
 var RenameSkeleton = /** @class */ (function () {
     function RenameSkeleton(model, position) {
         this.model = model;
         this.position = position;
-        this._provider = RenameProviderRegistry.ordered(model);
+        this._providers = RenameProviderRegistry.ordered(model);
     }
     RenameSkeleton.prototype.hasProvider = function () {
-        return this._provider.length > 0;
+        return this._providers.length > 0;
     };
     RenameSkeleton.prototype.resolveRenameLocation = function (token) {
         return __awaiter(this, void 0, void 0, function () {
-            var provider, res, word;
+            var firstProvider, res, word;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        provider = this._provider[0];
-                        if (!provider.resolveRenameLocation) return [3 /*break*/, 2];
-                        return [4 /*yield*/, provider.resolveRenameLocation(this.model, this.position, token)];
+                        firstProvider = this._providers[0];
+                        if (!firstProvider) {
+                            return [2 /*return*/, undefined];
+                        }
+                        if (!firstProvider.resolveRenameLocation) return [3 /*break*/, 2];
+                        return [4 /*yield*/, firstProvider.resolveRenameLocation(this.model, this.position, token)];
                     case 1:
                         res = _a.sent();
                         _a.label = 2;
@@ -103,10 +108,10 @@ var RenameSkeleton = /** @class */ (function () {
                         if (!res) {
                             word = this.model.getWordAtPosition(this.position);
                             if (word) {
-                                res = {
-                                    range: new Range(this.position.lineNumber, word.startColumn, this.position.lineNumber, word.endColumn),
-                                    text: word.word
-                                };
+                                return [2 /*return*/, {
+                                        range: new Range(this.position.lineNumber, word.startColumn, this.position.lineNumber, word.endColumn),
+                                        text: word.word
+                                    }];
                             }
                         }
                         return [2 /*return*/, res];
@@ -115,20 +120,18 @@ var RenameSkeleton = /** @class */ (function () {
         });
     };
     RenameSkeleton.prototype.provideRenameEdits = function (newName, i, rejects, token) {
-        if (i === void 0) { i = 0; }
-        if (rejects === void 0) { rejects = []; }
         return __awaiter(this, void 0, void 0, function () {
             var provider, result;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (i >= this._provider.length) {
+                        provider = this._providers[i];
+                        if (!provider) {
                             return [2 /*return*/, {
-                                    edits: undefined,
+                                    edits: [],
                                     rejectReason: rejects.join('\n')
                                 }];
                         }
-                        provider = this._provider[i];
                         return [4 /*yield*/, provider.provideRenameEdits(this.model, this.position, newName, token)];
                     case 1:
                         result = _a.sent();
@@ -148,33 +151,63 @@ var RenameSkeleton = /** @class */ (function () {
 export function rename(model, position, newName) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            return [2 /*return*/, new RenameSkeleton(model, position).provideRenameEdits(newName, undefined, undefined, CancellationToken.None)];
+            return [2 /*return*/, new RenameSkeleton(model, position).provideRenameEdits(newName, 0, [], CancellationToken.None)];
         });
     });
 }
 // ---  register actions and commands
-var CONTEXT_RENAME_INPUT_VISIBLE = new RawContextKey('renameInputVisible', false);
-var RenameController = /** @class */ (function () {
-    function RenameController(editor, _notificationService, _bulkEditService, _progressService, contextKeyService, themeService) {
-        this.editor = editor;
-        this._notificationService = _notificationService;
-        this._bulkEditService = _bulkEditService;
-        this._progressService = _progressService;
-        this._renameInputField = new RenameInputField(editor, themeService);
-        this._renameInputVisible = CONTEXT_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);
+var RenameController = /** @class */ (function (_super) {
+    __extends(RenameController, _super);
+    function RenameController(editor, _notificationService, _bulkEditService, _progressService, _contextKeyService, _themeService) {
+        var _this = _super.call(this) || this;
+        _this.editor = editor;
+        _this._notificationService = _notificationService;
+        _this._bulkEditService = _bulkEditService;
+        _this._progressService = _progressService;
+        _this._contextKeyService = _contextKeyService;
+        _this._themeService = _themeService;
+        _this._renameOperationIdPool = 1;
+        _this._register(_this.editor.onDidChangeModel(function () { return _this.onModelChanged(); }));
+        _this._register(_this.editor.onDidChangeModelLanguage(function () { return _this.onModelChanged(); }));
+        _this._register(_this.editor.onDidChangeCursorSelection(function () { return _this.onModelChanged(); }));
+        return _this;
     }
     RenameController.get = function (editor) {
         return editor.getContribution(RenameController.ID);
     };
-    RenameController.prototype.dispose = function () {
-        this._renameInputField.dispose();
-    };
+    Object.defineProperty(RenameController.prototype, "renameInputField", {
+        get: function () {
+            if (!this._renameInputField) {
+                this._renameInputField = this._register(new RenameInputField(this.editor, this._themeService, this._contextKeyService));
+            }
+            return this._renameInputField;
+        },
+        enumerable: true,
+        configurable: true
+    });
     RenameController.prototype.getId = function () {
         return RenameController.ID;
     };
-    RenameController.prototype.run = function (token) {
+    RenameController.prototype.run = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var position, skeleton, loc, e_1, selection, selectionStart, selectionEnd;
+            var id;
+            var _this = this;
+            return __generator(this, function (_a) {
+                if (this._activeRename) {
+                    this._activeRename.operation.cancel();
+                }
+                id = this._renameOperationIdPool++;
+                this._activeRename = {
+                    id: id,
+                    operation: createCancelablePromise(function (token) { return _this.doRename(token, id); })
+                };
+                return [2 /*return*/, this._activeRename.operation];
+            });
+        });
+    };
+    RenameController.prototype.doRename = function (token, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var position, skeleton, loc, resolveLocationOperation, e_1, selection, selectionStart, selectionEnd;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -190,7 +223,9 @@ var RenameController = /** @class */ (function () {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, skeleton.resolveRenameLocation(token)];
+                        resolveLocationOperation = skeleton.resolveRenameLocation(token);
+                        this._progressService.showWhile(resolveLocationOperation, 250);
+                        return [4 /*yield*/, resolveLocationOperation];
                     case 2:
                         loc = _a.sent();
                         return [3 /*break*/, 4];
@@ -206,6 +241,9 @@ var RenameController = /** @class */ (function () {
                             MessageController.get(this.editor).showMessage(loc.rejectReason, position);
                             return [2 /*return*/, undefined];
                         }
+                        if (!this._activeRename || this._activeRename.id !== id) {
+                            return [2 /*return*/, undefined];
+                        }
                         selection = this.editor.getSelection();
                         selectionStart = 0;
                         selectionEnd = loc.text.length;
@@ -213,9 +251,7 @@ var RenameController = /** @class */ (function () {
                             selectionStart = Math.max(0, selection.startColumn - loc.range.startColumn);
                             selectionEnd = Math.min(loc.range.endColumn, selection.endColumn) - loc.range.startColumn;
                         }
-                        this._renameInputVisible.set(true);
-                        return [2 /*return*/, this._renameInputField.getInput(loc.range, loc.text, selectionStart, selectionEnd).then(function (newNameOrFocusFlag) {
-                                _this._renameInputVisible.reset();
+                        return [2 /*return*/, this.renameInputField.getInput(loc.range, loc.text, selectionStart, selectionEnd).then(function (newNameOrFocusFlag) {
                                 if (typeof newNameOrFocusFlag === 'boolean') {
                                     if (newNameOrFocusFlag) {
                                         _this.editor.focus();
@@ -249,19 +285,26 @@ var RenameController = /** @class */ (function () {
                                 }));
                                 _this._progressService.showWhile(renameOperation, 250);
                                 return renameOperation;
-                            }, function (err) {
-                                _this._renameInputVisible.reset();
-                                return Promise.reject(err);
                             })];
                 }
             });
         });
     };
     RenameController.prototype.acceptRenameInput = function () {
-        this._renameInputField.acceptInput();
+        if (this._renameInputField) {
+            this._renameInputField.acceptInput();
+        }
     };
     RenameController.prototype.cancelRenameInput = function () {
-        this._renameInputField.cancelInput(true);
+        if (this._renameInputField) {
+            this._renameInputField.cancelInput(true);
+        }
+    };
+    RenameController.prototype.onModelChanged = function () {
+        if (this._activeRename) {
+            this._activeRename.operation.cancel();
+            this._activeRename = undefined;
+        }
     };
     RenameController.ID = 'editor.contrib.renameController';
     RenameController = __decorate([
@@ -272,7 +315,7 @@ var RenameController = /** @class */ (function () {
         __param(5, IThemeService)
     ], RenameController);
     return RenameController;
-}());
+}(Disposable));
 // ---- action implementation
 var RenameAction = /** @class */ (function (_super) {
     __extends(RenameAction, _super);
@@ -296,7 +339,7 @@ var RenameAction = /** @class */ (function (_super) {
     RenameAction.prototype.runCommand = function (accessor, args) {
         var _this = this;
         var editorService = accessor.get(ICodeEditorService);
-        var _a = args || [undefined, undefined], uri = _a[0], pos = _a[1];
+        var _a = Array.isArray(args) && args || [undefined, undefined], uri = _a[0], pos = _a[1];
         if (URI.isUri(uri) && Position.isIPosition(pos)) {
             return editorService.openCodeEditor({ resource: uri }, editorService.getActiveCodeEditor()).then(function (editor) {
                 if (!editor) {
@@ -314,7 +357,7 @@ var RenameAction = /** @class */ (function (_super) {
     RenameAction.prototype.run = function (accessor, editor) {
         var controller = RenameController.get(editor);
         if (controller) {
-            return Promise.resolve(controller.run(CancellationToken.None));
+            return controller.run();
         }
         return Promise.resolve();
     };

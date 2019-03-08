@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -103,7 +103,7 @@ var QuickOpenWidget = /** @class */ (function (_super) {
         this.inputContainer = document.createElement('div');
         DOM.addClass(this.inputContainer, 'quick-open-input');
         this.element.appendChild(this.inputContainer);
-        this.inputBox = this._register(new InputBox(this.inputContainer, null, {
+        this.inputBox = this._register(new InputBox(this.inputContainer, undefined, {
             placeholder: this.options.inputPlaceHolder || '',
             ariaLabel: DEFAULT_INPUT_ARIA_LABEL,
             inputBackground: this.styles.inputBackground,
@@ -184,7 +184,7 @@ var QuickOpenWidget = /** @class */ (function (_super) {
         }));
         this._register(this.tree.onDidChangeSelection(function (event) {
             if (event.selection && event.selection.length > 0) {
-                var mouseEvent = event.payload && event.payload.originalEvent instanceof StandardMouseEvent ? event.payload.originalEvent : void 0;
+                var mouseEvent = event.payload && event.payload.originalEvent instanceof StandardMouseEvent ? event.payload.originalEvent : undefined;
                 var shouldOpenInBackground = mouseEvent ? _this.shouldOpenInBackground(mouseEvent) : false;
                 _this.elementSelected(event.selection[0], event, shouldOpenInBackground ? 2 /* OPEN_IN_BACKGROUND */ : 1 /* OPEN */);
             }
@@ -385,7 +385,13 @@ var QuickOpenWidget = /** @class */ (function (_super) {
             return;
         }
         // ARIA
-        this.inputElement.setAttribute('aria-activedescendant', this.treeElement.getAttribute('aria-activedescendant'));
+        var arivaActiveDescendant = this.treeElement.getAttribute('aria-activedescendant');
+        if (arivaActiveDescendant) {
+            this.inputElement.setAttribute('aria-activedescendant', arivaActiveDescendant);
+        }
+        else {
+            this.inputElement.removeAttribute('aria-activedescendant');
+        }
         var context = { event: event, keymods: this.extractKeyMods(event), quickNavigateConfiguration: this.quickNavigateConfiguration };
         this.model.runner.run(value, 0 /* PREVIEW */, context);
     };
@@ -394,8 +400,8 @@ var QuickOpenWidget = /** @class */ (function (_super) {
         // Trigger open of element on selection
         if (this.isVisible()) {
             var mode = preferredMode || 1 /* OPEN */;
-            var context_1 = { event: event, keymods: this.extractKeyMods(event), quickNavigateConfiguration: this.quickNavigateConfiguration };
-            hide = this.model.runner.run(value, mode, context_1);
+            var context = { event: event, keymods: this.extractKeyMods(event), quickNavigateConfiguration: this.quickNavigateConfiguration };
+            hide = this.model.runner.run(value, mode, context);
         }
         // Hide if command was run successfully
         if (hide) {
@@ -411,7 +417,7 @@ var QuickOpenWidget = /** @class */ (function (_super) {
     QuickOpenWidget.prototype.show = function (param, options) {
         this.visible = true;
         this.isLoosingFocus = false;
-        this.quickNavigateConfiguration = options ? options.quickNavigateConfiguration : void 0;
+        this.quickNavigateConfiguration = options ? options.quickNavigateConfiguration : undefined;
         // Adjust UI for quick navigate mode
         if (this.quickNavigateConfiguration) {
             DOM.hide(this.inputContainer);
@@ -438,7 +444,7 @@ var QuickOpenWidget = /** @class */ (function (_super) {
             this.doShowWithPrefix(param);
         }
         else {
-            if (options.value) {
+            if (options && options.value) {
                 this.restoreLastInput(options.value);
             }
             this.doShowWithInput(param, options && options.autoFocus ? options.autoFocus : {});
@@ -496,9 +502,9 @@ var QuickOpenWidget = /** @class */ (function (_super) {
             var caseInsensitiveMatch = void 0;
             var prefix = autoFocus.autoFocusPrefixMatch;
             var lowerCasePrefix = prefix.toLowerCase();
-            for (var i = 0; i < entries.length; i++) {
-                var entry = entries[i];
-                var label = input.dataSource.getLabel(entry);
+            for (var _i = 0, entries_1 = entries; _i < entries_1.length; _i++) {
+                var entry = entries_1[_i];
+                var label = input.dataSource.getLabel(entry) || '';
                 if (!caseSensitiveMatch && label.indexOf(prefix) === 0) {
                     caseSensitiveMatch = entry;
                 }
@@ -551,7 +557,7 @@ var QuickOpenWidget = /** @class */ (function (_super) {
         var height = 0;
         var preferredItemsHeight;
         if (this.layoutDimensions && this.layoutDimensions.height) {
-            preferredItemsHeight = (this.layoutDimensions.height - 50 /* subtract height of input field (30px) and some spacing (drop shadow) to fit */) * 0.40 /* max 40% of screen */;
+            preferredItemsHeight = (this.layoutDimensions.height - 50 /* subtract height of input field (30px) and some spacing (drop shadow) to fit */) * 0.4 /* max 40% of screen */;
         }
         if (!preferredItemsHeight || preferredItemsHeight > QuickOpenWidget.MAX_ITEMS_HEIGHT) {
             preferredItemsHeight = QuickOpenWidget.MAX_ITEMS_HEIGHT;

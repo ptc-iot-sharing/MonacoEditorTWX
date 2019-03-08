@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -47,9 +47,24 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
     AbstractKeybindingService.prototype.lookupKeybinding = function (commandId) {
         var result = this._getResolver().lookupPrimaryKeybinding(commandId);
         if (!result) {
+            return undefined;
+        }
+        return result.resolvedKeybinding || undefined;
+    };
+    AbstractKeybindingService.prototype.softDispatch = function (e, target) {
+        var keybinding = this.resolveKeyboardEvent(e);
+        if (keybinding.isChord()) {
+            console.warn('Unexpected keyboard event mapped to a chord');
             return null;
         }
-        return result.resolvedKeybinding;
+        var firstPart = keybinding.getDispatchParts()[0];
+        if (firstPart === null) {
+            // cannot be dispatched, probably only modifier keys
+            return null;
+        }
+        var contextValue = this._contextKeyService.getContext(target);
+        var currentChord = this._currentChord ? this._currentChord.keypress : null;
+        return this._getResolver().resolve(contextValue, currentChord, firstPart);
     };
     AbstractKeybindingService.prototype._enterChordMode = function (firstPart, keypressLabel) {
         var _this = this;
@@ -82,9 +97,11 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
         this._currentChord = null;
     };
     AbstractKeybindingService.prototype._dispatch = function (e, target) {
+        return this._doDispatch(this.resolveKeyboardEvent(e), target);
+    };
+    AbstractKeybindingService.prototype._doDispatch = function (keybinding, target) {
         var _this = this;
         var shouldPreventDefault = false;
-        var keybinding = this.resolveKeyboardEvent(e);
         if (keybinding.isChord()) {
             console.warn('Unexpected keyboard event mapped to a chord');
             return false;
@@ -129,6 +146,19 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
             this._telemetryService.publicLog('workbenchActionExecuted', { id: resolveResult.commandId, from: 'keybinding' });
         }
         return shouldPreventDefault;
+    };
+    AbstractKeybindingService.prototype.mightProducePrintableCharacter = function (event) {
+        if (event.ctrlKey || event.metaKey) {
+            // ignore ctrl/cmd-combination but not shift/alt-combinatios
+            return false;
+        }
+        // weak check for certain ranges. this is properly implemented in a subclass
+        // with access to the KeyboardMapperFactory.
+        if ((event.keyCode >= 31 /* KEY_A */ && event.keyCode <= 56 /* KEY_Z */)
+            || (event.keyCode >= 21 /* KEY_0 */ && event.keyCode <= 30 /* KEY_9 */)) {
+            return true;
+        }
+        return false;
     };
     return AbstractKeybindingService;
 }(Disposable));

@@ -142,7 +142,7 @@ var FoldingModel = /** @class */ (function () {
         if (collapsedRanges.length > 0) {
             return collapsedRanges;
         }
-        return void 0;
+        return undefined;
     };
     /**
      * Apply persisted state, for persistence only
@@ -278,7 +278,6 @@ export function setCollapseStateLevelsUp(foldingModel, doCollapse, levels, lineN
  * Folds or unfolds all regions that have a given level, except if they contain one of the blocked lines.
  * @param foldLevel level. Level == 1 is the top level
  * @param doCollapse Wheter to collase or expand
-* @param blockedLineNumbers
 */
 export function setCollapseStateAtLevel(foldingModel, foldLevel, doCollapse, blockedLineNumbers) {
     var filter = function (region, level) { return level === foldLevel && region.isCollapsed !== doCollapse && !blockedLineNumbers.some(function (line) { return region.containsLine(line); }); };

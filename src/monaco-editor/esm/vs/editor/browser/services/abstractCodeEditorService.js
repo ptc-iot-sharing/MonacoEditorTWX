@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -59,8 +59,8 @@ var AbstractCodeEditorService = /** @class */ (function (_super) {
     AbstractCodeEditorService.prototype.getFocusedCodeEditor = function () {
         var editorWithWidgetFocus = null;
         var editors = this.listCodeEditors();
-        for (var i = 0; i < editors.length; i++) {
-            var editor = editors[i];
+        for (var _i = 0, editors_1 = editors; _i < editors_1.length; _i++) {
+            var editor = editors_1[_i];
             if (editor.hasTextFocus()) {
                 // bingo!
                 return editor;

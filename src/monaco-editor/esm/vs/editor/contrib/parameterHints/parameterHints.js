@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -57,7 +57,7 @@ var ParameterHintsController = /** @class */ (function () {
         this.widget.trigger(context);
     };
     ParameterHintsController.prototype.dispose = function () {
-        this.widget = dispose(this.widget);
+        dispose(this.widget);
     };
     ParameterHintsController.ID = 'editor.controller.parameterHints';
     ParameterHintsController = __decorate([
@@ -84,7 +84,7 @@ var TriggerParameterHintsAction = /** @class */ (function (_super) {
         var controller = ParameterHintsController.get(editor);
         if (controller) {
             controller.trigger({
-                triggerReason: modes.SignatureHelpTriggerReason.Invoke
+                triggerKind: modes.SignatureHelpTriggerKind.Invoke
             });
         }
     };
@@ -101,7 +101,7 @@ registerEditorCommand(new ParameterHintsCommand({
     handler: function (x) { return x.cancel(); },
     kbOpts: {
         weight: weight,
-        kbExpr: EditorContextKeys.editorTextFocus,
+        kbExpr: EditorContextKeys.focus,
         primary: 9 /* Escape */,
         secondary: [1024 /* Shift */ | 9 /* Escape */]
     }
@@ -112,7 +112,7 @@ registerEditorCommand(new ParameterHintsCommand({
     handler: function (x) { return x.previous(); },
     kbOpts: {
         weight: weight,
-        kbExpr: EditorContextKeys.editorTextFocus,
+        kbExpr: EditorContextKeys.focus,
         primary: 16 /* UpArrow */,
         secondary: [512 /* Alt */ | 16 /* UpArrow */],
         mac: { primary: 16 /* UpArrow */, secondary: [512 /* Alt */ | 16 /* UpArrow */, 256 /* WinCtrl */ | 46 /* KEY_P */] }
@@ -124,7 +124,7 @@ registerEditorCommand(new ParameterHintsCommand({
     handler: function (x) { return x.next(); },
     kbOpts: {
         weight: weight,
-        kbExpr: EditorContextKeys.editorTextFocus,
+        kbExpr: EditorContextKeys.focus,
         primary: 18 /* DownArrow */,
         secondary: [512 /* Alt */ | 18 /* DownArrow */],
         mac: { primary: 18 /* DownArrow */, secondary: [512 /* Alt */ | 18 /* DownArrow */, 256 /* WinCtrl */ | 44 /* KEY_N */] }

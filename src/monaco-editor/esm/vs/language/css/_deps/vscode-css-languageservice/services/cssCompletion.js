@@ -5,10 +5,10 @@
 'use strict';
 import * as nodes from '../parser/cssNodes.js';
 import { Symbols } from '../parser/cssSymbolScope.js';
-import * as languageFacts from './languageFacts.js';
+import * as languageFacts from '../languageFacts/facts.js';
 import * as strings from '../utils/strings.js';
-import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from './../../vscode-languageserver-types/main.js';
-import * as nls from './../../../fillers/vscode-nls.js';
+import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from '../../vscode-languageserver-types/main.js';
+import * as nls from '../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var SnippetFormat = InsertTextFormat.Snippet;
 var CSSCompletion = /** @class */ (function () {
@@ -54,13 +54,15 @@ var CSSCompletion = /** @class */ (function () {
                     }
                 }
                 else if (node instanceof nodes.SimpleSelector) {
-                    var parentExtRef = node.findParent(nodes.NodeType.ExtendsReference);
-                    if (parentExtRef) {
-                        this.getCompletionsForExtendsReference(parentExtRef, node, result);
-                    }
-                    else {
-                        var parentRuleSet = node.findParent(nodes.NodeType.Ruleset);
-                        this.getCompletionsForSelector(parentRuleSet, parentRuleSet && parentRuleSet.isNested(), result);
+                    var parentRef = node.findAParent(nodes.NodeType.ExtendsReference, nodes.NodeType.Ruleset);
+                    if (parentRef) {
+                        if (parentRef.type === nodes.NodeType.ExtendsReference) {
+                            this.getCompletionsForExtendsReference(parentRef, node, result);
+                        }
+                        else {
+                            var parentRuleSet = parentRef;
+                            this.getCompletionsForSelector(parentRuleSet, parentRuleSet && parentRuleSet.isNested(), result);
+                        }
                     }
                 }
                 else if (node instanceof nodes.FunctionArgument) {
@@ -98,6 +100,9 @@ var CSSCompletion = /** @class */ (function () {
                 }
                 else if (node.type === nodes.NodeType.URILiteral) {
                     this.getCompletionForUriLiteralValue(node, result);
+                }
+                else if (node.type === nodes.NodeType.StringLiteral && node.parent.type === nodes.NodeType.Import) {
+                    this.getCompletionForImportPath(node, result);
                 }
                 else if (node.parent === null) {
                     this.getCompletionForTopLevel(result);
@@ -160,49 +165,44 @@ var CSSCompletion = /** @class */ (function () {
     };
     CSSCompletion.prototype.getPropertyProposals = function (declaration, result) {
         var _this = this;
-        var properties = languageFacts.getProperties();
-        for (var key in properties) {
-            if (properties.hasOwnProperty(key)) {
-                var entry = properties[key];
-                if (entry.browsers.onCodeComplete) {
-                    var range = void 0;
-                    var insertText = void 0;
-                    var retrigger = false;
-                    if (declaration) {
-                        range = this.getCompletionRange(declaration.getProperty());
-                        insertText = entry.name;
-                        if (!isDefined(declaration.colonPosition)) {
-                            insertText += ': ';
-                            retrigger = true;
-                        }
-                    }
-                    else {
-                        range = this.getCompletionRange(null);
-                        insertText = entry.name + ': ';
-                        retrigger = true;
-                    }
-                    var item = {
-                        label: entry.name,
-                        documentation: languageFacts.getEntryDescription(entry),
-                        textEdit: TextEdit.replace(range, insertText),
-                        kind: CompletionItemKind.Property
-                    };
-                    if (entry.restrictions.length === 1 && entry.restrictions[0] === 'none') {
-                        retrigger = false;
-                    }
-                    if (retrigger) {
-                        item.command = {
-                            title: 'Suggest',
-                            command: 'editor.action.triggerSuggest'
-                        };
-                    }
-                    if (strings.startsWith(entry.name, '-')) {
-                        item.sortText = 'x';
-                    }
-                    result.items.push(item);
+        var properties = languageFacts.cssDataManager.getProperties();
+        properties.forEach(function (entry) {
+            var range;
+            var insertText;
+            var retrigger = false;
+            if (declaration) {
+                range = _this.getCompletionRange(declaration.getProperty());
+                insertText = entry.name;
+                if (!isDefined(declaration.colonPosition)) {
+                    insertText += ': ';
+                    retrigger = true;
                 }
             }
-        }
+            else {
+                range = _this.getCompletionRange(null);
+                insertText = entry.name + ': ';
+                retrigger = true;
+            }
+            var item = {
+                label: entry.name,
+                documentation: languageFacts.getEntryDescription(entry),
+                textEdit: TextEdit.replace(range, insertText),
+                kind: CompletionItemKind.Property
+            };
+            if (!entry.restrictions) {
+                retrigger = false;
+            }
+            if (retrigger) {
+                item.command = {
+                    title: 'Suggest',
+                    command: 'editor.action.triggerSuggest'
+                };
+            }
+            if (strings.startsWith(entry.name, '-')) {
+                item.sortText = 'x';
+            }
+            result.items.push(item);
+        });
         this.completionParticipants.forEach(function (participant) {
             if (participant.onCssProperty) {
                 participant.onCssProperty({
@@ -216,7 +216,7 @@ var CSSCompletion = /** @class */ (function () {
     CSSCompletion.prototype.getCompletionsForDeclarationValue = function (node, result) {
         var _this = this;
         var propertyName = node.getFullPropertyName();
-        var entry = languageFacts.getProperties()[propertyName];
+        var entry = languageFacts.cssDataManager.getProperty(propertyName);
         var existingNode = node.getValue();
         while (existingNode && existingNode.hasChildren()) {
             existingNode = existingNode.findChildAtOffset(this.offset, false);
@@ -231,39 +231,41 @@ var CSSCompletion = /** @class */ (function () {
             }
         });
         if (entry) {
-            for (var _i = 0, _a = entry.restrictions; _i < _a.length; _i++) {
-                var restriction = _a[_i];
-                switch (restriction) {
-                    case 'color':
-                        this.getColorProposals(entry, existingNode, result);
-                        break;
-                    case 'position':
-                        this.getPositionProposals(entry, existingNode, result);
-                        break;
-                    case 'repeat':
-                        this.getRepeatStyleProposals(entry, existingNode, result);
-                        break;
-                    case 'line-style':
-                        this.getLineStyleProposals(entry, existingNode, result);
-                        break;
-                    case 'line-width':
-                        this.getLineWidthProposals(entry, existingNode, result);
-                        break;
-                    case 'geometry-box':
-                        this.getGeometryBoxProposals(entry, existingNode, result);
-                        break;
-                    case 'box':
-                        this.getBoxProposals(entry, existingNode, result);
-                        break;
-                    case 'image':
-                        this.getImageProposals(entry, existingNode, result);
-                        break;
-                    case 'timing-function':
-                        this.getTimingFunctionProposals(entry, existingNode, result);
-                        break;
-                    case 'shape':
-                        this.getBasicShapeProposals(entry, existingNode, result);
-                        break;
+            if (entry.restrictions) {
+                for (var _i = 0, _a = entry.restrictions; _i < _a.length; _i++) {
+                    var restriction = _a[_i];
+                    switch (restriction) {
+                        case 'color':
+                            this.getColorProposals(entry, existingNode, result);
+                            break;
+                        case 'position':
+                            this.getPositionProposals(entry, existingNode, result);
+                            break;
+                        case 'repeat':
+                            this.getRepeatStyleProposals(entry, existingNode, result);
+                            break;
+                        case 'line-style':
+                            this.getLineStyleProposals(entry, existingNode, result);
+                            break;
+                        case 'line-width':
+                            this.getLineWidthProposals(entry, existingNode, result);
+                            break;
+                        case 'geometry-box':
+                            this.getGeometryBoxProposals(entry, existingNode, result);
+                            break;
+                        case 'box':
+                            this.getBoxProposals(entry, existingNode, result);
+                            break;
+                        case 'image':
+                            this.getImageProposals(entry, existingNode, result);
+                            break;
+                        case 'timing-function':
+                            this.getTimingFunctionProposals(entry, existingNode, result);
+                            break;
+                        case 'shape':
+                            this.getBasicShapeProposals(entry, existingNode, result);
+                            break;
+                    }
                 }
             }
             this.getValueEnumProposals(entry, existingNode, result);
@@ -289,7 +291,7 @@ var CSSCompletion = /** @class */ (function () {
         if (entry.values) {
             for (var _i = 0, _a = entry.values; _i < _a.length; _i++) {
                 var value = _a[_i];
-                if (languageFacts.isCommonValue(value)) { // only show if supported by more than one browser
+                if (languageFacts.supportedInMoreThanOneBrowser(value)) {
                     var insertString = value.name;
                     var insertTextFormat = void 0;
                     if (strings.endsWith(insertString, ')')) {
@@ -382,18 +384,20 @@ var CSSCompletion = /** @class */ (function () {
         if (existingNode && existingNode.parent && existingNode.parent.type === nodes.NodeType.Term) {
             existingNode = existingNode.getParent(); // include the unary operator
         }
-        for (var _i = 0, _a = entry.restrictions; _i < _a.length; _i++) {
-            var restriction = _a[_i];
-            var units = languageFacts.units[restriction];
-            if (units) {
-                for (var _b = 0, units_1 = units; _b < units_1.length; _b++) {
-                    var unit = units_1[_b];
-                    var insertText = currentWord + unit;
-                    result.items.push({
-                        label: insertText,
-                        textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
-                        kind: CompletionItemKind.Unit
-                    });
+        if (entry.restrictions) {
+            for (var _i = 0, _a = entry.restrictions; _i < _a.length; _i++) {
+                var restriction = _a[_i];
+                var units = languageFacts.units[restriction];
+                if (units) {
+                    for (var _b = 0, units_1 = units; _b < units_1.length; _b++) {
+                        var unit = units_1[_b];
+                        var insertText = currentWord + unit;
+                        result.items.push({
+                            label: insertText,
+                            textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
+                            kind: CompletionItemKind.Unit
+                        });
+                    }
                 }
             }
         }
@@ -572,17 +576,15 @@ var CSSCompletion = /** @class */ (function () {
         return result;
     };
     CSSCompletion.prototype.getCompletionForTopLevel = function (result) {
-        for (var _i = 0, _a = languageFacts.getAtDirectives(); _i < _a.length; _i++) {
-            var entry = _a[_i];
-            if (entry.browsers.count > 0) {
-                result.items.push({
-                    label: entry.name,
-                    textEdit: TextEdit.replace(this.getCompletionRange(null), entry.name),
-                    documentation: languageFacts.getEntryDescription(entry),
-                    kind: CompletionItemKind.Keyword
-                });
-            }
-        }
+        var _this = this;
+        languageFacts.cssDataManager.getAtDirectives().forEach(function (entry) {
+            result.items.push({
+                label: entry.name,
+                textEdit: TextEdit.replace(_this.getCompletionRange(null), entry.name),
+                documentation: languageFacts.getEntryDescription(entry),
+                kind: CompletionItemKind.Keyword
+            });
+        });
         this.getCompletionsForSelector(null, false, result);
         return result;
     };
@@ -596,7 +598,6 @@ var CSSCompletion = /** @class */ (function () {
         if (isInSelectors) {
             return this.getCompletionsForSelector(ruleSet, ruleSet.isNested(), result);
         }
-        ruleSet.findParent(nodes.NodeType.Ruleset);
         return this.getCompletionsForDeclarations(ruleSet.getDeclarations(), result);
     };
     CSSCompletion.prototype.getCompletionsForSelector = function (ruleSet, isNested, result) {
@@ -607,51 +608,47 @@ var CSSCompletion = /** @class */ (function () {
             this.currentWord = ':' + this.currentWord;
             this.defaultReplaceRange = Range.create(Position.create(this.position.line, this.position.character - this.currentWord.length), this.position);
         }
-        for (var _i = 0, _a = languageFacts.getPseudoClasses(); _i < _a.length; _i++) {
-            var entry = _a[_i];
-            if (entry.browsers.onCodeComplete) {
-                var insertText = moveCursorInsideParenthesis(entry.name);
-                var item = {
-                    label: entry.name,
-                    textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
-                    documentation: languageFacts.getEntryDescription(entry),
-                    kind: CompletionItemKind.Function,
-                    insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
-                };
-                if (strings.startsWith(entry.name, ':-')) {
-                    item.sortText = 'x';
-                }
-                result.items.push(item);
+        var pseudoClasses = languageFacts.cssDataManager.getPseudoClasses();
+        pseudoClasses.forEach(function (entry) {
+            var insertText = moveCursorInsideParenthesis(entry.name);
+            var item = {
+                label: entry.name,
+                textEdit: TextEdit.replace(_this.getCompletionRange(existingNode), insertText),
+                documentation: languageFacts.getEntryDescription(entry),
+                kind: CompletionItemKind.Function,
+                insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
+            };
+            if (strings.startsWith(entry.name, ':-')) {
+                item.sortText = 'x';
             }
-        }
-        for (var _b = 0, _c = languageFacts.getPseudoElements(); _b < _c.length; _b++) {
-            var entry = _c[_b];
-            if (entry.browsers.onCodeComplete) {
-                var insertText = moveCursorInsideParenthesis(entry.name);
-                var item = {
-                    label: entry.name,
-                    textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
-                    documentation: languageFacts.getEntryDescription(entry),
-                    kind: CompletionItemKind.Function,
-                    insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
-                };
-                if (strings.startsWith(entry.name, '::-')) {
-                    item.sortText = 'x';
-                }
-                result.items.push(item);
+            result.items.push(item);
+        });
+        var pseudoElements = languageFacts.cssDataManager.getPseudoElements();
+        pseudoElements.forEach(function (entry) {
+            var insertText = moveCursorInsideParenthesis(entry.name);
+            var item = {
+                label: entry.name,
+                textEdit: TextEdit.replace(_this.getCompletionRange(existingNode), insertText),
+                documentation: languageFacts.getEntryDescription(entry),
+                kind: CompletionItemKind.Function,
+                insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
+            };
+            if (strings.startsWith(entry.name, '::-')) {
+                item.sortText = 'x';
             }
-        }
+            result.items.push(item);
+        });
         if (!isNested) { // show html tags only for top level
-            for (var _d = 0, _e = languageFacts.html5Tags; _d < _e.length; _d++) {
-                var entry = _e[_d];
+            for (var _i = 0, _a = languageFacts.html5Tags; _i < _a.length; _i++) {
+                var entry = _a[_i];
                 result.items.push({
                     label: entry,
                     textEdit: TextEdit.replace(this.getCompletionRange(existingNode), entry),
                     kind: CompletionItemKind.Keyword
                 });
             }
-            for (var _f = 0, _g = languageFacts.svgElements; _f < _g.length; _f++) {
-                var entry = _g[_f];
+            for (var _b = 0, _c = languageFacts.svgElements; _b < _c.length; _b++) {
+                var entry = _c[_b];
                 result.items.push({
                     label: entry,
                     textEdit: TextEdit.replace(this.getCompletionRange(existingNode), entry),
@@ -857,6 +854,19 @@ var CSSCompletion = /** @class */ (function () {
         });
         return result;
     };
+    CSSCompletion.prototype.getCompletionForImportPath = function (importPathNode, result) {
+        var _this = this;
+        this.completionParticipants.forEach(function (participant) {
+            if (participant.onCssImportPath) {
+                participant.onCssImportPath({
+                    pathValue: importPathNode.getText(),
+                    position: _this.position,
+                    range: _this.getCompletionRange(importPathNode)
+                });
+            }
+        });
+        return result;
+    };
     return CSSCompletion;
 }());
 export { CSSCompletion };
@@ -929,4 +939,3 @@ function getCurrentWord(document, offset) {
     }
     return text.substring(i + 1, offset);
 }
-//# sourceMappingURL=cssCompletion.js.map

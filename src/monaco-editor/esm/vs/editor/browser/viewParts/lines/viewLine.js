@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -145,8 +145,8 @@ var ViewLine = /** @class */ (function () {
         var actualInlineDecorations = LineDecoration.filter(lineData.inlineDecorations, lineNumber, lineData.minColumn, lineData.maxColumn);
         if (alwaysRenderInlineSelection || options.themeType === HIGH_CONTRAST) {
             var selections = viewportData.selections;
-            for (var i = 0, len = selections.length; i < len; i++) {
-                var selection = selections[i];
+            for (var _i = 0, selections_1 = selections; _i < selections_1.length; _i++) {
+                var selection = selections_1[_i];
                 if (selection.endLineNumber < lineNumber || selection.startLineNumber > lineNumber) {
                     // Selection does not intersect line
                     continue;

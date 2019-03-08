@@ -30,9 +30,8 @@ var MoveLinesCommand = /** @class */ (function () {
             this._moveEndPositionDown = true;
             s = s.setEndPosition(s.endLineNumber - 1, model.getLineMaxColumn(s.endLineNumber - 1));
         }
-        var tabSize = model.getOptions().tabSize;
-        var insertSpaces = model.getOptions().insertSpaces;
-        var indentConverter = this.buildIndentConverter(tabSize);
+        var _a = model.getOptions(), tabSize = _a.tabSize, indentSize = _a.indentSize, insertSpaces = _a.insertSpaces;
+        var indentConverter = this.buildIndentConverter(tabSize, indentSize, insertSpaces);
         var virtualModel = {
             getLineTokens: function (lineNumber) {
                 return model.getLineTokens(lineNumber);
@@ -184,23 +183,13 @@ var MoveLinesCommand = /** @class */ (function () {
         }
         this._selectionId = builder.trackSelection(s);
     };
-    MoveLinesCommand.prototype.buildIndentConverter = function (tabSize) {
+    MoveLinesCommand.prototype.buildIndentConverter = function (tabSize, indentSize, insertSpaces) {
         return {
             shiftIndent: function (indentation) {
-                var desiredIndentCount = ShiftCommand.shiftIndentCount(indentation, indentation.length + 1, tabSize);
-                var newIndentation = '';
-                for (var i = 0; i < desiredIndentCount; i++) {
-                    newIndentation += '\t';
-                }
-                return newIndentation;
+                return ShiftCommand.shiftIndent(indentation, indentation.length + 1, tabSize, indentSize, insertSpaces);
             },
             unshiftIndent: function (indentation) {
-                var desiredIndentCount = ShiftCommand.unshiftIndentCount(indentation, indentation.length + 1, tabSize);
-                var newIndentation = '';
-                for (var i = 0; i < desiredIndentCount; i++) {
-                    newIndentation += '\t';
-                }
-                return newIndentation;
+                return ShiftCommand.unshiftIndent(indentation, indentation.length + 1, tabSize, indentSize, insertSpaces);
             }
         };
     };

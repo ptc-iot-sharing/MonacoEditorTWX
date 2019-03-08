@@ -18,7 +18,7 @@ var WordContextKey = /** @class */ (function () {
         var _this = this;
         this._editor = _editor;
         this._ckAtEnd = WordContextKey.AtEnd.bindTo(contextKeyService);
-        this._editor.onDidChangeConfiguration(function (e) { return e.contribInfo && _this._update(); });
+        this._confListener = this._editor.onDidChangeConfiguration(function (e) { return e.contribInfo && _this._update(); });
         this._update();
     }
     WordContextKey.prototype.dispose = function () {

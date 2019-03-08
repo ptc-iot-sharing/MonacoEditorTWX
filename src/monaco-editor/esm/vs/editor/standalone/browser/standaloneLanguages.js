@@ -170,6 +170,12 @@ export { TokenizationSupport2Adapter };
 function isEncodedTokensProvider(provider) {
     return provider['tokenizeEncoded'];
 }
+function isThenable(obj) {
+    if (typeof obj.then === 'function') {
+        return true;
+    }
+    return false;
+}
 /**
  * Set the tokens provider for a language (manual implementation).
  */
@@ -178,22 +184,30 @@ export function setTokensProvider(languageId, provider) {
     if (!languageIdentifier) {
         throw new Error("Cannot set tokens provider for unknown language " + languageId);
     }
-    var adapter;
-    if (isEncodedTokensProvider(provider)) {
-        adapter = new EncodedTokenizationSupport2Adapter(provider);
+    var create = function (provider) {
+        if (isEncodedTokensProvider(provider)) {
+            return new EncodedTokenizationSupport2Adapter(provider);
+        }
+        else {
+            return new TokenizationSupport2Adapter(StaticServices.standaloneThemeService.get(), languageIdentifier, provider);
+        }
+    };
+    if (isThenable(provider)) {
+        return modes.TokenizationRegistry.registerPromise(languageId, provider.then(function (provider) { return create(provider); }));
     }
-    else {
-        adapter = new TokenizationSupport2Adapter(StaticServices.standaloneThemeService.get(), languageIdentifier, provider);
-    }
-    return modes.TokenizationRegistry.register(languageId, adapter);
+    return modes.TokenizationRegistry.register(languageId, create(provider));
 }
 /**
  * Set the tokens provider for a language (monarch implementation).
  */
 export function setMonarchTokensProvider(languageId, languageDef) {
-    var lexer = compile(languageId, languageDef);
-    var adapter = createTokenizationSupport(StaticServices.modeService.get(), StaticServices.standaloneThemeService.get(), languageId, lexer);
-    return modes.TokenizationRegistry.register(languageId, adapter);
+    var create = function (languageDef) {
+        return createTokenizationSupport(StaticServices.modeService.get(), StaticServices.standaloneThemeService.get(), languageId, compile(languageId, languageDef));
+    };
+    if (isThenable(languageDef)) {
+        return modes.TokenizationRegistry.registerPromise(languageId, languageDef.then(function (languageDef) { return create(languageDef); }));
+    }
+    return modes.TokenizationRegistry.register(languageId, create(languageDef));
 }
 /**
  * Register a reference provider (used by e.g. reference search).
@@ -364,7 +378,7 @@ export function createMonacoLanguagesAPI() {
         SymbolKind: standaloneEnums.SymbolKind,
         IndentAction: standaloneEnums.IndentAction,
         CompletionTriggerKind: standaloneEnums.CompletionTriggerKind,
-        SignatureHelpTriggerReason: standaloneEnums.SignatureHelpTriggerReason,
+        SignatureHelpTriggerKind: standaloneEnums.SignatureHelpTriggerKind,
         // classes
         FoldingRangeKind: modes.FoldingRangeKind,
     };

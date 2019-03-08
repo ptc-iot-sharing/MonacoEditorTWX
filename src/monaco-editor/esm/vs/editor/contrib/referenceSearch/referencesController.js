@@ -82,11 +82,14 @@ var ReferencesController = /** @class */ (function () {
     ReferencesController.prototype.dispose = function () {
         this._referenceSearchVisible.reset();
         dispose(this._disposables);
-        dispose(this._widget);
-        dispose(this._model);
-        this._widget = null;
-        this._model = null;
-        this._editor = null;
+        if (this._widget) {
+            dispose(this._widget);
+            this._widget = null;
+        }
+        if (this._model) {
+            dispose(this._model);
+            this._model = null;
+        }
     };
     ReferencesController.prototype.toggleWidget = function (range, modelPromise, options) {
         var _this = this;
@@ -97,7 +100,7 @@ var ReferencesController = /** @class */ (function () {
         }
         this.closeWidget();
         if (!!widgetPosition && range.containsPosition(widgetPosition)) {
-            return null;
+            return;
         }
         this._referenceSearchVisible.set(true);
         // close the widget on model/mode changes
@@ -114,8 +117,10 @@ var ReferencesController = /** @class */ (function () {
         this._widget.show(range);
         this._disposables.push(this._widget.onDidClose(function () {
             modelPromise.cancel();
-            _this._storageService.store(storageKey, JSON.stringify(_this._widget.layoutData), 0 /* GLOBAL */);
-            _this._widget = null;
+            if (_this._widget) {
+                _this._storageService.store(storageKey, JSON.stringify(_this._widget.layoutData), 0 /* GLOBAL */);
+                _this._widget = null;
+            }
             _this.closeWidget();
         }));
         this._disposables.push(this._widget.onDidSelectReference(function (event) {
@@ -129,14 +134,18 @@ var ReferencesController = /** @class */ (function () {
                         break;
                     }
                 case 'side':
-                    _this.openReference(element, kind === 'side');
+                    if (element) {
+                        _this.openReference(element, kind === 'side');
+                    }
                     break;
                 case 'goto':
-                    if (options.onGoto) {
-                        options.onGoto(element);
-                    }
-                    else {
-                        _this._gotoReference(element);
+                    if (element) {
+                        if (options.onGoto) {
+                            options.onGoto(element);
+                        }
+                        else {
+                            _this._gotoReference(element);
+                        }
                     }
                     break;
             }
@@ -153,7 +162,7 @@ var ReferencesController = /** @class */ (function () {
             _this._model = model;
             // show widget
             return _this._widget.setModel(_this._model).then(function () {
-                if (_this._widget) { // might have been closed
+                if (_this._widget && _this._model && _this._editor.hasModel()) { // might have been closed
                     // set title
                     _this._widget.setMetaTitle(options.getMetaTitle(_this._model));
                     // set 'best' selection
@@ -172,12 +181,22 @@ var ReferencesController = /** @class */ (function () {
     };
     ReferencesController.prototype.goToNextOrPreviousReference = function (fwd) {
         return __awaiter(this, void 0, void 0, function () {
-            var source, target, editorFocus;
+            var currentPosition, source, target, editorFocus;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!this._model) return [3 /*break*/, 3];
-                        source = this._model.nearestReference(this._editor.getModel().uri, this._widget.position);
+                        if (!this._editor.hasModel() || !this._model || !this._widget) {
+                            // can be called while still resolving...
+                            return [2 /*return*/];
+                        }
+                        currentPosition = this._widget.position;
+                        if (!currentPosition) {
+                            return [2 /*return*/];
+                        }
+                        source = this._model.nearestReference(this._editor.getModel().uri, currentPosition);
+                        if (!source) {
+                            return [2 /*return*/];
+                        }
                         target = this._model.nextOrPreviousReference(source, fwd);
                         editorFocus = this._editor.hasTextFocus();
                         return [4 /*yield*/, this._widget.setSelection(target)];
@@ -189,25 +208,30 @@ var ReferencesController = /** @class */ (function () {
                         if (editorFocus) {
                             this._editor.focus();
                         }
-                        _a.label = 3;
-                    case 3: return [2 /*return*/];
+                        return [2 /*return*/];
                 }
             });
         });
     };
     ReferencesController.prototype.closeWidget = function () {
-        dispose(this._widget);
-        this._widget = null;
+        if (this._widget) {
+            dispose(this._widget);
+            this._widget = null;
+        }
         this._referenceSearchVisible.reset();
         this._disposables = dispose(this._disposables);
-        dispose(this._model);
-        this._model = null;
+        if (this._model) {
+            dispose(this._model);
+            this._model = null;
+        }
         this._editor.focus();
         this._requestIdPool += 1; // Cancel pending requests
     };
     ReferencesController.prototype._gotoReference = function (ref) {
         var _this = this;
-        this._widget.hide();
+        if (this._widget) {
+            this._widget.hide();
+        }
         this._ignoreModelChangeEvent = true;
         var range = Range.lift(ref.range).collapseToStart();
         return this._editorService.openCodeEditor({
@@ -226,8 +250,10 @@ var ReferencesController = /** @class */ (function () {
                 _this.closeWidget();
                 return;
             }
-            _this._widget.show(range);
-            _this._widget.focus();
+            if (_this._widget) {
+                _this._widget.show(range);
+                _this._widget.focus();
+            }
         }, function (err) {
             _this._ignoreModelChangeEvent = false;
             onUnexpectedError(err);

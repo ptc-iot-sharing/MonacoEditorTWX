@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -26,14 +26,13 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import { always } from '../../base/common/async.js';
 import { illegalArgument } from '../../base/common/errors.js';
 import { URI } from '../../base/common/uri.js';
 import { ICodeEditorService } from './services/codeEditorService.js';
 import { Position } from '../common/core/position.js';
 import { IModelService } from '../common/services/modelService.js';
 import { ITextModelService } from '../common/services/resolverService.js';
-import { MenuId, MenuRegistry } from '../../platform/actions/common/actions.js';
+import { MenuRegistry } from '../../platform/actions/common/actions.js';
 import { CommandsRegistry } from '../../platform/commands/common/commands.js';
 import { ContextKeyExpr, IContextKeyService } from '../../platform/contextkey/common/contextkey.js';
 import { KeybindingsRegistry } from '../../platform/keybinding/common/keybindingsRegistry.js';
@@ -113,7 +112,7 @@ var EditorCommand = /** @class */ (function (_super) {
             EditorControllerCommandImpl.prototype.runEditorCommand = function (accessor, editor, args) {
                 var controller = controllerGetter(editor);
                 if (controller) {
-                    this._callback(controllerGetter(editor));
+                    this._callback(controllerGetter(editor), args);
                 }
             };
             return EditorControllerCommandImpl;
@@ -151,7 +150,7 @@ var EditorAction = /** @class */ (function (_super) {
     }
     EditorAction.prototype.register = function () {
         if (this.menuOpts) {
-            MenuRegistry.appendMenuItem(MenuId.EditorContext, {
+            MenuRegistry.appendMenuItem(7 /* EditorContext */, {
                 command: {
                     id: this.id,
                     title: this.label
@@ -202,7 +201,7 @@ export function registerDefaultLanguageCommand(id, handler) {
             return handler(model, editorPosition, args);
         }
         return accessor.get(ITextModelService).createModelReference(resource).then(function (reference) {
-            return always(new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 try {
                     var result = handler(reference.object.textEditorModel, Position.lift(position), args);
                     resolve(result);
@@ -210,7 +209,7 @@ export function registerDefaultLanguageCommand(id, handler) {
                 catch (err) {
                     reject(err);
                 }
-            }), function () {
+            }).finally(function () {
                 reference.dispose();
             });
         });

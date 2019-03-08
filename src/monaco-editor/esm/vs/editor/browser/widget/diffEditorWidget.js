@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -238,14 +238,18 @@ var DiffEditorWidget = /** @class */ (function (_super) {
             this._overviewDomElement.removeChild(this._originalOverviewRuler.getDomNode());
             this._originalOverviewRuler.dispose();
         }
-        this._originalOverviewRuler = this.originalEditor.createOverviewRuler('original diffOverviewRuler');
-        this._overviewDomElement.appendChild(this._originalOverviewRuler.getDomNode());
+        if (this.originalEditor.hasModel()) {
+            this._originalOverviewRuler = this.originalEditor.createOverviewRuler('original diffOverviewRuler');
+            this._overviewDomElement.appendChild(this._originalOverviewRuler.getDomNode());
+        }
         if (this._modifiedOverviewRuler) {
             this._overviewDomElement.removeChild(this._modifiedOverviewRuler.getDomNode());
             this._modifiedOverviewRuler.dispose();
         }
-        this._modifiedOverviewRuler = this.modifiedEditor.createOverviewRuler('modified diffOverviewRuler');
-        this._overviewDomElement.appendChild(this._modifiedOverviewRuler.getDomNode());
+        if (this.modifiedEditor.hasModel()) {
+            this._modifiedOverviewRuler = this.modifiedEditor.createOverviewRuler('modified diffOverviewRuler');
+            this._overviewDomElement.appendChild(this._modifiedOverviewRuler.getDomNode());
+        }
         this._layoutOverviewRulers();
     };
     DiffEditorWidget.prototype._createLeftHandSide = function () {
@@ -546,7 +550,7 @@ var DiffEditorWidget = /** @class */ (function (_super) {
         };
     };
     DiffEditorWidget.prototype.restoreViewState = function (s) {
-        if (s.original && s.original) {
+        if (s.original && s.modified) {
             var diffEditorState = s;
             this.originalEditor.restoreViewState(diffEditorState.original);
             this.modifiedEditor.restoreViewState(diffEditorState.modified);
@@ -1112,14 +1116,18 @@ var ViewZonesComputer = /** @class */ (function () {
             }
             // ---------------------------- END EMIT MINIMAL VIEW ZONES
         }
-        var ensureDomNode = function (z) {
+        return {
+            original: ViewZonesComputer._ensureDomNodes(result.original),
+            modified: ViewZonesComputer._ensureDomNodes(result.modified),
+        };
+    };
+    ViewZonesComputer._ensureDomNodes = function (zones) {
+        return zones.map(function (z) {
             if (!z.domNode) {
                 z.domNode = createFakeLinesDiv();
             }
-        };
-        result.original.forEach(ensureDomNode);
-        result.modified.forEach(ensureDomNode);
-        return result;
+            return z;
+        });
     };
     return ViewZonesComputer;
 }());

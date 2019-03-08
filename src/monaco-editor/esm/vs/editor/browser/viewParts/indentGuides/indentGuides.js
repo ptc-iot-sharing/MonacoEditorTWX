@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -95,11 +95,10 @@ var IndentGuidesOverlay = /** @class */ (function (_super) {
         }
         var visibleStartLineNumber = ctx.visibleRange.startLineNumber;
         var visibleEndLineNumber = ctx.visibleRange.endLineNumber;
-        var tabSize = this._context.model.getTabSize();
-        var tabWidth = tabSize * this._spaceWidth;
+        var indentSize = this._context.model.getOptions().indentSize;
+        var indentWidth = indentSize * this._spaceWidth;
         var scrollWidth = ctx.scrollWidth;
         var lineHeight = this._lineHeight;
-        var indentGuideWidth = tabWidth;
         var indents = this._context.model.getLinesIndentGuides(visibleStartLineNumber, visibleEndLineNumber);
         var activeIndentStartLineNumber = 0;
         var activeIndentEndLineNumber = 0;
@@ -120,8 +119,8 @@ var IndentGuidesOverlay = /** @class */ (function (_super) {
             var left = leftMostVisiblePosition ? leftMostVisiblePosition.left : 0;
             for (var i = 1; i <= indent; i++) {
                 var className = (containsActiveIndentGuide && i === activeIndentLevel ? 'cigra' : 'cigr');
-                result += "<div class=\"" + className + "\" style=\"left:" + left + "px;height:" + lineHeight + "px;width:" + indentGuideWidth + "px\"></div>";
-                left += tabWidth;
+                result += "<div class=\"" + className + "\" style=\"left:" + left + "px;height:" + lineHeight + "px;width:" + indentWidth + "px\"></div>";
+                left += indentWidth;
                 if (left > scrollWidth) {
                     break;
                 }

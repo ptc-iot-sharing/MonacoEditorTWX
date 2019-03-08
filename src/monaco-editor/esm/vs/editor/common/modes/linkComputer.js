@@ -38,6 +38,7 @@ var StateMachine = /** @class */ (function () {
     };
     return StateMachine;
 }());
+export { StateMachine };
 // State machine for http:// or https:// or file://
 var _stateMachine = null;
 function getStateMachine() {
@@ -121,8 +122,8 @@ var LinkComputer = /** @class */ (function () {
             url: line.substring(linkBeginIndex, lastIncludedCharIndex + 1)
         };
     };
-    LinkComputer.computeLinks = function (model) {
-        var stateMachine = getStateMachine();
+    LinkComputer.computeLinks = function (model, stateMachine) {
+        if (stateMachine === void 0) { stateMachine = getStateMachine(); }
         var classifier = getClassifier();
         var result = [];
         for (var i = 1, lineCount = model.getLineCount(); i <= lineCount; i++) {
@@ -182,7 +183,15 @@ var LinkComputer = /** @class */ (function () {
                     }
                 }
                 else if (state === 12 /* End */) {
-                    var chClass = classifier.get(chCode);
+                    var chClass = void 0;
+                    if (chCode === 91 /* OpenSquareBracket */) {
+                        // Allow for the authority part to contain ipv6 addresses which contain [ and ]
+                        hasOpenSquareBracket = true;
+                        chClass = 0 /* None */;
+                    }
+                    else {
+                        chClass = classifier.get(chCode);
+                    }
                     // Check if character terminates link
                     if (chClass === 1 /* ForceTermination */) {
                         resetStateMachine = true;
@@ -216,6 +225,7 @@ var LinkComputer = /** @class */ (function () {
     };
     return LinkComputer;
 }());
+export { LinkComputer };
 /**
  * Returns an array of all links contains in the provided
  * document. *Note* that this operation is computational

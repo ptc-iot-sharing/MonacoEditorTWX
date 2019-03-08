@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -16,13 +16,13 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import * as nls from '../../../../nls.js';
-import { TPromise } from '../../../common/winjs.base.js';
 import { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';
 import { ActionBar } from '../../../browser/ui/actionbar/actionbar.js';
 import { HighlightedLabel } from '../../../browser/ui/highlightedlabel/highlightedLabel.js';
 import * as DOM from '../../../browser/dom.js';
 import { KeybindingLabel } from '../../../browser/ui/keybindingLabel/keybindingLabel.js';
 import { OS } from '../../../common/platform.js';
+import { coalesce } from '../../../common/arrays.js';
 var IDS = 0;
 var QuickOpenEntry = /** @class */ (function () {
     function QuickOpenEntry(highlights) {
@@ -53,8 +53,7 @@ var QuickOpenEntry = /** @class */ (function () {
      * The label of the entry to use when a screen reader wants to read about the entry
      */
     QuickOpenEntry.prototype.getAriaLabel = function () {
-        return [this.getLabel(), this.getDescription(), this.getDetail()]
-            .filter(function (s) { return !!s; })
+        return coalesce([this.getLabel(), this.getDescription(), this.getDetail()])
             .join(', ');
     };
     /**
@@ -147,7 +146,7 @@ var QuickOpenEntryGroup = /** @class */ (function (_super) {
      * Whether to show a border on top of the group entry or not.
      */
     QuickOpenEntryGroup.prototype.showBorder = function () {
-        return this.withBorder;
+        return !!this.withBorder;
     };
     QuickOpenEntryGroup.prototype.setShowBorder = function (showBorder) {
         this.withBorder = showBorder;
@@ -192,7 +191,7 @@ var NoActionProvider = /** @class */ (function () {
         return false;
     };
     NoActionProvider.prototype.getActions = function (tree, element) {
-        return TPromise.as(null);
+        return null;
     };
     return NoActionProvider;
 }());
@@ -201,7 +200,6 @@ var templateEntryGroup = 'quickOpenEntryGroup';
 var Renderer = /** @class */ (function () {
     function Renderer(actionProvider, actionRunner) {
         if (actionProvider === void 0) { actionProvider = new NoActionProvider(); }
-        if (actionRunner === void 0) { actionRunner = null; }
         this.actionProvider = actionProvider;
         this.actionRunner = actionRunner;
     }
@@ -224,7 +222,7 @@ var Renderer = /** @class */ (function () {
         // Entry
         var row1 = DOM.$('.quick-open-row');
         var row2 = DOM.$('.quick-open-row');
-        var entry = DOM.$('.quick-open-entry', null, row1, row2);
+        var entry = DOM.$('.quick-open-entry', undefined, row1, row2);
         entryContainer.appendChild(entry);
         // Icon
         var icon = document.createElement('span');
@@ -276,14 +274,13 @@ var Renderer = /** @class */ (function () {
             DOM.removeClass(data.container, 'has-actions');
         }
         data.actionBar.context = entry; // make sure the context is the current element
-        this.actionProvider.getActions(null, entry).then(function (actions) {
-            if (data.actionBar.isEmpty() && actions && actions.length > 0) {
-                data.actionBar.push(actions, { icon: true, label: false });
-            }
-            else if (!data.actionBar.isEmpty() && (!actions || actions.length === 0)) {
-                data.actionBar.clear();
-            }
-        });
+        var actions = this.actionProvider.getActions(null, entry);
+        if (data.actionBar.isEmpty() && actions && actions.length > 0) {
+            data.actionBar.push(actions, { icon: true, label: false });
+        }
+        else if (!data.actionBar.isEmpty() && (!actions || actions.length === 0)) {
+            data.actionBar.clear();
+        }
         // Entry group class
         if (entry instanceof QuickOpenEntryGroup && entry.getGroupLabel()) {
             DOM.addClass(data.container, 'has-group-label');
@@ -298,7 +295,9 @@ var Renderer = /** @class */ (function () {
             // Border
             if (group.showBorder()) {
                 DOM.addClass(groupData.container, 'results-group-separator');
-                groupData.container.style.borderTopColor = styles.pickerGroupBorder.toString();
+                if (styles.pickerGroupBorder) {
+                    groupData.container.style.borderTopColor = styles.pickerGroupBorder.toString();
+                }
             }
             else {
                 DOM.removeClass(groupData.container, 'results-group-separator');
@@ -306,8 +305,12 @@ var Renderer = /** @class */ (function () {
             }
             // Group Label
             var groupLabel = group.getGroupLabel() || '';
-            groupData.group.textContent = groupLabel;
-            groupData.group.style.color = styles.pickerGroupForeground.toString();
+            if (groupData.group) {
+                groupData.group.textContent = groupLabel;
+                if (styles.pickerGroupForeground) {
+                    groupData.group.style.color = styles.pickerGroupForeground.toString();
+                }
+            }
         }
         // Normal Entry
         if (entry instanceof QuickOpenEntry) {
@@ -318,14 +321,14 @@ var Renderer = /** @class */ (function () {
             // Label
             var options = entry.getLabelOptions() || Object.create(null);
             options.matches = labelHighlights || [];
-            options.title = entry.getTooltip();
-            options.descriptionTitle = entry.getDescriptionTooltip() || entry.getDescription(); // tooltip over description because it could overflow
+            options.title = entry.getTooltip() || undefined;
+            options.descriptionTitle = entry.getDescriptionTooltip() || entry.getDescription() || undefined; // tooltip over description because it could overflow
             options.descriptionMatches = descriptionHighlights || [];
-            data.label.setValue(entry.getLabel(), entry.getDescription(), options);
+            data.label.setLabel(entry.getLabel() || undefined, entry.getDescription() || undefined, options);
             // Meta
-            data.detail.set(entry.getDetail(), detailHighlights);
+            data.detail.set(entry.getDetail() || undefined, detailHighlights);
             // Keybinding
-            data.keybinding.set(entry.getKeybinding(), null);
+            data.keybinding.set(entry.getKeybinding());
         }
     };
     Renderer.prototype.disposeTemplate = function (templateId, templateData) {
@@ -334,9 +337,7 @@ var Renderer = /** @class */ (function () {
         data.actionBar = null;
         data.container = null;
         data.entry = null;
-        data.keybinding.dispose();
         data.keybinding = null;
-        data.detail.dispose();
         data.detail = null;
         data.group = null;
         data.icon = null;

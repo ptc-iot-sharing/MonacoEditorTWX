@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -35,7 +35,7 @@ import { InternalEditorAction } from '../../common/editorAction.js';
 import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
 import { StandaloneKeybindingService, applyConfigurationValues } from './simpleServices.js';
 import { IStandaloneThemeService } from '../common/standaloneThemeService.js';
-import { MenuId, MenuRegistry } from '../../../platform/actions/common/actions.js';
+import { MenuRegistry } from '../../../platform/actions/common/actions.js';
 import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
 import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
 import { ContextKeyExpr, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
@@ -44,6 +44,7 @@ import { IInstantiationService } from '../../../platform/instantiation/common/in
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
+import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 var LAST_GENERATED_COMMAND_ID = 0;
 var ariaDomNodeCreated = false;
 function createAriaDomNode() {
@@ -58,14 +59,14 @@ function createAriaDomNode() {
  */
 var StandaloneCodeEditor = /** @class */ (function (_super) {
     __extends(StandaloneCodeEditor, _super);
-    function StandaloneCodeEditor(domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService) {
+    function StandaloneCodeEditor(domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, accessibilityService) {
         var _this = this;
         options = options || {};
         options.ariaLabel = options.ariaLabel || nls.localize('editorViewAccessibleLabel', "Editor content");
         options.ariaLabel = options.ariaLabel + ';' + (browser.isIE
             ? nls.localize('accessibilityHelpMessageIE', "Press Ctrl+F1 for Accessibility Options.")
             : nls.localize('accessibilityHelpMessage', "Press Alt+F1 for Accessibility Options."));
-        _this = _super.call(this, domElement, options, {}, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService) || this;
+        _this = _super.call(this, domElement, options, {}, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService, accessibilityService) || this;
         if (keybindingService instanceof StandaloneKeybindingService) {
             _this._standaloneKeybindingService = keybindingService;
         }
@@ -122,7 +123,7 @@ var StandaloneCodeEditor = /** @class */ (function (_super) {
                 group: contextMenuGroupId,
                 order: contextMenuOrder
             };
-            toDispose.push(MenuRegistry.appendMenuItem(MenuId.EditorContext, menuItem));
+            toDispose.push(MenuRegistry.appendMenuItem(7 /* EditorContext */, menuItem));
         }
         // Register the keybindings
         if (Array.isArray(keybindings)) {
@@ -146,14 +147,15 @@ var StandaloneCodeEditor = /** @class */ (function (_super) {
         __param(5, IContextKeyService),
         __param(6, IKeybindingService),
         __param(7, IThemeService),
-        __param(8, INotificationService)
+        __param(8, INotificationService),
+        __param(9, IAccessibilityService)
     ], StandaloneCodeEditor);
     return StandaloneCodeEditor;
 }(CodeEditorWidget));
 export { StandaloneCodeEditor };
 var StandaloneEditor = /** @class */ (function (_super) {
     __extends(StandaloneEditor, _super);
-    function StandaloneEditor(domElement, options, toDispose, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, contextViewService, themeService, notificationService, configurationService) {
+    function StandaloneEditor(domElement, options, toDispose, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, contextViewService, themeService, notificationService, configurationService, accessibilityService) {
         var _this = this;
         applyConfigurationValues(configurationService, options, false);
         options = options || {};
@@ -162,7 +164,7 @@ var StandaloneEditor = /** @class */ (function (_super) {
         }
         var _model = options.model;
         delete options.model;
-        _this = _super.call(this, domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService) || this;
+        _this = _super.call(this, domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, accessibilityService) || this;
         _this._contextViewService = contextViewService;
         _this._configurationService = configurationService;
         _this._register(toDispose);
@@ -214,7 +216,8 @@ var StandaloneEditor = /** @class */ (function (_super) {
         __param(8, IContextViewService),
         __param(9, IStandaloneThemeService),
         __param(10, INotificationService),
-        __param(11, IConfigurationService)
+        __param(11, IConfigurationService),
+        __param(12, IAccessibilityService)
     ], StandaloneEditor);
     return StandaloneEditor;
 }(StandaloneCodeEditor));

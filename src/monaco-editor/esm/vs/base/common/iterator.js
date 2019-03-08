@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -95,6 +95,14 @@ export var Iterator;
     }
     Iterator.collect = collect;
 })(Iterator || (Iterator = {}));
+export function getSequenceIterator(arg) {
+    if (Array.isArray(arg)) {
+        return Iterator.fromArray(arg);
+    }
+    else {
+        return arg;
+    }
+}
 var ArrayIterator = /** @class */ (function () {
     function ArrayIterator(items, start, end, index) {
         if (start === void 0) { start = 0; }

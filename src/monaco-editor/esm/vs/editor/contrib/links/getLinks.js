@@ -38,7 +38,12 @@ var Link = /** @class */ (function () {
         var _this = this;
         if (this._link.url) {
             try {
-                return Promise.resolve(URI.parse(this._link.url));
+                if (typeof this._link.url === 'string') {
+                    return Promise.resolve(URI.parse(this._link.url));
+                }
+                else {
+                    return Promise.resolve(this._link.url);
+                }
             }
             catch (e) {
                 return Promise.reject(new Error('invalid'));

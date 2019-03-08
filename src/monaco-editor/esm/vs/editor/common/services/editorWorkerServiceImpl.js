@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -33,6 +33,7 @@ import { LanguageConfigurationRegistry } from '../modes/languageConfigurationReg
 import { EditorSimpleWorkerImpl } from './editorSimpleWorker.js';
 import { IModelService } from './modelService.js';
 import { ITextResourceConfigurationService } from './resourceConfiguration.js';
+import { regExpFlags } from '../../../base/common/strings.js';
 /**
  * Stop syncing a model to the worker if it was not needed for 1 min.
  */
@@ -204,8 +205,8 @@ var EditorModelManager = /** @class */ (function (_super) {
         _super.prototype.dispose.call(this);
     };
     EditorModelManager.prototype.esureSyncedResources = function (resources) {
-        for (var i = 0; i < resources.length; i++) {
-            var resource = resources[i];
+        for (var _i = 0, resources_1 = resources; _i < resources_1.length; _i++) {
+            var resource = resources_1[_i];
             var resourceStr = resource.toString();
             if (!this._syncedModels[resourceStr]) {
                 this._beginModelSync(resource);
@@ -224,8 +225,9 @@ var EditorModelManager = /** @class */ (function (_super) {
                 toRemove.push(modelUrl);
             }
         }
-        for (var i = 0; i < toRemove.length; i++) {
-            this._stopModelSync(toRemove[i]);
+        for (var _i = 0, toRemove_1 = toRemove; _i < toRemove_1.length; _i++) {
+            var e = toRemove_1[_i];
+            this._stopModelSync(e);
         }
     };
     EditorModelManager.prototype._beginModelSync = function (resource) {
@@ -301,7 +303,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
     };
     EditorWorkerClient.prototype._getProxy = function () {
         var _this = this;
-        return this._getOrCreateWorker().getProxyObject().then(null, function (err) {
+        return this._getOrCreateWorker().getProxyObject().then(undefined, function (err) {
             logOnceWebWorkerWarning(err);
             _this._worker = new SynchronousWorkerClient(new EditorSimpleWorkerImpl(null));
             return _this._getOrCreateWorker().getProxyObject();
@@ -344,7 +346,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
             }
             var wordDefRegExp = LanguageConfigurationRegistry.getWordDefinition(model.getLanguageIdentifier().id);
             var wordDef = wordDefRegExp.source;
-            var wordDefFlags = (wordDefRegExp.global ? 'g' : '') + (wordDefRegExp.ignoreCase ? 'i' : '') + (wordDefRegExp.multiline ? 'm' : '');
+            var wordDefFlags = regExpFlags(wordDefRegExp);
             return proxy.textualSuggest(resource.toString(), position, wordDef, wordDefFlags);
         });
     };
@@ -357,7 +359,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
             }
             var wordDefRegExp = LanguageConfigurationRegistry.getWordDefinition(model.getLanguageIdentifier().id);
             var wordDef = wordDefRegExp.source;
-            var wordDefFlags = (wordDefRegExp.global ? 'g' : '') + (wordDefRegExp.ignoreCase ? 'i' : '') + (wordDefRegExp.multiline ? 'm' : '');
+            var wordDefFlags = regExpFlags(wordDefRegExp);
             return proxy.computeWordRanges(resource.toString(), range, wordDef, wordDefFlags);
         });
     };
@@ -370,7 +372,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
             }
             var wordDefRegExp = LanguageConfigurationRegistry.getWordDefinition(model.getLanguageIdentifier().id);
             var wordDef = wordDefRegExp.source;
-            var wordDefFlags = (wordDefRegExp.global ? 'g' : '') + (wordDefRegExp.ignoreCase ? 'i' : '') + (wordDefRegExp.multiline ? 'm' : '');
+            var wordDefFlags = regExpFlags(wordDefRegExp);
             return proxy.navigateValueSet(resource.toString(), range, up, wordDef, wordDefFlags);
         });
     };

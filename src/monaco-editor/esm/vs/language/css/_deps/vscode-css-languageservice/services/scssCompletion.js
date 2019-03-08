@@ -4,9 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -15,8 +18,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { CSSCompletion } from './cssCompletion.js';
 import * as nodes from '../parser/cssNodes.js';
-import { CompletionItemKind, TextEdit, InsertTextFormat } from './../../vscode-languageserver-types/main.js';
-import * as nls from './../../../fillers/vscode-nls.js';
+import { CompletionItemKind, TextEdit, InsertTextFormat } from '../../vscode-languageserver-types/main.js';
+import * as nls from '../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var SCSSCompletion = /** @class */ (function (_super) {
     __extends(SCSSCompletion, _super);
@@ -25,7 +28,7 @@ var SCSSCompletion = /** @class */ (function (_super) {
     }
     SCSSCompletion.prototype.createReplaceFunction = function () {
         var tabStopCounter = 1;
-        return function (match, p1) {
+        return function (_match, p1) {
             return '\\' + p1 + ': ${' + tabStopCounter++ + ':' + (SCSSCompletion.variableDefaults[p1] || '') + '}';
         };
     };
@@ -70,7 +73,7 @@ var SCSSCompletion = /** @class */ (function (_super) {
         this.getCompletionsForSelector(null, true, result);
         return _super.prototype.getCompletionsForDeclarationProperty.call(this, declaration, result);
     };
-    SCSSCompletion.prototype.getCompletionsForExtendsReference = function (extendsRef, existingNode, result) {
+    SCSSCompletion.prototype.getCompletionsForExtendsReference = function (_extendsRef, existingNode, result) {
         var symbols = this.getSymbolContext().findSymbolsAtOffset(this.offset, nodes.ReferenceType.Rule);
         for (var _i = 0, symbols_1 = symbols; _i < symbols_1.length; _i++) {
             var symbol = symbols_1[_i];
@@ -262,4 +265,3 @@ var SCSSCompletion = /** @class */ (function (_super) {
     return SCSSCompletion;
 }(CSSCompletion));
 export { SCSSCompletion };
-//# sourceMappingURL=scssCompletion.js.map

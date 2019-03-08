@@ -58,7 +58,7 @@ var TypeScriptWorker = /** @class */ (function () {
             return '1';
         }
         else if (fileName in this._extraLibs) {
-            return this._extraLibs[fileName].version.toString();
+            return String(this._extraLibs[fileName].version);
         }
     };
     TypeScriptWorker.prototype.getScriptSnapshot = function (fileName) {
@@ -69,7 +69,7 @@ var TypeScriptWorker = /** @class */ (function () {
             text = model.getValue();
         }
         else if (fileName in this._extraLibs) {
-            // static extra lib
+            // extra lib
             text = this._extraLibs[fileName].content;
         }
         else if (fileName === DEFAULT_LIB.NAME) {
@@ -171,9 +171,6 @@ var TypeScriptWorker = /** @class */ (function () {
     };
     TypeScriptWorker.prototype.getEmitOutput = function (fileName) {
         return Promise.resolve(this._languageService.getEmitOutput(fileName));
-    };
-    TypeScriptWorker.prototype.syncExtraLibs = function (extraLibs) {
-        this._extraLibs = extraLibs;
     };
     TypeScriptWorker.prototype.getPropertiesOrAttributesOf = function (fileName, parentObjects) {
         var currentFile = this._languageService.getProgram().getSourceFile(fileName);
@@ -456,6 +453,9 @@ var TypeScriptWorker = /** @class */ (function () {
         }
         buildOutline(currentFile);
         return tokens;
+    };
+    TypeScriptWorker.prototype.updateExtraLibs = function (extraLibs) {
+        this._extraLibs = extraLibs;
     };
     return TypeScriptWorker;
 }());

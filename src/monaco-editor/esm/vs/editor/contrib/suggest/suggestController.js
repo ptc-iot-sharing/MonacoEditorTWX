@@ -8,13 +8,24 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -25,17 +36,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { alert } from '../../../base/browser/ui/aria/aria.js';
-import { isFalsyOrEmpty } from '../../../base/common/arrays.js';
+import { isNonEmptyArray } from '../../../base/common/arrays.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { dispose } from '../../../base/common/lifecycle.js';
 import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditOperation } from '../../common/core/editOperation.js';
 import { Range } from '../../common/core/range.js';
-import { Handler } from '../../common/editorCommon.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { SnippetController2 } from '../snippet/snippetController2.js';
 import { SnippetParser } from '../snippet/snippetParser.js';
-import { SuggestMemories } from './suggestMemory.js';
+import { ISuggestMemoryService } from './suggestMemory.js';
 import * as nls from '../../../nls.js';
 import { ICommandService } from '../../../platform/commands/common/commands.js';
 import { ContextKeyExpr, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
@@ -45,42 +55,43 @@ import { SuggestAlternatives } from './suggestAlternatives.js';
 import { SuggestModel } from './suggestModel.js';
 import { SuggestWidget } from './suggestWidget.js';
 import { WordContextKey } from './wordContextKey.js';
-import { once, anyEvent } from '../../../base/common/event.js';
+import { Event } from '../../../base/common/event.js';
 import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
 import { IdleValue } from '../../../base/common/async.js';
+import { CharacterSet } from '../../common/core/characterClassifier.js';
+import { isObject } from '../../../base/common/types.js';
 var AcceptOnCharacterOracle = /** @class */ (function () {
     function AcceptOnCharacterOracle(editor, widget, accept) {
         var _this = this;
         this._disposables = [];
-        this._activeAcceptCharacters = new Set();
         this._disposables.push(widget.onDidShow(function () { return _this._onItem(widget.getFocusedItem()); }));
         this._disposables.push(widget.onDidFocus(this._onItem, this));
         this._disposables.push(widget.onDidHide(this.reset, this));
         this._disposables.push(editor.onWillType(function (text) {
-            if (_this._activeItem) {
-                var ch = text[text.length - 1];
-                if (_this._activeAcceptCharacters.has(ch) && editor.getConfiguration().contribInfo.acceptSuggestionOnCommitCharacter) {
-                    accept(_this._activeItem);
+            if (_this._active) {
+                var ch = text.charCodeAt(text.length - 1);
+                if (_this._active.acceptCharacters.has(ch) && editor.getConfiguration().contribInfo.acceptSuggestionOnCommitCharacter) {
+                    accept(_this._active.item);
                 }
             }
         }));
     }
     AcceptOnCharacterOracle.prototype._onItem = function (selected) {
-        if (!selected || isFalsyOrEmpty(selected.item.suggestion.commitCharacters)) {
+        if (!selected || !isNonEmptyArray(selected.item.completion.commitCharacters)) {
             this.reset();
             return;
         }
-        this._activeItem = selected;
-        this._activeAcceptCharacters.clear();
-        for (var _i = 0, _a = selected.item.suggestion.commitCharacters; _i < _a.length; _i++) {
+        var acceptCharacters = new CharacterSet();
+        for (var _i = 0, _a = selected.item.completion.commitCharacters; _i < _a.length; _i++) {
             var ch = _a[_i];
             if (ch.length > 0) {
-                this._activeAcceptCharacters.add(ch[0]);
+                acceptCharacters.add(ch.charCodeAt(0));
             }
         }
+        this._active = { acceptCharacters: acceptCharacters, item: selected };
     };
     AcceptOnCharacterOracle.prototype.reset = function () {
-        this._activeItem = undefined;
+        this._active = undefined;
     };
     AcceptOnCharacterOracle.prototype.dispose = function () {
         dispose(this._disposables);
@@ -88,19 +99,55 @@ var AcceptOnCharacterOracle = /** @class */ (function () {
     return AcceptOnCharacterOracle;
 }());
 var SuggestController = /** @class */ (function () {
-    function SuggestController(_editor, editorWorker, _commandService, _contextKeyService, _instantiationService) {
+    function SuggestController(_editor, editorWorker, _memoryService, _commandService, _contextKeyService, _instantiationService) {
         var _this = this;
         this._editor = _editor;
+        this._memoryService = _memoryService;
         this._commandService = _commandService;
         this._contextKeyService = _contextKeyService;
         this._instantiationService = _instantiationService;
         this._toDispose = [];
         this._sticky = false; // for development purposes only
         this._model = new SuggestModel(this._editor, editorWorker);
-        this._memory = new IdleValue(function () {
-            var res = _instantiationService.createInstance(SuggestMemories, _this._editor);
-            _this._toDispose.push(res);
-            return res;
+        this._widget = new IdleValue(function () {
+            var widget = _this._instantiationService.createInstance(SuggestWidget, _this._editor);
+            _this._toDispose.push(widget);
+            _this._toDispose.push(widget.onDidSelect(function (item) { return _this._onDidSelectItem(item, false, true); }, _this));
+            // Wire up logic to accept a suggestion on certain characters
+            var autoAcceptOracle = new AcceptOnCharacterOracle(_this._editor, widget, function (item) { return _this._onDidSelectItem(item, false, true); });
+            _this._toDispose.push(autoAcceptOracle, _this._model.onDidSuggest(function (e) {
+                if (e.completionModel.items.length === 0) {
+                    autoAcceptOracle.reset();
+                }
+            }));
+            // Wire up makes text edit context key
+            var makesTextEdit = SuggestContext.MakesTextEdit.bindTo(_this._contextKeyService);
+            _this._toDispose.push(widget.onDidFocus(function (_a) {
+                var item = _a.item;
+                var position = _this._editor.getPosition();
+                var startColumn = item.completion.range.startColumn;
+                var endColumn = position.column;
+                var value = true;
+                if (_this._editor.getConfiguration().contribInfo.acceptSuggestionOnEnter === 'smart'
+                    && _this._model.state === 2 /* Auto */
+                    && !item.completion.command
+                    && !item.completion.additionalTextEdits
+                    && !(item.completion.insertTextRules & 4 /* InsertAsSnippet */)
+                    && endColumn - startColumn === item.completion.insertText.length) {
+                    var oldText = _this._editor.getModel().getValueInRange({
+                        startLineNumber: position.lineNumber,
+                        startColumn: startColumn,
+                        endLineNumber: position.lineNumber,
+                        endColumn: endColumn
+                    });
+                    value = oldText !== item.completion.insertText;
+                }
+                makesTextEdit.set(value);
+            }));
+            _this._toDispose.push({
+                dispose: function () { makesTextEdit.reset(); }
+            });
+            return widget;
         });
         this._alternatives = new IdleValue(function () {
             var res = new SuggestAlternatives(_this._editor, _this._contextKeyService);
@@ -109,23 +156,20 @@ var SuggestController = /** @class */ (function () {
         });
         this._toDispose.push(_instantiationService.createInstance(WordContextKey, _editor));
         this._toDispose.push(this._model.onDidTrigger(function (e) {
-            if (!_this._widget) {
-                _this._createSuggestWidget();
-            }
-            _this._widget.showTriggered(e.auto, e.shy ? 250 : 50);
+            _this._widget.getValue().showTriggered(e.auto, e.shy ? 250 : 50);
         }));
         this._toDispose.push(this._model.onDidSuggest(function (e) {
             if (!e.shy) {
-                var index = _this._memory.getValue().select(_this._editor.getModel(), _this._editor.getPosition(), e.completionModel.items);
-                _this._widget.showSuggestions(e.completionModel, index, e.isFrozen, e.auto);
+                var index = _this._memoryService.select(_this._editor.getModel(), _this._editor.getPosition(), e.completionModel.items);
+                _this._widget.getValue().showSuggestions(e.completionModel, index, e.isFrozen, e.auto);
             }
         }));
         this._toDispose.push(this._model.onDidCancel(function (e) {
             if (_this._widget && !e.retrigger) {
-                _this._widget.hideWidget();
+                _this._widget.getValue().hideWidget();
             }
         }));
-        this._toDispose.push(this._editor.onDidBlurEditorText(function () {
+        this._toDispose.push(this._editor.onDidBlurEditorWidget(function () {
             if (!_this._sticky) {
                 _this._model.cancel();
             }
@@ -142,56 +186,14 @@ var SuggestController = /** @class */ (function () {
     SuggestController.get = function (editor) {
         return editor.getContribution(SuggestController.ID);
     };
-    SuggestController.prototype._createSuggestWidget = function () {
-        var _this = this;
-        this._widget = this._instantiationService.createInstance(SuggestWidget, this._editor);
-        this._toDispose.push(this._widget.onDidSelect(function (item) { return _this._onDidSelectItem(item, false, true); }, this));
-        // Wire up logic to accept a suggestion on certain characters
-        var autoAcceptOracle = new AcceptOnCharacterOracle(this._editor, this._widget, function (item) { return _this._onDidSelectItem(item, false, true); });
-        this._toDispose.push(autoAcceptOracle, this._model.onDidSuggest(function (e) {
-            if (e.completionModel.items.length === 0) {
-                autoAcceptOracle.reset();
-            }
-        }));
-        var makesTextEdit = SuggestContext.MakesTextEdit.bindTo(this._contextKeyService);
-        this._toDispose.push(this._widget.onDidFocus(function (_a) {
-            var item = _a.item;
-            var position = _this._editor.getPosition();
-            var startColumn = item.suggestion.range.startColumn;
-            var endColumn = position.column;
-            var value = true;
-            if (_this._editor.getConfiguration().contribInfo.acceptSuggestionOnEnter === 'smart'
-                && _this._model.state === 2 /* Auto */
-                && !item.suggestion.command
-                && !item.suggestion.additionalTextEdits
-                && !(item.suggestion.insertTextRules & 4 /* InsertAsSnippet */)
-                && endColumn - startColumn === item.suggestion.insertText.length) {
-                var oldText = _this._editor.getModel().getValueInRange({
-                    startLineNumber: position.lineNumber,
-                    startColumn: startColumn,
-                    endLineNumber: position.lineNumber,
-                    endColumn: endColumn
-                });
-                value = oldText !== item.suggestion.insertText;
-            }
-            makesTextEdit.set(value);
-        }));
-        this._toDispose.push({
-            dispose: function () { makesTextEdit.reset(); }
-        });
-    };
     SuggestController.prototype.getId = function () {
         return SuggestController.ID;
     };
     SuggestController.prototype.dispose = function () {
         this._toDispose = dispose(this._toDispose);
-        if (this._widget) {
-            this._widget.dispose();
-            this._widget = null;
-        }
+        this._widget.dispose();
         if (this._model) {
             this._model.dispose();
-            this._model = null;
         }
     };
     SuggestController.prototype._onDidSelectItem = function (event, keepAlternativeSuggestions, undoStops) {
@@ -202,9 +204,12 @@ var SuggestController = /** @class */ (function () {
             this._model.cancel();
             return;
         }
+        if (!this._editor.hasModel()) {
+            return;
+        }
         var model = this._editor.getModel();
         var modelVersionNow = model.getAlternativeVersionId();
-        var _b = event.item, suggestion = _b.suggestion, position = _b.position;
+        var _b = event.item, suggestion = _b.completion, position = _b.position;
         var editorColumn = this._editor.getPosition().column;
         var columnDelta = editorColumn - position.column;
         // pushing undo stops *before* additional text edits and
@@ -216,7 +221,7 @@ var SuggestController = /** @class */ (function () {
             this._editor.executeEdits('suggestController.additionalTextEdits', suggestion.additionalTextEdits.map(function (edit) { return EditOperation.replace(Range.lift(edit.range), edit.text); }));
         }
         // keep item in memory
-        this._memory.getValue().memorize(model, this._editor.getPosition(), event.item);
+        this._memoryService.memorize(model, this._editor.getPosition(), event.item);
         var insertText = suggestion.insertText;
         if (!(suggestion.insertTextRules & 4 /* InsertAsSnippet */)) {
             insertText = SnippetParser.escape(insertText);
@@ -233,11 +238,11 @@ var SuggestController = /** @class */ (function () {
         }
         else if (suggestion.command.id === TriggerSuggestAction.id) {
             // retigger
-            this._model.trigger({ auto: true }, true);
+            this._model.trigger({ auto: true, shy: false }, true);
         }
         else {
             // exec command, done
-            (_a = this._commandService).executeCommand.apply(_a, [suggestion.command.id].concat(suggestion.command.arguments)).then(undefined, onUnexpectedError);
+            (_a = this._commandService).executeCommand.apply(_a, [suggestion.command.id].concat((suggestion.command.arguments ? suggestion.command.arguments.slice() : []))).catch(onUnexpectedError);
             this._model.cancel();
         }
         if (keepAlternativeSuggestions) {
@@ -257,32 +262,37 @@ var SuggestController = /** @class */ (function () {
         this._alertCompletionItem(event.item);
     };
     SuggestController.prototype._alertCompletionItem = function (_a) {
-        var suggestion = _a.suggestion;
+        var suggestion = _a.completion;
         var msg = nls.localize('arai.alert.snippet', "Accepting '{0}' did insert the following text: {1}", suggestion.label, suggestion.insertText);
         alert(msg);
     };
     SuggestController.prototype.triggerSuggest = function (onlyFrom) {
-        this._model.trigger({ auto: false }, false, onlyFrom);
-        this._editor.revealLine(this._editor.getPosition().lineNumber, 0 /* Smooth */);
-        this._editor.focus();
+        if (this._editor.hasModel()) {
+            this._model.trigger({ auto: false, shy: false }, false, onlyFrom);
+            this._editor.revealLine(this._editor.getPosition().lineNumber, 0 /* Smooth */);
+            this._editor.focus();
+        }
     };
-    SuggestController.prototype.triggerSuggestAndAcceptBest = function (defaultTypeText) {
+    SuggestController.prototype.triggerSuggestAndAcceptBest = function (arg) {
         var _this = this;
+        if (!this._editor.hasModel()) {
+            return;
+        }
         var positionNow = this._editor.getPosition();
         var fallback = function () {
             if (positionNow.equals(_this._editor.getPosition())) {
-                _this._editor.trigger('suggest', Handler.Type, { text: defaultTypeText });
+                _this._commandService.executeCommand(arg.fallback);
             }
         };
         var makesTextEdit = function (item) {
-            if (item.suggestion.insertTextRules & 4 /* InsertAsSnippet */ || item.suggestion.additionalTextEdits) {
+            if (item.completion.insertTextRules & 4 /* InsertAsSnippet */ || item.completion.additionalTextEdits) {
                 // snippet, other editor -> makes edit
                 return true;
             }
             var position = _this._editor.getPosition();
-            var startColumn = item.suggestion.range.startColumn;
+            var startColumn = item.completion.range.startColumn;
             var endColumn = position.column;
-            if (endColumn - startColumn !== item.suggestion.insertText.length) {
+            if (endColumn - startColumn !== item.completion.insertText.length) {
                 // unequal lengths -> makes edit
                 return true;
             }
@@ -293,12 +303,12 @@ var SuggestController = /** @class */ (function () {
                 endColumn: endColumn
             });
             // unequal text -> makes edit
-            return textNow !== item.suggestion.insertText;
+            return textNow !== item.completion.insertText;
         };
-        once(this._model.onDidTrigger)(function (_) {
+        Event.once(this._model.onDidTrigger)(function (_) {
             // wait for trigger because only then the cancel-event is trustworthy
             var listener = [];
-            anyEvent(_this._model.onDidTrigger, _this._model.onDidCancel)(function () {
+            Event.any(_this._model.onDidTrigger, _this._model.onDidCancel)(function () {
                 // retrigger or cancel -> try to type default text
                 dispose(listener);
                 fallback();
@@ -310,7 +320,7 @@ var SuggestController = /** @class */ (function () {
                     fallback();
                     return;
                 }
-                var index = _this._memory.getValue().select(_this._editor.getModel(), _this._editor.getPosition(), completionModel.items);
+                var index = _this._memoryService.select(_this._editor.getModel(), _this._editor.getPosition(), completionModel.items);
                 var item = completionModel.items[index];
                 if (!makesTextEdit(item)) {
                     fallback();
@@ -326,8 +336,8 @@ var SuggestController = /** @class */ (function () {
     };
     SuggestController.prototype.acceptSelectedSuggestion = function (keepAlternativeSuggestions) {
         if (this._widget) {
-            var item = this._widget.getFocusedItem();
-            this._onDidSelectItem(item, keepAlternativeSuggestions, true);
+            var item = this._widget.getValue().getFocusedItem();
+            this._onDidSelectItem(item, !!keepAlternativeSuggestions, true);
         }
     };
     SuggestController.prototype.acceptNextSuggestion = function () {
@@ -339,55 +349,56 @@ var SuggestController = /** @class */ (function () {
     SuggestController.prototype.cancelSuggestWidget = function () {
         if (this._widget) {
             this._model.cancel();
-            this._widget.hideWidget();
+            this._widget.getValue().hideWidget();
         }
     };
     SuggestController.prototype.selectNextSuggestion = function () {
         if (this._widget) {
-            this._widget.selectNext();
+            this._widget.getValue().selectNext();
         }
     };
     SuggestController.prototype.selectNextPageSuggestion = function () {
         if (this._widget) {
-            this._widget.selectNextPage();
+            this._widget.getValue().selectNextPage();
         }
     };
     SuggestController.prototype.selectLastSuggestion = function () {
         if (this._widget) {
-            this._widget.selectLast();
+            this._widget.getValue().selectLast();
         }
     };
     SuggestController.prototype.selectPrevSuggestion = function () {
         if (this._widget) {
-            this._widget.selectPrevious();
+            this._widget.getValue().selectPrevious();
         }
     };
     SuggestController.prototype.selectPrevPageSuggestion = function () {
         if (this._widget) {
-            this._widget.selectPreviousPage();
+            this._widget.getValue().selectPreviousPage();
         }
     };
     SuggestController.prototype.selectFirstSuggestion = function () {
         if (this._widget) {
-            this._widget.selectFirst();
+            this._widget.getValue().selectFirst();
         }
     };
     SuggestController.prototype.toggleSuggestionDetails = function () {
         if (this._widget) {
-            this._widget.toggleDetails();
+            this._widget.getValue().toggleDetails();
         }
     };
     SuggestController.prototype.toggleSuggestionFocus = function () {
         if (this._widget) {
-            this._widget.toggleDetailsFocus();
+            this._widget.getValue().toggleDetailsFocus();
         }
     };
     SuggestController.ID = 'editor.contrib.suggestController';
     SuggestController = __decorate([
         __param(1, IEditorWorkerService),
-        __param(2, ICommandService),
-        __param(3, IContextKeyService),
-        __param(4, IInstantiationService)
+        __param(2, ISuggestMemoryService),
+        __param(3, ICommandService),
+        __param(4, IContextKeyService),
+        __param(5, IInstantiationService)
     ], SuggestController);
     return SuggestController;
 }());
@@ -536,7 +547,9 @@ registerEditorCommand(new SuggestCommand({
 registerEditorCommand(new SuggestCommand({
     id: 'insertBestCompletion',
     precondition: ContextKeyExpr.and(ContextKeyExpr.equals('config.editor.tabCompletion', 'on'), WordContextKey.AtEnd, SuggestContext.Visible.toNegated(), SuggestAlternatives.OtherSuggestions.toNegated(), SnippetController2.InSnippetMode.toNegated()),
-    handler: function (x) { return x.triggerSuggestAndAcceptBest('\t'); },
+    handler: function (x, arg) {
+        x.triggerSuggestAndAcceptBest(isObject(arg) ? __assign({ fallback: 'tab' }, arg) : { fallback: 'tab' });
+    },
     kbOpts: {
         weight: weight,
         primary: 2 /* Tab */

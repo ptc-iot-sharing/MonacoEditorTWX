@@ -31,4 +31,5 @@ export var Schemas;
     Schemas.mailto = 'mailto';
     Schemas.untitled = 'untitled';
     Schemas.data = 'data';
+    Schemas.command = 'command';
 })(Schemas || (Schemas = {}));

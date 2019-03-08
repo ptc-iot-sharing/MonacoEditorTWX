@@ -1,10 +1,27 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-'use strict';
-import { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind } from './../vscode-languageserver-types/main.js';
+import { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, MarkupKind } from '../vscode-languageserver-types/main.js';
 export { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind };
+// #region Proposed types, remove once added to vscode-languageserver-types
+/**
+ * Enum of known selection range kinds
+ */
+export var SelectionRangeKind;
+(function (SelectionRangeKind) {
+    /**
+     * Empty Kind.
+     */
+    SelectionRangeKind["Empty"] = "";
+    /**
+     * The statment kind, its value is `statement`, possible extensions can be
+     * `statement.if` etc
+     */
+    SelectionRangeKind["Statement"] = "statement";
+    /**
+     * The declaration kind, its value is `declaration`, possible extensions can be
+     * `declaration.function`, `declaration.class` etc.
+     */
+    SelectionRangeKind["Declaration"] = "declaration";
+})(SelectionRangeKind || (SelectionRangeKind = {}));
+// #endregion
 /**
  * Error codes used by diagnostics
  */
@@ -29,4 +46,15 @@ export var ErrorCode;
     ErrorCode[ErrorCode["CommentNotPermitted"] = 521] = "CommentNotPermitted";
     ErrorCode[ErrorCode["SchemaResolveError"] = 768] = "SchemaResolveError";
 })(ErrorCode || (ErrorCode = {}));
-//# sourceMappingURL=jsonLanguageTypes.js.map
+export var ClientCapabilities;
+(function (ClientCapabilities) {
+    ClientCapabilities.LATEST = {
+        textDocument: {
+            completion: {
+                completionItem: {
+                    documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText]
+                }
+            }
+        }
+    };
+})(ClientCapabilities || (ClientCapabilities = {}));

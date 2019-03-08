@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,32 +28,29 @@ import { Action } from '../../../base/common/actions.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
 import { IContextKeyService } from '../../contextkey/common/contextkey.js';
 import { ICommandService } from '../../commands/common/commands.js';
+import { Emitter } from '../../../base/common/event.js';
 export function isIMenuItem(item) {
     return item.command !== undefined;
 }
-var MenuId = /** @class */ (function () {
-    function MenuId() {
-        this.id = String(MenuId.ID++);
-    }
-    MenuId.ID = 1;
-    MenuId.EditorContext = new MenuId();
-    MenuId.CommandPalette = new MenuId();
-    MenuId.MenubarEditMenu = new MenuId();
-    MenuId.MenubarSelectionMenu = new MenuId();
-    MenuId.MenubarGoMenu = new MenuId();
-    return MenuId;
-}());
-export { MenuId };
 export var IMenuService = createDecorator('menuService');
 export var MenuRegistry = new /** @class */ (function () {
     function class_1() {
         this._commands = Object.create(null);
         this._menuItems = Object.create(null);
+        this._onDidChangeMenu = new Emitter();
+        this.onDidChangeMenu = this._onDidChangeMenu.event;
     }
     class_1.prototype.addCommand = function (command) {
-        var old = this._commands[command.id];
+        var _this = this;
         this._commands[command.id] = command;
-        return old !== void 0;
+        this._onDidChangeMenu.fire(0 /* CommandPalette */);
+        return {
+            dispose: function () {
+                if (delete _this._commands[command.id]) {
+                    _this._onDidChangeMenu.fire(0 /* CommandPalette */);
+                }
+            }
+        };
     };
     class_1.prototype.getCommand = function (id) {
         return this._commands[id];
@@ -65,8 +62,8 @@ export var MenuRegistry = new /** @class */ (function () {
         }
         return result;
     };
-    class_1.prototype.appendMenuItem = function (_a, item) {
-        var id = _a.id;
+    class_1.prototype.appendMenuItem = function (id, item) {
+        var _this = this;
         var array = this._menuItems[id];
         if (!array) {
             this._menuItems[id] = array = [item];
@@ -74,19 +71,20 @@ export var MenuRegistry = new /** @class */ (function () {
         else {
             array.push(item);
         }
+        this._onDidChangeMenu.fire(id);
         return {
             dispose: function () {
                 var idx = array.indexOf(item);
                 if (idx >= 0) {
                     array.splice(idx, 1);
+                    _this._onDidChangeMenu.fire(id);
                 }
             }
         };
     };
-    class_1.prototype.getMenuItems = function (_a) {
-        var id = _a.id;
-        var result = this._menuItems[id] || [];
-        if (id === MenuId.CommandPalette.id) {
+    class_1.prototype.getMenuItems = function (id) {
+        var result = (this._menuItems[id] || []).slice(0);
+        if (id === 0 /* CommandPalette */) {
             // CommandPalette is special because it shows
             // all commands by default
             this._appendImplicitItems(result);

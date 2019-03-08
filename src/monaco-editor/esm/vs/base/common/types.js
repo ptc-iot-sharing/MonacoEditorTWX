@@ -107,8 +107,13 @@ export function validateConstraint(arg, constraint) {
         }
     }
     else if (isFunction(constraint)) {
-        if (arg instanceof constraint) {
-            return;
+        try {
+            if (arg instanceof constraint) {
+                return;
+            }
+        }
+        catch (_a) {
+            // ignore
         }
         if (!isUndefinedOrNull(arg) && arg.constructor === constraint) {
             return;
@@ -128,7 +133,32 @@ export function create(ctor) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    var obj = Object.create(ctor.prototype);
-    ctor.apply(obj, args);
-    return obj;
+    var _a;
+    if (isNativeClass(ctor)) {
+        return new ((_a = ctor).bind.apply(_a, [void 0].concat(args)))();
+    }
+    else {
+        var obj = Object.create(ctor.prototype);
+        ctor.apply(obj, args);
+        return obj;
+    }
+}
+// https://stackoverflow.com/a/32235645/1499159
+function isNativeClass(thing) {
+    return typeof thing === 'function'
+        && thing.hasOwnProperty('prototype')
+        && !thing.hasOwnProperty('arguments');
+}
+/**
+ *
+ *
+ */
+export function getAllPropertyNames(obj) {
+    var res = [];
+    var proto = Object.getPrototypeOf(obj);
+    while (Object.prototype !== proto) {
+        res = res.concat(Object.getOwnPropertyNames(proto));
+        proto = Object.getPrototypeOf(proto);
+    }
+    return res;
 }

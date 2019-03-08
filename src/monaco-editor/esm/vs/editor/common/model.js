@@ -18,6 +18,7 @@ var TextModelResolvedOptions = /** @class */ (function () {
      */
     function TextModelResolvedOptions(src) {
         this.tabSize = src.tabSize | 0;
+        this.indentSize = src.tabSize | 0;
         this.insertSpaces = Boolean(src.insertSpaces);
         this.defaultEOL = src.defaultEOL | 0;
         this.trimAutoWhitespace = Boolean(src.trimAutoWhitespace);
@@ -27,6 +28,7 @@ var TextModelResolvedOptions = /** @class */ (function () {
      */
     TextModelResolvedOptions.prototype.equals = function (other) {
         return (this.tabSize === other.tabSize
+            && this.indentSize === other.indentSize
             && this.insertSpaces === other.insertSpaces
             && this.defaultEOL === other.defaultEOL
             && this.trimAutoWhitespace === other.trimAutoWhitespace);
@@ -37,6 +39,7 @@ var TextModelResolvedOptions = /** @class */ (function () {
     TextModelResolvedOptions.prototype.createChangeEvent = function (newOpts) {
         return {
             tabSize: this.tabSize !== newOpts.tabSize,
+            indentSize: this.indentSize !== newOpts.indentSize,
             insertSpaces: this.insertSpaces !== newOpts.insertSpaces,
             trimAutoWhitespace: this.trimAutoWhitespace !== newOpts.trimAutoWhitespace,
         };

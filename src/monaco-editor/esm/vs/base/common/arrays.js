@@ -141,11 +141,16 @@ export function coalesce(array) {
     return array.filter(function (e) { return !!e; });
 }
 /**
- * @returns {{false}} if the provided object is an array
- * 	and not empty.
+ * @returns false if the provided object is an array and not empty.
  */
 export function isFalsyOrEmpty(obj) {
     return !Array.isArray(obj) || obj.length === 0;
+}
+/**
+ * @returns True if the provided object is an array and has at least one element.
+ */
+export function isNonEmptyArray(obj) {
+    return Array.isArray(obj) && obj.length > 0;
 }
 /**
  * Removes duplicates from the given array. The optional keyFn allows to specify

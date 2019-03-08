@@ -16,12 +16,16 @@ var TypeOperations = /** @class */ (function () {
     function TypeOperations() {
     }
     TypeOperations.indent = function (config, model, selections) {
+        if (model === null || selections === null) {
+            return [];
+        }
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             commands[i] = new ShiftCommand(selections[i], {
                 isUnshift: false,
                 tabSize: config.tabSize,
-                oneIndent: config.oneIndent,
+                indentSize: config.indentSize,
+                insertSpaces: config.insertSpaces,
                 useTabStops: config.useTabStops
             });
         }
@@ -33,7 +37,8 @@ var TypeOperations = /** @class */ (function () {
             commands[i] = new ShiftCommand(selections[i], {
                 isUnshift: true,
                 tabSize: config.tabSize,
-                oneIndent: config.oneIndent,
+                indentSize: config.indentSize,
+                insertSpaces: config.insertSpaces,
                 useTabStops: config.useTabStops
             });
         }
@@ -41,21 +46,11 @@ var TypeOperations = /** @class */ (function () {
     };
     TypeOperations.shiftIndent = function (config, indentation, count) {
         count = count || 1;
-        var desiredIndentCount = ShiftCommand.shiftIndentCount(indentation, indentation.length + count, config.tabSize);
-        var newIndentation = '';
-        for (var i = 0; i < desiredIndentCount; i++) {
-            newIndentation += '\t';
-        }
-        return newIndentation;
+        return ShiftCommand.shiftIndent(indentation, indentation.length + count, config.tabSize, config.indentSize, config.insertSpaces);
     };
     TypeOperations.unshiftIndent = function (config, indentation, count) {
         count = count || 1;
-        var desiredIndentCount = ShiftCommand.unshiftIndentCount(indentation, indentation.length + count, config.tabSize);
-        var newIndentation = '';
-        for (var i = 0; i < desiredIndentCount; i++) {
-            newIndentation += '\t';
-        }
-        return newIndentation;
+        return ShiftCommand.unshiftIndent(indentation, indentation.length + count, config.tabSize, config.indentSize, config.insertSpaces);
     };
     TypeOperations._distributedPaste = function (config, model, selections, text) {
         var commands = [];
@@ -134,7 +129,7 @@ var TypeOperations = /** @class */ (function () {
             indentation = expectedIndentAction.indentation;
         }
         else if (lineNumber > 1) {
-            var lastLineNumber = lineNumber - 1;
+            var lastLineNumber = void 0;
             for (lastLineNumber = lineNumber - 1; lastLineNumber >= 1; lastLineNumber--) {
                 var lineText = model.getLineContent(lastLineNumber);
                 var nonWhitespaceIdx = strings.lastNonWhitespaceIndex(lineText);
@@ -175,8 +170,8 @@ var TypeOperations = /** @class */ (function () {
         var position = selection.getStartPosition();
         if (config.insertSpaces) {
             var visibleColumnFromColumn = CursorColumns.visibleColumnFromColumn2(config, model, position);
-            var tabSize = config.tabSize;
-            var spacesCnt = tabSize - (visibleColumnFromColumn % tabSize);
+            var indentSize = config.indentSize;
+            var spacesCnt = indentSize - (visibleColumnFromColumn % indentSize);
             for (var i = 0; i < spacesCnt; i++) {
                 typeText += ' ';
             }
@@ -215,7 +210,8 @@ var TypeOperations = /** @class */ (function () {
                 commands[i] = new ShiftCommand(selection, {
                     isUnshift: false,
                     tabSize: config.tabSize,
-                    oneIndent: config.oneIndent,
+                    indentSize: config.indentSize,
+                    insertSpaces: config.insertSpaces,
                     useTabStops: config.useTabStops
                 });
             }
@@ -329,7 +325,7 @@ var TypeOperations = /** @class */ (function () {
                 var offset = 0;
                 if (oldEndColumn <= firstNonWhitespace + 1) {
                     if (!config.insertSpaces) {
-                        oldEndViewColumn = Math.ceil(oldEndViewColumn / config.tabSize);
+                        oldEndViewColumn = Math.ceil(oldEndViewColumn / config.indentSize);
                     }
                     offset = Math.min(oldEndViewColumn + 1 - config.normalizeIndentation(ir.afterEnter).length - 1, 0);
                 }
@@ -757,6 +753,9 @@ var TypeOperations = /** @class */ (function () {
         });
     };
     TypeOperations.lineInsertBefore = function (config, model, selections) {
+        if (model === null || selections === null) {
+            return [];
+        }
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             var lineNumber = selections[i].positionLineNumber;
@@ -772,6 +771,9 @@ var TypeOperations = /** @class */ (function () {
         return commands;
     };
     TypeOperations.lineInsertAfter = function (config, model, selections) {
+        if (model === null || selections === null) {
+            return [];
+        }
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             var lineNumber = selections[i].positionLineNumber;

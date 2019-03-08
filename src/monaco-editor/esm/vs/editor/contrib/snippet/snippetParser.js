@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -540,11 +540,12 @@ var SnippetParser = /** @class */ (function () {
         });
         for (var _i = 0, incompletePlaceholders_1 = incompletePlaceholders; _i < incompletePlaceholders_1.length; _i++) {
             var placeholder = incompletePlaceholders_1[_i];
-            if (placeholderDefaultValues.has(placeholder.index)) {
+            var defaultValues = placeholderDefaultValues.get(placeholder.index);
+            if (defaultValues) {
                 var clone = new Placeholder(placeholder.index);
                 clone.transform = placeholder.transform;
-                for (var _a = 0, _b = placeholderDefaultValues.get(placeholder.index); _a < _b.length; _a++) {
-                    var child = _b[_a];
+                for (var _a = 0, defaultValues_1 = defaultValues; _a < defaultValues_1.length; _a++) {
+                    var child = defaultValues_1[_a];
                     clone.appendChild(child.clone());
                 }
                 snippet.replace(placeholder, [clone]);
@@ -800,7 +801,7 @@ var SnippetParser = /** @class */ (function () {
             }
             var escaped = void 0;
             if (escaped = this._accept(5 /* Backslash */, true)) {
-                escaped = this._accept(6 /* Forwardslash */, true) || escaped;
+                escaped = this._accept(5 /* Backslash */, true) || this._accept(6 /* Forwardslash */, true) || escaped;
                 transform.appendChild(new Text(escaped));
                 continue;
             }

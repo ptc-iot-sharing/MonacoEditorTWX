@@ -94,7 +94,7 @@ var DeleteOperations = /** @class */ (function () {
                         : firstNonWhitespaceIndex + 1);
                     if (position.column <= lastIndentationColumn) {
                         var fromVisibleColumn = CursorColumns.visibleColumnFromColumn2(config, model, position);
-                        var toVisibleColumn = CursorColumns.prevTabStop(fromVisibleColumn, config.tabSize);
+                        var toVisibleColumn = CursorColumns.prevIndentTabStop(fromVisibleColumn, config.indentSize);
                         var toColumn = CursorColumns.columnFromVisibleColumn2(config, model, position.lineNumber, toVisibleColumn);
                         deleteSelection = new Range(position.lineNumber, toColumn, position.lineNumber, position.column);
                     }

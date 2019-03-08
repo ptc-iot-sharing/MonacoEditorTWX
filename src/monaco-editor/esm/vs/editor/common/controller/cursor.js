@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -154,7 +154,7 @@ var Cursor = /** @class */ (function (_super) {
     Cursor.prototype.setStates = function (source, reason, states) {
         if (states !== null && states.length > Cursor.MAX_CURSOR_COUNT) {
             states = states.slice(0, Cursor.MAX_CURSOR_COUNT);
-            this._onDidReachMaxCursorCount.fire(void 0);
+            this._onDidReachMaxCursorCount.fire(undefined);
         }
         var oldState = new CursorModelState(this._model, this);
         this._cursors.setStates(states);
@@ -373,7 +373,7 @@ var Cursor = /** @class */ (function (_super) {
         if (this._configuration.editor.readOnly) {
             // All the remaining handlers will try to edit the model,
             // but we cannot edit when read only...
-            this._onDidAttemptReadOnlyEdit.fire(void 0);
+            this._onDidAttemptReadOnlyEdit.fire(undefined);
             return;
         }
         var oldState = new CursorModelState(this._model, this);
@@ -532,8 +532,8 @@ var CommandExecutor = /** @class */ (function () {
             for (var i = 0; i < ctx.selectionsBefore.length; i++) {
                 groupedInverseEditOperations[i] = [];
             }
-            for (var i = 0; i < inverseEditOperations.length; i++) {
-                var op = inverseEditOperations[i];
+            for (var _i = 0, inverseEditOperations_1 = inverseEditOperations; _i < inverseEditOperations_1.length; _i++) {
+                var op = inverseEditOperations_1[_i];
                 if (!op.identifier) {
                     // perhaps auto whitespace trim edits
                     continue;
@@ -585,8 +585,9 @@ var CommandExecutor = /** @class */ (function () {
             return b - a;
         });
         // Remove losing cursors
-        for (var i = 0; i < losingCursors.length; i++) {
-            selectionsAfter.splice(losingCursors[i], 1);
+        for (var _i = 0, losingCursors_1 = losingCursors; _i < losingCursors_1.length; _i++) {
+            var losingCursor = losingCursors_1[_i];
+            selectionsAfter.splice(losingCursor, 1);
         }
         return selectionsAfter;
     };

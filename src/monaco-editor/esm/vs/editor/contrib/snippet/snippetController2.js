@@ -69,6 +69,9 @@ var SnippetController2 = /** @class */ (function () {
         if (undoStopBefore === void 0) { undoStopBefore = true; }
         if (undoStopAfter === void 0) { undoStopAfter = true; }
         if (adjustWhitespace === void 0) { adjustWhitespace = true; }
+        if (!this._editor.hasModel()) {
+            return;
+        }
         // don't listen while inserting the snippet
         // as that is the inflight state causing cancelation
         this._snippetListener = dispose(this._snippetListener);
@@ -94,7 +97,7 @@ var SnippetController2 = /** @class */ (function () {
         ];
     };
     SnippetController2.prototype._updateState = function () {
-        if (!this._session) {
+        if (!this._session || !this._editor.hasModel()) {
             // canceled in the meanwhile
             return;
         }
@@ -118,6 +121,10 @@ var SnippetController2 = /** @class */ (function () {
     };
     SnippetController2.prototype._handleChoice = function () {
         var _this = this;
+        if (!this._session || !this._editor.hasModel()) {
+            this._currentChoice = undefined;
+            return;
+        }
         var choice = this._session.choice;
         if (!choice) {
             this._currentChoice = undefined;
@@ -158,15 +165,19 @@ var SnippetController2 = /** @class */ (function () {
         this._modelVersionId = -1;
     };
     SnippetController2.prototype.prev = function () {
-        this._session.prev();
+        if (this._session) {
+            this._session.prev();
+        }
         this._updateState();
     };
     SnippetController2.prototype.next = function () {
-        this._session.next();
+        if (this._session) {
+            this._session.next();
+        }
         this._updateState();
     };
     SnippetController2.prototype.isInSnippet = function () {
-        return this._inSnippet.get();
+        return Boolean(this._inSnippet.get());
     };
     SnippetController2.InSnippetMode = new RawContextKey('inSnippetMode', false);
     SnippetController2.HasNextTabstop = new RawContextKey('hasNextTabstop', false);

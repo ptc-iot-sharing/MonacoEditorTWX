@@ -74,7 +74,7 @@ var _slash = '/';
 var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
 /**
  * Uniform Resource Identifier (URI) http://tools.ietf.org/html/rfc3986.
- * This class is a simple parser which creates the basic component paths
+ * This class is a simple parser which creates the basic component parts
  * (http://tools.ietf.org/html/rfc3986#section-3) with minimal validation
  * and encoding.
  *
@@ -85,8 +85,6 @@ var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
  *        |   _____________________|__
  *       / \ /                        \
  *       urn:example:animal:ferret:nose
- *
- *
  */
 var URI = (function () {
     /**
@@ -129,11 +127,32 @@ var URI = (function () {
         // ---- filesystem path -----------------------
         /**
          * Returns a string representing the corresponding file system path of this URI.
-         * Will handle UNC paths and normalize windows drive letters to lower-case. Also
-         * uses the platform specific path separator. Will *not* validate the path for
-         * invalid characters and semantics. Will *not* look at the scheme of this URI.
+         * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
+         * platform specific path separator.
+         *
+         * * Will *not* validate the path for invalid characters and semantics.
+         * * Will *not* look at the scheme of this URI.
+         * * The result shall *not* be used for display purposes but for accessing a file on disk.
+         *
+         *
+         * The *difference* to `URI#path` is the use of the platform specific separator and the handling
+         * of UNC paths. See the below sample of a file-uri with an authority (UNC path).
+         *
+         * ```ts
+            const u = URI.parse('file://server/c$/folder/file.txt')
+            u.authority === 'server'
+            u.path === '/shares/c$/file.txt'
+            u.fsPath === '\\server\c$\folder\file.txt'
+        ```
+         *
+         * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,
+         * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
+         * with URIs that represent files on disk (`file` scheme).
          */
         get: function () {
+            // if (this.scheme !== 'file') {
+            // 	console.warn(`[UriError] calling fsPath with scheme ${this.scheme}`);
+            // }
             return _makeFsPath(this);
         },
         enumerable: true,
@@ -185,6 +204,12 @@ var URI = (function () {
         return new _URI(scheme, authority, path, query, fragment);
     };
     // ---- parse & validate ------------------------
+    /**
+     * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+     * `file:///usr/home`, or `scheme:with/path`.
+     *
+     * @param value A string which represents an URI (see `URI#toString`).
+     */
     URI.parse = function (value) {
         var match = _regexp.exec(value);
         if (!match) {
@@ -192,6 +217,28 @@ var URI = (function () {
         }
         return new _URI(match[2] || _empty, decodeURIComponent(match[4] || _empty), decodeURIComponent(match[5] || _empty), decodeURIComponent(match[7] || _empty), decodeURIComponent(match[9] || _empty));
     };
+    /**
+     * Creates a new URI from a file system path, e.g. `c:\my\files`,
+     * `/usr/home`, or `\\server\share\some\path`.
+     *
+     * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument
+     * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**
+     * `URI.parse('file://' + path)` because the path might contain characters that are
+     * interpreted (# and ?). See the following sample:
+     * ```ts
+    const good = URI.file('/coding/c#/project1');
+    good.scheme === 'file';
+    good.path === '/coding/c#/project1';
+    good.fragment === '';
+
+    const bad = URI.parse('file://' + '/coding/c#/project1');
+    bad.scheme === 'file';
+    bad.path === '/coding/c'; // path is now broken
+    bad.fragment === '/project1';
+    ```
+     *
+     * @param path A file system path (see `URI#fsPath`)
+     */
     URI.file = function (path) {
         var authority = _empty;
         // normalize to fwd-slashes on windows,
@@ -220,6 +267,13 @@ var URI = (function () {
     };
     // ---- printing/externalize ---------------------------
     /**
+     * Creates a string presentation for this URI. It's guardeed that calling
+     * `URI.parse` with the result of this function creates an URI which is equal
+     * to this URI.
+     *
+     * * The result shall *not* be used for display purposes but for externalization or transport.
+     * * The result will be encoded using the percentage encoding and encoding happens mostly
+     * ignore the scheme-specific encoding rules.
      *
      * @param skipEncoding Do not encode the result, default is `false`
      */
@@ -495,7 +549,7 @@ function _asFormatted(uri, skipEncoding) {
     }
     if (fragment) {
         res += '#';
-        res += encoder(fragment, false);
+        res += !skipEncoding ? encodeURIComponentFast(fragment, false) : fragment;
     }
     return res;
 }

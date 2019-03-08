@@ -234,10 +234,11 @@ export function createScanner(text, ignoreTrivia) {
                 // Multi-line comment
                 if (text.charCodeAt(pos + 1) === 42 /* asterisk */) {
                     pos += 2;
+                    var safeLength = len - 1; // For lookahead.
                     var commentClosed = false;
-                    while (pos < len) {
+                    while (pos < safeLength) {
                         var ch = text.charCodeAt(pos);
-                        if (ch === 42 /* asterisk */ && (pos + 1 < len) && text.charCodeAt(pos + 1) === 47 /* slash */) {
+                        if (ch === 42 /* asterisk */ && text.charCodeAt(pos + 1) === 47 /* slash */) {
                             pos += 2;
                             commentClosed = true;
                             break;

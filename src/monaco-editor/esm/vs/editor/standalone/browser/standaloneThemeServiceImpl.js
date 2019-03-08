@@ -71,7 +71,7 @@ var StandaloneTheme = /** @class */ (function () {
         if (useDefault !== false) {
             return this.getDefault(colorId);
         }
-        return null;
+        return undefined;
     };
     StandaloneTheme.prototype.getDefault = function (colorId) {
         var color = this.defaultColors[colorId];

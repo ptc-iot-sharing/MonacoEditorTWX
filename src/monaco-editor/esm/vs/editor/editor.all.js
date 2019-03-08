@@ -35,6 +35,7 @@ import './contrib/rename/rename.js';
 import './contrib/smartSelect/smartSelect.js';
 import './contrib/snippet/snippetController2.js';
 import './contrib/suggest/suggestController.js';
+import './contrib/tokenization/tokenization.js';
 import './contrib/toggleTabFocusMode/toggleTabFocusMode.js';
 import './contrib/wordHighlighter/wordHighlighter.js';
 import './contrib/wordOperations/wordOperations.js';

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -81,16 +81,16 @@ var PeekViewWidget = /** @class */ (function (_super) {
     PeekViewWidget.prototype._applyStyles = function () {
         _super.prototype._applyStyles.call(this);
         var options = this.options;
-        if (this._headElement) {
+        if (this._headElement && options.headerBackgroundColor) {
             this._headElement.style.backgroundColor = options.headerBackgroundColor.toString();
         }
-        if (this._primaryHeading) {
+        if (this._primaryHeading && options.primaryHeadingColor) {
             this._primaryHeading.style.color = options.primaryHeadingColor.toString();
         }
-        if (this._secondaryHeading) {
+        if (this._secondaryHeading && options.secondaryHeadingColor) {
             this._secondaryHeading.style.color = options.secondaryHeadingColor.toString();
         }
-        if (this._bodyElement) {
+        if (this._bodyElement && options.frameColor) {
             this._bodyElement.style.borderColor = options.frameColor.toString();
         }
     };
@@ -108,10 +108,11 @@ var PeekViewWidget = /** @class */ (function (_super) {
         var titleElement = dom.$('.peekview-title');
         dom.append(this._headElement, titleElement);
         dom.addStandardDisposableListener(titleElement, 'click', function (event) { return _this._onTitleClick(event); });
+        this._headingIcon = dom.$('span');
         this._primaryHeading = dom.$('span.filename');
         this._secondaryHeading = dom.$('span.dirname');
         this._metaHeading = dom.$('span.meta');
-        dom.append(titleElement, this._primaryHeading, this._secondaryHeading, this._metaHeading);
+        dom.append(titleElement, this._headingIcon, this._primaryHeading, this._secondaryHeading, this._metaHeading);
         var actionsContainer = dom.$('.peekview-actions');
         dom.append(this._headElement, actionsContainer);
         var actionBarOptions = this._getActionBarOptions();
@@ -119,7 +120,7 @@ var PeekViewWidget = /** @class */ (function (_super) {
         this._disposables.push(this._actionbarWidget);
         this._actionbarWidget.push(new Action('peekview.close', nls.localize('label.close', "Close"), 'close-peekview-action', true, function () {
             _this.dispose();
-            return null;
+            return Promise.resolve();
         }), { label: false, icon: true });
     };
     PeekViewWidget.prototype._getActionBarOptions = function () {
@@ -127,6 +128,9 @@ var PeekViewWidget = /** @class */ (function (_super) {
     };
     PeekViewWidget.prototype._onTitleClick = function (event) {
         // implement me
+    };
+    PeekViewWidget.prototype.setTitleIcon = function (iconClassName) {
+        this._headingIcon.className = iconClassName ? "icon " + iconClassName : '';
     };
     PeekViewWidget.prototype.setTitle = function (primaryHeading, secondaryHeading) {
         this._primaryHeading.innerHTML = strings.escape(primaryHeading);
@@ -158,11 +162,11 @@ var PeekViewWidget = /** @class */ (function (_super) {
         this._doLayoutBody(bodyHeight, widthInPixel);
     };
     PeekViewWidget.prototype._doLayoutHead = function (heightInPixel, widthInPixel) {
-        this._headElement.style.height = strings.format('{0}px', heightInPixel);
+        this._headElement.style.height = heightInPixel + "px";
         this._headElement.style.lineHeight = this._headElement.style.height;
     };
     PeekViewWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
-        this._bodyElement.style.height = strings.format('{0}px', heightInPixel);
+        this._bodyElement.style.height = heightInPixel + "px";
     };
     return PeekViewWidget;
 }(ZoneWidget));

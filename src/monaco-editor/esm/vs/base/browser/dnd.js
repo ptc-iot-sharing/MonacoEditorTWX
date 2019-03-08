@@ -17,3 +17,19 @@ export var DataTransfers = {
      */
     TEXT: 'text/plain'
 };
+var DragAndDropData = /** @class */ (function () {
+    function DragAndDropData(data) {
+        this.data = data;
+    }
+    DragAndDropData.prototype.update = function () {
+        // noop
+    };
+    DragAndDropData.prototype.getData = function () {
+        return this.data;
+    };
+    return DragAndDropData;
+}());
+export { DragAndDropData };
+export var StaticDND = {
+    CurrentDragAndDropData: undefined
+};

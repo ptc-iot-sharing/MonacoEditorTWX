@@ -79,6 +79,34 @@ export var Location;
     Location.is = is;
 })(Location || (Location = {}));
 /**
+ * The LocationLink namespace provides helper functions to work with
+ * [LocationLink](#LocationLink) literals.
+ */
+export var LocationLink;
+(function (LocationLink) {
+    /**
+     * Creates a LocationLink literal.
+     * @param targetUri The definition's uri.
+     * @param targetRange The full range of the definition.
+     * @param targetSelectionRange The span of the symbol definition at the target.
+     * @param originSelectionRange The span of the symbol being defined in the originating source file.
+     */
+    function create(targetUri, targetRange, targetSelectionRange, originSelectionRange) {
+        return { targetUri: targetUri, targetRange: targetRange, targetSelectionRange: targetSelectionRange, originSelectionRange: originSelectionRange };
+    }
+    LocationLink.create = create;
+    /**
+     * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
+     */
+    function is(value) {
+        var candidate = value;
+        return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
+            && (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+            && (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+    }
+    LocationLink.is = is;
+})(LocationLink || (LocationLink = {}));
+/**
  * The Color namespace provides helper functions to work with
  * [Color](#Color) literals.
  */
@@ -396,13 +424,84 @@ export var TextDocumentEdit;
     }
     TextDocumentEdit.is = is;
 })(TextDocumentEdit || (TextDocumentEdit = {}));
+export var CreateFile;
+(function (CreateFile) {
+    function create(uri, options) {
+        var result = {
+            kind: 'create',
+            uri: uri
+        };
+        if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+            result.options = options;
+        }
+        return result;
+    }
+    CreateFile.create = create;
+    function is(value) {
+        var candidate = value;
+        return candidate && candidate.kind === 'create' && Is.string(candidate.uri) &&
+            (candidate.options === void 0 ||
+                ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+    }
+    CreateFile.is = is;
+})(CreateFile || (CreateFile = {}));
+export var RenameFile;
+(function (RenameFile) {
+    function create(oldUri, newUri, options) {
+        var result = {
+            kind: 'rename',
+            oldUri: oldUri,
+            newUri: newUri
+        };
+        if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+            result.options = options;
+        }
+        return result;
+    }
+    RenameFile.create = create;
+    function is(value) {
+        var candidate = value;
+        return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) &&
+            (candidate.options === void 0 ||
+                ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+    }
+    RenameFile.is = is;
+})(RenameFile || (RenameFile = {}));
+export var DeleteFile;
+(function (DeleteFile) {
+    function create(uri, options) {
+        var result = {
+            kind: 'delete',
+            uri: uri
+        };
+        if (options !== void 0 && (options.recursive !== void 0 || options.ignoreIfNotExists !== void 0)) {
+            result.options = options;
+        }
+        return result;
+    }
+    DeleteFile.create = create;
+    function is(value) {
+        var candidate = value;
+        return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) &&
+            (candidate.options === void 0 ||
+                ((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists))));
+    }
+    DeleteFile.is = is;
+})(DeleteFile || (DeleteFile = {}));
 export var WorkspaceEdit;
 (function (WorkspaceEdit) {
     function is(value) {
         var candidate = value;
         return candidate &&
             (candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
-            (candidate.documentChanges === void 0 || Is.typedArray(candidate.documentChanges, TextDocumentEdit.is));
+            (candidate.documentChanges === void 0 || candidate.documentChanges.every(function (change) {
+                if (Is.string(change.kind)) {
+                    return CreateFile.is(change) || RenameFile.is(change) || DeleteFile.is(change);
+                }
+                else {
+                    return TextDocumentEdit.is(change);
+                }
+            }));
     }
     WorkspaceEdit.is = is;
 })(WorkspaceEdit || (WorkspaceEdit = {}));
@@ -440,9 +539,11 @@ var WorkspaceChange = /** @class */ (function () {
         if (workspaceEdit) {
             this._workspaceEdit = workspaceEdit;
             if (workspaceEdit.documentChanges) {
-                workspaceEdit.documentChanges.forEach(function (textDocumentEdit) {
-                    var textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
-                    _this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+                workspaceEdit.documentChanges.forEach(function (change) {
+                    if (TextDocumentEdit.is(change)) {
+                        var textEditChange = new TextEditChangeImpl(change.edits);
+                        _this._textEditChanges[change.textDocument.uri] = textEditChange;
+                    }
                 });
             }
             else if (workspaceEdit.changes) {
@@ -472,7 +573,7 @@ var WorkspaceChange = /** @class */ (function () {
                 };
             }
             if (!this._workspaceEdit.documentChanges) {
-                throw new Error('Workspace edit is not configured for versioned document changes.');
+                throw new Error('Workspace edit is not configured for document changes.');
             }
             var textDocument = key;
             var result = this._textEditChanges[textDocument.uri];
@@ -505,6 +606,23 @@ var WorkspaceChange = /** @class */ (function () {
                 this._textEditChanges[key] = result;
             }
             return result;
+        }
+    };
+    WorkspaceChange.prototype.createFile = function (uri, options) {
+        this.checkDocumentChanges();
+        this._workspaceEdit.documentChanges.push(CreateFile.create(uri, options));
+    };
+    WorkspaceChange.prototype.renameFile = function (oldUri, newUri, options) {
+        this.checkDocumentChanges();
+        this._workspaceEdit.documentChanges.push(RenameFile.create(oldUri, newUri, options));
+    };
+    WorkspaceChange.prototype.deleteFile = function (uri, options) {
+        this.checkDocumentChanges();
+        this._workspaceEdit.documentChanges.push(DeleteFile.create(uri, options));
+    };
+    WorkspaceChange.prototype.checkDocumentChanges = function () {
+        if (!this._workspaceEdit || !this._workspaceEdit.documentChanges) {
+            throw new Error('Workspace edit is not configured for document changes.');
         }
     };
     return WorkspaceChange;
@@ -553,7 +671,7 @@ export var VersionedTextDocumentIdentifier;
      */
     function is(value) {
         var candidate = value;
-        return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.version);
+        return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.number(candidate.version));
     }
     VersionedTextDocumentIdentifier.is = is;
 })(VersionedTextDocumentIdentifier || (VersionedTextDocumentIdentifier = {}));
@@ -734,7 +852,7 @@ export var Hover;
      */
     function is(value) {
         var candidate = value;
-        return Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
+        return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
             MarkedString.is(candidate.contents) ||
             Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range.is(value.range));
     }
@@ -1158,7 +1276,7 @@ export var TextDocument;
                 text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
             }
             else {
-                throw new Error('Ovelapping edit');
+                throw new Error('Overlapping edit');
             }
             lastModifiedOffset = startOffset;
         }

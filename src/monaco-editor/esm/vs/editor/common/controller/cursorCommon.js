@@ -13,13 +13,13 @@ var autoCloseAlways = function (_) { return true; };
 var autoCloseNever = function (_) { return false; };
 var autoCloseBeforeWhitespace = function (chr) { return (chr === ' ' || chr === '\t'); };
 var CursorConfiguration = /** @class */ (function () {
-    function CursorConfiguration(languageIdentifier, oneIndent, modelOptions, configuration) {
+    function CursorConfiguration(languageIdentifier, modelOptions, configuration) {
         this._languageIdentifier = languageIdentifier;
         var c = configuration.editor;
         this.readOnly = c.readOnly;
         this.tabSize = modelOptions.tabSize;
+        this.indentSize = modelOptions.indentSize;
         this.insertSpaces = modelOptions.insertSpaces;
-        this.oneIndent = oneIndent;
         this.pageSize = Math.max(1, Math.floor(c.layoutInfo.height / c.fontInfo.lineHeight) - 2);
         this.lineHeight = c.lineHeight;
         this.useTabStops = c.useTabStops;
@@ -41,15 +41,17 @@ var CursorConfiguration = /** @class */ (function () {
         };
         var autoClosingPairs = CursorConfiguration._getAutoClosingPairs(languageIdentifier);
         if (autoClosingPairs) {
-            for (var i = 0; i < autoClosingPairs.length; i++) {
-                this.autoClosingPairsOpen[autoClosingPairs[i].open] = autoClosingPairs[i].close;
-                this.autoClosingPairsClose[autoClosingPairs[i].close] = autoClosingPairs[i].open;
+            for (var _i = 0, autoClosingPairs_1 = autoClosingPairs; _i < autoClosingPairs_1.length; _i++) {
+                var pair = autoClosingPairs_1[_i];
+                this.autoClosingPairsOpen[pair.open] = pair.close;
+                this.autoClosingPairsClose[pair.close] = pair.open;
             }
         }
         var surroundingPairs = CursorConfiguration._getSurroundingPairs(languageIdentifier);
         if (surroundingPairs) {
-            for (var i = 0; i < surroundingPairs.length; i++) {
-                this.surroundingPairs[surroundingPairs[i].open] = surroundingPairs[i].close;
+            for (var _a = 0, surroundingPairs_1 = surroundingPairs; _a < surroundingPairs_1.length; _a++) {
+                var pair = surroundingPairs_1[_a];
+                this.surroundingPairs[pair.open] = pair.close;
             }
         }
     }
@@ -71,8 +73,9 @@ var CursorConfiguration = /** @class */ (function () {
                 this._electricChars = {};
                 var electricChars = CursorConfiguration._getElectricCharacters(this._languageIdentifier);
                 if (electricChars) {
-                    for (var i = 0; i < electricChars.length; i++) {
-                        this._electricChars[electricChars[i]] = true;
+                    for (var _i = 0, electricChars_1 = electricChars; _i < electricChars_1.length; _i++) {
+                        var char = electricChars_1[_i];
+                        this._electricChars[char] = true;
                     }
                 }
             }
@@ -82,7 +85,7 @@ var CursorConfiguration = /** @class */ (function () {
         configurable: true
     });
     CursorConfiguration.prototype.normalizeIndentation = function (str) {
-        return TextModel.normalizeIndentation(str, this.tabSize, this.insertSpaces);
+        return TextModel.normalizeIndentation(str, this.indentSize, this.insertSpaces);
     };
     CursorConfiguration._getElectricCharacters = function (languageIdentifier) {
         try {
@@ -197,7 +200,7 @@ var CursorContext = /** @class */ (function () {
     function CursorContext(configuration, model, viewModel) {
         this.model = model;
         this.viewModel = viewModel;
-        this.config = new CursorConfiguration(this.model.getLanguageIdentifier(), this.model.getOneIndent(), this.model.getOptions(), configuration);
+        this.config = new CursorConfiguration(this.model.getLanguageIdentifier(), this.model.getOptions(), configuration);
     }
     CursorContext.prototype.validateViewPosition = function (viewPosition, modelPosition) {
         return this.viewModel.coordinatesConverter.validateViewPosition(viewPosition, modelPosition);
@@ -326,7 +329,7 @@ var CursorColumns = /** @class */ (function () {
         for (var i = 0; i < endOffset; i++) {
             var charCode = lineContent.charCodeAt(i);
             if (charCode === 9 /* Tab */) {
-                result = this.nextTabStop(result, tabSize);
+                result = this.nextRenderTabStop(result, tabSize);
             }
             else if (strings.isFullWidthCharacter(charCode)) {
                 result = result + 2;
@@ -350,7 +353,7 @@ var CursorColumns = /** @class */ (function () {
             var charCode = lineContent.charCodeAt(i);
             var afterVisibleColumn = void 0;
             if (charCode === 9 /* Tab */) {
-                afterVisibleColumn = this.nextTabStop(beforeVisibleColumn, tabSize);
+                afterVisibleColumn = this.nextRenderTabStop(beforeVisibleColumn, tabSize);
             }
             else if (strings.isFullWidthCharacter(charCode)) {
                 afterVisibleColumn = beforeVisibleColumn + 2;
@@ -388,14 +391,26 @@ var CursorColumns = /** @class */ (function () {
     /**
      * ATTENTION: This works with 0-based columns (as oposed to the regular 1-based columns)
      */
-    CursorColumns.nextTabStop = function (visibleColumn, tabSize) {
+    CursorColumns.nextRenderTabStop = function (visibleColumn, tabSize) {
         return visibleColumn + tabSize - visibleColumn % tabSize;
     };
     /**
      * ATTENTION: This works with 0-based columns (as oposed to the regular 1-based columns)
      */
-    CursorColumns.prevTabStop = function (column, tabSize) {
+    CursorColumns.nextIndentTabStop = function (visibleColumn, indentSize) {
+        return visibleColumn + indentSize - visibleColumn % indentSize;
+    };
+    /**
+     * ATTENTION: This works with 0-based columns (as oposed to the regular 1-based columns)
+     */
+    CursorColumns.prevRenderTabStop = function (column, tabSize) {
         return column - 1 - (column - 1) % tabSize;
+    };
+    /**
+     * ATTENTION: This works with 0-based columns (as oposed to the regular 1-based columns)
+     */
+    CursorColumns.prevIndentTabStop = function (column, indentSize) {
+        return column - 1 - (column - 1) % indentSize;
     };
     return CursorColumns;
 }());

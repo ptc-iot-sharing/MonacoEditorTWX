@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -21,10 +21,10 @@ var _schemePattern = /^\w[\w\d+.-]*$/;
 var _singleSlashStart = /^\//;
 var _doubleSlashStart = /^\/\//;
 var _throwOnMissingSchema = true;
-function _validateUri(ret) {
+function _validateUri(ret, _strict) {
     // scheme, must be set
     if (!ret.scheme) {
-        if (_throwOnMissingSchema) {
+        if (_strict || _throwOnMissingSchema) {
             throw new Error("[UriError]: Scheme is missing: {scheme: \"\", authority: \"" + ret.authority + "\", path: \"" + ret.path + "\", query: \"" + ret.query + "\", fragment: \"" + ret.fragment + "\"}");
         }
         else {
@@ -95,7 +95,7 @@ var URI = /** @class */ (function () {
     /**
      * @internal
      */
-    function URI(schemeOrData, authority, path, query, fragment) {
+    function URI(schemeOrData, authority, path, query, fragment, _strict) {
         if (typeof schemeOrData === 'object') {
             this.scheme = schemeOrData.scheme || _empty;
             this.authority = schemeOrData.authority || _empty;
@@ -112,7 +112,7 @@ var URI = /** @class */ (function () {
             this.path = _referenceResolution(this.scheme, path || _empty);
             this.query = query || _empty;
             this.fragment = fragment || _empty;
-            _validateUri(this);
+            _validateUri(this, _strict);
         }
     }
     URI.isUri = function (thing) {
@@ -126,7 +126,10 @@ var URI = /** @class */ (function () {
             && typeof thing.fragment === 'string'
             && typeof thing.path === 'string'
             && typeof thing.query === 'string'
-            && typeof thing.scheme === 'string';
+            && typeof thing.scheme === 'string'
+            && typeof thing.fsPath === 'function'
+            && typeof thing.with === 'function'
+            && typeof thing.toString === 'function';
     };
     Object.defineProperty(URI.prototype, "fsPath", {
         // ---- filesystem path -----------------------
@@ -169,31 +172,31 @@ var URI = /** @class */ (function () {
             return this;
         }
         var scheme = change.scheme, authority = change.authority, path = change.path, query = change.query, fragment = change.fragment;
-        if (scheme === void 0) {
+        if (scheme === undefined) {
             scheme = this.scheme;
         }
         else if (scheme === null) {
             scheme = _empty;
         }
-        if (authority === void 0) {
+        if (authority === undefined) {
             authority = this.authority;
         }
         else if (authority === null) {
             authority = _empty;
         }
-        if (path === void 0) {
+        if (path === undefined) {
             path = this.path;
         }
         else if (path === null) {
             path = _empty;
         }
-        if (query === void 0) {
+        if (query === undefined) {
             query = this.query;
         }
         else if (query === null) {
             query = _empty;
         }
-        if (fragment === void 0) {
+        if (fragment === undefined) {
             fragment = this.fragment;
         }
         else if (fragment === null) {
@@ -215,12 +218,13 @@ var URI = /** @class */ (function () {
      *
      * @param value A string which represents an URI (see `URI#toString`).
      */
-    URI.parse = function (value) {
+    URI.parse = function (value, _strict) {
+        if (_strict === void 0) { _strict = false; }
         var match = _regexp.exec(value);
         if (!match) {
             return new _URI(_empty, _empty, _empty, _empty, _empty);
         }
-        return new _URI(match[2] || _empty, decodeURIComponent(match[4] || _empty), decodeURIComponent(match[5] || _empty), decodeURIComponent(match[7] || _empty), decodeURIComponent(match[9] || _empty));
+        return new _URI(match[2] || _empty, decodeURIComponent(match[4] || _empty), decodeURIComponent(match[5] || _empty), decodeURIComponent(match[7] || _empty), decodeURIComponent(match[9] || _empty), _strict);
     };
     /**
      * Creates a new URI from a file system path, e.g. `c:\my\files`,
@@ -271,7 +275,7 @@ var URI = /** @class */ (function () {
     };
     // ---- printing/externalize ---------------------------
     /**
-     * Creates a string presentation for this URI. It's guaranteed that calling
+     * Creates a string representation for this URI. It's guaranteed that calling
      * `URI.parse` with the result of this function creates an URI which is equal
      * to this URI.
      *
@@ -461,7 +465,6 @@ function encodeURIComponentMinimal(path) {
 }
 /**
  * Compute `fsPath` for the given uri
- * @param uri
  */
 function _makeFsPath(uri) {
     var value;

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as nls from './../../../fillers/vscode-nls.js';
+import * as nls from '../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var CSSIssueType = /** @class */ (function () {
     function CSSIssueType(id, message) {
@@ -45,4 +45,3 @@ export var ParseError = {
     WhitespaceExpected: new CSSIssueType('css-whitespaceexpected', localize('expected.whitespace', "whitespace expected")),
     MediaQueryExpected: new CSSIssueType('css-mediaqueryexpected', localize('expected.mediaquery', "media query expected"))
 };
-//# sourceMappingURL=cssErrors.js.map

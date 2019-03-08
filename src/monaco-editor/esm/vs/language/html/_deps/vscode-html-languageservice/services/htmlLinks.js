@@ -2,20 +2,16 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 import { createScanner } from '../parser/htmlScanner.js';
-import { Range } from './../../vscode-languageserver-types/main.js';
+import { Range } from '../../vscode-languageserver-types/main.js';
 import * as strings from '../utils/strings.js';
-import Uri from './../../vscode-uri/index.js';
+import Uri from '../../vscode-uri/index.js';
 import { TokenType } from '../htmlLanguageTypes.js';
 function normalizeRef(url, languageId) {
     var first = url[0];
     var last = url[url.length - 1];
     if (first === last && (first === '\'' || first === '\"')) {
         url = url.substr(1, url.length - 2);
-    }
-    if (languageId === 'razor' && url[0] === '~') {
-        url = url.substr(1);
     }
     return url;
 }
@@ -24,9 +20,6 @@ function validateRef(url, languageId) {
         return false;
     }
     if (languageId === 'handlebars' && /{{.*}}/.test(url)) {
-        return false;
-    }
-    if (languageId === 'razor' && /@/.test(url)) {
         return false;
     }
     try {

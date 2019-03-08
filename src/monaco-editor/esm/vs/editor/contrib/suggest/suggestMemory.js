@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,6 +28,10 @@ import { LRUCache, TernarySearchTree } from '../../../base/common/map.js';
 import { IStorageService } from '../../../platform/storage/common/storage.js';
 import { completionKindFromLegacyString } from '../../common/modes.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
+import { RunOnceScheduler } from '../../../base/common/async.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
 var Memory = /** @class */ (function () {
     function Memory() {
     }
@@ -37,7 +41,7 @@ var Memory = /** @class */ (function () {
         }
         var topScore = items[0].score;
         for (var i = 1; i < items.length; i++) {
-            var _a = items[i], score = _a.score, suggestion = _a.suggestion;
+            var _a = items[i], score = _a.score, suggestion = _a.completion;
             if (score !== topScore) {
                 // stop when leaving the group of top matches
                 break;
@@ -73,17 +77,17 @@ var LRUMemory = /** @class */ (function (_super) {
     __extends(LRUMemory, _super);
     function LRUMemory() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._cache = new LRUCache(300, .66);
+        _this._cache = new LRUCache(300, 0.66);
         _this._seq = 0;
         return _this;
     }
     LRUMemory.prototype.memorize = function (model, pos, item) {
-        var label = item.suggestion.label;
+        var label = item.completion.label;
         var key = model.getLanguageIdentifier().language + "/" + label;
         this._cache.set(key, {
             touch: this._seq++,
-            type: item.suggestion.kind,
-            insertText: item.suggestion.insertText
+            type: item.completion.kind,
+            insertText: item.completion.insertText
         });
     };
     LRUMemory.prototype.select = function (model, pos, items) {
@@ -100,7 +104,7 @@ var LRUMemory = /** @class */ (function (_super) {
         var res = -1;
         var seq = -1;
         for (var i = 0; i < items.length; i++) {
-            var suggestion = items[i].suggestion;
+            var suggestion = items[i].completion;
             var key = model.getLanguageIdentifier().language + "/" + suggestion.label;
             var item = this._cache.get(key);
             if (item && item.touch > seq && item.type === suggestion.kind && item.insertText === suggestion.insertText) {
@@ -148,8 +152,8 @@ var PrefixMemory = /** @class */ (function (_super) {
         var word = model.getWordUntilPosition(pos).word;
         var key = model.getLanguageIdentifier().language + "/" + word;
         this._trie.set(key, {
-            type: item.suggestion.kind,
-            insertText: item.suggestion.insertText,
+            type: item.completion.kind,
+            insertText: item.completion.insertText,
             touch: this._seq++
         });
     };
@@ -165,7 +169,7 @@ var PrefixMemory = /** @class */ (function (_super) {
         }
         if (item) {
             for (var i = 0; i < items.length; i++) {
-                var _a = items[i].suggestion, kind = _a.kind, insertText = _a.insertText;
+                var _a = items[i].completion, kind = _a.kind, insertText = _a.insertText;
                 if (kind === item.type && insertText === item.insertText) {
                     return i;
                 }
@@ -198,25 +202,47 @@ var PrefixMemory = /** @class */ (function (_super) {
     return PrefixMemory;
 }(Memory));
 export { PrefixMemory };
-var SuggestMemories = /** @class */ (function (_super) {
-    __extends(SuggestMemories, _super);
-    function SuggestMemories(editor, _storageService) {
+var SuggestMemoryService = /** @class */ (function (_super) {
+    __extends(SuggestMemoryService, _super);
+    function SuggestMemoryService(_storageService, _configService) {
         var _this = _super.call(this) || this;
         _this._storageService = _storageService;
+        _this._configService = _configService;
         _this._storagePrefix = 'suggest/memories';
-        _this._setMode(editor.getConfiguration().contribInfo.suggestSelection);
-        _this._register(editor.onDidChangeConfiguration(function (e) { return e.contribInfo && _this._setMode(editor.getConfiguration().contribInfo.suggestSelection); }));
+        var update = function () {
+            var mode = _this._configService.getValue('editor.suggestSelection');
+            var share = _this._configService.getValue('editor.suggest.shareSuggestSelections');
+            _this._update(mode, share, false);
+        };
+        _this._persistSoon = _this._register(new RunOnceScheduler(function () { return _this._saveState(); }, 500));
         _this._register(_storageService.onWillSaveState(function () { return _this._saveState(); }));
+        _this._register(_this._configService.onDidChangeConfiguration(function (e) {
+            if (e.affectsConfiguration('editor.suggestSelection') || e.affectsConfiguration('editor.suggest.shareSuggestSelections')) {
+                update();
+            }
+        }));
+        _this._register(_this._storageService.onDidChangeStorage(function (e) {
+            if (e.scope === 0 /* GLOBAL */ && e.key.indexOf(_this._storagePrefix) === 0) {
+                if (!document.hasFocus()) {
+                    // windows that aren't focused have to drop their current
+                    // storage value and accept what's stored now
+                    _this._update(_this._mode, _this._shareMem, true);
+                }
+            }
+        }));
+        update();
         return _this;
     }
-    SuggestMemories.prototype._setMode = function (mode) {
-        if (this._mode === mode) {
+    SuggestMemoryService.prototype._update = function (mode, shareMem, force) {
+        if (!force && this._mode === mode && this._shareMem === shareMem) {
             return;
         }
+        this._shareMem = shareMem;
         this._mode = mode;
         this._strategy = mode === 'recentlyUsedByPrefix' ? new PrefixMemory() : mode === 'recentlyUsed' ? new LRUMemory() : new NoMemory();
         try {
-            var raw = this._storageService.get(this._storagePrefix + "/" + this._mode, 1 /* WORKSPACE */);
+            var scope = shareMem ? 0 /* GLOBAL */ : 1 /* WORKSPACE */;
+            var raw = this._storageService.get(this._storagePrefix + "/" + this._mode, scope);
             if (raw) {
                 this._strategy.fromJSON(JSON.parse(raw));
             }
@@ -225,19 +251,24 @@ var SuggestMemories = /** @class */ (function (_super) {
             // things can go wrong with JSON...
         }
     };
-    SuggestMemories.prototype.memorize = function (model, pos, item) {
+    SuggestMemoryService.prototype.memorize = function (model, pos, item) {
         this._strategy.memorize(model, pos, item);
+        this._persistSoon.schedule();
     };
-    SuggestMemories.prototype.select = function (model, pos, items) {
+    SuggestMemoryService.prototype.select = function (model, pos, items) {
         return this._strategy.select(model, pos, items);
     };
-    SuggestMemories.prototype._saveState = function () {
+    SuggestMemoryService.prototype._saveState = function () {
         var raw = JSON.stringify(this._strategy);
-        this._storageService.store(this._storagePrefix + "/" + this._mode, raw, 1 /* WORKSPACE */);
+        var scope = this._shareMem ? 0 /* GLOBAL */ : 1 /* WORKSPACE */;
+        this._storageService.store(this._storagePrefix + "/" + this._mode, raw, scope);
     };
-    SuggestMemories = __decorate([
-        __param(1, IStorageService)
-    ], SuggestMemories);
-    return SuggestMemories;
+    SuggestMemoryService = __decorate([
+        __param(0, IStorageService),
+        __param(1, IConfigurationService)
+    ], SuggestMemoryService);
+    return SuggestMemoryService;
 }(Disposable));
-export { SuggestMemories };
+export { SuggestMemoryService };
+export var ISuggestMemoryService = createDecorator('ISuggestMemories');
+registerSingleton(ISuggestMemoryService, SuggestMemoryService, true);

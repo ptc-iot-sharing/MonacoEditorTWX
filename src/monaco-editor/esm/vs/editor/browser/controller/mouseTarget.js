@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -375,8 +375,8 @@ var MouseTargetFactory = /** @class */ (function () {
         if (request.target) {
             // Check if we've hit a painted cursor
             var lastViewCursorsRenderData = ctx.lastViewCursorsRenderData;
-            for (var i = 0, len = lastViewCursorsRenderData.length; i < len; i++) {
-                var d = lastViewCursorsRenderData[i];
+            for (var _i = 0, lastViewCursorsRenderData_1 = lastViewCursorsRenderData; _i < lastViewCursorsRenderData_1.length; _i++) {
+                var d = lastViewCursorsRenderData_1[_i];
                 if (request.target === d.domNode) {
                     return request.fulfill(6 /* CONTENT_TEXT */, d.position);
                 }
@@ -390,8 +390,8 @@ var MouseTargetFactory = /** @class */ (function () {
             var lastViewCursorsRenderData = ctx.lastViewCursorsRenderData;
             var mouseContentHorizontalOffset = request.mouseContentHorizontalOffset;
             var mouseVerticalOffset = request.mouseVerticalOffset;
-            for (var i = 0, len = lastViewCursorsRenderData.length; i < len; i++) {
-                var d = lastViewCursorsRenderData[i];
+            for (var _a = 0, lastViewCursorsRenderData_2 = lastViewCursorsRenderData; _a < lastViewCursorsRenderData_2.length; _a++) {
+                var d = lastViewCursorsRenderData_2[_a];
                 if (mouseContentHorizontalOffset < d.contentLeft) {
                     // mouse position is to the left of the cursor
                     continue;
@@ -461,7 +461,7 @@ var MouseTargetFactory = /** @class */ (function () {
             // This most likely indicates it happened after the last view-line
             var lineCount = ctx.model.getLineCount();
             var maxLineColumn = ctx.model.getLineMaxColumn(lineCount);
-            return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineCount, maxLineColumn), void 0, EMPTY_CONTENT_AFTER_LINES);
+            return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineCount, maxLineColumn), undefined, EMPTY_CONTENT_AFTER_LINES);
         }
         if (domHitTestExecuted) {
             // Check if we are hitting a view-line (can happen in the case of inline decorations on empty lines)
@@ -471,7 +471,7 @@ var MouseTargetFactory = /** @class */ (function () {
                 if (ctx.model.getLineLength(lineNumber) === 0) {
                     var lineWidth = ctx.getLineWidth(lineNumber);
                     var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
-                    return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineNumber, 1), void 0, detail);
+                    return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineNumber, 1), undefined, detail);
                 }
             }
             // We have already executed hit test...
@@ -533,10 +533,10 @@ var MouseTargetFactory = /** @class */ (function () {
             if (browser.isEdge && pos.column === 1) {
                 // See https://github.com/Microsoft/vscode/issues/10875
                 var detail_1 = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
-                return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineNumber, ctx.model.getLineMaxColumn(lineNumber)), void 0, detail_1);
+                return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineNumber, ctx.model.getLineMaxColumn(lineNumber)), undefined, detail_1);
             }
             var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
-            return request.fulfill(7 /* CONTENT_EMPTY */, pos, void 0, detail);
+            return request.fulfill(7 /* CONTENT_EMPTY */, pos, undefined, detail);
         }
         var visibleRange = ctx.visibleRangeForPosition2(lineNumber, column);
         if (!visibleRange) {

@@ -5,11 +5,14 @@
 import { toDisposable } from '../../../base/common/lifecycle.js';
 import { validateConstraints } from '../../../base/common/types.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
+import { Emitter } from '../../../base/common/event.js';
 import { LinkedList } from '../../../base/common/linkedList.js';
 export var ICommandService = createDecorator('commandService');
 export var CommandsRegistry = new /** @class */ (function () {
     function class_1() {
         this._commands = new Map();
+        this._onDidRegisterCommand = new Emitter();
+        this.onDidRegisterCommand = this._onDidRegisterCommand.event;
     }
     class_1.prototype.registerCommand = function (idOrCommand, handler) {
         var _this = this;
@@ -47,12 +50,16 @@ export var CommandsRegistry = new /** @class */ (function () {
             this._commands.set(id, commands);
         }
         var removeFn = commands.unshift(idOrCommand);
-        return toDisposable(function () {
+        var ret = toDisposable(function () {
             removeFn();
-            if (_this._commands.get(id).isEmpty()) {
+            var command = _this._commands.get(id);
+            if (command && command.isEmpty()) {
                 _this._commands.delete(id);
             }
         });
+        // tell the world about this command
+        this._onDidRegisterCommand.fire(id);
+        return ret;
     };
     class_1.prototype.registerCommandAlias = function (oldId, newId) {
         return CommandsRegistry.registerCommand(oldId, function (accessor) {
@@ -61,7 +68,7 @@ export var CommandsRegistry = new /** @class */ (function () {
                 args[_i - 1] = arguments[_i];
             }
             var _a;
-            (_a = accessor.get(ICommandService)).executeCommand.apply(_a, [newId].concat(args));
+            return (_a = accessor.get(ICommandService)).executeCommand.apply(_a, [newId].concat(args));
         });
     };
     class_1.prototype.getCommand = function (id) {

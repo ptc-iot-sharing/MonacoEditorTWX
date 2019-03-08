@@ -157,9 +157,10 @@ var SplitLinesCollection = /** @class */ (function () {
         }
         // END TODO@Martin: Please stop calling this method on each model change!
         var newDecorations = [];
-        for (var i = 0; i < newRanges.length; i++) {
+        for (var _i = 0, newRanges_1 = newRanges; _i < newRanges_1.length; _i++) {
+            var newRange = newRanges_1[_i];
             newDecorations.push({
-                range: newRanges[i],
+                range: newRange,
                 options: ModelDecorationOptions.EMPTY
             });
         }
@@ -253,8 +254,9 @@ var SplitLinesCollection = /** @class */ (function () {
         var hiddenAreas = this.getHiddenAreas();
         var isInHiddenArea = false;
         var testPosition = new Position(fromLineNumber, 1);
-        for (var i = 0; i < hiddenAreas.length; i++) {
-            if (hiddenAreas[i].containsPosition(testPosition)) {
+        for (var _i = 0, hiddenAreas_1 = hiddenAreas; _i < hiddenAreas_1.length; _i++) {
+            var hiddenArea = hiddenAreas_1[_i];
+            if (hiddenArea.containsPosition(testPosition)) {
                 isInHiddenArea = true;
                 break;
             }
@@ -579,8 +581,8 @@ var SplitLinesCollection = /** @class */ (function () {
     SplitLinesCollection.prototype.getAllOverviewRulerDecorations = function (ownerId, filterOutValidation, theme) {
         var decorations = this.model.getOverviewRulerDecorations(ownerId, filterOutValidation);
         var result = new OverviewRulerDecorations();
-        for (var i = 0, len = decorations.length; i < len; i++) {
-            var decoration = decorations[i];
+        for (var _i = 0, decorations_1 = decorations; _i < decorations_1.length; _i++) {
+            var decoration = decorations_1[_i];
             var opts = decoration.options.overviewRuler;
             var lane = opts ? opts.position : 0;
             if (lane === 0) {
@@ -642,8 +644,8 @@ var SplitLinesCollection = /** @class */ (function () {
         // Eliminate duplicate decorations that might have intersected our visible ranges multiple times
         var finalResult = [], finalResultLen = 0;
         var prevDecId = null;
-        for (var i = 0, len = result.length; i < len; i++) {
-            var dec = result[i];
+        for (var _i = 0, result_1 = result; _i < result_1.length; _i++) {
+            var dec = result_1[_i];
             var decId = dec.id;
             if (prevDecId === decId) {
                 // skip
@@ -1045,8 +1047,8 @@ var IdentityLinesCollection = /** @class */ (function () {
     IdentityLinesCollection.prototype.getAllOverviewRulerDecorations = function (ownerId, filterOutValidation, theme) {
         var decorations = this.model.getOverviewRulerDecorations(ownerId, filterOutValidation);
         var result = new OverviewRulerDecorations();
-        for (var i = 0, len = decorations.length; i < len; i++) {
-            var decoration = decorations[i];
+        for (var _i = 0, decorations_2 = decorations; _i < decorations_2.length; _i++) {
+            var decoration = decorations_2[_i];
             var opts = decoration.options.overviewRuler;
             var lane = opts ? opts.position : 0;
             if (lane === 0) {

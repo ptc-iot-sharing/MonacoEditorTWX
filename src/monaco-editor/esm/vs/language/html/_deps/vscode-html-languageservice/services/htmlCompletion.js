@@ -2,15 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
-import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from './../../vscode-languageserver-types/main.js';
+import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from '../../vscode-languageserver-types/main.js';
 import { createScanner } from '../parser/htmlScanner.js';
-import { isEmptyElement } from '../parser/htmlTags.js';
-import { allTagProviders } from './tagProviders.js';
 import { ScannerState, TokenType } from '../htmlLanguageTypes.js';
 import { entities } from '../parser/htmlEntities.js';
-import * as nls from './../../../fillers/vscode-nls.js';
+import * as nls from '../../../fillers/vscode-nls.js';
 import { isLetterOrDigit, endsWith, startsWith } from '../utils/strings.js';
+import { getAllDataProviders } from '../languageFacts/builtinDataProviders.js';
+import { isVoidElement } from '../languageFacts/fact.js';
 var localize = nls.loadMessageBundle();
 var HTMLCompletion = /** @class */ (function () {
     function HTMLCompletion() {
@@ -25,7 +24,7 @@ var HTMLCompletion = /** @class */ (function () {
             items: []
         };
         var completionParticipants = this.completionParticipants;
-        var tagProviders = allTagProviders.filter(function (p) { return p.isApplicable(document.languageId) && (!settings || settings[p.getId()] !== false); });
+        var dataProviders = getAllDataProviders().filter(function (p) { return p.isApplicable(document.languageId) && (!settings || settings[p.getId()] !== false); });
         var text = document.getText();
         var offset = document.offsetAt(position);
         var node = htmlDocument.findNodeBefore(offset);
@@ -44,13 +43,13 @@ var HTMLCompletion = /** @class */ (function () {
         }
         function collectOpenTagSuggestions(afterOpenBracket, tagNameEnd) {
             var range = getReplaceRange(afterOpenBracket, tagNameEnd);
-            tagProviders.forEach(function (provider) {
-                provider.collectTags(function (tag, label) {
+            dataProviders.forEach(function (provider) {
+                provider.provideTags().forEach(function (tag) {
                     result.items.push({
-                        label: tag,
+                        label: tag.name,
                         kind: CompletionItemKind.Property,
-                        documentation: label,
-                        textEdit: TextEdit.replace(range, tag),
+                        documentation: tag.description,
+                        textEdit: TextEdit.replace(range, tag.name),
                         insertTextFormat: InsertTextFormat.PlainText
                     });
                 });
@@ -104,12 +103,12 @@ var HTMLCompletion = /** @class */ (function () {
             if (inOpenTag) {
                 return result;
             }
-            tagProviders.forEach(function (provider) {
-                provider.collectTags(function (tag, label) {
+            dataProviders.forEach(function (provider) {
+                provider.provideTags().forEach(function (tag) {
                     result.items.push({
-                        label: '/' + tag,
+                        label: '/' + tag.name,
                         kind: CompletionItemKind.Property,
-                        documentation: label,
+                        documentation: tag.description,
                         filterText: '/' + tag + closeTag,
                         textEdit: TextEdit.replace(range, '/' + tag + closeTag),
                         insertTextFormat: InsertTextFormat.PlainText
@@ -122,7 +121,7 @@ var HTMLCompletion = /** @class */ (function () {
             if (settings && settings.hideAutoCompleteProposals) {
                 return result;
             }
-            if (!isEmptyElement(tag)) {
+            if (!isVoidElement(tag)) {
                 var pos = document.positionAt(tagCloseEnd);
                 result.items.push({
                     label: '</' + tag + '>',
@@ -149,17 +148,17 @@ var HTMLCompletion = /** @class */ (function () {
             var value = isFollowedBy(text, nameEnd, ScannerState.AfterAttributeName, TokenType.DelimiterAssign) ? '' : '="$1"';
             var tag = currentTag.toLowerCase();
             var seenAttributes = Object.create(null);
-            tagProviders.forEach(function (provider) {
-                provider.collectAttributes(tag, function (attribute, type) {
-                    if (seenAttributes[attribute]) {
+            dataProviders.forEach(function (provider) {
+                provider.provideAttributes(tag).forEach(function (attr) {
+                    if (seenAttributes[attr.name]) {
                         return;
                     }
-                    seenAttributes[attribute] = true;
-                    var codeSnippet = attribute;
+                    seenAttributes[attr.name] = true;
+                    var codeSnippet = attr.name;
                     var command;
-                    if (type !== 'v' && value.length) {
+                    if (attr.valueSet !== 'v' && value.length) {
                         codeSnippet = codeSnippet + value;
-                        if (type) {
+                        if (attr.valueSet) {
                             command = {
                                 title: 'Suggest',
                                 command: 'editor.action.triggerSuggest'
@@ -167,8 +166,9 @@ var HTMLCompletion = /** @class */ (function () {
                         }
                     }
                     result.items.push({
-                        label: attribute,
-                        kind: type === 'handler' ? CompletionItemKind.Function : CompletionItemKind.Value,
+                        label: attr.name,
+                        kind: attr.valueSet === 'handler' ? CompletionItemKind.Function : CompletionItemKind.Value,
+                        documentation: attr.description,
                         textEdit: TextEdit.replace(range, codeSnippet),
                         insertTextFormat: InsertTextFormat.Snippet,
                         command: command
@@ -235,12 +235,11 @@ var HTMLCompletion = /** @class */ (function () {
                     }
                 }
             }
-            var value = scanner.getTokenText();
-            tagProviders.forEach(function (provider) {
-                provider.collectValues(tag, attribute, function (value) {
-                    var insertText = addQuotes ? '"' + value + '"' : value;
+            dataProviders.forEach(function (provider) {
+                provider.provideValues(tag, attribute).forEach(function (value) {
+                    var insertText = addQuotes ? '"' + value.name + '"' : value.name;
                     result.items.push({
-                        label: value,
+                        label: value.name,
                         filterText: insertText,
                         kind: CompletionItemKind.Unit,
                         textEdit: TextEdit.replace(range, insertText),
@@ -294,12 +293,25 @@ var HTMLCompletion = /** @class */ (function () {
             }
             return result;
         }
+        function suggestDoctype(replaceStart, replaceEnd) {
+            var range = getReplaceRange(replaceStart, replaceEnd);
+            result.items.push({
+                label: '!DOCTYPE',
+                kind: CompletionItemKind.Property,
+                documentation: 'A preamble for an HTML document.',
+                textEdit: TextEdit.replace(range, '!DOCTYPE html>'),
+                insertTextFormat: InsertTextFormat.PlainText
+            });
+        }
         var token = scanner.scan();
         while (token !== TokenType.EOS && scanner.getTokenOffset() <= offset) {
             switch (token) {
                 case TokenType.StartTagOpen:
                     if (scanner.getTokenEnd() === offset) {
                         var endPos = scanNextForEndPos(TokenType.StartTag);
+                        if (position.line === 0) {
+                            suggestDoctype(offset, endPos);
+                        }
                         return collectTagSuggestions(offset, endPos);
                     }
                     break;
@@ -397,7 +409,7 @@ var HTMLCompletion = /** @class */ (function () {
         var char = document.getText().charAt(offset - 1);
         if (char === '>') {
             var node = htmlDocument.findNodeBefore(offset);
-            if (node && node.tag && !isEmptyElement(node.tag) && node.start < offset && (!node.endTagStart || node.endTagStart > offset)) {
+            if (node && node.tag && !isVoidElement(node.tag) && node.start < offset && (!node.endTagStart || node.endTagStart > offset)) {
                 var scanner = createScanner(document.getText(), node.start);
                 var token = scanner.scan();
                 while (token !== TokenType.EOS && scanner.getTokenEnd() <= offset) {

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -30,6 +30,7 @@ var ViewCursors = /** @class */ (function (_super) {
         _this._readOnly = _this._context.configuration.editor.readOnly;
         _this._cursorBlinking = _this._context.configuration.editor.viewInfo.cursorBlinking;
         _this._cursorStyle = _this._context.configuration.editor.viewInfo.cursorStyle;
+        _this._cursorSmoothCaretAnimation = _this._context.configuration.editor.viewInfo.cursorSmoothCaretAnimation;
         _this._selectionIsEmpty = true;
         _this._primaryCursor = new ViewCursor(_this._context);
         _this._secondaryCursors = [];
@@ -62,6 +63,7 @@ var ViewCursors = /** @class */ (function (_super) {
         if (e.viewInfo) {
             this._cursorBlinking = this._context.configuration.editor.viewInfo.cursorBlinking;
             this._cursorStyle = this._context.configuration.editor.viewInfo.cursorStyle;
+            this._cursorSmoothCaretAnimation = this._context.configuration.editor.viewInfo.cursorSmoothCaretAnimation;
         }
         this._primaryCursor.onConfigurationChanged(e);
         this._updateBlinking();
@@ -146,8 +148,9 @@ var ViewCursors = /** @class */ (function (_super) {
         if (shouldRender(this._primaryCursor.getPosition())) {
             return true;
         }
-        for (var i = 0; i < this._secondaryCursors.length; i++) {
-            if (shouldRender(this._secondaryCursors[i].getPosition())) {
+        for (var _i = 0, _a = this._secondaryCursors; _i < _a.length; _i++) {
+            var secondaryCursor = _a[_i];
+            if (shouldRender(secondaryCursor.getPosition())) {
                 return true;
             }
         }
@@ -257,6 +260,9 @@ var ViewCursors = /** @class */ (function (_super) {
         }
         else {
             result += ' cursor-solid';
+        }
+        if (this._cursorSmoothCaretAnimation) {
+            result += ' cursor-smooth-caret-animation';
         }
         return result;
     };

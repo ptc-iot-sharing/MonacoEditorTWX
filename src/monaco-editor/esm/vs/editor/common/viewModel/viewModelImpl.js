@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,6 +28,7 @@ import { CharacterHardWrappingLineMapperFactory } from './characterHardWrappingL
 import { IdentityLinesCollection, SplitLinesCollection } from './splitLinesCollection.js';
 import { MinimapLinesRenderingData, ViewLineRenderingData } from './viewModel.js';
 import { ViewModelDecorations } from './viewModelDecorations.js';
+import { RunOnceScheduler } from '../../../base/common/async.js';
 var USE_IDENTITY_LINES_COLLECTION = true;
 var ViewModel = /** @class */ (function (_super) {
     __extends(ViewModel, _super);
@@ -36,6 +37,7 @@ var ViewModel = /** @class */ (function (_super) {
         _this.editorId = editorId;
         _this.configuration = configuration;
         _this.model = model;
+        _this._tokenizeViewportSoon = _this._register(new RunOnceScheduler(function () { return _this.tokenizeViewport(); }, 50));
         _this.hasFocus = false;
         _this.viewportStartLine = -1;
         _this.viewportStartLineTrackedRange = null;
@@ -51,6 +53,9 @@ var ViewModel = /** @class */ (function (_super) {
         _this.coordinatesConverter = _this.lines.createCoordinatesConverter();
         _this.viewLayout = _this._register(new ViewLayout(_this.configuration, _this.getLineCount(), scheduleAtNextAnimationFrame));
         _this._register(_this.viewLayout.onDidScroll(function (e) {
+            if (e.scrollTopChanged) {
+                _this._tokenizeViewportSoon.schedule();
+            }
             try {
                 var eventsCollector = _this._beginEmit();
                 eventsCollector.emit(new viewEvents.ViewScrollChangedEvent(e));
@@ -88,6 +93,12 @@ var ViewModel = /** @class */ (function (_super) {
         this.decorations.dispose();
         this.lines.dispose();
         this.viewportStartLineTrackedRange = this.model._setTrackedRange(this.viewportStartLineTrackedRange, null, 1 /* NeverGrowsWhenTypingAtEdges */);
+    };
+    ViewModel.prototype.tokenizeViewport = function () {
+        var linesViewportData = this.viewLayout.getLinesViewportData();
+        var startPosition = this.coordinatesConverter.convertViewPositionToModelPosition(new Position(linesViewportData.startLineNumber, 1));
+        var endPosition = this.coordinatesConverter.convertViewPositionToModelPosition(new Position(linesViewportData.endLineNumber, 1));
+        this.model.tokenizeViewport(startPosition.lineNumber, endPosition.lineNumber);
     };
     ViewModel.prototype.setHasFocus = function (hasFocus) {
         this.hasFocus = hasFocus;
@@ -227,6 +238,9 @@ var ViewModel = /** @class */ (function (_super) {
             finally {
                 _this._endEmit();
             }
+            if (e.tokenizationSupportChanged) {
+                _this._tokenizeViewportSoon.schedule();
+            }
         }));
         this._register(this.model.onDidChangeLanguageConfiguration(function (e) {
             try {
@@ -359,6 +373,9 @@ var ViewModel = /** @class */ (function (_super) {
     ViewModel.prototype.getTabSize = function () {
         return this.model.getOptions().tabSize;
     };
+    ViewModel.prototype.getOptions = function () {
+        return this.model.getOptions();
+    };
     ViewModel.prototype.getLineCount = function () {
         return this.lines.getViewLineCount();
     };
@@ -430,8 +447,8 @@ var ViewModel = /** @class */ (function (_super) {
     };
     ViewModel.prototype.invalidateOverviewRulerColorCache = function () {
         var decorations = this.model.getOverviewRulerDecorations();
-        for (var i = 0, len = decorations.length; i < len; i++) {
-            var decoration = decorations[i];
+        for (var _i = 0, decorations_1 = decorations; _i < decorations_1.length; _i++) {
+            var decoration = decorations_1[_i];
             var opts = decoration.options.overviewRuler;
             if (opts) {
                 opts.invalidateCachedColor();
@@ -493,8 +510,9 @@ var ViewModel = /** @class */ (function (_super) {
             return result_1;
         }
         var result = [];
-        for (var i = 0; i < nonEmptyRanges.length; i++) {
-            result.push(this.getValueInRange(nonEmptyRanges[i], forceCRLF ? 2 /* CRLF */ : 0 /* TextDefined */));
+        for (var _i = 0, nonEmptyRanges_1 = nonEmptyRanges; _i < nonEmptyRanges_1.length; _i++) {
+            var nonEmptyRange = nonEmptyRanges_1[_i];
+            result.push(this.getValueInRange(nonEmptyRange, forceCRLF ? 2 /* CRLF */ : 0 /* TextDefined */));
         }
         return result.length === 1 ? result[0] : result;
     };

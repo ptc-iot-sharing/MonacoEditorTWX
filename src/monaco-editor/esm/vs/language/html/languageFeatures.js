@@ -187,7 +187,6 @@ var CompletionAdapter = /** @class */ (function () {
         configurable: true
     });
     CompletionAdapter.prototype.provideCompletionItems = function (model, position, context, token) {
-        var wordInfo = model.getWordUntilPosition(position);
         var resource = model.uri;
         return this._worker(resource).then(function (worker) {
             return worker.doComplete(resource.toString(), fromPosition(position));
@@ -195,6 +194,8 @@ var CompletionAdapter = /** @class */ (function () {
             if (!info) {
                 return;
             }
+            var wordInfo = model.getWordUntilPosition(position);
+            var wordRange = new Range(position.lineNumber, wordInfo.startColumn, position.lineNumber, wordInfo.endColumn);
             var items = info.items.map(function (entry) {
                 var item = {
                     label: entry.label,
@@ -203,6 +204,7 @@ var CompletionAdapter = /** @class */ (function () {
                     filterText: entry.filterText,
                     documentation: entry.documentation,
                     detail: entry.detail,
+                    range: wordRange,
                     kind: toCompletionItemKind(entry.kind),
                 };
                 if (entry.textEdit) {
@@ -226,6 +228,7 @@ var CompletionAdapter = /** @class */ (function () {
     return CompletionAdapter;
 }());
 export { CompletionAdapter };
+// --- hover ------
 function isMarkupContent(thing) {
     return thing && typeof thing === 'object' && typeof thing.kind === 'string';
 }
@@ -247,6 +250,37 @@ function toMarkdownString(entry) {
     }
     return { value: '```' + entry.language + '\n' + entry.value + '\n```\n' };
 }
+function toMarkedStringArray(contents) {
+    if (!contents) {
+        return void 0;
+    }
+    if (Array.isArray(contents)) {
+        return contents.map(toMarkdownString);
+    }
+    return [toMarkdownString(contents)];
+}
+var HoverAdapter = /** @class */ (function () {
+    function HoverAdapter(_worker) {
+        this._worker = _worker;
+    }
+    HoverAdapter.prototype.provideHover = function (model, position, token) {
+        var resource = model.uri;
+        return this._worker(resource).then(function (worker) {
+            return worker.doHover(resource.toString(), fromPosition(position));
+        }).then(function (info) {
+            if (!info) {
+                return;
+            }
+            return {
+                range: toRange(info.range),
+                contents: toMarkedStringArray(info.contents)
+            };
+        });
+    };
+    return HoverAdapter;
+}());
+export { HoverAdapter };
+// --- document highlights ------
 function toHighlighKind(kind) {
     var mKind = monaco.languages.DocumentHighlightKind;
     switch (kind) {
@@ -275,6 +309,54 @@ var DocumentHighlightAdapter = /** @class */ (function () {
     return DocumentHighlightAdapter;
 }());
 export { DocumentHighlightAdapter };
+// --- document symbols ------
+function toSymbolKind(kind) {
+    var mKind = monaco.languages.SymbolKind;
+    switch (kind) {
+        case ls.SymbolKind.File: return mKind.Array;
+        case ls.SymbolKind.Module: return mKind.Module;
+        case ls.SymbolKind.Namespace: return mKind.Namespace;
+        case ls.SymbolKind.Package: return mKind.Package;
+        case ls.SymbolKind.Class: return mKind.Class;
+        case ls.SymbolKind.Method: return mKind.Method;
+        case ls.SymbolKind.Property: return mKind.Property;
+        case ls.SymbolKind.Field: return mKind.Field;
+        case ls.SymbolKind.Constructor: return mKind.Constructor;
+        case ls.SymbolKind.Enum: return mKind.Enum;
+        case ls.SymbolKind.Interface: return mKind.Interface;
+        case ls.SymbolKind.Function: return mKind.Function;
+        case ls.SymbolKind.Variable: return mKind.Variable;
+        case ls.SymbolKind.Constant: return mKind.Constant;
+        case ls.SymbolKind.String: return mKind.String;
+        case ls.SymbolKind.Number: return mKind.Number;
+        case ls.SymbolKind.Boolean: return mKind.Boolean;
+        case ls.SymbolKind.Array: return mKind.Array;
+    }
+    return mKind.Function;
+}
+var DocumentSymbolAdapter = /** @class */ (function () {
+    function DocumentSymbolAdapter(_worker) {
+        this._worker = _worker;
+    }
+    DocumentSymbolAdapter.prototype.provideDocumentSymbols = function (model, token) {
+        var resource = model.uri;
+        return this._worker(resource).then(function (worker) { return worker.findDocumentSymbols(resource.toString()); }).then(function (items) {
+            if (!items) {
+                return;
+            }
+            return items.map(function (item) { return ({
+                name: item.name,
+                detail: '',
+                containerName: item.containerName,
+                kind: toSymbolKind(item.kind),
+                range: toRange(item.location.range),
+                selectionRange: toRange(item.location.range)
+            }); });
+        });
+    };
+    return DocumentSymbolAdapter;
+}());
+export { DocumentSymbolAdapter };
 var DocumentLinkAdapter = /** @class */ (function () {
     function DocumentLinkAdapter(_worker) {
         this._worker = _worker;

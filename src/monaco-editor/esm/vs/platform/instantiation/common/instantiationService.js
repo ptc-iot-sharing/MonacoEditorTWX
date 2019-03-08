@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -184,7 +184,7 @@ var InstantiationService = /** @class */ (function () {
             for (var _a = 0, roots_1 = roots; _a < roots_1.length; _a++) {
                 var data = roots_1[_a].data;
                 // create instance and overwrite the service collections
-                var instance = this._createServiceInstanceWithOwner(data.id, data.desc.ctor, data.desc.staticArguments, false, data._trace);
+                var instance = this._createServiceInstanceWithOwner(data.id, data.desc.ctor, data.desc.staticArguments, data.desc.supportsDelayedInstantiation, data._trace);
                 this._setServiceInstance(data.id, instance);
                 graph.removeNode(data);
             }
@@ -203,7 +203,7 @@ var InstantiationService = /** @class */ (function () {
             throw new Error('illegalState - creating UNKNOWN service instance');
         }
     };
-    InstantiationService.prototype._createServiceInstance = function (ctor, args, supportsDelayedInstantiation, _trace) {
+    InstantiationService.prototype._createServiceInstance = function (ctor, args, _supportsDelayedInstantiation, _trace) {
         if (args === void 0) { args = []; }
         return this._createInstance(ctor, args, _trace);
     };

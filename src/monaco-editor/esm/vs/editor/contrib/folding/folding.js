@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -46,7 +46,6 @@ var FoldingController = /** @class */ (function () {
         this.foldingDecorationProvider = new FoldingDecorationProvider(editor);
         this.foldingDecorationProvider.autoHideFoldingControls = this._autoHideFoldingControls;
         this.globalToDispose.push(this.editor.onDidChangeModel(function () { return _this.onModelChanged(); }));
-        this.globalToDispose.push(FoldingRangeProviderRegistry.onDidChange(function () { return _this.onFoldingStrategyChanged(); }));
         this.globalToDispose.push(this.editor.onDidChangeConfiguration(function (e) {
             if (e.contribInfo) {
                 var oldIsEnabled = _this._isEnabled;
@@ -89,10 +88,10 @@ var FoldingController = /** @class */ (function () {
         }
         if (this.foldingModel) { // disposed ?
             var collapsedRegions = this.foldingModel.isInitialized ? this.foldingModel.getMemento() : this.hiddenRangeModel.getMemento();
-            var provider = this.rangeProvider ? this.rangeProvider.id : void 0;
+            var provider = this.rangeProvider ? this.rangeProvider.id : undefined;
             return { collapsedRegions: collapsedRegions, lineCount: model.getLineCount(), provider: provider };
         }
-        return void 0;
+        return undefined;
     };
     /**
      * Restore view state.
@@ -137,7 +136,8 @@ var FoldingController = /** @class */ (function () {
         this.updateScheduler = new Delayer(200);
         this.cursorChangedScheduler = new RunOnceScheduler(function () { return _this.revealCursor(); }, 200);
         this.localToDispose.push(this.cursorChangedScheduler);
-        this.localToDispose.push(this.editor.onDidChangeModelLanguageConfiguration(function () { return _this.onModelContentChanged(); })); // covers model language changes as well
+        this.localToDispose.push(FoldingRangeProviderRegistry.onDidChange(function () { return _this.onFoldingStrategyChanged(); }));
+        this.localToDispose.push(this.editor.onDidChangeModelLanguageConfiguration(function () { return _this.onFoldingStrategyChanged(); })); // covers model language changes as well
         this.localToDispose.push(this.editor.onDidChangeModelContent(function () { return _this.onModelContentChanged(); }));
         this.localToDispose.push(this.editor.onDidChangeCursorPosition(function () { return _this.onCursorPositionChanged(); }));
         this.localToDispose.push(this.editor.onMouseDown(function (e) { return _this.onEditorMouseDown(e); }));
@@ -220,6 +220,9 @@ var FoldingController = /** @class */ (function () {
                     }
                     return foldingModel;
                 });
+            }).then(undefined, function (err) {
+                onUnexpectedError(err);
+                return null;
             });
         }
     };
@@ -438,7 +441,27 @@ var UnfoldAction = /** @class */ (function (_super) {
                     {
                         name: 'Unfold editor argument',
                         description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t\t* 'levels': Number of levels to unfold. If not set, defaults to 1.\n\t\t\t\t\t\t* 'direction': If 'up', unfold given number of levels up otherwise unfolds down.\n\t\t\t\t\t\t* 'selectionLines': The start lines (0-based) of the editor selections to apply the unfold action to. If not set, the active selection(s) will be used.\n\t\t\t\t\t\t",
-                        constraint: foldingArgumentsConstraint
+                        constraint: foldingArgumentsConstraint,
+                        schema: {
+                            'type': 'object',
+                            'properties': {
+                                'levels': {
+                                    'type': 'number',
+                                    'default': 1
+                                },
+                                'direction': {
+                                    'type': 'string',
+                                    'enum': ['up', 'down'],
+                                    'default': 'down'
+                                },
+                                'selectionLines': {
+                                    'type': 'array',
+                                    'items': {
+                                        'type': 'number'
+                                    }
+                                }
+                            }
+                        }
                     }
                 ]
             }
@@ -498,7 +521,27 @@ var FoldAction = /** @class */ (function (_super) {
                     {
                         name: 'Fold editor argument',
                         description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t\t\t* 'levels': Number of levels to fold. Defaults to 1.\n\t\t\t\t\t\t\t* 'direction': If 'up', folds given number of levels up otherwise folds down.\n\t\t\t\t\t\t\t* 'selectionLines': The start lines (0-based) of the editor selections to apply the fold action to. If not set, the active selection(s) will be used.\n\t\t\t\t\t\t",
-                        constraint: foldingArgumentsConstraint
+                        constraint: foldingArgumentsConstraint,
+                        schema: {
+                            'type': 'object',
+                            'properties': {
+                                'levels': {
+                                    'type': 'number',
+                                    'default': 1
+                                },
+                                'direction': {
+                                    'type': 'string',
+                                    'enum': ['up', 'down'],
+                                    'default': 'down'
+                                },
+                                'selectionLines': {
+                                    'type': 'array',
+                                    'items': {
+                                        'type': 'number'
+                                    }
+                                }
+                            }
+                        }
                     }
                 ]
             }

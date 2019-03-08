@@ -8,6 +8,9 @@ import { escape } from '../common/strings.js';
 import { removeMarkdownEscapes } from '../common/htmlContent.js';
 import * as marked from '../common/marked/marked.js';
 import { onUnexpectedError } from '../common/errors.js';
+import { URI } from '../common/uri.js';
+import { parse } from '../common/marshalling.js';
+import { cloneAndChange } from '../common/objects.js';
 function createElement(options) {
     var tagName = options.inline ? 'span' : 'div';
     var element = document.createElement(tagName);
@@ -34,12 +37,48 @@ export function renderFormattedText(formattedText, options) {
 export function renderMarkdown(markdown, options) {
     if (options === void 0) { options = {}; }
     var element = createElement(options);
+    var _uriMassage = function (part) {
+        var data;
+        try {
+            data = parse(decodeURIComponent(part));
+        }
+        catch (e) {
+            // ignore
+        }
+        if (!data) {
+            return part;
+        }
+        data = cloneAndChange(data, function (value) {
+            if (markdown.uris && markdown.uris[value]) {
+                return URI.revive(markdown.uris[value]);
+            }
+            else {
+                return undefined;
+            }
+        });
+        return encodeURIComponent(JSON.stringify(data));
+    };
+    var _href = function (href) {
+        var data = markdown.uris && markdown.uris[href];
+        if (!data) {
+            return href;
+        }
+        var uri = URI.revive(data);
+        if (uri.query) {
+            uri = uri.with({ query: _uriMassage(uri.query) });
+        }
+        if (data) {
+            href = uri.toString(true);
+        }
+        return href;
+    };
     // signal to code-block render that the
     // element has been created
     var signalInnerHTML;
     var withInnerHTML = new Promise(function (c) { return signalInnerHTML = c; });
     var renderer = new marked.Renderer();
     renderer.image = function (href, title, text) {
+        href = _href(href);
         var dimensions = [];
         if (href) {
             var splitted = href.split('|').map(function (s) { return s.trim(); });
@@ -80,6 +119,7 @@ export function renderMarkdown(markdown, options) {
         if (href === text) { // raw link case
             text = removeMarkdownEscapes(text);
         }
+        href = _href(href);
         title = removeMarkdownEscapes(title);
         href = removeMarkdownEscapes(href);
         if (!href
@@ -90,6 +130,12 @@ export function renderMarkdown(markdown, options) {
             return text;
         }
         else {
+            // HTML Encode href
+            href = href.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
             return "<a href=\"#\" data-href=\"" + href + "\" title=\"" + (title || href) + "\">" + text + "</a>";
         }
     };

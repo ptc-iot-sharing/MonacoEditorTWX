@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { isObject } from '../../base/common/types.js';
+import { URI } from '../../base/common/uri.js';
+import { Range } from './core/range.js';
 import { LanguageFeatureRegistry } from './modes/languageFeatureRegistry.js';
 import { TokenizationRegistryImpl } from './modes/tokenizationRegistry.js';
 /**
@@ -140,12 +142,12 @@ export var completionKindFromLegacyString = (function () {
         return data[value] || 'property';
     };
 })();
-export var SignatureHelpTriggerReason;
-(function (SignatureHelpTriggerReason) {
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["Invoke"] = 1] = "Invoke";
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["TriggerCharacter"] = 2] = "TriggerCharacter";
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["ContentChange"] = 3] = "ContentChange";
-})(SignatureHelpTriggerReason || (SignatureHelpTriggerReason = {}));
+export var SignatureHelpTriggerKind;
+(function (SignatureHelpTriggerKind) {
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["Invoke"] = 1] = "Invoke";
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["TriggerCharacter"] = 2] = "TriggerCharacter";
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["ContentChange"] = 3] = "ContentChange";
+})(SignatureHelpTriggerKind || (SignatureHelpTriggerKind = {}));
 /**
  * A document highlight kind.
  */
@@ -164,6 +166,15 @@ export var DocumentHighlightKind;
      */
     DocumentHighlightKind[DocumentHighlightKind["Write"] = 2] = "Write";
 })(DocumentHighlightKind || (DocumentHighlightKind = {}));
+/**
+ * @internal
+ */
+export function isLocationLink(thing) {
+    return thing
+        && URI.isUri(thing.uri)
+        && Range.isIRange(thing.range)
+        && (Range.isIRange(thing.originSelectionRange) || Range.isIRange(thing.targetSelectionRange));
+}
 /**
  * @internal
  */
@@ -195,8 +206,8 @@ export var symbolKindToCssClass = (function () {
     _fromMapping[23 /* Event */] = 'event';
     _fromMapping[24 /* Operator */] = 'operator';
     _fromMapping[25 /* TypeParameter */] = 'type-parameter';
-    return function toCssClassName(kind) {
-        return "symbol-icon " + (_fromMapping[kind] || 'property');
+    return function toCssClassName(kind, inline) {
+        return "symbol-icon " + (inline ? 'inline' : 'block') + " " + (_fromMapping[kind] || 'property');
     };
 })();
 var FoldingRangeKind = /** @class */ (function () {
@@ -266,6 +277,10 @@ export var DefinitionProviderRegistry = new LanguageFeatureRegistry();
 /**
  * @internal
  */
+export var DeclarationProviderRegistry = new LanguageFeatureRegistry();
+/**
+ * @internal
+ */
 export var ImplementationProviderRegistry = new LanguageFeatureRegistry();
 /**
  * @internal
@@ -299,6 +314,10 @@ export var LinkProviderRegistry = new LanguageFeatureRegistry();
  * @internal
  */
 export var ColorProviderRegistry = new LanguageFeatureRegistry();
+/**
+ * @internal
+ */
+export var SelectionRangeRegistry = new LanguageFeatureRegistry();
 /**
  * @internal
  */

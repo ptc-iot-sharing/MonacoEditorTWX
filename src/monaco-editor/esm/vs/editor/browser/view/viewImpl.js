@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -330,6 +330,7 @@ var View = /** @class */ (function (_super) {
     };
     View.prototype.restoreState = function (scrollPosition) {
         this._context.viewLayout.setScrollPositionNow({ scrollTop: scrollPosition.scrollTop });
+        this._context.model.tokenizeViewport();
         this._renderNow();
         this.viewLines.updateLineWidths();
         this._context.viewLayout.setScrollPositionNow({ scrollLeft: scrollPosition.scrollLeft });

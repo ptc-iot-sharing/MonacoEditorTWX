@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -22,8 +22,9 @@ import { StandardMouseEvent } from './mouseEvent.js';
 import { TimeoutTimer } from '../common/async.js';
 import { onUnexpectedError } from '../common/errors.js';
 import { Emitter } from '../common/event.js';
-import { Disposable, dispose } from '../common/lifecycle.js';
+import { Disposable, dispose, toDisposable } from '../common/lifecycle.js';
 import * as platform from '../common/platform.js';
+import { coalesce } from '../common/arrays.js';
 export function clearNode(node) {
     while (node.firstChild) {
         node.removeChild(node.firstChild);
@@ -133,10 +134,10 @@ var _manualClassList = new /** @class */ (function () {
     };
     class_1.prototype.toggleClass = function (node, className, shouldHaveIt) {
         this._findClassName(node, className);
-        if (this._lastStart !== -1 && (shouldHaveIt === void 0 || !shouldHaveIt)) {
+        if (this._lastStart !== -1 && (shouldHaveIt === undefined || !shouldHaveIt)) {
             this.removeClass(node, className);
         }
-        if (this._lastStart === -1 && (shouldHaveIt === void 0 || shouldHaveIt)) {
+        if (this._lastStart === -1 && (shouldHaveIt === undefined || shouldHaveIt)) {
             this.addClass(node, className);
         }
     };
@@ -236,7 +237,7 @@ export var addStandardDisposableListener = function addStandardDisposableListene
 export function addDisposableNonBubblingMouseOutListener(node, handler) {
     return addDisposableListener(node, 'mouseout', function (e) {
         // Mouse out bubbles, so this is an attempt to ignore faux mouse outs coming from children elements
-        var toElement = (e.relatedTarget || e.toElement);
+        var toElement = (e.relatedTarget || e.target);
         while (toElement && toElement !== node) {
             toElement = toElement.parentNode;
         }
@@ -411,25 +412,6 @@ function getDimension(element, cssPropertyName, jsPropertyName) {
         }
     }
     return convertToPixels(element, value);
-}
-export function getClientArea(element) {
-    // Try with DOM clientWidth / clientHeight
-    if (element !== document.body) {
-        return new Dimension(element.clientWidth, element.clientHeight);
-    }
-    // Try innerWidth / innerHeight
-    if (window.innerWidth && window.innerHeight) {
-        return new Dimension(window.innerWidth, window.innerHeight);
-    }
-    // Try with document.body.clientWidth / document.body.clientHeight
-    if (document.body && document.body.clientWidth && document.body.clientHeight) {
-        return new Dimension(document.body.clientWidth, document.body.clientHeight);
-    }
-    // Try with document.documentElement.clientWidth / document.documentElement.clientHeight
-    if (document.documentElement && document.documentElement.clientWidth && document.documentElement.clientHeight) {
-        return new Dimension(document.documentElement.clientWidth, document.documentElement.clientHeight);
-    }
-    throw new Error('Unable to figure out browser width and height');
 }
 var sizeUtils = {
     getBorderLeftWidth: function (element) {
@@ -824,8 +806,7 @@ export function $(description, attrs) {
             result.setAttribute(name, value);
         }
     });
-    children
-        .filter(function (child) { return !!child; })
+    coalesce(children)
         .forEach(function (child) {
         if (child instanceof Node) {
             result.appendChild(child);
@@ -918,4 +899,12 @@ export function windowOpenNoOpener(url) {
             newTab.location.href = url;
         }
     }
+}
+export function animate(fn) {
+    var step = function () {
+        fn();
+        stepDisposable = scheduleAtNextAnimationFrame(step);
+    };
+    var stepDisposable = scheduleAtNextAnimationFrame(step);
+    return toDisposable(function () { return stepDisposable.dispose(); });
 }

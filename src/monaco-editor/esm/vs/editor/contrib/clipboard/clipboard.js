@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -23,7 +23,6 @@ import { CopyOptions } from '../../browser/controller/textAreaInput.js';
 import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { MenuId } from '../../../platform/actions/common/actions.js';
 var CLIPBOARD_CONTEXT_MENU_GROUP = '9_cutcopypaste';
 var supportsCut = (platform.isNative || document.queryCommandSupported('cut'));
 var supportsCopy = (platform.isNative || document.queryCommandSupported('copy'));
@@ -81,7 +80,7 @@ var ExecCommandCutAction = /** @class */ (function (_super) {
                 order: 1
             },
             menubarOpts: {
-                menuId: MenuId.MenubarEditMenu,
+                menuId: 14 /* MenubarEditMenu */,
                 group: '2_ccp',
                 title: nls.localize({ key: 'miCut', comment: ['&& denotes a mnemonic'] }, "Cu&&t"),
                 order: 1
@@ -127,7 +126,7 @@ var ExecCommandCopyAction = /** @class */ (function (_super) {
                 order: 2
             },
             menubarOpts: {
-                menuId: MenuId.MenubarEditMenu,
+                menuId: 14 /* MenubarEditMenu */,
                 group: '2_ccp',
                 title: nls.localize({ key: 'miCopy', comment: ['&& denotes a mnemonic'] }, "&&Copy"),
                 order: 2
@@ -142,6 +141,12 @@ var ExecCommandCopyAction = /** @class */ (function (_super) {
         var emptySelectionClipboard = editor.getConfiguration().emptySelectionClipboard;
         if (!emptySelectionClipboard && editor.getSelection().isEmpty()) {
             return;
+        }
+        // Prevent copying an empty line by accident
+        if (editor.getSelections().length === 1 && editor.getSelection().isEmpty()) {
+            if (editor.getModel().getLineFirstNonWhitespaceColumn(editor.getSelection().positionLineNumber) === 0) {
+                return;
+            }
         }
         _super.prototype.run.call(this, accessor, editor);
     };
@@ -173,7 +178,7 @@ var ExecCommandPasteAction = /** @class */ (function (_super) {
                 order: 3
             },
             menubarOpts: {
-                menuId: MenuId.MenubarEditMenu,
+                menuId: 14 /* MenubarEditMenu */,
                 group: '2_ccp',
                 title: nls.localize({ key: 'miPaste', comment: ['&& denotes a mnemonic'] }, "&&Paste"),
                 order: 3

@@ -6,6 +6,7 @@ import * as arrays from '../../../base/common/arrays.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { LineTokens } from '../core/lineTokens.js';
 import { Position } from '../core/position.js';
+import { TokenMetadata } from '../modes.js';
 import { nullTokenize2 } from '../modes/nullMode.js';
 function getDefaultMetadata(topLevelLanguageId) {
     return ((topLevelLanguageId << 0 /* LANGUAGEID_OFFSET */)
@@ -123,7 +124,7 @@ var ModelLineTokens = /** @class */ (function () {
         var tokensCount = (tokens.length >>> 1);
         var fromTokenIndex = LineTokens.findIndexInTokensArray(tokens, chIndex);
         if (fromTokenIndex > 0) {
-            var fromTokenStartOffset = (fromTokenIndex > 0 ? tokens[(fromTokenIndex - 1) << 1] : 0);
+            var fromTokenStartOffset = tokens[(fromTokenIndex - 1) << 1];
             if (fromTokenStartOffset === chIndex) {
                 fromTokenIndex--;
             }
@@ -216,8 +217,14 @@ var ModelLinesTokens = /** @class */ (function () {
             this._tokens[lineIndex] = target;
         }
         if (lineTextLength === 0) {
-            target._lineTokens = EMPTY_LINE_TOKENS;
-            return;
+            var hasDifferentLanguageId = false;
+            if (tokens && tokens.length > 1) {
+                hasDifferentLanguageId = (TokenMetadata.getLanguageId(tokens[1]) !== topLevelLanguageId);
+            }
+            if (!hasDifferentLanguageId) {
+                target._lineTokens = EMPTY_LINE_TOKENS;
+                return;
+            }
         }
         if (!tokens || tokens.length === 0) {
             tokens = new Uint32Array(2);
@@ -411,6 +418,7 @@ var ModelTokensChangedEventBuilder = /** @class */ (function () {
             return null;
         }
         return {
+            tokenizationSupportChanged: false,
             ranges: this._ranges
         };
     };

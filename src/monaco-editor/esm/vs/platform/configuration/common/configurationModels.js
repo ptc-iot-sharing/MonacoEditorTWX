@@ -4,7 +4,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -235,7 +235,7 @@ var Configuration = /** @class */ (function () {
         else {
             memoryConfiguration = this._memoryConfiguration;
         }
-        if (value === void 0) {
+        if (value === undefined) {
             memoryConfiguration.removeValue(key);
         }
         else {
@@ -244,6 +244,19 @@ var Configuration = /** @class */ (function () {
         if (!overrides.resource) {
             this._workspaceConsolidatedConfiguration = null;
         }
+    };
+    Configuration.prototype.inspect = function (key, overrides, workspace) {
+        var consolidateConfigurationModel = this.getConsolidateConfigurationModel(overrides, workspace);
+        var folderConfigurationModel = this.getFolderConfigurationModelForResource(overrides.resource, workspace);
+        var memoryConfigurationModel = overrides.resource ? this._memoryConfigurationByResource.get(overrides.resource) || this._memoryConfiguration : this._memoryConfiguration;
+        return {
+            default: overrides.overrideIdentifier ? this._defaultConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._defaultConfiguration.freeze().getValue(key),
+            user: overrides.overrideIdentifier ? this._userConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._userConfiguration.freeze().getValue(key),
+            workspace: workspace ? overrides.overrideIdentifier ? this._workspaceConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._workspaceConfiguration.freeze().getValue(key) : undefined,
+            workspaceFolder: folderConfigurationModel ? overrides.overrideIdentifier ? folderConfigurationModel.freeze().override(overrides.overrideIdentifier).getValue(key) : folderConfigurationModel.freeze().getValue(key) : undefined,
+            memory: overrides.overrideIdentifier ? memoryConfigurationModel.override(overrides.overrideIdentifier).getValue(key) : memoryConfigurationModel.getValue(key),
+            value: consolidateConfigurationModel.getValue(key)
+        };
     };
     Configuration.prototype.getConsolidateConfigurationModel = function (overrides, workspace) {
         var configurationModel = this.getConsolidatedConfigurationModelForResource(overrides, workspace);
@@ -290,6 +303,15 @@ var Configuration = /** @class */ (function () {
             }
         }
         return folderConsolidatedConfiguration;
+    };
+    Configuration.prototype.getFolderConfigurationModelForResource = function (resource, workspace) {
+        if (workspace && resource) {
+            var root = workspace.getFolder(resource);
+            if (root) {
+                return this._folderConfigurations.get(root.uri) || null;
+            }
+        }
+        return null;
     };
     return Configuration;
 }());

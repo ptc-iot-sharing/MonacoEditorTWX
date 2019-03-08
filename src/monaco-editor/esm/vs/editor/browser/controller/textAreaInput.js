@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -245,6 +245,9 @@ var TextAreaInput = /** @class */ (function (_super) {
             _this._lastTextAreaEvent = 9 /* blur */;
             _this._setHasFocus(false);
         }));
+        return _this;
+    }
+    TextAreaInput.prototype._installSelectionChangeListener = function () {
         // See https://github.com/Microsoft/vscode/issues/27216
         // When using a Braille display, it is possible for users to reposition the
         // system caret. This is reflected in Chrome as a `selectionchange` event.
@@ -260,10 +263,11 @@ var TextAreaInput = /** @class */ (function (_super) {
         //  * the event is emitted when tabbing into the textarea
         //  * the event is emitted asynchronously (sometimes with a delay as high as a few tens of ms)
         //  * the event sometimes comes in bursts for a single logical textarea operation
+        var _this = this;
         // `selectionchange` events often come multiple times for a single logical change
         // so throttle multiple `selectionchange` events that burst in a short period of time.
         var previousSelectionChangeEventTime = 0;
-        _this._register(dom.addDisposableListener(document, 'selectionchange', function (e) {
+        return dom.addDisposableListener(document, 'selectionchange', function (e) {
             if (!_this._hasFocus) {
                 return;
             }
@@ -310,11 +314,14 @@ var TextAreaInput = /** @class */ (function (_super) {
             var newSelectionEndPosition = _this._host.deduceModelPosition(_newSelectionEndPosition[0], _newSelectionEndPosition[1], _newSelectionEndPosition[2]);
             var newSelection = new Selection(newSelectionStartPosition.lineNumber, newSelectionStartPosition.column, newSelectionEndPosition.lineNumber, newSelectionEndPosition.column);
             _this._onSelectionChangeRequest.fire(newSelection);
-        }));
-        return _this;
-    }
+        });
+    };
     TextAreaInput.prototype.dispose = function () {
         _super.prototype.dispose.call(this);
+        if (this._selectionChangeListener) {
+            this._selectionChangeListener.dispose();
+            this._selectionChangeListener = null;
+        }
     };
     TextAreaInput.prototype.focusTextArea = function () {
         // Setting this._hasFocus and writing the screen reader content
@@ -330,6 +337,13 @@ var TextAreaInput = /** @class */ (function (_super) {
             return;
         }
         this._hasFocus = newHasFocus;
+        if (this._selectionChangeListener) {
+            this._selectionChangeListener.dispose();
+            this._selectionChangeListener = null;
+        }
+        if (this._hasFocus) {
+            this._selectionChangeListener = this._installSelectionChangeListener();
+        }
         if (this._hasFocus) {
             if (browser.isEdge) {
                 // Edge has a bug where setting the selection range while the focus event

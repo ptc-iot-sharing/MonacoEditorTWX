@@ -4,9 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -15,6 +18,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as nodes from '../parser/cssNodes.js';
 import { Scanner } from '../parser/cssScanner.js';
+import * as nls from '../../../fillers/vscode-nls.js';
+var localize = nls.loadMessageBundle();
 var Element = /** @class */ (function () {
     function Element() {
     }
@@ -306,13 +311,58 @@ function unescape(content) {
     }
     return content;
 }
+function selectorToSpecificityMarkedString(node) {
+    //https://www.w3.org/TR/selectors-3/#specificity
+    function calculateScore(node) {
+        node.getChildren().forEach(function (element) {
+            switch (element.type) {
+                case nodes.NodeType.IdentifierSelector:
+                    specificity[0] += 1; //a
+                    break;
+                case nodes.NodeType.ClassSelector:
+                case nodes.NodeType.AttributeSelector:
+                    specificity[1] += 1; //b
+                    break;
+                case nodes.NodeType.ElementNameSelector:
+                    //ignore universal selector
+                    if (element.getText() === "*") {
+                        break;
+                    }
+                    specificity[2] += 1; //c
+                    break;
+                case nodes.NodeType.PseudoSelector:
+                    if (element.getText().match(/^::/)) {
+                        specificity[2] += 1; //c (pseudo element)
+                    }
+                    else {
+                        //ignore psuedo class NOT
+                        if (element.getText().match(/^:not/i)) {
+                            break;
+                        }
+                        specificity[1] += 1; //b (pseudo class)
+                    }
+                    break;
+            }
+            if (element.getChildren().length > 0) {
+                calculateScore(element);
+            }
+        });
+    }
+    var specificity = [0, 0, 0]; //a,b,c
+    calculateScore(node);
+    return localize.apply(void 0, ['specificity', "[Selector Specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity): ({0}, {1}, {2})"].concat(specificity));
+}
 export function selectorToMarkedString(node) {
     var root = selectorToElement(node);
-    return new MarkedStringPrinter('"').print(root);
+    var markedStrings = new MarkedStringPrinter('"').print(root);
+    markedStrings.push(selectorToSpecificityMarkedString(node));
+    return markedStrings;
 }
 export function simpleSelectorToMarkedString(node) {
     var element = toElement(node);
-    return new MarkedStringPrinter('"').print(element);
+    var markedStrings = new MarkedStringPrinter('"').print(element);
+    markedStrings.push(selectorToSpecificityMarkedString(node));
+    return markedStrings;
 }
 var SelectorElementBuilder = /** @class */ (function () {
     function SelectorElementBuilder(element) {
@@ -340,7 +390,7 @@ var SelectorElementBuilder = /** @class */ (function () {
                     this.element.addChild(labelElement);
                     this.element = labelElement;
                 }
-                else if (this.prev && (this.prev.matches('+') || this.prev.matches('~'))) {
+                else if (this.prev && (this.prev.matches('+') || this.prev.matches('~')) && this.element.parent) {
                     this.element = this.element.parent;
                 }
                 if (this.prev && this.prev.matches('~')) {
@@ -399,4 +449,3 @@ export function selectorToElement(node) {
     builder.processSelector(node);
     return root;
 }
-//# sourceMappingURL=selectorPrinting.js.map

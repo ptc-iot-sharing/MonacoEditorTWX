@@ -97,7 +97,7 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
             // The find model is disposed during a find state changed event
             return;
         }
-        if (!this._editor.getModel()) {
+        if (!this._editor.hasModel()) {
             // The find model will be disposed momentarily
             return;
         }

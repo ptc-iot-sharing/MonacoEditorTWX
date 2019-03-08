@@ -144,6 +144,11 @@ export function guessIndentation(source, defaultTabSize, defaultInsertSpaces) {
             tabSize = possibleTabSize;
         }
     });
+    // Let a tabSize of 2 win even if it is not the maximum
+    // (only in case 4 was guessed)
+    if (tabSize === 4 && spacesDiffCount[4] > 0 && spacesDiffCount[2] > 0 && spacesDiffCount[2] >= spacesDiffCount[4] / 2) {
+        tabSize = 2;
+    }
     // console.log('--------------------------');
     // console.log('linesIndentedWithTabsCount: ' + linesIndentedWithTabsCount + ', linesIndentedWithSpacesCount: ' + linesIndentedWithSpacesCount);
     // console.log('spacesDiffCount: ' + spacesDiffCount);

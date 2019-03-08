@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,23 +28,31 @@ import './hover.css';
 import * as nls from '../../../nls.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { dispose } from '../../../base/common/lifecycle.js';
-import * as platform from '../../../base/common/platform.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { IModeService } from '../../common/services/modeService.js';
 import { ModesContentHoverWidget } from './modesContentHover.js';
 import { ModesGlyphHoverWidget } from './modesGlyphHover.js';
-import { MarkdownRenderer } from '../markdown/markdownRenderer.js';
 import { IOpenerService } from '../../../platform/opener/common/opener.js';
-import { editorHoverBackground, editorHoverBorder, editorHoverHighlight, textCodeBlockBackground, textLinkForeground } from '../../../platform/theme/common/colorRegistry.js';
+import { editorHoverBackground, editorHoverBorder, editorHoverHighlight, textCodeBlockBackground, textLinkForeground, editorHoverStatusBarBackground } from '../../../platform/theme/common/colorRegistry.js';
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
+import { IMarkerDecorationsService } from '../../common/services/markersDecorationService.js';
+import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
+import { IContextMenuService } from '../../../platform/contextview/browser/contextView.js';
+import { IBulkEditService } from '../../browser/services/bulkEditService.js';
+import { ICommandService } from '../../../platform/commands/common/commands.js';
 var ModesHoverController = /** @class */ (function () {
-    function ModesHoverController(_editor, _openerService, _modeService, _themeService) {
+    function ModesHoverController(_editor, _openerService, _modeService, _markerDecorationsService, _keybindingService, _contextMenuService, _bulkEditService, _commandService, _themeService) {
         var _this = this;
         this._editor = _editor;
         this._openerService = _openerService;
         this._modeService = _modeService;
+        this._markerDecorationsService = _markerDecorationsService;
+        this._keybindingService = _keybindingService;
+        this._contextMenuService = _contextMenuService;
+        this._bulkEditService = _bulkEditService;
+        this._commandService = _commandService;
         this._themeService = _themeService;
         this._toUnhook = [];
         this._isMouseDown = false;
@@ -136,15 +144,14 @@ var ModesHoverController = /** @class */ (function () {
     ModesHoverController.prototype._onEditorMouseMove = function (mouseEvent) {
         // const this._editor.getConfiguration().contribInfo.hover.sticky;
         var targetType = mouseEvent.target.type;
-        var hasStopKey = (platform.isMacintosh ? mouseEvent.event.metaKey : mouseEvent.event.ctrlKey);
         if (this._isMouseDown && this._hoverClicked && this.contentWidget.isColorPickerVisible()) {
             return;
         }
-        if (this._isHoverSticky && targetType === 9 /* CONTENT_WIDGET */ && mouseEvent.target.detail === ModesContentHoverWidget.ID && !hasStopKey) {
+        if (this._isHoverSticky && targetType === 9 /* CONTENT_WIDGET */ && mouseEvent.target.detail === ModesContentHoverWidget.ID) {
             // mouse moved on top of content hover widget
             return;
         }
-        if (this._isHoverSticky && targetType === 12 /* OVERLAY_WIDGET */ && mouseEvent.target.detail === ModesGlyphHoverWidget.ID && !hasStopKey) {
+        if (this._isHoverSticky && targetType === 12 /* OVERLAY_WIDGET */ && mouseEvent.target.detail === ModesGlyphHoverWidget.ID) {
             // mouse moved on top of overlay hover widget
             return;
         }
@@ -158,13 +165,13 @@ var ModesHoverController = /** @class */ (function () {
         }
         if (targetType === 6 /* CONTENT_TEXT */) {
             this.glyphWidget.hide();
-            if (this._isHoverEnabled) {
+            if (this._isHoverEnabled && mouseEvent.target.range) {
                 this.contentWidget.startShowingAt(mouseEvent.target.range, 0 /* Delayed */, false);
             }
         }
         else if (targetType === 2 /* GUTTER_GLYPH_MARGIN */) {
             this.contentWidget.hide();
-            if (this._isHoverEnabled) {
+            if (this._isHoverEnabled && mouseEvent.target.position) {
                 this.glyphWidget.startShowingAt(mouseEvent.target.position.lineNumber);
             }
         }
@@ -186,9 +193,8 @@ var ModesHoverController = /** @class */ (function () {
         this._contentWidget.hide();
     };
     ModesHoverController.prototype._createHoverWidget = function () {
-        var renderer = new MarkdownRenderer(this._editor, this._modeService, this._openerService);
-        this._contentWidget = new ModesContentHoverWidget(this._editor, renderer, this._themeService);
-        this._glyphWidget = new ModesGlyphHoverWidget(this._editor, renderer);
+        this._contentWidget = new ModesContentHoverWidget(this._editor, this._markerDecorationsService, this._themeService, this._keybindingService, this._contextMenuService, this._bulkEditService, this._commandService, this._modeService, this._openerService);
+        this._glyphWidget = new ModesGlyphHoverWidget(this._editor, this._modeService, this._openerService);
     };
     ModesHoverController.prototype.showContentHover = function (range, mode, focus) {
         this.contentWidget.startShowingAt(range, mode, focus);
@@ -201,18 +207,21 @@ var ModesHoverController = /** @class */ (function () {
         this._didChangeConfigurationHandler.dispose();
         if (this._glyphWidget) {
             this._glyphWidget.dispose();
-            this._glyphWidget = null;
         }
         if (this._contentWidget) {
             this._contentWidget.dispose();
-            this._contentWidget = null;
         }
     };
     ModesHoverController.ID = 'editor.contrib.hover';
     ModesHoverController = __decorate([
         __param(1, IOpenerService),
         __param(2, IModeService),
-        __param(3, IThemeService)
+        __param(3, IMarkerDecorationsService),
+        __param(4, IKeybindingService),
+        __param(5, IContextMenuService),
+        __param(6, IBulkEditService),
+        __param(7, ICommandService),
+        __param(8, IThemeService)
     ], ModesHoverController);
     return ModesHoverController;
 }());
@@ -239,13 +248,17 @@ var ShowHoverAction = /** @class */ (function (_super) {
         }) || this;
     }
     ShowHoverAction.prototype.run = function (accessor, editor) {
+        if (!editor.hasModel()) {
+            return;
+        }
         var controller = ModesHoverController.get(editor);
         if (!controller) {
             return;
         }
         var position = editor.getPosition();
         var range = new Range(position.lineNumber, position.column, position.lineNumber, position.column);
-        controller.showContentHover(range, 1 /* Immediate */, true);
+        var focus = editor.getConfiguration().accessibilitySupport === 2 /* Enabled */;
+        controller.showContentHover(range, 1 /* Immediate */, focus);
     };
     return ShowHoverAction;
 }(EditorAction));
@@ -265,10 +278,16 @@ registerThemingParticipant(function (theme, collector) {
     if (hoverBorder) {
         collector.addRule(".monaco-editor .monaco-editor-hover { border: 1px solid " + hoverBorder + "; }");
         collector.addRule(".monaco-editor .monaco-editor-hover .hover-row:not(:first-child):not(:empty) { border-top: 1px solid " + hoverBorder.transparent(0.5) + "; }");
+        collector.addRule(".monaco-editor .monaco-editor-hover hr { border-top: 1px solid " + hoverBorder.transparent(0.5) + "; }");
+        collector.addRule(".monaco-editor .monaco-editor-hover hr { border-bottom: 0px solid " + hoverBorder.transparent(0.5) + "; }");
     }
     var link = theme.getColor(textLinkForeground);
     if (link) {
         collector.addRule(".monaco-editor .monaco-editor-hover a { color: " + link + "; }");
+    }
+    var actionsBackground = theme.getColor(editorHoverStatusBarBackground);
+    if (actionsBackground) {
+        collector.addRule(".monaco-editor .monaco-editor-hover .hover-row .actions { background-color: " + actionsBackground + "; }");
     }
     var codeBackground = theme.getColor(textCodeBlockBackground);
     if (codeBackground) {

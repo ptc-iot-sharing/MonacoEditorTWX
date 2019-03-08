@@ -54,7 +54,7 @@ var FoldingRegions = /** @class */ (function () {
         return this._endIndexes[index] & MAX_LINE_NUMBER;
     };
     FoldingRegions.prototype.getType = function (index) {
-        return this._types ? this._types[index] : void 0;
+        return this._types ? this._types[index] : undefined;
     };
     FoldingRegions.prototype.hasTypes = function () {
         return !!this._types;

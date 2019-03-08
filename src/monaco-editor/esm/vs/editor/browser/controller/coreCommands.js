@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -28,7 +28,6 @@ import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { Handler } from '../../common/editorCommon.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { MenuId } from '../../../platform/actions/common/actions.js';
 import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
 var CORE_WEIGHT = 0 /* EditorCore */;
 var CoreEditorCommand = /** @class */ (function (_super) {
@@ -74,7 +73,28 @@ export var EditorScroll_;
             {
                 name: 'Editor scroll argument object',
                 description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t* 'to': A mandatory direction value.\n\t\t\t\t\t\t```\n\t\t\t\t\t\t'up', 'down'\n\t\t\t\t\t\t```\n\t\t\t\t\t* 'by': Unit to move. Default is computed based on 'to' value.\n\t\t\t\t\t\t```\n\t\t\t\t\t\t'line', 'wrappedLine', 'page', 'halfPage'\n\t\t\t\t\t\t```\n\t\t\t\t\t* 'value': Number of units to move. Default is '1'.\n\t\t\t\t\t* 'revealCursor': If 'true' reveals the cursor if it is outside view port.\n\t\t\t\t",
-                constraint: isEditorScrollArgs
+                constraint: isEditorScrollArgs,
+                schema: {
+                    'type': 'object',
+                    'required': ['to'],
+                    'properties': {
+                        'to': {
+                            'type': 'string',
+                            'enum': ['up', 'down']
+                        },
+                        'by': {
+                            'type': 'string',
+                            'enum': ['line', 'wrappedLine', 'page', 'halfPage']
+                        },
+                        'value': {
+                            'type': 'number',
+                            'default': 1
+                        },
+                        'revealCursor': {
+                            'type': 'boolean',
+                        }
+                    }
+                }
             }
         ]
     };
@@ -157,7 +177,20 @@ export var RevealLine_;
             {
                 name: 'Reveal line argument object',
                 description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t* 'lineNumber': A mandatory line number value.\n\t\t\t\t\t* 'at': Logical position at which line has to be revealed .\n\t\t\t\t\t\t```\n\t\t\t\t\t\t'top', 'center', 'bottom'\n\t\t\t\t\t\t```\n\t\t\t\t",
-                constraint: isRevealLineArgs
+                constraint: isRevealLineArgs,
+                schema: {
+                    'type': 'object',
+                    'required': ['lineNumber'],
+                    'properties': {
+                        'lineNumber': {
+                            'type': 'number',
+                        },
+                        'at': {
+                            'type': 'string',
+                            'enum': ['top', 'center', 'bottom']
+                        }
+                    }
+                }
             }
         ]
     };
@@ -1120,7 +1153,7 @@ export var CoreNavigationCommands;
                 kbOpts: {
                     weight: CORE_WEIGHT,
                     kbExpr: EditorContextKeys.textInputFocus,
-                    primary: 2048 /* CtrlCmd */ | 39 /* KEY_I */
+                    primary: 2048 /* CtrlCmd */ | 42 /* KEY_L */
                 }
             }) || this;
         }
@@ -1433,10 +1466,11 @@ var EditorOrNativeTextInputCommand = /** @class */ (function (_super) {
  */
 var EditorHandlerCommand = /** @class */ (function (_super) {
     __extends(EditorHandlerCommand, _super);
-    function EditorHandlerCommand(id, handlerId) {
+    function EditorHandlerCommand(id, handlerId, description) {
         var _this = _super.call(this, {
             id: id,
-            precondition: null
+            precondition: null,
+            description: description
         }) || this;
         _this._handlerId = handlerId;
         return _this;
@@ -1461,7 +1495,7 @@ registerCommand(new EditorOrNativeTextInputCommand({
         primary: 2048 /* CtrlCmd */ | 31 /* KEY_A */
     },
     menubarOpts: {
-        menuId: MenuId.MenubarSelectionMenu,
+        menuId: 22 /* MenubarSelectionMenu */,
         group: '1_basic',
         title: nls.localize({ key: 'miSelectAll', comment: ['&& denotes a mnemonic'] }, "&&Select All"),
         order: 1
@@ -1478,7 +1512,7 @@ registerCommand(new EditorOrNativeTextInputCommand({
         primary: 2048 /* CtrlCmd */ | 56 /* KEY_Z */
     },
     menubarOpts: {
-        menuId: MenuId.MenubarEditMenu,
+        menuId: 14 /* MenubarEditMenu */,
         group: '1_do',
         title: nls.localize({ key: 'miUndo', comment: ['&& denotes a mnemonic'] }, "&&Undo"),
         order: 1
@@ -1498,18 +1532,32 @@ registerCommand(new EditorOrNativeTextInputCommand({
         mac: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 56 /* KEY_Z */ }
     },
     menubarOpts: {
-        menuId: MenuId.MenubarEditMenu,
+        menuId: 14 /* MenubarEditMenu */,
         group: '1_do',
         title: nls.localize({ key: 'miRedo', comment: ['&& denotes a mnemonic'] }, "&&Redo"),
         order: 2
     }
 }));
 registerCommand(new EditorHandlerCommand('default:' + Handler.Redo, Handler.Redo));
-function registerOverwritableCommand(handlerId) {
+function registerOverwritableCommand(handlerId, description) {
     registerCommand(new EditorHandlerCommand('default:' + handlerId, handlerId));
-    registerCommand(new EditorHandlerCommand(handlerId, handlerId));
+    registerCommand(new EditorHandlerCommand(handlerId, handlerId, description));
 }
-registerOverwritableCommand(Handler.Type);
+registerOverwritableCommand(Handler.Type, {
+    description: "Type",
+    args: [{
+            name: 'args',
+            schema: {
+                'type': 'object',
+                'required': ['text'],
+                'properties': {
+                    'text': {
+                        'type': 'string'
+                    }
+                },
+            }
+        }]
+});
 registerOverwritableCommand(Handler.ReplacePreviousChar);
 registerOverwritableCommand(Handler.CompositionStart);
 registerOverwritableCommand(Handler.CompositionEnd);

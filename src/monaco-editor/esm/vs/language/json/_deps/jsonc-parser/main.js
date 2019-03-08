@@ -51,6 +51,27 @@ export var visit = parser.visit;
  * of comments with a replaceCharacter
  */
 export var stripComments = parser.stripComments;
+export function printParseErrorCode(code) {
+    switch (code) {
+        case 1 /* InvalidSymbol */: return 'InvalidSymbol';
+        case 2 /* InvalidNumberFormat */: return 'InvalidNumberFormat';
+        case 3 /* PropertyNameExpected */: return 'PropertyNameExpected';
+        case 4 /* ValueExpected */: return 'ValueExpected';
+        case 5 /* ColonExpected */: return 'ColonExpected';
+        case 6 /* CommaExpected */: return 'CommaExpected';
+        case 7 /* CloseBraceExpected */: return 'CloseBraceExpected';
+        case 8 /* CloseBracketExpected */: return 'CloseBracketExpected';
+        case 9 /* EndOfFileExpected */: return 'EndOfFileExpected';
+        case 10 /* InvalidCommentToken */: return 'InvalidCommentToken';
+        case 11 /* UnexpectedEndOfComment */: return 'UnexpectedEndOfComment';
+        case 12 /* UnexpectedEndOfString */: return 'UnexpectedEndOfString';
+        case 13 /* UnexpectedEndOfNumber */: return 'UnexpectedEndOfNumber';
+        case 14 /* InvalidUnicode */: return 'InvalidUnicode';
+        case 15 /* InvalidEscapeCharacter */: return 'InvalidEscapeCharacter';
+        case 16 /* InvalidCharacter */: return 'InvalidCharacter';
+    }
+    return '<unknown ParseErrorCode>';
+}
 /**
  * Computes the edits needed to format a JSON document.
  *

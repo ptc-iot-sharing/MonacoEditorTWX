@@ -4,6 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 import { createScanner } from './scanner.js';
+var ParseOptions;
+(function (ParseOptions) {
+    ParseOptions.DEFAULT = {
+        allowTrailingComma: false
+    };
+})(ParseOptions || (ParseOptions = {}));
 /**
  * For a given offset, evaluate the location in the JSON document. Each segment in the location path is either a property name or an array index.
  */
@@ -129,6 +135,7 @@ export function getLocation(text, position) {
  */
 export function parse(text, errors, options) {
     if (errors === void 0) { errors = []; }
+    if (options === void 0) { options = ParseOptions.DEFAULT; }
     var currentProperty = null;
     var currentParent = [];
     var previousParents = [];
@@ -177,6 +184,7 @@ export function parse(text, errors, options) {
  */
 export function parseTree(text, errors, options) {
     if (errors === void 0) { errors = []; }
+    if (options === void 0) { options = ParseOptions.DEFAULT; }
     var currentParent = { type: 'array', offset: -1, length: -1, children: [], parent: void 0 }; // artificial root
     function ensurePropertyComplete(endOffset) {
         if (currentParent.type === 'property') {
@@ -344,6 +352,7 @@ export function findNodeAtOffset(node, offset, includeRightBound) {
  * Parses the given text and invokes the visitor functions for each object, array and literal reached.
  */
 export function visit(text, visitor, options) {
+    if (options === void 0) { options = ParseOptions.DEFAULT; }
     var _scanner = createScanner(text, false);
     function toNoArgVisit(visitFunction) {
         return visitFunction ? function () { return visitFunction(_scanner.getTokenOffset(), _scanner.getTokenLength()); } : function () { return true; };

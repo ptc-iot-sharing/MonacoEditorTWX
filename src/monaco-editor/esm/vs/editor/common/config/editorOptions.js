@@ -258,6 +258,7 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.ariaLabel === b.ariaLabel
             && a.renderLineNumbers === b.renderLineNumbers
             && a.renderCustomLineNumbers === b.renderCustomLineNumbers
+            && a.renderFinalNewline === b.renderFinalNewline
             && a.selectOnLineNumbers === b.selectOnLineNumbers
             && a.glyphMargin === b.glyphMargin
             && a.revealHorizontalRightPadding === b.revealHorizontalRightPadding
@@ -266,6 +267,7 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.overviewRulerBorder === b.overviewRulerBorder
             && a.cursorBlinking === b.cursorBlinking
             && a.mouseWheelZoom === b.mouseWheelZoom
+            && a.cursorSmoothCaretAnimation === b.cursorSmoothCaretAnimation
             && a.cursorStyle === b.cursorStyle
             && a.cursorWidth === b.cursorWidth
             && a.hideCursorInOverviewRuler === b.hideCursorInOverviewRuler
@@ -281,8 +283,7 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.renderLineHighlight === b.renderLineHighlight
             && this._equalsScrollbarOptions(a.scrollbar, b.scrollbar)
             && this._equalsMinimapOptions(a.minimap, b.minimap)
-            && a.fixedOverflowWidgets === b.fixedOverflowWidgets
-            && a.keepWidgetsWithinEditor == b.keepWidgetsWithinEditor);
+            && a.fixedOverflowWidgets === b.fixedOverflowWidgets);
     };
     /**
      * @internal
@@ -299,7 +300,8 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.horizontalSliderSize === b.horizontalSliderSize
             && a.verticalScrollbarSize === b.verticalScrollbarSize
             && a.verticalSliderSize === b.verticalSliderSize
-            && a.mouseWheelScrollSensitivity === b.mouseWheelScrollSensitivity);
+            && a.mouseWheelScrollSensitivity === b.mouseWheelScrollSensitivity
+            && a.fastScrollSensitivity === b.fastScrollSensitivity);
     };
     /**
      * @internal
@@ -317,7 +319,8 @@ var InternalEditorOptions = /** @class */ (function () {
     InternalEditorOptions._equalFindOptions = function (a, b) {
         return (a.seedSearchStringFromSelection === b.seedSearchStringFromSelection
             && a.autoFindInSelection === b.autoFindInSelection
-            && a.globalFindClipboard === b.globalFindClipboard);
+            && a.globalFindClipboard === b.globalFindClipboard
+            && a.addExtraSpaceOnTop === b.addExtraSpaceOnTop);
     };
     /**
      * @internal
@@ -348,7 +351,8 @@ var InternalEditorOptions = /** @class */ (function () {
             return a.filterGraceful === b.filterGraceful
                 && a.snippets === b.snippets
                 && a.snippetsPreventQuickSuggestions === b.snippetsPreventQuickSuggestions
-                && a.localityBonus === b.localityBonus;
+                && a.localityBonus === b.localityBonus
+                && a.shareSuggestSelections === b.shareSuggestSelections;
         }
     };
     /**
@@ -608,7 +612,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             contribInfo: contribInfo,
         };
     };
-    EditorOptionsValidator._sanitizeScrollbarOpts = function (opts, defaults, mouseWheelScrollSensitivity) {
+    EditorOptionsValidator._sanitizeScrollbarOpts = function (opts, defaults, mouseWheelScrollSensitivity, fastScrollSensitivity) {
         if (typeof opts !== 'object') {
             return defaults;
         }
@@ -626,7 +630,8 @@ var EditorOptionsValidator = /** @class */ (function () {
             verticalScrollbarSize: verticalScrollbarSize,
             verticalSliderSize: _clampedInt(opts.verticalSliderSize, verticalScrollbarSize, 0, 1000),
             handleMouseWheel: _boolean(opts.handleMouseWheel, defaults.handleMouseWheel),
-            mouseWheelScrollSensitivity: mouseWheelScrollSensitivity
+            mouseWheelScrollSensitivity: mouseWheelScrollSensitivity,
+            fastScrollSensitivity: fastScrollSensitivity,
         };
     };
     EditorOptionsValidator._sanitizeMinimapOpts = function (opts, defaults) {
@@ -641,14 +646,15 @@ var EditorOptionsValidator = /** @class */ (function () {
             maxColumn: _clampedInt(opts.maxColumn, defaults.maxColumn, 1, 10000),
         };
     };
-    EditorOptionsValidator._santizeFindOpts = function (opts, defaults) {
+    EditorOptionsValidator._sanitizeFindOpts = function (opts, defaults) {
         if (typeof opts !== 'object') {
             return defaults;
         }
         return {
             seedSearchStringFromSelection: _boolean(opts.seedSearchStringFromSelection, defaults.seedSearchStringFromSelection),
             autoFindInSelection: _boolean(opts.autoFindInSelection, defaults.autoFindInSelection),
-            globalFindClipboard: _boolean(opts.globalFindClipboard, defaults.globalFindClipboard)
+            globalFindClipboard: _boolean(opts.globalFindClipboard, defaults.globalFindClipboard),
+            addExtraSpaceOnTop: _boolean(opts.addExtraSpaceOnTop, defaults.addExtraSpaceOnTop)
         };
     };
     EditorOptionsValidator._sanitizeParameterHintOpts = function (opts, defaults) {
@@ -660,7 +666,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             cycle: _boolean(opts.cycle, defaults.cycle)
         };
     };
-    EditorOptionsValidator._santizeHoverOpts = function (_opts, defaults) {
+    EditorOptionsValidator._sanitizeHoverOpts = function (_opts, defaults) {
         var opts;
         if (typeof _opts === 'boolean') {
             opts = {
@@ -686,6 +692,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             snippets: _stringSet(opts.snippetSuggestions, defaults.snippets, ['top', 'bottom', 'inline', 'none']),
             snippetsPreventQuickSuggestions: _boolean(suggestOpts.snippetsPreventQuickSuggestions, defaults.filterGraceful),
             localityBonus: _boolean(suggestOpts.localityBonus, defaults.localityBonus),
+            shareSuggestSelections: _boolean(suggestOpts.shareSuggestSelections, defaults.shareSuggestSelections)
         };
     };
     EditorOptionsValidator._sanitizeTabCompletionOpts = function (opts, defaults) {
@@ -746,7 +753,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             else if (renderWhitespace === false) {
                 renderWhitespace = 'none';
             }
-            renderWhitespace = _stringSet(opts.renderWhitespace, defaults.renderWhitespace, ['none', 'boundary', 'all']);
+            renderWhitespace = _stringSet(renderWhitespace, defaults.renderWhitespace, ['none', 'boundary', 'all']);
         }
         var renderLineHighlight = opts.renderLineHighlight;
         {
@@ -757,14 +764,18 @@ var EditorOptionsValidator = /** @class */ (function () {
             else if (renderLineHighlight === false) {
                 renderLineHighlight = 'none';
             }
-            renderLineHighlight = _stringSet(opts.renderLineHighlight, defaults.renderLineHighlight, ['none', 'gutter', 'line', 'all']);
+            renderLineHighlight = _stringSet(renderLineHighlight, defaults.renderLineHighlight, ['none', 'gutter', 'line', 'all']);
         }
         var mouseWheelScrollSensitivity = _float(opts.mouseWheelScrollSensitivity, defaults.scrollbar.mouseWheelScrollSensitivity);
         if (mouseWheelScrollSensitivity === 0) {
             // Disallow 0, as it would prevent/block scrolling
             mouseWheelScrollSensitivity = 1;
         }
-        var scrollbar = this._sanitizeScrollbarOpts(opts.scrollbar, defaults.scrollbar, mouseWheelScrollSensitivity);
+        var fastScrollSensitivity = _float(opts.fastScrollSensitivity, defaults.scrollbar.fastScrollSensitivity);
+        if (fastScrollSensitivity <= 0) {
+            fastScrollSensitivity = defaults.scrollbar.fastScrollSensitivity;
+        }
+        var scrollbar = this._sanitizeScrollbarOpts(opts.scrollbar, defaults.scrollbar, mouseWheelScrollSensitivity, fastScrollSensitivity);
         var minimap = this._sanitizeMinimapOpts(opts.minimap, defaults.minimap);
         return {
             extraEditorClassName: _string(opts.extraEditorClassName, defaults.extraEditorClassName),
@@ -773,6 +784,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             ariaLabel: _string(opts.ariaLabel, defaults.ariaLabel),
             renderLineNumbers: renderLineNumbers,
             renderCustomLineNumbers: renderCustomLineNumbers,
+            renderFinalNewline: _boolean(opts.renderFinalNewline, defaults.renderFinalNewline),
             selectOnLineNumbers: _boolean(opts.selectOnLineNumbers, defaults.selectOnLineNumbers),
             glyphMargin: _boolean(opts.glyphMargin, defaults.glyphMargin),
             revealHorizontalRightPadding: _clampedInt(opts.revealHorizontalRightPadding, defaults.revealHorizontalRightPadding, 0, 1000),
@@ -781,6 +793,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             overviewRulerBorder: _boolean(opts.overviewRulerBorder, defaults.overviewRulerBorder),
             cursorBlinking: _cursorBlinkingStyleFromString(opts.cursorBlinking, defaults.cursorBlinking),
             mouseWheelZoom: _boolean(opts.mouseWheelZoom, defaults.mouseWheelZoom),
+            cursorSmoothCaretAnimation: _boolean(opts.cursorSmoothCaretAnimation, defaults.cursorSmoothCaretAnimation),
             cursorStyle: _cursorStyleFromString(opts.cursorStyle, defaults.cursorStyle),
             cursorWidth: _clampedInt(opts.cursorWidth, defaults.cursorWidth, 0, Number.MAX_VALUE),
             hideCursorInOverviewRuler: _boolean(opts.hideCursorInOverviewRuler, defaults.hideCursorInOverviewRuler),
@@ -797,7 +810,6 @@ var EditorOptionsValidator = /** @class */ (function () {
             scrollbar: scrollbar,
             minimap: minimap,
             fixedOverflowWidgets: _boolean(opts.fixedOverflowWidgets, defaults.fixedOverflowWidgets),
-            keepWidgetsWithinEditor: _boolean(opts.keepWidgetsWithinEditor, defaults.keepWidgetsWithinEditor)
         };
     };
     EditorOptionsValidator._sanitizeContribInfo = function (opts, defaults) {
@@ -812,10 +824,10 @@ var EditorOptionsValidator = /** @class */ (function () {
         if (typeof opts.acceptSuggestionOnEnter === 'boolean') {
             opts.acceptSuggestionOnEnter = opts.acceptSuggestionOnEnter ? 'on' : 'off';
         }
-        var find = this._santizeFindOpts(opts.find, defaults.find);
+        var find = this._sanitizeFindOpts(opts.find, defaults.find);
         return {
             selectionClipboard: _boolean(opts.selectionClipboard, defaults.selectionClipboard),
-            hover: this._santizeHoverOpts(opts.hover, defaults.hover),
+            hover: this._sanitizeHoverOpts(opts.hover, defaults.hover),
             links: _boolean(opts.links, defaults.links),
             contextmenu: _boolean(opts.contextmenu, defaults.contextmenu),
             quickSuggestions: quickSuggestions,
@@ -894,6 +906,7 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                 ariaLabel: (accessibilityIsOff ? nls.localize('accessibilityOffAriaLabel', "The editor is not accessible at this time. Press Alt+F1 for options.") : opts.viewInfo.ariaLabel),
                 renderLineNumbers: opts.viewInfo.renderLineNumbers,
                 renderCustomLineNumbers: opts.viewInfo.renderCustomLineNumbers,
+                renderFinalNewline: opts.viewInfo.renderFinalNewline,
                 selectOnLineNumbers: opts.viewInfo.selectOnLineNumbers,
                 glyphMargin: opts.viewInfo.glyphMargin,
                 revealHorizontalRightPadding: opts.viewInfo.revealHorizontalRightPadding,
@@ -902,6 +915,7 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                 overviewRulerBorder: opts.viewInfo.overviewRulerBorder,
                 cursorBlinking: opts.viewInfo.cursorBlinking,
                 mouseWheelZoom: opts.viewInfo.mouseWheelZoom,
+                cursorSmoothCaretAnimation: opts.viewInfo.cursorSmoothCaretAnimation,
                 cursorStyle: opts.viewInfo.cursorStyle,
                 cursorWidth: opts.viewInfo.cursorWidth,
                 hideCursorInOverviewRuler: opts.viewInfo.hideCursorInOverviewRuler,
@@ -923,8 +937,7 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                     showSlider: opts.viewInfo.minimap.showSlider,
                     maxColumn: opts.viewInfo.minimap.maxColumn
                 },
-                fixedOverflowWidgets: opts.viewInfo.fixedOverflowWidgets,
-                keepWidgetsWithinEditor: opts.viewInfo.keepWidgetsWithinEditor
+                fixedOverflowWidgets: opts.viewInfo.fixedOverflowWidgets
             },
             contribInfo: {
                 selectionClipboard: opts.contribInfo.selectionClipboard,
@@ -1259,6 +1272,7 @@ export var EDITOR_FONT_DEFAULTS = {
  */
 export var EDITOR_MODEL_DEFAULTS = {
     tabSize: 4,
+    indentSize: 4,
     insertSpaces: true,
     detectIndentation: true,
     trimAutoWhitespace: true,
@@ -1281,7 +1295,7 @@ export var EDITOR_DEFAULTS = {
     wordWrapMinified: true,
     wrappingIndent: 1 /* Same */,
     wordWrapBreakBeforeCharacters: '([{‘“〈《「『【〔（［｛｢£¥＄￡￥+＋',
-    wordWrapBreakAfterCharacters: ' \t})]?|&,;¢°′″‰℃、。｡､￠，．：；？！％・･ゝゞヽヾーァィゥェォッャュョヮヵヶぁぃぅぇぉっゃゅょゎゕゖㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ々〻ｧｨｩｪｫｬｭｮｯｰ”〉》」』】〕）］｝｣',
+    wordWrapBreakAfterCharacters: ' \t})]?|/&,;¢°′″‰℃、。｡､￠，．：；？！％・･ゝゞヽヾーァィゥェォッャュョヮヵヶぁぃぅぇぉっゃゅょゎゕゖㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ々〻ｧｨｩｪｫｬｭｮｯｰ”〉》」』】〕）］｝｣',
     wordWrapBreakObtrusiveCharacters: '.',
     autoClosingBrackets: 'languageDefined',
     autoClosingQuotes: 'languageDefined',
@@ -1302,6 +1316,7 @@ export var EDITOR_DEFAULTS = {
         ariaLabel: nls.localize('editorViewAccessibleLabel', "Editor content"),
         renderLineNumbers: 1 /* On */,
         renderCustomLineNumbers: null,
+        renderFinalNewline: (platform.isLinux ? false : true),
         selectOnLineNumbers: true,
         glyphMargin: true,
         revealHorizontalRightPadding: 30,
@@ -1310,6 +1325,7 @@ export var EDITOR_DEFAULTS = {
         overviewRulerBorder: true,
         cursorBlinking: 1 /* Blink */,
         mouseWheelZoom: false,
+        cursorSmoothCaretAnimation: false,
         cursorStyle: TextEditorCursorStyle.Line,
         cursorWidth: 0,
         hideCursorInOverviewRuler: false,
@@ -1336,6 +1352,7 @@ export var EDITOR_DEFAULTS = {
             verticalSliderSize: 14,
             handleMouseWheel: true,
             mouseWheelScrollSensitivity: 1,
+            fastScrollSensitivity: 5,
         },
         minimap: {
             enabled: true,
@@ -1345,7 +1362,6 @@ export var EDITOR_DEFAULTS = {
             maxColumn: 120
         },
         fixedOverflowWidgets: false,
-        keepWidgetsWithinEditor: false
     },
     contribInfo: {
         selectionClipboard: true,
@@ -1377,7 +1393,8 @@ export var EDITOR_DEFAULTS = {
             filterGraceful: true,
             snippets: 'inline',
             snippetsPreventQuickSuggestions: true,
-            localityBonus: false
+            localityBonus: false,
+            shareSuggestSelections: false
         },
         selectionHighlight: true,
         occurrencesHighlight: true,
@@ -1389,7 +1406,8 @@ export var EDITOR_DEFAULTS = {
         find: {
             seedSearchStringFromSelection: true,
             autoFindInSelection: false,
-            globalFindClipboard: false
+            globalFindClipboard: false,
+            addExtraSpaceOnTop: true
         },
         colorDecorators: true,
         lightbulbEnabled: true,

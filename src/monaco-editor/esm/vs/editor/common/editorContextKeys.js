@@ -34,6 +34,7 @@ export var EditorContextKeys;
     EditorContextKeys.hasCodeActionsProvider = new RawContextKey('editorHasCodeActionsProvider', false);
     EditorContextKeys.hasCodeLensProvider = new RawContextKey('editorHasCodeLensProvider', false);
     EditorContextKeys.hasDefinitionProvider = new RawContextKey('editorHasDefinitionProvider', false);
+    EditorContextKeys.hasDeclarationProvider = new RawContextKey('editorHasDeclarationProvider', false);
     EditorContextKeys.hasImplementationProvider = new RawContextKey('editorHasImplementationProvider', false);
     EditorContextKeys.hasTypeDefinitionProvider = new RawContextKey('editorHasTypeDefinitionProvider', false);
     EditorContextKeys.hasHoverProvider = new RawContextKey('editorHasHoverProvider', false);

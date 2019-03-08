@@ -57,8 +57,8 @@ var FindDecorations = /** @class */ (function () {
     };
     FindDecorations.prototype.getCurrentMatchesPosition = function (desiredRange) {
         var candidates = this._editor.getModel().getDecorationsInRange(desiredRange);
-        for (var i = 0, len = candidates.length; i < len; i++) {
-            var candidate = candidates[i];
+        for (var _i = 0, candidates_1 = candidates; _i < candidates_1.length; _i++) {
+            var candidate = candidates_1[_i];
             var candidateOpts = candidate.options;
             if (candidateOpts === FindDecorations._FIND_MATCH_DECORATION || candidateOpts === FindDecorations._CURRENT_FIND_MATCH_DECORATION) {
                 return this._getDecorationIndex(candidate.id);

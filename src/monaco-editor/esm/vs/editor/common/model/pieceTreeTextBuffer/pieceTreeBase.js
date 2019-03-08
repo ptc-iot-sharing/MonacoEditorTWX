@@ -156,8 +156,8 @@ var PieceTreeSearchCache = /** @class */ (function () {
         }
         if (hasInvalidVal) {
             var newArr = [];
-            for (var i = 0; i < tmp.length; i++) {
-                var entry = tmp[i];
+            for (var _i = 0, tmp_1 = tmp; _i < tmp_1.length; _i++) {
+                var entry = tmp_1[_i];
                 if (entry !== null) {
                     newArr.push(entry);
                 }
@@ -772,7 +772,7 @@ var PieceTreeBase = /** @class */ (function () {
             while (text.length > AverageBufferSize) {
                 var lastChar = text.charCodeAt(AverageBufferSize - 1);
                 var splitText = void 0;
-                if (lastChar === 13 /* CarriageReturn */ || (lastChar >= 0xd800 && lastChar <= 0xdbff)) {
+                if (lastChar === 13 /* CarriageReturn */ || (lastChar >= 0xD800 && lastChar <= 0xDBFF)) {
                     // last character is \r or a high surrogate => keep it back
                     splitText = text.substring(0, AverageBufferSize - 1);
                     text = text.substring(AverageBufferSize - 1);

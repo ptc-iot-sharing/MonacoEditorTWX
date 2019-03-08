@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -47,8 +47,8 @@ var ContentHoverWidget = /** @class */ (function (_super) {
                 _this.updateFont();
             }
         }));
-        _this._editor.onDidLayoutChange(function (e) { return _this.updateMaxHeight(); });
-        _this.updateMaxHeight();
+        _this._editor.onDidLayoutChange(function (e) { return _this.layout(); });
+        _this.layout();
         _this._editor.addContentWidget(_this);
         _this._showAtPosition = null;
         _this._showAtRange = null;
@@ -128,12 +128,13 @@ var ContentHoverWidget = /** @class */ (function (_super) {
     ContentHoverWidget.prototype.onContentsChange = function () {
         this.scrollbar.scanDomNode();
     };
-    ContentHoverWidget.prototype.updateMaxHeight = function () {
+    ContentHoverWidget.prototype.layout = function () {
         var height = Math.max(this._editor.getLayoutInfo().height / 4, 250);
         var _a = this._editor.getConfiguration().fontInfo, fontSize = _a.fontSize, lineHeight = _a.lineHeight;
         this._domNode.style.fontSize = fontSize + "px";
         this._domNode.style.lineHeight = lineHeight + "px";
         this._domNode.style.maxHeight = height + "px";
+        this._domNode.style.maxWidth = Math.max(this._editor.getLayoutInfo().width * 0.66, 500) + "px";
     };
     return ContentHoverWidget;
 }(Widget));

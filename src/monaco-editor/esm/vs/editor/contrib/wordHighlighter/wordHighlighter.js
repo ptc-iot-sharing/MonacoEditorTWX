@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -39,12 +39,12 @@ import { DocumentHighlightKind, DocumentHighlightProviderRegistry } from '../../
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { activeContrastBorder, editorSelectionHighlight, editorSelectionHighlightBorder, overviewRulerSelectionHighlightForeground, registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant, themeColorFromId } from '../../../platform/theme/common/themeService.js';
-export var editorWordHighlight = registerColor('editor.wordHighlightBackground', { dark: '#575757B8', light: '#57575740', hc: null }, nls.localize('wordHighlight', 'Background color of a symbol during read-access, like reading a variable. The color must not be opaque to not hide underlying decorations.'), true);
-export var editorWordHighlightStrong = registerColor('editor.wordHighlightStrongBackground', { dark: '#004972B8', light: '#0e639c40', hc: null }, nls.localize('wordHighlightStrong', 'Background color of a symbol during write-access, like writing to a variable. The color must not be opaque to not hide underlying decorations.'), true);
+export var editorWordHighlight = registerColor('editor.wordHighlightBackground', { dark: '#575757B8', light: '#57575740', hc: null }, nls.localize('wordHighlight', 'Background color of a symbol during read-access, like reading a variable. The color must not be opaque so as not to hide underlying decorations.'), true);
+export var editorWordHighlightStrong = registerColor('editor.wordHighlightStrongBackground', { dark: '#004972B8', light: '#0e639c40', hc: null }, nls.localize('wordHighlightStrong', 'Background color of a symbol during write-access, like writing to a variable. The color must not be opaque so as not to hide underlying decorations.'), true);
 export var editorWordHighlightBorder = registerColor('editor.wordHighlightBorder', { light: null, dark: null, hc: activeContrastBorder }, nls.localize('wordHighlightBorder', 'Border color of a symbol during read-access, like reading a variable.'));
 export var editorWordHighlightStrongBorder = registerColor('editor.wordHighlightStrongBorder', { light: null, dark: null, hc: activeContrastBorder }, nls.localize('wordHighlightStrongBorder', 'Border color of a symbol during write-access, like writing to a variable.'));
-export var overviewRulerWordHighlightForeground = registerColor('editorOverviewRuler.wordHighlightForeground', { dark: '#A0A0A0CC', light: '#A0A0A0CC', hc: '#A0A0A0CC' }, nls.localize('overviewRulerWordHighlightForeground', 'Overview ruler marker color for symbol highlights. The color must not be opaque to not hide underlying decorations.'), true);
-export var overviewRulerWordHighlightStrongForeground = registerColor('editorOverviewRuler.wordHighlightStrongForeground', { dark: '#C0A0C0CC', light: '#C0A0C0CC', hc: '#C0A0C0CC' }, nls.localize('overviewRulerWordHighlightStrongForeground', 'Overview ruler marker color for write-access symbol highlights. The color must not be opaque to not hide underlying decorations.'), true);
+export var overviewRulerWordHighlightForeground = registerColor('editorOverviewRuler.wordHighlightForeground', { dark: '#A0A0A0CC', light: '#A0A0A0CC', hc: '#A0A0A0CC' }, nls.localize('overviewRulerWordHighlightForeground', 'Overview ruler marker color for symbol highlights. The color must not be opaque so as not to hide underlying decorations.'), true);
+export var overviewRulerWordHighlightStrongForeground = registerColor('editorOverviewRuler.wordHighlightStrongForeground', { dark: '#C0A0C0CC', light: '#C0A0C0CC', hc: '#C0A0C0CC' }, nls.localize('overviewRulerWordHighlightStrongForeground', 'Overview ruler marker color for write-access symbol highlights. The color must not be opaque so as not to hide underlying decorations.'), true);
 export var ctxHasWordHighlights = new RawContextKey('hasWordHighlights', false);
 export function getOccurrencesAtPosition(model, position, token) {
     var orderedByScore = DocumentHighlightProviderRegistry.ordered(model);
@@ -54,7 +54,7 @@ export function getOccurrencesAtPosition(model, position, token) {
     return first(orderedByScore.map(function (provider) { return function () {
         return Promise.resolve(provider.provideDocumentHighlights(model, position, token))
             .then(undefined, onUnexpectedExternalError);
-    }; }), function (result) { return !arrays.isFalsyOrEmpty(result); });
+    }; }), arrays.isNonEmptyArray);
 }
 var OccurenceAtPositionRequest = /** @class */ (function () {
     function OccurenceAtPositionRequest(model, selection, wordSeparators) {
@@ -98,7 +98,7 @@ var SemanticOccurenceAtPositionRequest = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     SemanticOccurenceAtPositionRequest.prototype._compute = function (model, selection, wordSeparators, token) {
-        return getOccurrencesAtPosition(model, selection.getPosition(), token);
+        return getOccurrencesAtPosition(model, selection.getPosition(), token).then(function (value) { return value || []; });
     };
     return SemanticOccurenceAtPositionRequest;
 }(OccurenceAtPositionRequest));

@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 import { Schemas } from '../../../base/common/network.js';
 import { DataUri, basenameOrAuthority } from '../../../base/common/resources.js';
 import { PLAINTEXT_MODE_ID } from '../modes/modesRegistry.js';
@@ -40,7 +39,7 @@ export function getIconClasses(modelService, modeService, resource, fileKind) {
             }
             // Configured Language
             var configuredLangId = getConfiguredLangId(modelService, resource);
-            configuredLangId = configuredLangId || modeService.getModeIdByFilepathOrFirstLine(path);
+            configuredLangId = configuredLangId || (path ? modeService.getModeIdByFilepathOrFirstLine(path) : null);
             if (configuredLangId) {
                 classes.push(cssEscape(configuredLangId) + "-lang-file-icon");
             }

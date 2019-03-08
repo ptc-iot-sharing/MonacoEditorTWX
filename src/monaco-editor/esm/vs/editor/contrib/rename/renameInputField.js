@@ -2,24 +2,16 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-import './renameInputField.css';
-import { localize } from '../../../nls.js';
 import { dispose } from '../../../base/common/lifecycle.js';
-import { Range } from '../../common/core/range.js';
-import { IThemeService } from '../../../platform/theme/common/themeService.js';
-import { inputBackground, inputBorder, inputForeground, widgetShadow } from '../../../platform/theme/common/colorRegistry.js';
+import './renameInputField.css';
 import { Position } from '../../common/core/position.js';
+import { Range } from '../../common/core/range.js';
+import { localize } from '../../../nls.js';
+import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
+import { inputBackground, inputBorder, inputForeground, widgetShadow } from '../../../platform/theme/common/colorRegistry.js';
+export var CONTEXT_RENAME_INPUT_VISIBLE = new RawContextKey('renameInputVisible', false);
 var RenameInputField = /** @class */ (function () {
-    function RenameInputField(editor, themeService) {
+    function RenameInputField(editor, themeService, contextKeyService) {
         var _this = this;
         this.themeService = themeService;
         this._disposables = [];
@@ -27,6 +19,7 @@ var RenameInputField = /** @class */ (function () {
         this.allowEditorOverflow = true;
         this._currentAcceptInput = null;
         this._currentCancelInput = null;
+        this._visibleContextKey = CONTEXT_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);
         this._editor = editor;
         this._editor.addContentWidget(this);
         this._disposables.push(editor.onDidChangeConfiguration(function (e) {
@@ -107,8 +100,8 @@ var RenameInputField = /** @class */ (function () {
         this._inputField.setAttribute('selectionStart', selectionStart.toString());
         this._inputField.setAttribute('selectionEnd', selectionEnd.toString());
         this._inputField.size = Math.max((where.endColumn - where.startColumn) * 1.1, 20);
-        var disposeOnDone = [], always;
-        always = function () {
+        var disposeOnDone = [];
+        var always = function () {
             dispose(disposeOnDone);
             _this._hide();
         };
@@ -150,6 +143,7 @@ var RenameInputField = /** @class */ (function () {
         var _this = this;
         this._editor.revealLineInCenterIfOutsideViewport(this._position.lineNumber, 0 /* Smooth */);
         this._visible = true;
+        this._visibleContextKey.set(true);
         this._editor.layoutContentWidget(this);
         setTimeout(function () {
             _this._inputField.focus();
@@ -158,11 +152,9 @@ var RenameInputField = /** @class */ (function () {
     };
     RenameInputField.prototype._hide = function () {
         this._visible = false;
+        this._visibleContextKey.reset();
         this._editor.layoutContentWidget(this);
     };
-    RenameInputField = __decorate([
-        __param(1, IThemeService)
-    ], RenameInputField);
     return RenameInputField;
 }());
-export default RenameInputField;
+export { RenameInputField };

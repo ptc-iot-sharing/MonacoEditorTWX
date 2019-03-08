@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 /**
  * HTML 5 character entities
  * https://www.w3.org/TR/html5/syntax.html#named-character-references

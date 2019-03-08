@@ -30,6 +30,24 @@ var TokenizationRegistryImpl = /** @class */ (function () {
             _this.fire([language]);
         });
     };
+    TokenizationRegistryImpl.prototype.registerPromise = function (language, supportPromise) {
+        var _this = this;
+        var registration = null;
+        var isDisposed = false;
+        this._promises[language] = supportPromise.then(function (support) {
+            delete _this._promises[language];
+            if (isDisposed || !support) {
+                return;
+            }
+            registration = _this.register(language, support);
+        });
+        return toDisposable(function () {
+            isDisposed = true;
+            if (registration) {
+                registration.dispose();
+            }
+        });
+    };
     TokenizationRegistryImpl.prototype.getPromise = function (language) {
         var _this = this;
         var support = this.get(language);

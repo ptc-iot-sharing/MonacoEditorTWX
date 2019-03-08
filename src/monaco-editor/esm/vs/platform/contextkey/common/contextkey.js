@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -39,35 +39,36 @@ var ContextKeyExpr = /** @class */ (function () {
         }
         return new ContextKeyAndExpr(expr);
     };
-    ContextKeyExpr.deserialize = function (serialized) {
+    ContextKeyExpr.deserialize = function (serialized, strict) {
         var _this = this;
+        if (strict === void 0) { strict = false; }
         if (!serialized) {
             return null;
         }
         var pieces = serialized.split('&&');
-        var result = new ContextKeyAndExpr(pieces.map(function (p) { return _this._deserializeOne(p); }));
+        var result = new ContextKeyAndExpr(pieces.map(function (p) { return _this._deserializeOne(p, strict); }));
         return result.normalize();
     };
-    ContextKeyExpr._deserializeOne = function (serializedOne) {
+    ContextKeyExpr._deserializeOne = function (serializedOne, strict) {
         serializedOne = serializedOne.trim();
         if (serializedOne.indexOf('!=') >= 0) {
             var pieces = serializedOne.split('!=');
-            return new ContextKeyNotEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1]));
+            return new ContextKeyNotEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1], strict));
         }
         if (serializedOne.indexOf('==') >= 0) {
             var pieces = serializedOne.split('==');
-            return new ContextKeyEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1]));
+            return new ContextKeyEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1], strict));
         }
         if (serializedOne.indexOf('=~') >= 0) {
             var pieces = serializedOne.split('=~');
-            return new ContextKeyRegexExpr(pieces[0].trim(), this._deserializeRegexValue(pieces[1]));
+            return new ContextKeyRegexExpr(pieces[0].trim(), this._deserializeRegexValue(pieces[1], strict));
         }
         if (/^\!\s*/.test(serializedOne)) {
             return new ContextKeyNotExpr(serializedOne.substr(1).trim());
         }
         return new ContextKeyDefinedExpr(serializedOne);
     };
-    ContextKeyExpr._deserializeValue = function (serializedValue) {
+    ContextKeyExpr._deserializeValue = function (serializedValue, strict) {
         serializedValue = serializedValue.trim();
         if (serializedValue === 'true') {
             return true;
@@ -81,15 +82,25 @@ var ContextKeyExpr = /** @class */ (function () {
         }
         return serializedValue;
     };
-    ContextKeyExpr._deserializeRegexValue = function (serializedValue) {
+    ContextKeyExpr._deserializeRegexValue = function (serializedValue, strict) {
         if (isFalsyOrWhitespace(serializedValue)) {
-            console.warn('missing regexp-value for =~-expression');
+            if (strict) {
+                throw new Error('missing regexp-value for =~-expression');
+            }
+            else {
+                console.warn('missing regexp-value for =~-expression');
+            }
             return null;
         }
         var start = serializedValue.indexOf('/');
         var end = serializedValue.lastIndexOf('/');
         if (start === end || start < 0 /* || to < 0 */) {
-            console.warn("bad regexp-value '" + serializedValue + "', missing /-enclosure");
+            if (strict) {
+                throw new Error("bad regexp-value '" + serializedValue + "', missing /-enclosure");
+            }
+            else {
+                console.warn("bad regexp-value '" + serializedValue + "', missing /-enclosure");
+            }
             return null;
         }
         var value = serializedValue.slice(start + 1, end);
@@ -98,7 +109,12 @@ var ContextKeyExpr = /** @class */ (function () {
             return new RegExp(value, caseIgnoreFlag);
         }
         catch (e) {
-            console.warn("bad regexp-value '" + serializedValue + "', parse error: " + e);
+            if (strict) {
+                throw new Error("bad regexp-value '" + serializedValue + "', parse error: " + e);
+            }
+            else {
+                console.warn("bad regexp-value '" + serializedValue + "', parse error: " + e);
+            }
             return null;
         }
     };

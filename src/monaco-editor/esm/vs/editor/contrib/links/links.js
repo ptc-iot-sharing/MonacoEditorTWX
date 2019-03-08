@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -150,7 +150,7 @@ var LinkOccurrence = /** @class */ (function () {
         };
     };
     LinkOccurrence._getOptions = function (link, useMetaKey, isActive) {
-        if (link.url && /^command:/i.test(link.url)) {
+        if (link.url && /^command:/i.test(link.url.toString())) {
             if (useMetaKey) {
                 return (isActive ? decoration.metaCommandActive : decoration.metaCommand);
             }
@@ -285,8 +285,9 @@ var LinkDetector = /** @class */ (function () {
         var newDecorations = [];
         if (links) {
             // Not sure why this is sometimes null
-            for (var i = 0; i < links.length; i++) {
-                newDecorations.push(LinkOccurrence.decoration(links[i], useMetaKey));
+            for (var _i = 0, links_1 = links; _i < links_1.length; _i++) {
+                var link = links_1[_i];
+                newDecorations.push(LinkOccurrence.decoration(link, useMetaKey));
             }
         }
         var decorations = this.editor.deltaDecorations(oldDecorations, newDecorations);
@@ -348,7 +349,7 @@ var LinkDetector = /** @class */ (function () {
         }, function (err) {
             // different error cases
             if (err === 'invalid') {
-                _this.notificationService.warn(nls.localize('invalid.url', 'Failed to open this link because it is not well-formed: {0}', link.url));
+                _this.notificationService.warn(nls.localize('invalid.url', 'Failed to open this link because it is not well-formed: {0}', link.url.toString()));
             }
             else if (err === 'missing') {
                 _this.notificationService.warn(nls.localize('missing.url', 'Failed to open this link because its target is missing.'));
@@ -368,8 +369,8 @@ var LinkDetector = /** @class */ (function () {
             endLineNumber: position.lineNumber,
             endColumn: position.column
         }, 0, true);
-        for (var i = 0; i < decorations.length; i++) {
-            var decoration_1 = decorations[i];
+        for (var _i = 0, decorations_1 = decorations; _i < decorations_1.length; _i++) {
+            var decoration_1 = decorations_1[_i];
             var currentOccurrence = this.currentOccurrences[decoration_1.id];
             if (currentOccurrence) {
                 return currentOccurrence;

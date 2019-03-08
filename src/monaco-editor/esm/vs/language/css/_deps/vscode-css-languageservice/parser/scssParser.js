@@ -4,9 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -111,24 +114,23 @@ var SCSSParser = /** @class */ (function (_super) {
         }
         var node = this.create(nodes.Identifier);
         node.referenceTypes = referenceTypes;
+        node.isCustomProperty = this.peekRegExp(TokenType.Ident, /^--/);
         var hasContent = false;
-        var delimWithInterpolation = function () {
-            if (!_this.acceptDelim('-')) {
-                return null;
+        var indentInterpolation = function () {
+            var pos = _this.mark();
+            if (_this.acceptDelim('-')) {
+                if (!_this.hasWhitespace()) {
+                    _this.acceptDelim('-');
+                }
+                if (_this.hasWhitespace()) {
+                    _this.restoreAtMark(pos);
+                    return null;
+                }
             }
-            if (!_this.hasWhitespace() && _this.acceptDelim('-')) {
-                node.isCustomProperty = true;
-            }
-            if (!_this.hasWhitespace()) {
-                return _this._parseInterpolation();
-            }
-            return null;
+            return _this._parseInterpolation();
         };
-        while (this.accept(TokenType.Ident) || node.addChild(this._parseInterpolation() || this.try(delimWithInterpolation))) {
+        while (this.accept(TokenType.Ident) || node.addChild(indentInterpolation()) || (hasContent && (this.acceptDelim('-') || this.accept(TokenType.Num)))) {
             hasContent = true;
-            if (!this.hasWhitespace() && this.acceptDelim('-')) {
-                // '-' is a valid char inside a ident (special treatment here to support #{foo}-#{bar})
-            }
             if (this.hasWhitespace()) {
                 break;
             }
@@ -415,6 +417,9 @@ var SCSSParser = /** @class */ (function (_super) {
         }
         if (node.getParameters().addChild(this._parseParameterDeclaration())) {
             while (this.accept(TokenType.Comma)) {
+                if (this.peek(TokenType.ParenthesisR)) {
+                    break;
+                }
                 if (!node.getParameters().addChild(this._parseParameterDeclaration())) {
                     return this.finish(node, ParseError.VariableNameExpected);
                 }
@@ -448,6 +453,9 @@ var SCSSParser = /** @class */ (function (_super) {
         if (this.accept(TokenType.ParenthesisL)) {
             if (node.getParameters().addChild(this._parseParameterDeclaration())) {
                 while (this.accept(TokenType.Comma)) {
+                    if (this.peek(TokenType.ParenthesisR)) {
+                        break;
+                    }
                     if (!node.getParameters().addChild(this._parseParameterDeclaration())) {
                         return this.finish(node, ParseError.VariableNameExpected);
                     }
@@ -494,6 +502,9 @@ var SCSSParser = /** @class */ (function (_super) {
         if (this.accept(TokenType.ParenthesisL)) {
             if (node.getArguments().addChild(this._parseFunctionArgument())) {
                 while (this.accept(TokenType.Comma)) {
+                    if (this.peek(TokenType.ParenthesisR)) {
+                        break;
+                    }
                     if (!node.getArguments().addChild(this._parseFunctionArgument())) {
                         return this.finish(node, ParseError.ExpressionExpected);
                     }
@@ -584,4 +595,3 @@ var SCSSParser = /** @class */ (function (_super) {
     return SCSSParser;
 }(cssParser.Parser));
 export { SCSSParser };
-//# sourceMappingURL=scssParser.js.map

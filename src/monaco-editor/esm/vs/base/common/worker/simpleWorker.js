@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -18,13 +18,7 @@ var __extends = (this && this.__extends) || (function () {
 import { transformErrorForSerialization } from '../errors.js';
 import { Disposable } from '../lifecycle.js';
 import { isWeb } from '../platform.js';
-import { PolyfillPromise } from '../winjs.polyfill.promise.js';
-var global = self;
-// When missing, polyfill the native promise
-// with our winjs-based polyfill
-if (typeof global.Promise === 'undefined') {
-    global.Promise = PolyfillPromise;
-}
+import { getAllPropertyNames } from '../types.js';
 var INITIALIZE = '$initialize';
 var webWorkerWarningLogged = false;
 export function logOnceWebWorkerWarning(err) {
@@ -182,8 +176,9 @@ var SimpleWorkerClient = /** @class */ (function (_super) {
             lazyProxyReject = reject;
             _this._onModuleLoaded.then(function (availableMethods) {
                 var proxy = {};
-                for (var i = 0; i < availableMethods.length; i++) {
-                    proxy[availableMethods[i]] = createProxyMethod(availableMethods[i], proxyMethodRequest);
+                for (var _i = 0, availableMethods_1 = availableMethods; _i < availableMethods_1.length; _i++) {
+                    var methodName = availableMethods_1[_i];
+                    proxy[methodName] = createProxyMethod(methodName, proxyMethodRequest);
                 }
                 resolve(proxy);
             }, function (e) {
@@ -258,7 +253,8 @@ var SimpleWorkerServer = /** @class */ (function () {
         if (this._requestHandler) {
             // static request handler
             var methods = [];
-            for (var prop in this._requestHandler) {
+            for (var _i = 0, _a = getAllPropertyNames(this._requestHandler); _i < _a.length; _i++) {
+                var prop = _a[_i];
                 if (typeof this._requestHandler[prop] === 'function') {
                     methods.push(prop);
                 }
@@ -293,7 +289,8 @@ var SimpleWorkerServer = /** @class */ (function () {
                     return;
                 }
                 var methods = [];
-                for (var prop in _this._requestHandler) {
+                for (var _a = 0, _b = getAllPropertyNames(_this._requestHandler); _a < _b.length; _a++) {
+                    var prop = _b[_a];
                     if (typeof _this._requestHandler[prop] === 'function') {
                         methods.push(prop);
                     }

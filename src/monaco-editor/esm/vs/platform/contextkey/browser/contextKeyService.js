@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -24,7 +24,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Emitter, debounceEvent } from '../../../base/common/event.js';
+import { Emitter, Event } from '../../../base/common/event.js';
 import { dispose } from '../../../base/common/lifecycle.js';
 import { keys } from '../../../base/common/map.js';
 import { CommandsRegistry } from '../../commands/common/commands.js';
@@ -165,14 +165,20 @@ var ContextKey = /** @class */ (function () {
     };
     return ContextKey;
 }());
-var ContextKeyChangeEvent = /** @class */ (function () {
-    function ContextKeyChangeEvent() {
-        this._keys = [];
+var SimpleContextKeyChangeEvent = /** @class */ (function () {
+    function SimpleContextKeyChangeEvent(_key) {
+        this._key = _key;
     }
-    ContextKeyChangeEvent.prototype.collect = function (oneOrManyKeys) {
-        this._keys = this._keys.concat(oneOrManyKeys);
+    SimpleContextKeyChangeEvent.prototype.affectsSome = function (keys) {
+        return keys.has(this._key);
     };
-    ContextKeyChangeEvent.prototype.affectsSome = function (keys) {
+    return SimpleContextKeyChangeEvent;
+}());
+var ArrayContextKeyChangeEvent = /** @class */ (function () {
+    function ArrayContextKeyChangeEvent(_keys) {
+        this._keys = _keys;
+    }
+    ArrayContextKeyChangeEvent.prototype.affectsSome = function (keys) {
         for (var _i = 0, _a = this._keys; _i < _a.length; _i++) {
             var key = _a[_i];
             if (keys.has(key)) {
@@ -181,9 +187,8 @@ var ContextKeyChangeEvent = /** @class */ (function () {
         }
         return false;
     };
-    return ContextKeyChangeEvent;
+    return ArrayContextKeyChangeEvent;
 }());
-export { ContextKeyChangeEvent };
 var AbstractContextKeyService = /** @class */ (function () {
     function AbstractContextKeyService(myContextId) {
         this._isDisposed = false;
@@ -199,13 +204,11 @@ var AbstractContextKeyService = /** @class */ (function () {
     Object.defineProperty(AbstractContextKeyService.prototype, "onDidChangeContext", {
         get: function () {
             if (!this._onDidChangeContext) {
-                this._onDidChangeContext = debounceEvent(this._onDidChangeContextKey.event, function (prev, cur) {
-                    if (!prev) {
-                        prev = new ContextKeyChangeEvent();
-                    }
-                    prev.collect(cur);
-                    return prev;
-                }, 25);
+                this._onDidChangeContext = Event.map(this._onDidChangeContextKey.event, (function (changedKeyOrKeys) {
+                    return typeof changedKeyOrKeys === 'string'
+                        ? new SimpleContextKeyChangeEvent(changedKeyOrKeys)
+                        : new ArrayContextKeyChangeEvent(changedKeyOrKeys);
+                }));
             }
             return this._onDidChangeContext;
         },

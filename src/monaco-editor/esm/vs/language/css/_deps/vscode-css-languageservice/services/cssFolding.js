@@ -191,4 +191,3 @@ function limitFoldingRanges(ranges, context) {
         return validRanges.slice(0, maxRanges);
     }
 }
-//# sourceMappingURL=cssFolding.js.map

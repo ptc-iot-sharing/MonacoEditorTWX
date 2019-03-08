@@ -20,6 +20,9 @@ var SortLinesCommand = /** @class */ (function () {
         return helper.getTrackedSelection(this.selectionId);
     };
     SortLinesCommand.canRun = function (model, selection, descending) {
+        if (model === null) {
+            return false;
+        }
         var data = getSortData(model, selection, descending);
         if (!data) {
             return false;

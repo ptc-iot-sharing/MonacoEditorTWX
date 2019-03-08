@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -145,8 +145,10 @@ var SaturationBox = /** @class */ (function (_super) {
         var mouseUpListener = dom.addDisposableListener(document, dom.EventType.MOUSE_UP, function () {
             _this._onColorFlushed.fire();
             mouseUpListener.dispose();
-            _this.monitor.stopMonitoring(true);
-            _this.monitor = null;
+            if (_this.monitor) {
+                _this.monitor.stopMonitoring(true);
+                _this.monitor = null;
+            }
         }, true);
     };
     SaturationBox.prototype.onDidChangePosition = function (left, top) {

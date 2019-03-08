@@ -5,6 +5,7 @@
 'use strict';
 import * as ls from './_deps/vscode-languageserver-types/main.js';
 var Uri = monaco.Uri;
+var Range = monaco.Range;
 // --- diagnostics --- ---
 var DiagnosticsAdapter = /** @class */ (function () {
     function DiagnosticsAdapter(_languageId, _worker, defaults) {
@@ -164,7 +165,6 @@ var CompletionAdapter = /** @class */ (function () {
         configurable: true
     });
     CompletionAdapter.prototype.provideCompletionItems = function (model, position, context, token) {
-        var wordInfo = model.getWordUntilPosition(position);
         var resource = model.uri;
         return this._worker(resource).then(function (worker) {
             return worker.doComplete(resource.toString(), fromPosition(position));
@@ -172,6 +172,8 @@ var CompletionAdapter = /** @class */ (function () {
             if (!info) {
                 return;
             }
+            var wordInfo = model.getWordUntilPosition(position);
+            var wordRange = new Range(position.lineNumber, wordInfo.startColumn, position.lineNumber, wordInfo.endColumn);
             var items = info.items.map(function (entry) {
                 var item = {
                     label: entry.label,
@@ -180,6 +182,7 @@ var CompletionAdapter = /** @class */ (function () {
                     filterText: entry.filterText,
                     documentation: entry.documentation,
                     detail: entry.detail,
+                    range: wordRange,
                     kind: toCompletionItemKind(entry.kind),
                 };
                 if (entry.textEdit) {

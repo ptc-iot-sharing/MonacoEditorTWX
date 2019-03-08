@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -65,7 +65,7 @@ var SymbolEntry = /** @class */ (function (_super) {
         }
         return this.runPreview();
     };
-    SymbolEntry.prototype.runOpen = function (context) {
+    SymbolEntry.prototype.runOpen = function (_context) {
         // Apply selection and focus
         var range = this.toSelection();
         this.editor.setSelection(range);
@@ -108,9 +108,12 @@ var QuickOutlineAction = /** @class */ (function (_super) {
     }
     QuickOutlineAction.prototype.run = function (accessor, editor) {
         var _this = this;
+        if (!editor.hasModel()) {
+            return undefined;
+        }
         var model = editor.getModel();
         if (!DocumentSymbolProviderRegistry.has(model)) {
-            return null;
+            return undefined;
         }
         // Resolve outline
         return getDocumentSymbols(model, true, CancellationToken.None).then(function (result) {
@@ -149,8 +152,8 @@ var QuickOutlineAction = /** @class */ (function (_super) {
         if (searchValue.indexOf(SCOPE_PREFIX) === 0) {
             normalizedSearchValue = normalizedSearchValue.substr(SCOPE_PREFIX.length);
         }
-        for (var i = 0; i < flattened.length; i++) {
-            var element = flattened[i];
+        for (var _i = 0, flattened_1 = flattened; _i < flattened_1.length; _i++) {
+            var element = flattened_1[_i];
             var label = strings.trim(element.name);
             // Check for meatch
             var highlights = matchesFuzzy(normalizedSearchValue, label);
@@ -184,7 +187,7 @@ var QuickOutlineAction = /** @class */ (function (_super) {
                 if (currentType !== result.getType()) {
                     // Update previous result with count
                     if (currentResult) {
-                        currentResult.setGroupLabel(this.typeToLabel(currentType, typeCounter));
+                        currentResult.setGroupLabel(this.typeToLabel(currentType || '', typeCounter));
                     }
                     currentType = result.getType();
                     currentResult = result;
@@ -198,7 +201,7 @@ var QuickOutlineAction = /** @class */ (function (_super) {
             }
             // Update previous result with count
             if (currentResult) {
-                currentResult.setGroupLabel(this.typeToLabel(currentType, typeCounter));
+                currentResult.setGroupLabel(this.typeToLabel(currentType || '', typeCounter));
             }
         }
         // Mark first entry as outline

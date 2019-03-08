@@ -71,7 +71,7 @@ var ViewController = /** @class */ (function () {
     ViewController.prototype.dispatchMouse = function (data) {
         if (data.middleButton) {
             if (data.inSelectionMode) {
-                this.columnSelect(data.position, data.mouseColumn);
+                this._columnSelect(data.position, data.mouseColumn);
             }
             else {
                 this.moveTo(data.position);
@@ -81,52 +81,52 @@ var ViewController = /** @class */ (function () {
             // If the dragging started on the gutter, then have operations work on the entire line
             if (this._hasMulticursorModifier(data)) {
                 if (data.inSelectionMode) {
-                    this.lastCursorLineSelect(data.position);
+                    this._lastCursorLineSelect(data.position);
                 }
                 else {
-                    this.createCursor(data.position, true);
+                    this._createCursor(data.position, true);
                 }
             }
             else {
                 if (data.inSelectionMode) {
-                    this.lineSelectDrag(data.position);
+                    this._lineSelectDrag(data.position);
                 }
                 else {
-                    this.lineSelect(data.position);
+                    this._lineSelect(data.position);
                 }
             }
         }
         else if (data.mouseDownCount >= 4) {
-            this.selectAll();
+            this._selectAll();
         }
         else if (data.mouseDownCount === 3) {
             if (this._hasMulticursorModifier(data)) {
                 if (data.inSelectionMode) {
-                    this.lastCursorLineSelectDrag(data.position);
+                    this._lastCursorLineSelectDrag(data.position);
                 }
                 else {
-                    this.lastCursorLineSelect(data.position);
+                    this._lastCursorLineSelect(data.position);
                 }
             }
             else {
                 if (data.inSelectionMode) {
-                    this.lineSelectDrag(data.position);
+                    this._lineSelectDrag(data.position);
                 }
                 else {
-                    this.lineSelect(data.position);
+                    this._lineSelect(data.position);
                 }
             }
         }
         else if (data.mouseDownCount === 2) {
             if (this._hasMulticursorModifier(data)) {
-                this.lastCursorWordSelect(data.position);
+                this._lastCursorWordSelect(data.position);
             }
             else {
                 if (data.inSelectionMode) {
-                    this.wordSelectDrag(data.position);
+                    this._wordSelectDrag(data.position);
                 }
                 else {
-                    this.wordSelect(data.position);
+                    this._wordSelect(data.position);
                 }
             }
         }
@@ -134,22 +134,27 @@ var ViewController = /** @class */ (function () {
             if (this._hasMulticursorModifier(data)) {
                 if (!this._hasNonMulticursorModifier(data)) {
                     if (data.shiftKey) {
-                        this.columnSelect(data.position, data.mouseColumn);
+                        this._columnSelect(data.position, data.mouseColumn);
                     }
                     else {
                         // Do multi-cursor operations only when purely alt is pressed
                         if (data.inSelectionMode) {
-                            this.lastCursorMoveToSelect(data.position);
+                            this._lastCursorMoveToSelect(data.position);
                         }
                         else {
-                            this.createCursor(data.position, false);
+                            this._createCursor(data.position, false);
                         }
                     }
                 }
             }
             else {
                 if (data.inSelectionMode) {
-                    this.moveToSelect(data.position);
+                    if (data.altKey) {
+                        this._columnSelect(data.position, data.mouseColumn);
+                    }
+                    else {
+                        this._moveToSelect(data.position);
+                    }
                 }
                 else {
                     this.moveTo(data.position);
@@ -160,61 +165,61 @@ var ViewController = /** @class */ (function () {
     ViewController.prototype._usualArgs = function (viewPosition) {
         viewPosition = this._validateViewColumn(viewPosition);
         return {
-            position: this.convertViewToModelPosition(viewPosition),
+            position: this._convertViewToModelPosition(viewPosition),
             viewPosition: viewPosition
         };
     };
     ViewController.prototype.moveTo = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.MoveTo, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.moveToSelect = function (viewPosition) {
+    ViewController.prototype._moveToSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.MoveToSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.columnSelect = function (viewPosition, mouseColumn) {
+    ViewController.prototype._columnSelect = function (viewPosition, mouseColumn) {
         viewPosition = this._validateViewColumn(viewPosition);
         this._execMouseCommand(CoreNavigationCommands.ColumnSelect, {
-            position: this.convertViewToModelPosition(viewPosition),
+            position: this._convertViewToModelPosition(viewPosition),
             viewPosition: viewPosition,
             mouseColumn: mouseColumn
         });
     };
-    ViewController.prototype.createCursor = function (viewPosition, wholeLine) {
+    ViewController.prototype._createCursor = function (viewPosition, wholeLine) {
         viewPosition = this._validateViewColumn(viewPosition);
         this._execMouseCommand(CoreNavigationCommands.CreateCursor, {
-            position: this.convertViewToModelPosition(viewPosition),
+            position: this._convertViewToModelPosition(viewPosition),
             viewPosition: viewPosition,
             wholeLine: wholeLine
         });
     };
-    ViewController.prototype.lastCursorMoveToSelect = function (viewPosition) {
+    ViewController.prototype._lastCursorMoveToSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LastCursorMoveToSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.wordSelect = function (viewPosition) {
+    ViewController.prototype._wordSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.WordSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.wordSelectDrag = function (viewPosition) {
+    ViewController.prototype._wordSelectDrag = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.WordSelectDrag, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.lastCursorWordSelect = function (viewPosition) {
+    ViewController.prototype._lastCursorWordSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LastCursorWordSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.lineSelect = function (viewPosition) {
+    ViewController.prototype._lineSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LineSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.lineSelectDrag = function (viewPosition) {
+    ViewController.prototype._lineSelectDrag = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LineSelectDrag, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.lastCursorLineSelect = function (viewPosition) {
+    ViewController.prototype._lastCursorLineSelect = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LastCursorLineSelect, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.lastCursorLineSelectDrag = function (viewPosition) {
+    ViewController.prototype._lastCursorLineSelectDrag = function (viewPosition) {
         this._execMouseCommand(CoreNavigationCommands.LastCursorLineSelectDrag, this._usualArgs(viewPosition));
     };
-    ViewController.prototype.selectAll = function () {
+    ViewController.prototype._selectAll = function () {
         this._execMouseCommand(CoreNavigationCommands.SelectAll, {});
     };
     // ----------------------
-    ViewController.prototype.convertViewToModelPosition = function (viewPosition) {
+    ViewController.prototype._convertViewToModelPosition = function (viewPosition) {
         return this.viewModel.coordinatesConverter.convertViewPositionToModelPosition(viewPosition);
     };
     ViewController.prototype.emitKeyDown = function (e) {

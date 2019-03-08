@@ -30,8 +30,8 @@ var CharacterPairSupport = /** @class */ (function () {
         }
         var tokenIndex = context.findTokenIndexAtOffset(column - 2);
         var standardTokenType = context.getStandardTokenType(tokenIndex);
-        for (var i = 0; i < this._autoClosingPairs.length; ++i) {
-            var autoClosingPair = this._autoClosingPairs[i];
+        for (var _i = 0, _a = this._autoClosingPairs; _i < _a.length; _i++) {
+            var autoClosingPair = _a[_i];
             if (autoClosingPair.open === character) {
                 return autoClosingPair.isOK(standardTokenType);
             }

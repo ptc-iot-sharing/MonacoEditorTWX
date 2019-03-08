@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -340,7 +340,7 @@ var LinkedMap = /** @class */ (function () {
         }
     };
     /* VS Code / Monaco editor runs on es5 which has no Symbol.iterator
-    public keys(): IterableIterator<K> {
+    keys(): IterableIterator<K> {
         let current = this._head;
         let iterator: IterableIterator<K> = {
             [Symbol.iterator]() {
@@ -359,7 +359,7 @@ var LinkedMap = /** @class */ (function () {
         return iterator;
     }
 
-    public values(): IterableIterator<V> {
+    values(): IterableIterator<V> {
         let current = this._head;
         let iterator: IterableIterator<V> = {
             [Symbol.iterator]() {
@@ -396,7 +396,7 @@ var LinkedMap = /** @class */ (function () {
         this._head = current;
         this._size = currentSize;
         if (current) {
-            current.previous = void 0;
+            current.previous = undefined;
         }
     };
     LinkedMap.prototype.addItemFirst = function (item) {
@@ -444,7 +444,7 @@ var LinkedMap = /** @class */ (function () {
             if (item === this._tail) {
                 // previous must be defined since item was not head but is tail
                 // So there are more than on item in the map
-                previous.next = void 0;
+                previous.next = undefined;
                 this._tail = previous;
             }
             else {
@@ -453,7 +453,7 @@ var LinkedMap = /** @class */ (function () {
                 previous.next = next;
             }
             // Insert the node at head
-            item.previous = void 0;
+            item.previous = undefined;
             item.next = this._head;
             this._head.previous = item;
             this._head = item;
@@ -468,7 +468,7 @@ var LinkedMap = /** @class */ (function () {
             if (item === this._head) {
                 // next must be defined since item was not tail but is head
                 // So there are more than on item in the map
-                next.previous = void 0;
+                next.previous = undefined;
                 this._head = next;
             }
             else {
@@ -476,7 +476,7 @@ var LinkedMap = /** @class */ (function () {
                 next.previous = previous;
                 previous.next = next;
             }
-            item.next = void 0;
+            item.next = undefined;
             item.previous = this._tail;
             this._tail.next = item;
             this._tail = item;

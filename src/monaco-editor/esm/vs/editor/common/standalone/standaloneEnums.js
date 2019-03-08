@@ -591,12 +591,12 @@ export var CompletionTriggerKind;
     CompletionTriggerKind[CompletionTriggerKind["TriggerCharacter"] = 1] = "TriggerCharacter";
     CompletionTriggerKind[CompletionTriggerKind["TriggerForIncompleteCompletions"] = 2] = "TriggerForIncompleteCompletions";
 })(CompletionTriggerKind || (CompletionTriggerKind = {}));
-export var SignatureHelpTriggerReason;
-(function (SignatureHelpTriggerReason) {
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["Invoke"] = 1] = "Invoke";
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["TriggerCharacter"] = 2] = "TriggerCharacter";
-    SignatureHelpTriggerReason[SignatureHelpTriggerReason["ContentChange"] = 3] = "ContentChange";
-})(SignatureHelpTriggerReason || (SignatureHelpTriggerReason = {}));
+export var SignatureHelpTriggerKind;
+(function (SignatureHelpTriggerKind) {
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["Invoke"] = 1] = "Invoke";
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["TriggerCharacter"] = 2] = "TriggerCharacter";
+    SignatureHelpTriggerKind[SignatureHelpTriggerKind["ContentChange"] = 3] = "ContentChange";
+})(SignatureHelpTriggerKind || (SignatureHelpTriggerKind = {}));
 /**
  * A document highlight kind.
  */

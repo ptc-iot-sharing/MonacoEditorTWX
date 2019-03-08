@@ -56,8 +56,7 @@ var ViewModelDecorations = /** @class */ (function () {
         return r;
     };
     ViewModelDecorations.prototype.getDecorationsViewportData = function (viewRange) {
-        var cacheIsValid = true;
-        cacheIsValid = cacheIsValid && (this._cachedModelDecorationsResolver !== null);
+        var cacheIsValid = (this._cachedModelDecorationsResolver !== null);
         cacheIsValid = cacheIsValid && (viewRange.equalsRange(this._cachedModelDecorationsResolverViewRange));
         if (!cacheIsValid) {
             this._cachedModelDecorationsResolver = this._getDecorationsViewportData(viewRange);

@@ -23,9 +23,9 @@ var TreeContext = /** @class */ (function () {
         this.controller = configuration.controller || new TreeDefaults.DefaultController({ clickBehavior: 1 /* ON_MOUSE_UP */, keyboardSupport: typeof options.keyboardSupport !== 'boolean' || options.keyboardSupport });
         this.dnd = configuration.dnd || new TreeDefaults.DefaultDragAndDrop();
         this.filter = configuration.filter || new TreeDefaults.DefaultFilter();
-        this.sorter = configuration.sorter || null;
+        this.sorter = configuration.sorter;
         this.accessibilityProvider = configuration.accessibilityProvider || new TreeDefaults.DefaultAccessibilityProvider();
-        this.styler = configuration.styler || null;
+        this.styler = configuration.styler;
     }
     return TreeContext;
 }());
@@ -102,11 +102,6 @@ var Tree = /** @class */ (function () {
     Tree.prototype.getInput = function () {
         return this.model.getInput();
     };
-    Tree.prototype.refresh = function (element, recursive) {
-        if (element === void 0) { element = null; }
-        if (recursive === void 0) { recursive = true; }
-        return this.model.refresh(element, recursive);
-    };
     Tree.prototype.expand = function (element) {
         return this.model.expand(element);
     };
@@ -180,11 +175,11 @@ var Tree = /** @class */ (function () {
         this._onDispose.fire();
         if (this.model !== null) {
             this.model.dispose();
-            this.model = null;
+            this.model = null; // StrictNullOverride Nulling out ok in dispose
         }
         if (this.view !== null) {
             this.view.dispose();
-            this.view = null;
+            this.view = null; // StrictNullOverride Nulling out ok in dispose
         }
         this._onDidChangeFocus.dispose();
         this._onDidChangeSelection.dispose();

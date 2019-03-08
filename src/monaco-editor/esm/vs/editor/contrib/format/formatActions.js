@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -24,25 +24,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
-import { isFalsyOrEmpty } from '../../../base/common/arrays.js';
+import { alert } from '../../../base/browser/ui/aria/aria.js';
+import { isNonEmptyArray } from '../../../base/common/arrays.js';
+import { CancellationToken } from '../../../base/common/cancellation.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { dispose } from '../../../base/common/lifecycle.js';
-import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
-import { registerEditorAction, EditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
-import { OnTypeFormattingEditProviderRegistry, DocumentRangeFormattingEditProviderRegistry } from '../../common/modes.js';
-import { getOnTypeFormattingEdits, getDocumentFormattingEdits, getDocumentRangeFormattingEdits, NoProviderError } from './format.js';
-import { FormattingEdit } from './formattingEdit.js';
-import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { EditorState } from '../../browser/core/editorState.js';
+import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
-import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
 import { CharacterSet } from '../../common/core/characterClassifier.js';
 import { Range } from '../../common/core/range.js';
-import { alert } from '../../../base/browser/ui/aria/aria.js';
-import { EditorState } from '../../browser/core/editorState.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { INotificationService } from '../../../platform/notification/common/notification.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
+import { DocumentRangeFormattingEditProviderRegistry, OnTypeFormattingEditProviderRegistry } from '../../common/modes.js';
+import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
+import { getOnTypeFormattingEdits, getDocumentFormattingEdits, getDocumentRangeFormattingEdits } from './format.js';
+import { FormattingEdit } from './formattingEdit.js';
+import * as nls from '../../../nls.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
 function alertFormattingEdits(edits) {
     edits = edits.filter(function (edit) { return edit.range; });
     if (!edits.length) {
@@ -70,31 +70,77 @@ function alertFormattingEdits(edits) {
         }
     }
 }
+function formatDocumentRange(telemetryService, workerService, editor, rangeOrRangeType, options, token) {
+    var state = new EditorState(editor, 1 /* Value */ | 4 /* Position */);
+    var model = editor.getModel();
+    var range;
+    if (rangeOrRangeType === 0 /* Full */) {
+        // full
+        range = model.getFullModelRange();
+    }
+    else if (rangeOrRangeType === 1 /* Selection */) {
+        // selection or line (when empty)
+        range = editor.getSelection();
+        if (range.isEmpty()) {
+            range = new Range(range.startLineNumber, 1, range.endLineNumber, model.getLineMaxColumn(range.endLineNumber));
+        }
+    }
+    else {
+        // as is
+        range = rangeOrRangeType;
+    }
+    return getDocumentRangeFormattingEdits(telemetryService, workerService, model, range, options, 2 /* Manual */, token).then(function (edits) {
+        // make edit only when the editor didn't change while
+        // computing and only when there are edits
+        if (state.validate(editor) && isNonEmptyArray(edits)) {
+            FormattingEdit.execute(editor, edits);
+            alertFormattingEdits(edits);
+            editor.focus();
+            editor.revealPositionInCenterIfOutsideViewport(editor.getPosition(), 1 /* Immediate */);
+        }
+    });
+}
+function formatDocument(telemetryService, workerService, editor, options, token) {
+    var allEdits = [];
+    var state = new EditorState(editor, 1 /* Value */ | 4 /* Position */);
+    return getDocumentFormattingEdits(telemetryService, workerService, editor.getModel(), options, 2 /* Manual */, token).then(function (edits) {
+        // make edit only when the editor didn't change while
+        // computing and only when there are edits
+        if (state.validate(editor) && isNonEmptyArray(edits)) {
+            FormattingEdit.execute(editor, edits);
+            alertFormattingEdits(allEdits);
+            editor.pushUndoStop();
+            editor.focus();
+            editor.revealPositionInCenterIfOutsideViewport(editor.getPosition(), 1 /* Immediate */);
+        }
+    });
+}
 var FormatOnType = /** @class */ (function () {
-    function FormatOnType(editor, workerService) {
+    function FormatOnType(editor, _telemetryService, _workerService) {
         var _this = this;
-        this.editor = editor;
-        this.workerService = workerService;
-        this.callOnDispose = [];
-        this.callOnModel = [];
-        this.callOnDispose.push(editor.onDidChangeConfiguration(function () { return _this.update(); }));
-        this.callOnDispose.push(editor.onDidChangeModel(function () { return _this.update(); }));
-        this.callOnDispose.push(editor.onDidChangeModelLanguage(function () { return _this.update(); }));
-        this.callOnDispose.push(OnTypeFormattingEditProviderRegistry.onDidChange(this.update, this));
+        this._telemetryService = _telemetryService;
+        this._workerService = _workerService;
+        this._callOnDispose = [];
+        this._callOnModel = [];
+        this._editor = editor;
+        this._callOnDispose.push(editor.onDidChangeConfiguration(function () { return _this.update(); }));
+        this._callOnDispose.push(editor.onDidChangeModel(function () { return _this.update(); }));
+        this._callOnDispose.push(editor.onDidChangeModelLanguage(function () { return _this.update(); }));
+        this._callOnDispose.push(OnTypeFormattingEditProviderRegistry.onDidChange(this.update, this));
     }
     FormatOnType.prototype.update = function () {
         var _this = this;
         // clean up
-        this.callOnModel = dispose(this.callOnModel);
+        this._callOnModel = dispose(this._callOnModel);
         // we are disabled
-        if (!this.editor.getConfiguration().contribInfo.formatOnType) {
+        if (!this._editor.getConfiguration().contribInfo.formatOnType) {
             return;
         }
         // no model
-        if (!this.editor.getModel()) {
+        if (!this._editor.hasModel()) {
             return;
         }
-        var model = this.editor.getModel();
+        var model = this._editor.getModel();
         // no support
         var support = OnTypeFormattingEditProviderRegistry.ordered(model)[0];
         if (!support || !support.autoFormatTriggerCharacters) {
@@ -106,7 +152,7 @@ var FormatOnType = /** @class */ (function () {
             var ch = _a[_i];
             triggerChars.add(ch.charCodeAt(0));
         }
-        this.callOnModel.push(this.editor.onDidType(function (text) {
+        this._callOnModel.push(this._editor.onDidType(function (text) {
             var lastCharCode = text.charCodeAt(text.length - 1);
             if (triggerChars.has(lastCharCode)) {
                 _this.trigger(String.fromCharCode(lastCharCode));
@@ -115,16 +161,19 @@ var FormatOnType = /** @class */ (function () {
     };
     FormatOnType.prototype.trigger = function (ch) {
         var _this = this;
-        if (this.editor.getSelections().length > 1) {
+        if (!this._editor.hasModel()) {
             return;
         }
-        var model = this.editor.getModel();
-        var position = this.editor.getPosition();
+        if (this._editor.getSelections().length > 1) {
+            return;
+        }
+        var model = this._editor.getModel();
+        var position = this._editor.getPosition();
         var canceled = false;
         // install a listener that checks if edits happens before the
         // position on which we format right now. If so, we won't
         // apply the format edits
-        var unbind = this.editor.onDidChangeModelContent(function (e) {
+        var unbind = this._editor.onDidChangeModelContent(function (e) {
             if (e.isFlush) {
                 // a model.setValue() was called
                 // cancel only once
@@ -142,19 +191,15 @@ var FormatOnType = /** @class */ (function () {
                 }
             }
         });
-        var modelOpts = model.getOptions();
-        getOnTypeFormattingEdits(model, position, ch, {
-            tabSize: modelOpts.tabSize,
-            insertSpaces: modelOpts.insertSpaces
-        }).then(function (edits) {
-            return _this.workerService.computeMoreMinimalEdits(model.uri, edits);
-        }).then(function (edits) {
+        getOnTypeFormattingEdits(this._telemetryService, this._workerService, model, position, ch, model.getFormattingOptions()).then(function (edits) {
             unbind.dispose();
-            if (canceled || isFalsyOrEmpty(edits)) {
+            if (canceled) {
                 return;
             }
-            FormattingEdit.execute(_this.editor, edits);
-            alertFormattingEdits(edits);
+            if (isNonEmptyArray(edits)) {
+                FormattingEdit.execute(_this._editor, edits);
+                alertFormattingEdits(edits);
+            }
         }, function (err) {
             unbind.dispose();
             throw err;
@@ -164,20 +209,22 @@ var FormatOnType = /** @class */ (function () {
         return FormatOnType.ID;
     };
     FormatOnType.prototype.dispose = function () {
-        this.callOnDispose = dispose(this.callOnDispose);
-        this.callOnModel = dispose(this.callOnModel);
+        this._callOnDispose = dispose(this._callOnDispose);
+        this._callOnModel = dispose(this._callOnModel);
     };
     FormatOnType.ID = 'editor.contrib.autoFormat';
     FormatOnType = __decorate([
-        __param(1, IEditorWorkerService)
+        __param(1, ITelemetryService),
+        __param(2, IEditorWorkerService)
     ], FormatOnType);
     return FormatOnType;
 }());
 var FormatOnPaste = /** @class */ (function () {
-    function FormatOnPaste(editor, workerService) {
+    function FormatOnPaste(editor, workerService, telemetryService) {
         var _this = this;
         this.editor = editor;
         this.workerService = workerService;
+        this.telemetryService = telemetryService;
         this.callOnDispose = [];
         this.callOnModel = [];
         this.callOnDispose.push(editor.onDidChangeConfiguration(function () { return _this.update(); }));
@@ -194,13 +241,12 @@ var FormatOnPaste = /** @class */ (function () {
             return;
         }
         // no model
-        if (!this.editor.getModel()) {
+        if (!this.editor.hasModel()) {
             return;
         }
         var model = this.editor.getModel();
         // no support
-        var support = DocumentRangeFormattingEditProviderRegistry.ordered(model)[0];
-        if (!support || !support.provideDocumentRangeFormattingEdits) {
+        if (!DocumentRangeFormattingEditProviderRegistry.has(model)) {
             return;
         }
         this.callOnModel.push(this.editor.onDidPaste(function (range) {
@@ -208,22 +254,14 @@ var FormatOnPaste = /** @class */ (function () {
         }));
     };
     FormatOnPaste.prototype.trigger = function (range) {
-        var _this = this;
+        if (!this.editor.hasModel()) {
+            return;
+        }
         if (this.editor.getSelections().length > 1) {
             return;
         }
         var model = this.editor.getModel();
-        var _a = model.getOptions(), tabSize = _a.tabSize, insertSpaces = _a.insertSpaces;
-        var state = new EditorState(this.editor, 1 /* Value */ | 4 /* Position */);
-        getDocumentRangeFormattingEdits(model, range, { tabSize: tabSize, insertSpaces: insertSpaces }, CancellationToken.None).then(function (edits) {
-            return _this.workerService.computeMoreMinimalEdits(model.uri, edits);
-        }).then(function (edits) {
-            if (!state.validate(_this.editor) || isFalsyOrEmpty(edits)) {
-                return;
-            }
-            FormattingEdit.execute(_this.editor, edits);
-            alertFormattingEdits(edits);
-        });
+        formatDocumentRange(this.telemetryService, this.workerService, this.editor, range, model.getFormattingOptions(), CancellationToken.None);
     };
     FormatOnPaste.prototype.getId = function () {
         return FormatOnPaste.ID;
@@ -234,49 +272,11 @@ var FormatOnPaste = /** @class */ (function () {
     };
     FormatOnPaste.ID = 'editor.contrib.formatOnPaste';
     FormatOnPaste = __decorate([
-        __param(1, IEditorWorkerService)
+        __param(1, IEditorWorkerService),
+        __param(2, ITelemetryService)
     ], FormatOnPaste);
     return FormatOnPaste;
 }());
-var AbstractFormatAction = /** @class */ (function (_super) {
-    __extends(AbstractFormatAction, _super);
-    function AbstractFormatAction() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    AbstractFormatAction.prototype.run = function (accessor, editor) {
-        var _this = this;
-        var workerService = accessor.get(IEditorWorkerService);
-        var notificationService = accessor.get(INotificationService);
-        var formattingPromise = this._getFormattingEdits(editor, CancellationToken.None);
-        if (!formattingPromise) {
-            return Promise.resolve(void 0);
-        }
-        // Capture the state of the editor
-        var state = new EditorState(editor, 1 /* Value */ | 4 /* Position */);
-        // Receive formatted value from worker
-        return formattingPromise.then(function (edits) { return workerService.computeMoreMinimalEdits(editor.getModel().uri, edits); }).then(function (edits) {
-            if (!state.validate(editor) || isFalsyOrEmpty(edits)) {
-                return;
-            }
-            FormattingEdit.execute(editor, edits);
-            alertFormattingEdits(edits);
-            editor.focus();
-            editor.revealPositionInCenterIfOutsideViewport(editor.getPosition(), 1 /* Immediate */);
-        }, function (err) {
-            if (err instanceof Error && err.name === NoProviderError.Name) {
-                _this._notifyNoProviderError(notificationService, editor.getModel().getLanguageIdentifier().language);
-            }
-            else {
-                throw err;
-            }
-        });
-    };
-    AbstractFormatAction.prototype._notifyNoProviderError = function (notificationService, language) {
-        notificationService.info(nls.localize('no.provider', "There is no formatter for '{0}'-files installed.", language));
-    };
-    return AbstractFormatAction;
-}(EditorAction));
-export { AbstractFormatAction };
 var FormatDocumentAction = /** @class */ (function (_super) {
     __extends(FormatDocumentAction, _super);
     function FormatDocumentAction() {
@@ -299,16 +299,16 @@ var FormatDocumentAction = /** @class */ (function (_super) {
             }
         }) || this;
     }
-    FormatDocumentAction.prototype._getFormattingEdits = function (editor, token) {
-        var model = editor.getModel();
-        var _a = model.getOptions(), tabSize = _a.tabSize, insertSpaces = _a.insertSpaces;
-        return getDocumentFormattingEdits(model, { tabSize: tabSize, insertSpaces: insertSpaces }, token);
-    };
-    FormatDocumentAction.prototype._notifyNoProviderError = function (notificationService, language) {
-        notificationService.info(nls.localize('no.documentprovider', "There is no document formatter for '{0}'-files installed.", language));
+    FormatDocumentAction.prototype.run = function (accessor, editor) {
+        if (!editor.hasModel()) {
+            return;
+        }
+        var workerService = accessor.get(IEditorWorkerService);
+        var telemetryService = accessor.get(ITelemetryService);
+        return formatDocument(telemetryService, workerService, editor, editor.getModel().getFormattingOptions(), CancellationToken.None);
     };
     return FormatDocumentAction;
-}(AbstractFormatAction));
+}(EditorAction));
 export { FormatDocumentAction };
 var FormatSelectionAction = /** @class */ (function (_super) {
     __extends(FormatSelectionAction, _super);
@@ -330,22 +330,16 @@ var FormatSelectionAction = /** @class */ (function (_super) {
             }
         }) || this;
     }
-    FormatSelectionAction.prototype._getFormattingEdits = function (editor, token) {
-        var model = editor.getModel();
-        var selection = editor.getSelection();
-        if (selection.isEmpty()) {
-            var maxColumn = model.getLineMaxColumn(selection.startLineNumber);
-            selection = selection.setStartPosition(selection.startLineNumber, 1);
-            selection = selection.setEndPosition(selection.endLineNumber, maxColumn);
+    FormatSelectionAction.prototype.run = function (accessor, editor) {
+        if (!editor.hasModel()) {
+            return;
         }
-        var _a = model.getOptions(), tabSize = _a.tabSize, insertSpaces = _a.insertSpaces;
-        return getDocumentRangeFormattingEdits(model, selection, { tabSize: tabSize, insertSpaces: insertSpaces }, token);
-    };
-    FormatSelectionAction.prototype._notifyNoProviderError = function (notificationService, language) {
-        notificationService.info(nls.localize('no.selectionprovider', "There is no selection formatter for '{0}'-files installed.", language));
+        var workerService = accessor.get(IEditorWorkerService);
+        var telemetryService = accessor.get(ITelemetryService);
+        return formatDocumentRange(telemetryService, workerService, editor, 1 /* Selection */, editor.getModel().getFormattingOptions(), CancellationToken.None);
     };
     return FormatSelectionAction;
-}(AbstractFormatAction));
+}(EditorAction));
 export { FormatSelectionAction };
 registerEditorContribution(FormatOnType);
 registerEditorContribution(FormatOnPaste);
@@ -355,22 +349,15 @@ registerEditorAction(FormatSelectionAction);
 // and we keep it here such that existing keybinding configurations etc will still work
 CommandsRegistry.registerCommand('editor.action.format', function (accessor) {
     var editor = accessor.get(ICodeEditorService).getFocusedCodeEditor();
-    if (editor) {
-        return new /** @class */ (function (_super) {
-            __extends(class_1, _super);
-            function class_1() {
-                return _super.call(this, {}) || this;
-            }
-            class_1.prototype._getFormattingEdits = function (editor, token) {
-                var model = editor.getModel();
-                var editorSelection = editor.getSelection();
-                var _a = model.getOptions(), tabSize = _a.tabSize, insertSpaces = _a.insertSpaces;
-                return editorSelection.isEmpty()
-                    ? getDocumentFormattingEdits(model, { tabSize: tabSize, insertSpaces: insertSpaces }, token)
-                    : getDocumentRangeFormattingEdits(model, editorSelection, { tabSize: tabSize, insertSpaces: insertSpaces }, token);
-            };
-            return class_1;
-        }(AbstractFormatAction))().run(accessor, editor);
+    if (!editor || !editor.hasModel()) {
+        return undefined;
     }
-    return undefined;
+    var workerService = accessor.get(IEditorWorkerService);
+    var telemetryService = accessor.get(ITelemetryService);
+    if (editor.getSelection().isEmpty()) {
+        return formatDocument(telemetryService, workerService, editor, editor.getModel().getFormattingOptions(), CancellationToken.None);
+    }
+    else {
+        return formatDocumentRange(telemetryService, workerService, editor, 1 /* Selection */, editor.getModel().getFormattingOptions(), CancellationToken.None);
+    }
 });

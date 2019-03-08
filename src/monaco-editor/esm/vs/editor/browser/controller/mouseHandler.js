@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -17,7 +17,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as browser from '../../../base/browser/browser.js';
 import * as dom from '../../../base/browser/dom.js';
-import { StandardMouseWheelEvent } from '../../../base/browser/mouseEvent.js';
+import { StandardWheelEvent } from '../../../base/browser/mouseEvent.js';
 import { RunOnceScheduler, TimeoutTimer } from '../../../base/common/async.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import * as platform from '../../../base/common/platform.js';
@@ -64,7 +64,7 @@ var MouseHandler = /** @class */ (function (_super) {
             if (!_this._context.configuration.editor.viewInfo.mouseWheelZoom) {
                 return;
             }
-            var e = new StandardMouseWheelEvent(browserEvent);
+            var e = new StandardWheelEvent(browserEvent);
             if (e.browserEvent.ctrlKey || e.browserEvent.metaKey) {
                 var zoomLevel = EditorZoom.getZoomLevel();
                 var delta = e.deltaY > 0 ? 1 : -1;
@@ -74,7 +74,6 @@ var MouseHandler = /** @class */ (function (_super) {
             }
         };
         _this._register(dom.addDisposableListener(_this.viewHelper.viewDomNode, 'mousewheel', onMouseWheel, true));
-        _this._register(dom.addDisposableListener(_this.viewHelper.viewDomNode, 'DOMMouseScroll', onMouseWheel, true));
         _this._context.addEventHandler(_this);
         return _this;
     }

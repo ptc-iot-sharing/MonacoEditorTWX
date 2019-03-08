@@ -151,7 +151,28 @@ var CodeLensContribution = /** @class */ (function () {
             }
             else {
                 // No accessors available
-                _this._disposeAllLenses(null, null);
+                _this._disposeAllLenses(undefined, undefined);
+            }
+        }));
+        this._localToDispose.push(this._editor.onDidChangeConfiguration(function (e) {
+            if (e.fontInfo) {
+                for (var _i = 0, _a = _this._lenses; _i < _a.length; _i++) {
+                    var lens = _a[_i];
+                    lens.updateHeight();
+                }
+            }
+        }));
+        this._localToDispose.push(this._editor.onMouseUp(function (e) {
+            var _a;
+            if (e.target.type === 9 /* CONTENT_WIDGET */ && e.target.element && e.target.element.tagName === 'A') {
+                for (var _i = 0, _b = _this._lenses; _i < _b.length; _i++) {
+                    var lens = _b[_i];
+                    var command = lens.getCommand(e.target.element);
+                    if (command) {
+                        (_a = _this._commandService).executeCommand.apply(_a, [command.id].concat((command.arguments || []))).catch(function (err) { return _this._notificationService.error(err); });
+                        break;
+                    }
+                }
             }
         }));
         scheduler.schedule();
@@ -166,7 +187,7 @@ var CodeLensContribution = /** @class */ (function () {
     };
     CodeLensContribution.prototype._renderCodeLensSymbols = function (symbols) {
         var _this = this;
-        if (!this._editor.getModel()) {
+        if (!this._editor.hasModel()) {
             return;
         }
         var maxLineNumber = this._editor.getModel().getLineCount();
@@ -206,7 +227,7 @@ var CodeLensContribution = /** @class */ (function () {
                         codeLensIndex++;
                     }
                     else {
-                        _this._lenses.splice(codeLensIndex, 0, new CodeLens(groups[groupsIndex], _this._editor, helper, accessor, _this._commandService, _this._notificationService, function () { return _this._detectVisibleLenses.schedule(); }));
+                        _this._lenses.splice(codeLensIndex, 0, new CodeLens(groups[groupsIndex], _this._editor, helper, accessor, function () { return _this._detectVisibleLenses.schedule(); }));
                         codeLensIndex++;
                         groupsIndex++;
                     }
@@ -218,7 +239,7 @@ var CodeLensContribution = /** @class */ (function () {
                 }
                 // Create extra symbols
                 while (groupsIndex < groups.length) {
-                    _this._lenses.push(new CodeLens(groups[groupsIndex], _this._editor, helper, accessor, _this._commandService, _this._notificationService, function () { return _this._detectVisibleLenses.schedule(); }));
+                    _this._lenses.push(new CodeLens(groups[groupsIndex], _this._editor, helper, accessor, function () { return _this._detectVisibleLenses.schedule(); }));
                     groupsIndex++;
                 }
                 helper.commit(changeAccessor);
@@ -252,13 +273,15 @@ var CodeLensContribution = /** @class */ (function () {
             var promises = toResolve.map(function (request, i) {
                 var resolvedSymbols = new Array(request.length);
                 var promises = request.map(function (request, i) {
-                    if (typeof request.provider.resolveCodeLens === 'function') {
+                    if (!request.symbol.command && typeof request.provider.resolveCodeLens === 'function') {
                         return Promise.resolve(request.provider.resolveCodeLens(model, request.symbol, token)).then(function (symbol) {
                             resolvedSymbols[i] = symbol;
                         });
                     }
-                    resolvedSymbols[i] = request.symbol;
-                    return Promise.resolve(void 0);
+                    else {
+                        resolvedSymbols[i] = request.symbol;
+                        return Promise.resolve(undefined);
+                    }
                 });
                 return Promise.all(promises).then(function () {
                     lenses[i].updateCommands(resolvedSymbols);

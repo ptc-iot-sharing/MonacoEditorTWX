@@ -42,7 +42,7 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
         this.toUnhook.push(linkGesture);
         this.toUnhook.push(linkGesture.onMouseMoveOrRelevantKeyDown(function (_a) {
             var mouseEvent = _a[0], keyboardEvent = _a[1];
-            _this.startFindDefinition(mouseEvent, keyboardEvent);
+            _this.startFindDefinition(mouseEvent, keyboardEvent || undefined);
         }));
         this.toUnhook.push(linkGesture.onExecute(function (mouseEvent) {
             if (_this.isEnabled(mouseEvent)) {
@@ -61,19 +61,23 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
     }
     GotoDefinitionWithMouseEditorContribution.prototype.startFindDefinition = function (mouseEvent, withKey) {
         var _this = this;
-        if (!this.isEnabled(mouseEvent, withKey)) {
+        // check if we are active and on a content widget
+        if (mouseEvent.target.type === 9 /* CONTENT_WIDGET */ && this.decorations.length > 0) {
+            return;
+        }
+        if (!this.editor.hasModel() || !this.isEnabled(mouseEvent, withKey)) {
             this.currentWordUnderMouse = null;
             this.removeDecorations();
             return;
         }
         // Find word at mouse position
-        var position = mouseEvent.target.position;
-        var word = position ? this.editor.getModel().getWordAtPosition(position) : null;
+        var word = mouseEvent.target.position ? this.editor.getModel().getWordAtPosition(mouseEvent.target.position) : null;
         if (!word) {
             this.currentWordUnderMouse = null;
             this.removeDecorations();
             return;
         }
+        var position = mouseEvent.target.position;
         // Return early if word at position is still the same
         if (this.currentWordUnderMouse && this.currentWordUnderMouse.startColumn === word.startColumn && this.currentWordUnderMouse.endColumn === word.endColumn && this.currentWordUnderMouse.word === word.word) {
             return;
@@ -115,13 +119,14 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
                     }
                     var previewValue = _this.getPreviewValue(textEditorModel, startLineNumber);
                     var wordRange;
-                    if (result_1.origin) {
-                        wordRange = Range.lift(result_1.origin);
+                    if (result_1.originSelectionRange) {
+                        wordRange = Range.lift(result_1.originSelectionRange);
                     }
                     else {
                         wordRange = new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
                     }
-                    _this.addDecoration(wordRange, new MarkdownString().appendCodeblock(_this.modeService.getModeIdByFilepathOrFirstLine(textEditorModel.uri.fsPath), previewValue));
+                    var modeId = _this.modeService.getModeIdByFilepathOrFirstLine(textEditorModel.uri.fsPath);
+                    _this.addDecoration(wordRange, new MarkdownString().appendCodeblock(modeId ? modeId : '', previewValue));
                     ref.dispose();
                 });
             }
@@ -214,10 +219,10 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
         }
     };
     GotoDefinitionWithMouseEditorContribution.prototype.isEnabled = function (mouseEvent, withKey) {
-        return this.editor.getModel() &&
+        return this.editor.hasModel() &&
             mouseEvent.isNoneOrSingleMouseDown &&
-            mouseEvent.target.type === 6 /* CONTENT_TEXT */ &&
-            (mouseEvent.hasTriggerModifier || (withKey && withKey.keyCodeIsTriggerKey)) &&
+            (mouseEvent.target.type === 6 /* CONTENT_TEXT */) &&
+            (mouseEvent.hasTriggerModifier || (withKey ? withKey.keyCodeIsTriggerKey : false)) &&
             DefinitionProviderRegistry.has(this.editor.getModel());
     };
     GotoDefinitionWithMouseEditorContribution.prototype.findDefinition = function (target, token) {
@@ -230,7 +235,7 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
     GotoDefinitionWithMouseEditorContribution.prototype.gotoDefinition = function (target, sideBySide) {
         var _this = this;
         this.editor.setPosition(target.position);
-        var action = new DefinitionAction(new DefinitionActionConfig(sideBySide, false, true, false), { alias: undefined, label: undefined, id: undefined, precondition: undefined });
+        var action = new DefinitionAction(new DefinitionActionConfig(sideBySide, false, true, false), { alias: '', label: '', id: '', precondition: null });
         return this.editor.invokeWithinContext(function (accessor) { return action.run(accessor, _this.editor); });
     };
     GotoDefinitionWithMouseEditorContribution.prototype.getId = function () {

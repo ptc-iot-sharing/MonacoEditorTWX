@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -59,7 +59,6 @@ var CurrentLineMarginHighlightOverlay = /** @class */ (function (_super) {
         var selectionIsEmpty = e.selections[0].isEmpty();
         if (this._selectionIsEmpty !== selectionIsEmpty) {
             this._selectionIsEmpty = selectionIsEmpty;
-            hasChanged = true;
             return true;
         }
         return hasChanged;

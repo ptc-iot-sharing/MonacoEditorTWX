@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { localize } from '../../../nls.js';
 import { Emitter } from '../../../base/common/event.js';
-import { basename } from '../../../base/common/paths.js';
+import { basename } from '../../../base/common/resources.js';
 import { dispose } from '../../../base/common/lifecycle.js';
 import * as strings from '../../../base/common/strings.js';
 import { defaultGenerator } from '../../../base/common/idGenerator.js';
@@ -36,7 +36,7 @@ var OneReference = /** @class */ (function () {
         configurable: true
     });
     OneReference.prototype.getAriaMessage = function () {
-        return localize('aria.oneReference', "symbol in {0} on line {1} at column {2}", basename(this.uri.fsPath), this.range.startLineNumber, this.range.startColumn);
+        return localize('aria.oneReference', "symbol in {0} on line {1} at column {2}", basename(this.uri), this.range.startLineNumber, this.range.startColumn);
     };
     return OneReference;
 }());
@@ -119,10 +119,10 @@ var FileReferences = /** @class */ (function () {
     FileReferences.prototype.getAriaMessage = function () {
         var len = this.children.length;
         if (len === 1) {
-            return localize('aria.fileReferences.1', "1 symbol in {0}, full path {1}", basename(this.uri.fsPath), this.uri.fsPath);
+            return localize('aria.fileReferences.1', "1 symbol in {0}, full path {1}", basename(this.uri), this.uri.fsPath);
         }
         else {
-            return localize('aria.fileReferences.N', "{0} symbols in {1}, full path {2}", len, basename(this.uri.fsPath), this.uri.fsPath);
+            return localize('aria.fileReferences.N', "{0} symbols in {1}, full path {2}", len, basename(this.uri), this.uri.fsPath);
         }
     };
     FileReferences.prototype.resolve = function (textModelResolverService) {
@@ -177,7 +177,7 @@ var ReferencesModel = /** @class */ (function () {
             // append, check for equality first!
             if (current.children.length === 0
                 || !Range.equalsRange(ref.range, current.children[current.children.length - 1].range)) {
-                var oneRef = new OneReference(current, ref.range);
+                var oneRef = new OneReference(current, ref.targetSelectionRange || ref.range);
                 this._disposables.push(oneRef.onRefChanged(function (e) { return _this._onDidChangeReferenceRange.fire(e); }));
                 this.references.push(oneRef);
                 current.children.push(oneRef);

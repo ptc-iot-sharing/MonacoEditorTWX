@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -112,8 +112,8 @@ var OverviewRuler = /** @class */ (function (_super) {
         var currentColorId = 0;
         var currentFrom = 0;
         var currentTo = 0;
-        for (var i = 0, len = colorZones.length; i < len; i++) {
-            var zone = colorZones[i];
+        for (var _i = 0, colorZones_1 = colorZones; _i < colorZones_1.length; _i++) {
+            var zone = colorZones_1[_i];
             var zoneColorId = zone.colorId;
             var zoneFrom = zone.from;
             var zoneTo = zone.to;

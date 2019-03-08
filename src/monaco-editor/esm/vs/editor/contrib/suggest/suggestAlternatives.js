@@ -59,7 +59,7 @@ var SuggestAlternatives = /** @class */ (function () {
             if (newIndex === index) {
                 break;
             }
-            if (!model.items[newIndex].suggestion.additionalTextEdits) {
+            if (!model.items[newIndex].completion.additionalTextEdits) {
                 break;
             }
         }

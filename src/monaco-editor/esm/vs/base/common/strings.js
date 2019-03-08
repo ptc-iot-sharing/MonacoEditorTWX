@@ -51,7 +51,7 @@ export function format(value) {
  * being used e.g. in HTMLElement.innerHTML.
  */
 export function escape(html) {
-    return html.replace(/[<|>|&]/g, function (match) {
+    return html.replace(/[<>&]/g, function (match) {
         switch (match) {
             case '<': return '&lt;';
             case '>': return '&gt;';
@@ -182,6 +182,9 @@ export function createRegExp(searchString, isRegex, options) {
     if (options.multiline) {
         modifiers += 'm';
     }
+    if (options.unicode) {
+        modifiers += 'u';
+    }
     return new RegExp(searchString, modifiers);
 }
 export function regExpLeadsToEndlessLoop(regexp) {
@@ -194,6 +197,12 @@ export function regExpLeadsToEndlessLoop(regexp) {
     // (e.g. ends in an endless loop) it will match an empty string.
     var match = regexp.exec('');
     return !!(match && regexp.lastIndex === 0);
+}
+export function regExpFlags(regexp) {
+    return (regexp.global ? 'g' : '')
+        + (regexp.ignoreCase ? 'i' : '')
+        + (regexp.multiline ? 'm' : '')
+        + (regexp.unicode ? 'u' : '');
 }
 /**
  * Returns first index of the string that is not whitespace.

@@ -29,6 +29,8 @@ import { IInstantiationService } from '../../../platform/instantiation/common/in
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IOpenerService } from '../../../platform/opener/common/opener.js';
+import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
+import { clearAllFontInfos } from '../../browser/config/configuration.js';
 function withAllStandaloneServices(domElement, override, callback) {
     var services = new DynamicStandaloneServices(domElement, override);
     var simpleEditorModelResolverService = null;
@@ -52,7 +54,7 @@ function withAllStandaloneServices(domElement, override, callback) {
  */
 export function create(domElement, options, override) {
     return withAllStandaloneServices(domElement, override || {}, function (services) {
-        return new StandaloneEditor(domElement, options, services, services.get(IInstantiationService), services.get(ICodeEditorService), services.get(ICommandService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService));
+        return new StandaloneEditor(domElement, options, services, services.get(IInstantiationService), services.get(ICodeEditorService), services.get(ICommandService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService), services.get(IAccessibilityService));
     });
 }
 /**
@@ -71,7 +73,7 @@ export function onDidCreateEditor(listener) {
  * The editor will read the size of `domElement`.
  */
 export function createDiffEditor(domElement, options, override) {
-    return withAllStandaloneServices(domElement, override, function (services) {
+    return withAllStandaloneServices(domElement, override || {}, function (services) {
         return new StandaloneDiffEditor(domElement, options, services, services.get(IInstantiationService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IEditorWorkerService), services.get(ICodeEditorService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService));
     });
 }
@@ -114,8 +116,8 @@ export function setModelMarkers(model, owner, markers) {
 }
 /**
  * Get markers for owner and/or resource
- * @returns {IMarker[]} list of markers
- * @param filter
+ *
+ * @returns list of markers
  */
 export function getModelMarkers(filter) {
     return StaticServices.markerService.get().read(filter);
@@ -194,8 +196,7 @@ function getSafeTokenizationSupport(language) {
     }
     return {
         getInitialState: function () { return NULL_STATE; },
-        tokenize: function (line, state, deltaOffset) { return nullTokenize(language, line, state, deltaOffset); },
-        tokenize2: undefined,
+        tokenize: function (line, state, deltaOffset) { return nullTokenize(language, line, state, deltaOffset); }
     };
 }
 /**
@@ -230,6 +231,12 @@ export function setTheme(themeName) {
     StaticServices.standaloneThemeService.get().setTheme(themeName);
 }
 /**
+ * Clears all cached font measurements and triggers re-measurement.
+ */
+export function remeasureFonts() {
+    clearAllFontInfos();
+}
+/**
  * @internal
  */
 export function createMonacoEditorAPI() {
@@ -255,6 +262,7 @@ export function createMonacoEditorAPI() {
         tokenize: tokenize,
         defineTheme: defineTheme,
         setTheme: setTheme,
+        remeasureFonts: remeasureFonts,
         // enums
         ScrollbarVisibility: standaloneEnums.ScrollbarVisibility,
         WrappingIndent: standaloneEnums.WrappingIndent,
