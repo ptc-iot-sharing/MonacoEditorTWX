@@ -558,7 +558,6 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 this.codeMirror.onEditorFocused(async () => {
                     typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
                     TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
-                    TypescriptCodeEditor.workerManager.syncExtraLibs();
                 });
 
                 typescriptCodeEditor.onEditorTranspileFinished((code) => {

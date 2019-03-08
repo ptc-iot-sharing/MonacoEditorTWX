@@ -97,7 +97,7 @@ export async function spotlightSearch(entityType, searchTerm): Promise<any> {
  *
  * @param  {string} snippets to load
  */
-export function loadSnippets(snippets): monaco.languages.CompletionList {
+export function loadSnippets(snippets, range: monaco.Range): monaco.languages.CompletionList {
     let result: monaco.languages.CompletionList = {
         suggestions: []
     };
@@ -108,7 +108,8 @@ export function loadSnippets(snippets): monaco.languages.CompletionList {
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                 label: snippets[key].prefix,
                 documentation: snippets[key].description,
-                insertText: snippets[key].body.join("\n")
+                insertText: snippets[key].body.join("\n"),
+                range: range
             });
         }
     }

@@ -383,7 +383,6 @@ if (TW && TW.jqPlugins && TW.jqPlugins.twCodeEditor) {
                     serviceDefinition: serviceModel.serviceDefinition
                 });
                 TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
-                TypescriptCodeEditor.workerManager.syncExtraLibs();
             });
 
             if (mode == Languages.TwxTypescript) {

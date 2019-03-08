@@ -14,13 +14,6 @@ export class WorkerScriptManager {
     constructor(typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults, javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults) {
         this.typescriptDefaults = typescriptDefaults;
         this.javascriptDefaults = javascriptDefaults;
-        typescriptDefaults.setEagerExtraLibSync(false);
-        javascriptDefaults.setEagerExtraLibSync(false);
-    }
-
-    syncExtraLibs() {
-        this.javascriptDefaults.syncExtraLibs();
-        this.typescriptDefaults.syncExtraLibs();
     }
 
     addExtraLib(code, name): [monaco.IDisposable, monaco.IDisposable] {

@@ -117,25 +117,33 @@ export class TypescriptCodeEditor extends ServiceEditor {
         // generate the completion for language snippets
         monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../../configs/javascriptSnippets.json"));
+                const wordUntil = model.getWordUntilPosition(position);
+                const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+                return loadSnippets(require("../../configs/javascriptSnippets.json"), defaultRange);
             }
         });
 
         monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../../configs/typescriptSnippets.json"));
+                const wordUntil = model.getWordUntilPosition(position);
+                const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+                return loadSnippets(require("../../configs/typescriptSnippets.json"), defaultRange);
             }
         });
 
         // generate the completion for twx snippets
         monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../../configs/thingworxJavascriptSnippets.json"));
+                const wordUntil = model.getWordUntilPosition(position);
+                const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+                return loadSnippets(require("../../configs/thingworxJavascriptSnippets.json"), defaultRange);
             }
         });
         monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
             provideCompletionItems: function (model, position) {
-                return loadSnippets(require("../../configs/thingworxTypescriptSnippets.json"));
+                const wordUntil = model.getWordUntilPosition(position);
+                const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+                return loadSnippets(require("../../configs/thingworxTypescriptSnippets.json"), defaultRange);
             }
         });
         // generate the regex that matches the autocomplete for the entity collection for element access
@@ -148,6 +156,9 @@ export class TypescriptCodeEditor extends ServiceEditor {
         monaco.languages.registerCompletionItemProvider([Languages.TwxJavascript, Languages.TwxTypescript], {
             triggerCharacters: ["[", "[\"", "."],
             provideCompletionItems: (model, position) => {
+                const wordUntil = model.getWordUntilPosition(position);
+                const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+
                 // find out if we are completing on a entity collection. Get the line until the current position
                 let textUntilPosition = model.getValueInRange(new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column));
                 let isPropertyCompletion = false;
@@ -164,7 +175,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
                     let entitySearch = match[2];
                     // returns a  promise to the search
                     return spotlightSearch(entityType, entitySearch).then((infotable) => {
-                        let result = [];
+                        let result: monaco.languages.CompletionItem[] = [];
                         for (let row of infotable.rows) {
                             // look in the entity collection libs and skip the elements already in there
                             let entityName = entityType + sanitizeEntityName(row.name);
@@ -182,7 +193,8 @@ export class TypescriptCodeEditor extends ServiceEditor {
                                 kind: monaco.languages.CompletionItemKind.Field,
                                 documentation: row.description,
                                 detail: "Entity type: " + row.type,
-                                insertText: row.name
+                                insertText: row.name,
+                                range: defaultRange
                             });
                         }
                         return { suggestions: result };
@@ -206,7 +218,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
         this.codeTranslator.generateScriptFunctionLibraries();
         this.codeTranslator.registeEntityCollectionDefs();
         this.codeTranslator.generateResourceFunctions();
-        TypescriptCodeEditor.workerManager.syncExtraLibs();
     }
 
     /**
@@ -248,7 +259,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
                 }
             }
         }
-        TypescriptCodeEditor.workerManager.syncExtraLibs();
     }
 
     /**
