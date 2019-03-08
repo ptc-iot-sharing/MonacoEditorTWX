@@ -4374,7 +4374,7 @@ export namespace languages {
     /**
      * Register a completion item provider (use by e.g. suggestions).
      */
-    export function registerCompletionItemProvider(languageId: string, provider: CompletionItemProvider): IDisposable;
+    export function registerCompletionItemProvider(languageId: string | string[], provider: CompletionItemProvider): IDisposable;
 
     /**
      * Register a document color provider (used by Color Picker, Color Decorator).
@@ -5759,6 +5759,10 @@ export namespace languages.typescript {
 
     export var getTypeScriptWorker: () => Promise<any>;
     export var getJavaScriptWorker: () => Promise<any>;
+
+    export var getLanguageWorker: (languageName: string) => Promise<any>;
+    export var setupNamedLanguage: (languageDefinition: languages.ILanguageExtensionPoint, isTypescript: boolean, registerLanguage?: boolean) => void;
+    export var getLanguageDefaults: (languageName: string) => LanguageServiceDefaults;
 }
 
 /*---------------------------------------------------------------------------------------------
