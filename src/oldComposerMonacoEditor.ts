@@ -368,7 +368,7 @@ if (TW && TW.jqPlugins && TW.jqPlugins.twCodeEditor) {
             const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
             typescriptCodeEditor.refreshMeDefinitions({
                 id: serviceModel.model.id,
-                entityType: serviceModel.model.type,
+                entityType: serviceModel.model.entityType,
                 effectiveShape: serviceModel.model.attributes.effectiveShape,
                 propertyData: serviceModel.model.propertyData,
                 serviceDefinition: serviceModel.serviceDefinition
@@ -377,7 +377,7 @@ if (TW && TW.jqPlugins && TW.jqPlugins.twCodeEditor) {
                 const serviceModel = parentServiceEditorJqEl[parentPluginType]("getAllProperties");
                 typescriptCodeEditor.refreshMeDefinitions({
                     id: serviceModel.model.id,
-                    entityType: serviceModel.model.type,
+                    entityType: serviceModel.model.entityType,
                     effectiveShape: serviceModel.model.attributes.effectiveShape,
                     propertyData: serviceModel.model.propertyData,
                     serviceDefinition: serviceModel.serviceDefinition
