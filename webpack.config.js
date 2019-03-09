@@ -1,13 +1,13 @@
 'use strict';
-var path = require('path');
-var fs = require('fs');
+const path = require('path');
+const fs = require('fs');
 const TerserPlugin = require('terser-webpack-plugin');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
-var EncodingPlugin = require('webpack-encoding-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const EncodingPlugin = require('webpack-encoding-plugin');
 // enable cleaning of the build and zip directories
-var CleanWebpackPlugin = require('clean-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin').default;
 // enable building of the widget
-var ZipPlugin = require('zip-webpack-plugin');
+const ZipPlugin = require('zip-webpack-plugin');
 // enable reading master data from the package.json file
 let packageJson = require('./package.json');
 const MonacoWebpackPlugin = require('./loader/monaco-editor-webpack-plugin');
@@ -49,7 +49,9 @@ module.exports = function (env, argv) {
         },
         plugins: [
             // delete build and zip folders
-            new CleanWebpackPlugin(['build', 'zip']),
+            new CleanWebpackPlugin({
+                cleanOnceBeforeBuildPatterns: [path.resolve('build/**'), path.resolve('zip/**')]
+            }),
             new MonacoWebpackPlugin(),
             // in case we just want to copy some resources directly to the widget package, then do it here
             // in case the extension contains entities, copy them as well
