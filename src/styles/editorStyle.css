@@ -5,3 +5,8 @@
 .tingle-modal--visible .tingle-modal-box {
     transform: unset;
 }
+/* Make sure there's space for the bullets */
+.markdown-docs ul, .markdown-docs ol, .monaco-editor-hover .hover-contents ul, .monaco-editor-hover .hover-contents ol {
+    list-style: disc outside none;
+    margin: 0 0 9px 25px;
+}

@@ -1,7 +1,8 @@
+import { stripIndents, oneLine } from 'common-tags'
 import { WorkerScriptManager } from "../workerScriptManager";
 import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata } from "../../utilities";
 import { ENTITY_TYPES } from "../../constants";
-
+import { EntityMetadataInformtion } from "../../types";
 
 export class ThingworxToTypescriptGenerator {
     private scriptManager: WorkerScriptManager;
@@ -111,84 +112,77 @@ export class ThingworxToTypescriptGenerator {
 
     /**
     * Generates a typescript class and namespace for a metadata.
-    * @param  {} effectiveShapeMetadata The enity metadata as a standard object with info about the properties. This is what thingworx responds for a object metadata request
+    * @param  {} effectiveShapeMetadata The entity metadata as a standard object with info about the properties. This is what thingworx responds for a object metadata request
+    * @param  propertyData Map with the property values of this entity
     * @param  {String} entityName The name of the entity that has this metadata
-    * @param  {Boolean} isGenericMetadata Specifies where to take the services definitios for. This differes if we are on the "me" metadata, or on a generic metadata
+    * @param  {Boolean} isGenericMetadata Specifies where to take the services definitions for. This differs if we are on the "me" metadata, or on a generic metadata
     * @param  {Boolean} showGenericServices Include the generic services in the results
     * @return The typescript definitions generated using this metadata
     */
-    public generateTypeScriptDefinitions(effectiveShapeMetadata, propertyData, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
-        // based on a module class declaration
-        // https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-class-d-ts.html
+    public generateTypeScriptDefinitions(effectiveShapeMetadata: EntityMetadataInformtion, propertyData: { [name: string]: any }, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
         let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
-        let classDefinition: string;
-        if (showGenericServices) {
-            classDefinition = `export class ${entityName} extends twx.GenericThing {\n constructor();\n`;
-        } else {
-            classDefinition = `export class ${entityName} {\n constructor();\n`;
-        }
+        let classDefinition = `declare namespace twx {
+                                export class ${entityName} ${showGenericServices ? "extends twx.GenericThing" : ""} {
+                                    constructor();
+                                `;
 
-        // generate info retated to services
-        let serviceDefs = effectiveShapeMetadata.serviceDefinitions;
-        for (let key in serviceDefs) {
-            if (!serviceDefs.hasOwnProperty(key)) continue;
-            // first create an interface for service params
-            let service = serviceDefs[key];
-            if (isGenericService(service)) continue;
-            // metadata for the service parameters
-            let serviceParamDefinition = "";
-            let serviceParameterMetadata;
-            if (isGenericMetadata) {
-                serviceParameterMetadata = service.Inputs.fieldDefinitions;
-            } else {
-                serviceParameterMetadata = service.parameterDefinitions;
-            }
+        // generate definitions for the services. This includes parameter definitions and service definitions
+        for (const service of Object.values(effectiveShapeMetadata.serviceDefinitions)) {
+            if (isGenericService(service)) continue; // skip over generic services
+            // generate the metadata for the service parameters
+            let serviceParamList = [];
+            // input definitions can come from one of two places
+            const serviceParameterMetadata = isGenericMetadata ? service.Inputs.fieldDefinitions : service.parameterDefinitions;
+            // iterate over inputs
             if (serviceParameterMetadata && Object.keys(serviceParameterMetadata).length > 0) {
-                namespaceDefinition += `export interface ${service.name}Params {\n`;
-                for (let parameterDef in serviceParameterMetadata) {
-                    if (!serviceParameterMetadata.hasOwnProperty(parameterDef)) continue;
-                    let inputDef = serviceParameterMetadata[parameterDef];
-
-                    const dataShapeInfo = (inputDef.aspects.dataShape ? (`\n * Datashape: ${inputDef.aspects.dataShape}`) : "");
-                    namespaceDefinition += `/**\n * ${inputDef.description} ${dataShapeInfo} \n */\n ${inputDef.name}${(inputDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(inputDef)};\n`;
+                namespaceDefinition += `export interface ${service.name}Params {`;
+                for (const parameterDef of Object.values(serviceParameterMetadata)) {
+                    const jsonDocInfoElements = [];
+                    if (parameterDef.description) {
+                        jsonDocInfoElements.push(parameterDef.description);
+                    }
+                    if (parameterDef.aspects.dataShape) {
+                        jsonDocInfoElements.push(`Datashape: ${parameterDef.aspects.dataShape}`);
+                    }
+                    namespaceDefinition += this.generateJDocWithContent(jsonDocInfoElements.join(" - "));
+                    namespaceDefinition += `${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(parameterDef)};\n`;
                     // generate a nice description of the service params
-                    const dataShapeDescription = inputDef.aspects.dataShape ? (` with datashape ${inputDef.aspects.dataShape}`) : "";
-                    serviceParamDefinition += `*\t${inputDef.name}: ${this.getTypescriptBaseType(inputDef)} ${dataShapeDescription} - ${inputDef.description}\n`;
+                    serviceParamList.push(oneLine`  * _${parameterDef.name}_: ${this.getTypescriptBaseType(parameterDef)}
+                                                        ${parameterDef.description ? " - " + parameterDef.description : ""}`);
                 }
                 namespaceDefinition += "}\n";
             }
-            let outputMetadata;
-            if (isGenericMetadata) {
-                outputMetadata = service.Outputs;
-            } else {
-                outputMetadata = service.resultType;
+            let outputMetadata = isGenericMetadata ? service.Outputs : service.resultType;
+            const serviceJsDocElements = [];
+            if (service.category) {
+                serviceJsDocElements.push("**Category**: " + oneLine(service.category) + "\n");
+            }
+            if (service.description) {
+                serviceJsDocElements.push("**Description**: " + this.handleMultilineJDocContent(service.description) + "\n");
+            }
+            if (serviceParamList.length > 0) {
+                serviceJsDocElements.push("**Params**:\n" + serviceParamList.join("\n"));
             }
             // now generate the service definition, as well as jsdocs
-            if (serviceParamDefinition) {
-                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * Params:\n ${serviceParamDefinition}**/\n${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
-            } else {
-                classDefinition += `/**\n * Category: ${service.category} \n * ${service.description}\n * \n **/\n${service.name}(): ${this.getTypescriptBaseType(outputMetadata)};\n`;
-            }
+            classDefinition += this.generateJDocWithContent(serviceJsDocElements.join("\n"))
+            classDefinition += `${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
         }
 
         // we handle property definitions here
-        let propertyDefs = effectiveShapeMetadata.propertyDefinitions;
-        for (let def in propertyDefs) {
-            if (!propertyDefs.hasOwnProperty(def)) continue;
-
-            let property = propertyDefs[def];
+        for (const property of Object.values(effectiveShapeMetadata.propertyDefinitions)) {
             // generate an export for each property
             if (typeof propertyData[property.name] == "string") {
-                classDefinition += `/**\n * ${property.description}\n */\n readonly ${property.name} = "${propertyData[property.name]}";\n`;
+                classDefinition += this.generateJDocWithContent(property.description);
+                classDefinition += `readonly ${property.name} = "${oneLine(propertyData[property.name].replace(/"/g, '\\"').substring(0, 100))}";\n`;
             } else {
-                classDefinition += `/**\n * ${property.description}\n */\n ${property.name}: ${this.getTypescriptBaseType(property)};\n`;
+                classDefinition += this.generateJDocWithContent(property.description);
+                classDefinition += `${property.name}: ${this.getTypescriptBaseType(property)};\n`;
             }
         }
-        classDefinition = classDefinition + "}\n";
+        namespaceDefinition = `export as namespace twx.${entityName};\n${namespaceDefinition}}`;
+        classDefinition += `}\n`;
 
-        namespaceDefinition = namespaceDefinition + classDefinition + "}\n";
-
-        return `export as namespace twx.${entityName};\n${namespaceDefinition}`;
+        return stripIndents(namespaceDefinition + "\n" + classDefinition);
     }
 
     public async generateResourceFunctions() {
@@ -204,7 +198,7 @@ export class ThingworxToTypescriptGenerator {
             let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, {}, libraryName, true, false);
             this.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
             resourcesDef += `/**\n * ${resource.description}\n**/\n`;
-            resourcesDef += `\t'${resource.name}': twx.${libraryName}.${libraryName};\n`;
+            resourcesDef += `\t'${resource.name}': twx.${libraryName};\n`;
         }
         resourcesDef += "}\n}\n let Resources: twx.ResourcesInterface;";
         this.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
@@ -213,8 +207,8 @@ export class ThingworxToTypescriptGenerator {
     /**
     * Declares the me object and the inputs of the service
     */
-    public generateServiceGlobals(serviceMetadata: {parameterDefinitions: {[ name: string]:  any}}, entityName: string) {
-        var definition = `const me = new twx.${entityName}.${entityName}();`;
+    public generateServiceGlobals(serviceMetadata: { parameterDefinitions: { [name: string]: any } }, entityName: string) {
+        var definition = `const me = new twx.${entityName}();`;
         for (var key in serviceMetadata.parameterDefinitions) {
             if (!serviceMetadata.parameterDefinitions.hasOwnProperty(key)) continue;
             var inputDef = serviceMetadata.parameterDefinitions[key];
@@ -232,5 +226,25 @@ export class ThingworxToTypescriptGenerator {
             result += `${`<twx.ds.${sanitizeEntityName(definition.aspects.dataShape)}>`}`;
         }
         return result;
+    }
+    /**
+     * Wraps a string into jdoc comments
+     * @param content Content to be wrapped in jdoc comments
+     */
+    private generateJDocWithContent(content: string) {
+        if (content) {
+            const list = content.split(/\r?\n/).map((val) => `* ${val}`).join("\n");
+            return `\n/**\n${list} \n*/\n`;
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Handles a multiline content that needs to exists as a jdoc comment
+     * @param content Multiline content that needs to be wrapped across a long jdoc
+     */
+    private handleMultilineJDocContent(content) {
+        return content ? content.split(/\r?\n/).map((val, idx) => `${idx != 0 ? "*" : ""} ${val}`).join("\n") : "";
     }
 }

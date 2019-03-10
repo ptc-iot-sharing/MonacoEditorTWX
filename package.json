@@ -55,6 +55,7 @@
         "zip-webpack-plugin": "^3.0.0"
     },
     "dependencies": {
+        "common-tags": "^1.8.0",
         "tingle.js": "^0.14.0",
         "typescriptwebpacksupport": "github:stefan-lacatus/ThingworxWidgetSupportPackage#master"
     }

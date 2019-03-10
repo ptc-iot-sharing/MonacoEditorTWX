@@ -44,7 +44,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         if(this._instanceSettings.language == Languages.TwxJavascript) {
             this.languageSwitchAction = this.monacoEditor.addAction({
                 id: "toggleTypescript",
-                label: "Swich to TypeScript",
+                label: "Switch to TypeScript",
                 run: () => {
                     this.languageSwitchAction.dispose();
                     this.changeLanguage(Languages.TwxTypescript, this.oldTypescriptCode ? this.oldTypescriptCode : this.monacoEditor.getModel().getValue());
@@ -54,7 +54,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         } else if(this._instanceSettings.language == Languages.TwxTypescript) {
             this.languageSwitchAction = this.monacoEditor.addAction({
                 id: "toggleJavascript",
-                label: "Swich to JavaScript",
+                label: "Switch to JavaScript",
                 run: async () => {
                     await this.transpileTypeScript();
                     this.languageSwitchAction.dispose();
@@ -270,7 +270,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         // declare the entity under its collection
         typescriptMetadata += "\ndeclare namespace twx {\n";
         typescriptMetadata += `\texport interface ${entityType}Interface {\n`;
-        typescriptMetadata += `\t'${entityId}': twx.${entityName}.${entityName};\n`;
+        typescriptMetadata += `\t'${entityId}': twx.${entityName};\n`;
         if(entityType == "Things") {
             typescriptMetadata += `\t [entityName: string]: twx.GenericThing;\n`;
         }
