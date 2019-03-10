@@ -4,6 +4,7 @@
   "type": "object",
   "title": "Editor",
   "overridable": true,
+  "scope": 3,
   "properties": {
     "editor.fontFamily": {
       "type": "string",
@@ -36,7 +37,7 @@
     "editor.lineHeight": {
       "type": "number",
       "default": 0,
-      "description": "Controls the line height. Use 0 to compute the lineHeight from the fontSize."
+      "description": "Controls the line height. Use 0 to compute the line height from the font size."
     },
     "editor.letterSpacing": {
       "type": "number",
@@ -48,10 +49,22 @@
       "enum": [
         "off",
         "on",
-        "relative"
+        "relative",
+        "interval"
+      ],
+      "enumDescriptions": [
+        "Line numbers are not rendered.",
+        "Line numbers are rendered as absolute number.",
+        "Line numbers are rendered as distance in lines to cursor position.",
+        "Line numbers are rendered every 10 lines."
       ],
       "default": "on",
-      "description": "Controls the display of line numbers. Possible values are 'on', 'off', and 'relative'. 'relative' shows the line count from the current cursor position."
+      "description": "Controls the display of line numbers."
+    },
+    "editor.renderFinalNewline": {
+      "type": "boolean",
+      "default": true,
+      "description": "Render last line number when the file ends with a newline."
     },
     "editor.rulers": {
       "type": "array",
@@ -59,65 +72,117 @@
         "type": "number"
       },
       "default": [],
-      "description": "Columns at which to show vertical rulers"
+      "description": "Render vertical rulers after a certain number of monospace characters. Use multiple values for multiple rulers. No rulers are drawn if array is empty."
     },
     "editor.wordSeparators": {
       "type": "string",
       "default": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?",
-      "description": "Characters that will be used as word separators when doing word related navigations or operations"
+      "description": "Characters that will be used as word separators when doing word related navigations or operations."
     },
     "editor.tabSize": {
       "type": "number",
       "default": 4,
       "minimum": 1,
-      "description": "The number of spaces a tab is equal to. This setting is overriden based on the file contents when `editor.detectIndentation` is on.",
-      "errorMessage": "Expected 'number'. Note that the value \"auto\" has been replaced by the `editor.detectIndentation` setting."
+      "markdownDescription": "The number of spaces a tab is equal to. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on."
     },
     "editor.insertSpaces": {
       "type": "boolean",
       "default": true,
-      "description": "Insert spaces when pressing Tab. This setting is overriden based on the file contents when `editor.detectIndentation` is on.",
-      "errorMessage": "Expected 'boolean'. Note that the value \"auto\" has been replaced by the `editor.detectIndentation` setting."
+      "markdownDescription": "Insert spaces when pressing `Tab`. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on."
     },
     "editor.detectIndentation": {
       "type": "boolean",
       "default": true,
-      "description": "When opening a file, `editor.tabSize` and `editor.insertSpaces` will be detected based on the file contents."
+      "markdownDescription": "Controls whether `#editor.tabSize#` and `#editor.insertSpaces#` will be automatically detected when a file is opened based on the file contents."
     },
     "editor.roundedSelection": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if selections have rounded corners"
+      "description": "Controls whether selections should have rounded corners."
     },
     "editor.scrollBeyondLastLine": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the editor will scroll beyond the last line"
+      "description": "Controls whether the editor will scroll beyond the last line."
+    },
+    "editor.scrollBeyondLastColumn": {
+      "type": "number",
+      "default": 5,
+      "description": "Controls the number of extra characters beyond which the editor will scroll horizontally."
+    },
+    "editor.smoothScrolling": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether the editor will scroll using an animation."
     },
     "editor.minimap.enabled": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the minimap is shown"
+      "description": "Controls whether the minimap is shown."
+    },
+    "editor.minimap.side": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "default": "right",
+      "description": "Controls the side where to render the minimap."
+    },
+    "editor.minimap.showSlider": {
+      "type": "string",
+      "enum": [
+        "always",
+        "mouseover"
+      ],
+      "default": "mouseover",
+      "description": "Controls whether the minimap slider is automatically hidden."
     },
     "editor.minimap.renderCharacters": {
       "type": "boolean",
       "default": true,
-      "description": "Render the actual characters on a line (as opposed to color blocks)"
+      "description": "Render the actual characters on a line as opposed to color blocks."
     },
     "editor.minimap.maxColumn": {
       "type": "number",
       "default": 120,
-      "description": "Limit the width of the minimap to render at most a certain number of columns"
+      "description": "Limit the width of the minimap to render at most a certain number of columns."
+    },
+    "editor.hover.enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the hover is shown."
+    },
+    "editor.hover.delay": {
+      "type": "number",
+      "default": 300,
+      "description": "Controls the delay in milliseconds after which the hover is shown."
+    },
+    "editor.hover.sticky": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the hover should remain visible when mouse is moved over it."
     },
     "editor.find.seedSearchStringFromSelection": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if we seed the search string in Find Widget from editor selection"
+      "description": "Controls whether the search string in the Find Widget is seeded from the editor selection."
     },
     "editor.find.autoFindInSelection": {
       "type": "boolean",
       "default": false,
-      "description": "Controls if Find in Selection flag is turned on when multiple characters or lines of text are selected in the editor"
+      "description": "Controls whether the find operation is carried out on selected text or the entire file in the editor."
+    },
+    "editor.find.globalFindClipboard": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether the Find Widget should read or modify the shared find clipboard on macOS.",
+      "included": false
+    },
+    "editor.find.addExtraSpaceOnTop": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the Find Widget should add extra lines on top of the editor. When true, you can scroll beyond the first line when the Find Widget is visible."
     },
     "editor.wordWrap": {
       "type": "string",
@@ -127,35 +192,47 @@
         "wordWrapColumn",
         "bounded"
       ],
-      "enumDescriptions": [
+      "markdownEnumDescriptions": [
         "Lines will never wrap.",
         "Lines will wrap at the viewport width.",
-        "Lines will wrap at `editor.wordWrapColumn`.",
-        "Lines will wrap at the minimum of viewport and `editor.wordWrapColumn`."
+        "Lines will wrap at `#editor.wordWrapColumn#`.",
+        "Lines will wrap at the minimum of viewport and `#editor.wordWrapColumn#`."
       ],
       "default": "off",
-      "description": "Controls how lines should wrap. Can be:\n - 'off' (disable wrapping),\n - 'on' (viewport wrapping),\n - 'wordWrapColumn' (wrap at `editor.wordWrapColumn`) or\n - 'bounded' (wrap at minimum of viewport and `editor.wordWrapColumn`)."
+      "description": "Controls how lines should wrap."
     },
     "editor.wordWrapColumn": {
       "type": "integer",
       "default": 80,
       "minimum": 1,
-      "description": "Controls the wrapping column of the editor when `editor.wordWrap` is 'wordWrapColumn' or 'bounded'."
+      "markdownDescription": "Controls the wrapping column of the editor when `#editor.wordWrap#` is `wordWrapColumn` or `bounded`."
     },
     "editor.wrappingIndent": {
       "type": "string",
       "enum": [
         "none",
         "same",
-        "indent"
+        "indent",
+        "deepIndent"
+      ],
+      "enumDescriptions": [
+        "No indentation. Wrapped lines begin at column 1.",
+        "Wrapped lines get the same indentation as the parent.",
+        "Wrapped lines get +1 indentation toward the parent.",
+        "Wrapped lines get +2 indentation toward the parent."
       ],
       "default": "same",
-      "description": "Controls the indentation of wrapped lines. Can be one of 'none', 'same' or 'indent'."
+      "description": "Controls the indentation of wrapped lines."
     },
     "editor.mouseWheelScrollSensitivity": {
       "type": "number",
       "default": 1,
-      "description": "A multiplier to be used on the `deltaX` and `deltaY` of mouse wheel scroll events"
+      "markdownDescription": "A multiplier to be used on the `deltaX` and `deltaY` of mouse wheel scroll events."
+    },
+    "editor.fastScrollSensitivity": {
+      "type": "number",
+      "default": 5,
+      "markdownDescription": "Scrolling speed mulitiplier when pressing `Alt`."
     },
     "editor.multiCursorModifier": {
       "type": "string",
@@ -163,12 +240,17 @@
         "ctrlCmd",
         "alt"
       ],
-      "enumDescriptions": [
-        "Maps to `Control` on Windows and Linux and to `Command` on OSX.",
-        "Maps to `Alt` on Windows and Linux and to `Option` on OSX."
+      "markdownEnumDescriptions": [
+        "Maps to `Control` on Windows and Linux and to `Command` on macOS.",
+        "Maps to `Alt` on Windows and Linux and to `Option` on macOS."
       ],
       "default": "alt",
-      "description": "The modifier to be used to add multiple cursors with the mouse. `ctrlCmd` maps to `Control` on Windows and Linux and to `Command` on OSX. The Go To Definition and Open Link mouse gestures will adapt such that they do not conflict with the multicursor modifier."
+      "markdownDescription": "The modifier to be used to add multiple cursors with the mouse. The Go To Definition and Open Link mouse gestures will adapt such that they do not conflict with the multicursor modifier. [Read more](https://code.visualstudio.com/docs/editor/codebasics#_multicursor-modifier)."
+    },
+    "editor.multiCursorMergeOverlapping": {
+      "type": "boolean",
+      "default": true,
+      "description": "Merge multiple cursors when they are overlapping."
     },
     "editor.quickSuggestions": {
       "anyOf": [
@@ -201,38 +283,94 @@
         "comments": false,
         "strings": false
       },
-      "description": "Controls if suggestions should automatically show up while typing"
+      "description": "Controls whether suggestions should automatically show up while typing."
     },
     "editor.quickSuggestionsDelay": {
       "type": "integer",
       "default": 10,
       "minimum": 0,
-      "description": "Controls the delay in ms after which quick suggestions will show up"
+      "description": "Controls the delay in milliseconds after which quick suggestions will show up."
     },
-    "editor.parameterHints": {
+    "editor.parameterHints.enabled": {
       "type": "boolean",
       "default": true,
-      "description": "Enables parameter hints"
+      "description": "Enables a pop-up that shows parameter documentation and type information as you type."
+    },
+    "editor.parameterHints.cycle": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether the parameter hints menu cycles or closes when reaching the end of the list."
     },
     "editor.autoClosingBrackets": {
-      "type": "boolean",
-      "default": true,
-      "description": "Controls if the editor should automatically close brackets after opening them"
+      "type": "string",
+      "enum": [
+        "always",
+        "languageDefined",
+        "beforeWhitespace",
+        "never"
+      ],
+      "enumDescriptions": [
+        "",
+        "Use language configurations to determine when to autoclose brackets.",
+        "Autoclose brackets only when the cursor is to the left of whitespace.",
+        ""
+      ],
+      "default": "languageDefined",
+      "description": "Controls whether the editor should automatically close brackets after the user adds an opening bracket."
+    },
+    "editor.autoClosingQuotes": {
+      "type": "string",
+      "enum": [
+        "always",
+        "languageDefined",
+        "beforeWhitespace",
+        "never"
+      ],
+      "enumDescriptions": [
+        "",
+        "Use language configurations to determine when to autoclose quotes.",
+        "Autoclose quotes only when the cursor is to the left of whitespace.",
+        ""
+      ],
+      "default": "languageDefined",
+      "description": "Controls whether the editor should automatically close quotes after the user adds an opening quote."
+    },
+    "editor.autoSurround": {
+      "type": "string",
+      "enum": [
+        "languageDefined",
+        "brackets",
+        "quotes",
+        "never"
+      ],
+      "enumDescriptions": [
+        "Use language configurations to determine when to automatically surround selections.",
+        "Surround with brackets but not quotes.",
+        "Surround with quotes but not brackets.",
+        ""
+      ],
+      "default": "languageDefined",
+      "description": "Controls whether the editor should automatically surround selections."
     },
     "editor.formatOnType": {
       "type": "boolean",
       "default": false,
-      "description": "Controls if the editor should automatically format the line after typing"
+      "description": "Controls whether the editor should automatically format the line after typing."
     },
     "editor.formatOnPaste": {
       "type": "boolean",
       "default": false,
-      "description": "Controls if the editor should automatically format the pasted content. A formatter must be available and the formatter should be able to format a range in a document."
+      "description": "Controls whether the editor should automatically format the pasted content. A formatter must be available and the formatter should be able to format a range in a document."
+    },
+    "editor.autoIndent": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the editor should automatically adjust the indentation when users type, paste or move lines. Extensions with indentation rules of the language must be available."
     },
     "editor.suggestOnTriggerCharacters": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if suggestions should automatically show up when typing trigger characters"
+      "description": "Controls whether suggestions should automatically show up when typing trigger characters."
     },
     "editor.acceptSuggestionOnEnter": {
       "type": "string",
@@ -242,12 +380,17 @@
         "off"
       ],
       "default": "on",
-      "description": "Controls if suggestions should be accepted on 'Enter' - in addition to 'Tab'. Helps to avoid ambiguity between inserting new lines or accepting suggestions. The value 'smart' means only accept a suggestion with Enter when it makes a textual change"
+      "markdownEnumDescriptions": [
+        "",
+        "Only accept a suggestion with `Enter` when it makes a textual change.",
+        ""
+      ],
+      "markdownDescription": "Controls whether suggestions should be accepted on `Enter`, in addition to `Tab`. Helps to avoid ambiguity between inserting new lines or accepting suggestions."
     },
     "editor.acceptSuggestionOnCommitCharacter": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if suggestions should be accepted on commit characters. For instance in JavaScript the semi-colon (';') can be a commit character that accepts a suggestion and types that character."
+      "markdownDescription": "Controls whether suggestions should be accepted on commit characters. For example, in JavaScript, the semi-colon (`;`) can be a commit character that accepts a suggestion and types that character."
     },
     "editor.snippetSuggestions": {
       "type": "string",
@@ -257,6 +400,12 @@
         "inline",
         "none"
       ],
+      "enumDescriptions": [
+        "Show snippet suggestions on top of other suggestions.",
+        "Show snippet suggestions below other suggestions.",
+        "Show snippets suggestions with other suggestions.",
+        "Do not show snippet suggestions."
+      ],
       "default": "inline",
       "description": "Controls whether snippets are shown with other suggestions and how they are sorted."
     },
@@ -265,42 +414,97 @@
       "default": true,
       "description": "Controls whether copying without a selection copies the current line."
     },
+    "editor.copyWithSyntaxHighlighting": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether syntax highlighting should be copied into the clipboard."
+    },
     "editor.wordBasedSuggestions": {
       "type": "boolean",
       "default": true,
       "description": "Controls whether completions should be computed based on words in the document."
     },
+    "editor.suggestSelection": {
+      "type": "string",
+      "enum": [
+        "first",
+        "recentlyUsed",
+        "recentlyUsedByPrefix"
+      ],
+      "markdownEnumDescriptions": [
+        "Always select the first suggestion.",
+        "Select recent suggestions unless further typing selects one, e.g. `console.| -> console.log` because `log` has been completed recently.",
+        "Select suggestions based on previous prefixes that have completed those suggestions, e.g. `co -> console` and `con -> const`."
+      ],
+      "default": "recentlyUsed",
+      "description": "Controls how suggestions are pre-selected when showing the suggest list."
+    },
     "editor.suggestFontSize": {
       "type": "integer",
       "default": 0,
       "minimum": 0,
-      "description": "Font size for the suggest widget"
+      "markdownDescription": "Font size for the suggest widget. When set to `0`, the value of `#editor.fontSize#` is used."
     },
     "editor.suggestLineHeight": {
       "type": "integer",
       "default": 0,
       "minimum": 0,
-      "description": "Line height for the suggest widget"
+      "markdownDescription": "Line height for the suggest widget. When set to `0`, the value of `#editor.lineHeight#` is used."
+    },
+    "editor.tabCompletion": {
+      "type": "string",
+      "default": "off",
+      "enum": [
+        "on",
+        "off",
+        "onlySnippets"
+      ],
+      "enumDescriptions": [
+        "Tab complete will insert the best matching suggestion when pressing tab.",
+        "Disable tab completions.",
+        "Tab complete snippets when their prefix match. Works best when 'quickSuggestions' aren't enabled."
+      ],
+      "description": "Enables tab completions."
+    },
+    "editor.suggest.filterGraceful": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether filtering and sorting suggestions accounts for small typos."
+    },
+    "editor.suggest.localityBonus": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether sorting favours words that appear close to the cursor."
+    },
+    "editor.suggest.shareSuggestSelections": {
+      "type": "boolean",
+      "default": false,
+      "markdownDescription": "Controls whether remembered suggestion selections are shared between multiple workspaces and windows (needs `#editor.suggestSelection#`)."
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": {
+      "type": "boolean",
+      "default": true,
+      "description": "Control whether an active snippet prevents quick suggestions."
     },
     "editor.selectionHighlight": {
       "type": "boolean",
       "default": true,
-      "description": "Controls whether the editor should highlight similar matches to the selection"
+      "description": "Controls whether the editor should highlight matches similar to the selection."
     },
     "editor.occurrencesHighlight": {
       "type": "boolean",
       "default": true,
-      "description": "Controls whether the editor should highlight semantic symbol occurrences"
+      "description": "Controls whether the editor should highlight semantic symbol occurrences."
     },
     "editor.overviewRulerLanes": {
       "type": "integer",
       "default": 3,
-      "description": "Controls the number of decorations that can show up at the same position in the overview ruler"
+      "description": "Controls the number of decorations that can show up at the same position in the overview ruler."
     },
     "editor.overviewRulerBorder": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if a border should be drawn around the overview ruler."
+      "description": "Controls whether a border should be drawn around the overview ruler."
     },
     "editor.cursorBlinking": {
       "type": "string",
@@ -312,12 +516,17 @@
         "solid"
       ],
       "default": "blink",
-      "description": "Control the cursor animation style, possible values are 'blink', 'smooth', 'phase', 'expand' and 'solid'"
+      "description": "Control the cursor animation style."
     },
     "editor.mouseWheelZoom": {
       "type": "boolean",
       "default": false,
-      "description": "Zoom the font of the editor when using mouse wheel and holding Ctrl"
+      "markdownDescription": "Zoom the font of the editor when using mouse wheel and holding `Ctrl`."
+    },
+    "editor.cursorSmoothCaretAnimation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether the smooth caret animation should be enabled."
     },
     "editor.cursorStyle": {
       "type": "string",
@@ -330,17 +539,22 @@
         "underline-thin"
       ],
       "default": "line",
-      "description": "Controls the cursor style, accepted values are 'block', 'block-outline', 'line', 'line-thin', 'underline' and 'underline-thin'"
+      "description": "Controls the cursor style."
+    },
+    "editor.cursorWidth": {
+      "type": "integer",
+      "default": 0,
+      "markdownDescription": "Controls the width of the cursor when `#editor.cursorStyle#` is set to `line`."
     },
     "editor.fontLigatures": {
       "type": "boolean",
       "default": false,
-      "description": "Enables font ligatures"
+      "description": "Enables/Disables font ligatures."
     },
     "editor.hideCursorInOverviewRuler": {
       "type": "boolean",
       "default": false,
-      "description": "Controls if the cursor should be hidden in the overview ruler."
+      "description": "Controls whether the cursor should be hidden in the overview ruler."
     },
     "editor.renderWhitespace": {
       "type": "string",
@@ -349,18 +563,28 @@
         "boundary",
         "all"
       ],
+      "enumDescriptions": [
+        "",
+        "Render whitespace characters except for single spaces between words.",
+        ""
+      ],
       "default": "none",
-      "description": "Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words."
+      "description": "Controls how the editor should render whitespace characters."
     },
     "editor.renderControlCharacters": {
       "type": "boolean",
       "default": false,
-      "description": "Controls whether the editor should render control characters"
+      "description": "Controls whether the editor should render control characters."
     },
     "editor.renderIndentGuides": {
       "type": "boolean",
       "default": true,
-      "description": "Controls whether the editor should render indent guides"
+      "description": "Controls whether the editor should render indent guides."
+    },
+    "editor.highlightActiveIndentGuide": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the editor should highlight the active indent guide."
     },
     "editor.renderLineHighlight": {
       "type": "string",
@@ -370,18 +594,33 @@
         "line",
         "all"
       ],
+      "enumDescriptions": [
+        "",
+        "",
+        "",
+        "Highlights both the gutter and the current line."
+      ],
       "default": "line",
-      "description": "Controls how the editor should render the current line highlight, possibilities are 'none', 'gutter', 'line', and 'all'."
+      "description": "Controls how the editor should render the current line highlight."
     },
     "editor.codeLens": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the editor shows code lenses"
+      "description": "Controls whether the editor shows CodeLens."
     },
     "editor.folding": {
       "type": "boolean",
       "default": true,
-      "description": "Controls whether the editor has code folding enabled"
+      "description": "Controls whether the editor has code folding enabled."
+    },
+    "editor.foldingStrategy": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "indentation"
+      ],
+      "default": "auto",
+      "markdownDescription": "Controls the strategy for computing folding ranges. `auto` uses a language specific folding strategy, if available. `indentation` uses the indentation based folding strategy."
     },
     "editor.showFoldingControls": {
       "type": "string",
@@ -405,22 +644,22 @@
     "editor.useTabStops": {
       "type": "boolean",
       "default": true,
-      "description": "Inserting and deleting whitespace follows tab stops"
+      "description": "Inserting and deleting whitespace follows tab stops."
     },
     "editor.trimAutoWhitespace": {
       "type": "boolean",
       "default": true,
-      "description": "Remove trailing auto inserted whitespace"
+      "description": "Remove trailing auto inserted whitespace."
     },
     "editor.stablePeek": {
       "type": "boolean",
       "default": false,
-      "description": "Keep peek editors open even when double clicking their content or when hitting Escape."
+      "markdownDescription": "Keep peek editors open even when double clicking their content or when hitting `Escape`."
     },
     "editor.dragAndDrop": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the editor should allow to move selections via drag and drop."
+      "description": "Controls whether the editor should allow moving selections via drag and drop."
     },
     "editor.accessibilitySupport": {
       "type": "string",
@@ -437,25 +676,79 @@
       "default": "auto",
       "description": "Controls whether the editor should run in a mode where it is optimized for screen readers."
     },
+    "editor.showUnused": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls fading out of unused code."
+    },
+    "editor.links": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the editor should detect links and make them clickable."
+    },
+    "editor.colorDecorators": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the editor should render the inline color decorators and color picker."
+    },
+    "editor.lightbulb.enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enables the code action lightbulb in the editor."
+    },
+    "editor.maxTokenizationLineLength": {
+      "type": "integer",
+      "default": 20000,
+      "description": "Lines above this length will not be tokenized for performance reasons"
+    },
+    "editor.codeActionsOnSave": {
+      "type": "object",
+      "properties": {
+        "source.organizeImports": {
+          "type": "boolean",
+          "description": "Controls whether organize imports action should be run on file save."
+        },
+        "source.fixAll": {
+          "type": "boolean",
+          "description": "Controls whether auto fix action should be run on file save."
+        }
+      },
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "default": {},
+      "description": "Code action kinds to be run on save."
+    },
+    "editor.codeActionsOnSaveTimeout": {
+      "type": "number",
+      "default": 750,
+      "description": "Timeout in milliseconds after which the code actions that are run on save are cancelled."
+    },
+    "editor.selectionClipboard": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the Linux primary clipboard should be supported.",
+      "included": false
+    },
     "diffEditor.renderSideBySide": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the diff editor shows the diff side by side or inline"
+      "description": "Controls whether the diff editor shows the diff side by side or inline."
     },
     "diffEditor.ignoreTrimWhitespace": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the diff editor shows changes in leading or trailing whitespace as diffs"
+      "description": "Controls whether the diff editor shows changes in leading or trailing whitespace as diffs."
+    },
+    "editor.largeFileOptimizations": {
+      "type": "boolean",
+      "default": true,
+      "description": "Special handling for large files to disable certain memory intensive features."
     },
     "diffEditor.renderIndicators": {
       "type": "boolean",
       "default": true,
-      "description": "Controls if the diff editor shows +/- indicators for added/removed changes"
-    }, 
-    "thingworx.showGenericServices": {
-      "type": "boolean",
-      "default": true,
-      "description": "Show thing generic services in autocomplete. This includes services on GenericThing template."
+      "description": "Controls whether the diff editor shows +/- indicators for added/removed changes."
     }
   }
 }

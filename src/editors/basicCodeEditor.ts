@@ -46,7 +46,7 @@ export class MonacoCodeEditor {
     /**
      * Creates a new monaco editor in the given container
      * @param container HTMLElement where to initialize the new editor
-     * @param initialSettings The inital options that the editor should be initialized with
+     * @param initialSettings The initial options that the editor should be initialized with
      */
     constructor(container: HTMLElement, initialSettings: MonacoEditorSettings, actionCallbacks: ActionCallbacks, instanceSettings: MonacoInstanceSettings) {
         this._currentEditorSettings = initialSettings;
@@ -158,7 +158,7 @@ export class MonacoCodeEditor {
     }
 
     /**
-     * Set the editor as readonly or not
+     * Set the editor as read-only or not
      */
     public setReadOnlyStatus(readOnly: boolean) {
         this.monacoEditor.updateOptions({
@@ -262,15 +262,13 @@ export class MonacoCodeEditor {
      */
     public static performGlobalInitialization() {
         // initialize the json worker with the give schema
-        let confSchema = require("../configs/confSchema.json");
-
-        // text formatting
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
             schemas: [{
                 uri: "http://monaco-editor/schema.json",
-                schema: confSchema,
+                schema: require("../configs/confSchema.json"),
                 fileMatch: ["*"]
             }],
+            allowComments: false,
             validate: true
         });
     }
@@ -334,11 +332,13 @@ export class MonacoCodeEditor {
             onOpen: function () {
                 // clone the editor settings to be used for the config editor
                 let editorSettings = JSON.parse(JSON.stringify(self._currentEditorSettings.editor));
-                // set the intial text to be the current config
+                // set the initial text to be the current config
                 editorSettings.value = JSON.stringify(flattenJson(self._currentEditorSettings), null, "\t");
                 // set the language as json
                 editorSettings.language = "json";
-                confEditor = monaco.editor.create(this.modalBoxContent.getElementsByClassName("content")[0], editorSettings);
+                const contentElement = this.modalBoxContent.getElementsByClassName("content")[0];
+                confEditor = monaco.editor.create(contentElement, editorSettings);
+                contentElement.onkeydown = contentElement.onkeypress = contentElement.onkeyup = ((e) => e.stopPropagation());
                 confEditor.focus();
                 // whenever the model changes, we need to also update the current editor, as well as other editors
                 confEditor.onDidChangeModelContent((e) => {
@@ -396,7 +396,10 @@ export class MonacoCodeEditor {
 
                 const editorSettings = Object.assign({}, self._currentEditorSettings.editor, self._currentEditorSettings.diffEditor);
                 // create the diff editor
-                diffEditor = monaco.editor.createDiffEditor(this.modalBoxContent.getElementsByClassName("content")[0], editorSettings);
+                const contentElement = this.modalBoxContent.getElementsByClassName("content")[0];
+                diffEditor = monaco.editor.createDiffEditor(contentElement, editorSettings);
+                contentElement.onkeydown = contentElement.onkeypress = contentElement.onkeyup = ((e) => e.stopPropagation());
+
                 diffEditor.setModel({
                     original: originalModel,
                     modified: modifiedModel
@@ -427,5 +430,5 @@ export class MonacoCodeEditor {
     }
 }
 
-// perform the global init
+// perform the global initialization
 MonacoCodeEditor.performGlobalInitialization();
