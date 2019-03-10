@@ -180,7 +180,7 @@ export class ThingworxToTypescriptGenerator {
             }
         }
         namespaceDefinition = `export as namespace twx.${entityName};\n${namespaceDefinition}}`;
-        classDefinition += `}\n`;
+        classDefinition += `}\n}\n`;
 
         return stripIndents(namespaceDefinition + "\n" + classDefinition);
     }
@@ -234,7 +234,7 @@ export class ThingworxToTypescriptGenerator {
     private generateJDocWithContent(content: string) {
         if (content) {
             const list = content.split(/\r?\n/).map((val) => `* ${val}`).join("\n");
-            return `\n/**\n${list} \n*/\n`;
+            return `\n/**\n${list}\n*/\n`;
         } else {
             return "";
         }
