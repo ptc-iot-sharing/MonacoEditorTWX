@@ -208,7 +208,7 @@ var SuggestAdapter = /** @class */ (function (_super) {
             if (!info) {
                 return;
             }
-            var suggestions = info.entries.map(function (entry) {
+            var suggestions = info.entries.map(function (entry, index) {
                 var range = wordRange;
                 if (entry.replacementSpan) {
                     var p1 = model.getPositionAt(entry.replacementSpan.start);
@@ -221,7 +221,7 @@ var SuggestAdapter = /** @class */ (function (_super) {
                     range: range,
                     label: entry.name,
                     insertText: entry.name,
-                    sortText: entry.sortText,
+                    sortText: entry.sortText + String.fromCharCode(index),
                     kind: SuggestAdapter.convertKind(entry.kind)
                 };
             });
