@@ -4,6 +4,7 @@ const fs = require('fs');
 const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const EncodingPlugin = require('webpack-encoding-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // enable cleaning of the build and zip directories
 const CleanWebpackPlugin = require('clean-webpack-plugin').default;
 // enable building of the widget
@@ -21,6 +22,17 @@ let packageVersion = packageJson.version.split('.');
 packageJson.version = `${packageVersion[0]}.${packageVersion[1]}.${parseInt(packageVersion[2])}`;
 console.log(`Incremented package version to ${packageJson.version}`);
 fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 4));
+
+var babelLoader = {
+    loader: 'babel-loader',
+    options: {
+        babelrc: false,
+        cacheDirectory: true,
+        presets: [['@babel/preset-env', { useBuiltIns: "usage" }]],
+        plugins: ["@babel/plugin-syntax-dynamic-import"]
+    }
+};
+
 module.exports = function (env, argv) {
     const packageName = packageJson.packageName || `${packageJson.name}_ExtensionPackage`;
 
@@ -28,8 +40,6 @@ module.exports = function (env, argv) {
     const isProduction = argv.mode == "production";
     let result = {
         entry: {
-            // the entry point when viewing the index.html page
-            htmlDemo: './src/index.ts',
             // the entry point for the old composer code
             oldComposer: `./src/oldComposerMonacoEditor.ts`,
             // the entry point for the new composer code
@@ -77,7 +87,8 @@ module.exports = function (env, argv) {
             }),
             new EncodingPlugin({
                 encoding: 'utf8'
-            })
+            }),
+            new ForkTsCheckerWebpackPlugin()
         ],
         // if we are in development mode, then use "eval-source-map".
         // See https://webpack.js.org/configuration/devtool/ for all available options
@@ -91,23 +102,20 @@ module.exports = function (env, argv) {
         module: {
             rules: [
                 {
-                    test: /(\.jsx|\.js)$/,
-                    exclude: /(node_modules|bower_components|src[\\/]monaco-editor[\\/]esm)/,
-                    use: {
-                        loader: 'babel-loader',
-                        options: {
-                            presets: ['@babel/preset-env']
+                    test: /\.ts(x?)$/,
+                    exclude: /node_modules/,
+                    use: [
+                        babelLoader,
+                        {
+                            loader: 'ts-loader'
                         }
-                    }
-                },
-                // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
-                {
-                    test: /\.tsx?$/,
-                    exclude: /(\.d\.ts$|node_modules)/,
-                    loader: 'ts-loader',
-                    options: {
-                        transpileOnly: true
-                    }
+                    ]
+                }, {
+                    test: /\.js$/,
+                    exclude: /(node_modules|bower_components|src[\\/]monaco-editor[\\/]esm)/,
+                    use: [
+                        babelLoader
+                    ]
                 },
                 {
                     test: /\.(png|jp(e*)g|svg|xml|d\.ts)$/,
@@ -124,12 +132,15 @@ module.exports = function (env, argv) {
     if (isProduction) {
         result.optimization = {
             minimizer: [
-                new TerserPlugin ({
+                new TerserPlugin({
+                    cache: true,
+                    parallel: true,
                     terserOptions: {
                         compress: true,
                         mangle: false,
                         toplevel: false,
-                        keep_fnames: true
+                        keep_fnames: true,
+                        sourceMap: true
                     }
                 })
             ]
