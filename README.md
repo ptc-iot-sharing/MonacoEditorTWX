@@ -98,4 +98,4 @@ In the new composer, press F1, select _Switch to Typescript_. The reverse action
 
 ## Reporting issues 
 
-Issues and suggestions can be reported at http://roicentersvn/placatus/MonacoScriptEditorWidget/issues
+Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues)
