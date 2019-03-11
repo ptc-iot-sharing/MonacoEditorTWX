@@ -16,7 +16,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
    * In the old composer, the Monaco Script Editor is being used when editing services and subscriptions.
    * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
 
-3. If you want to also use Monaco Script Editor within the New Composer, also do the following steps.
+3. If you are using ThingWorx 8.4.X and want to use Monaco Script Editor within the New Composer, also do the following steps.
 
    1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
    2. Edit the file `index.html`.
@@ -98,4 +98,4 @@ In the new composer, press F1, select _Switch to Typescript_. The reverse action
 
 ## Reporting issues 
 
-Issues and suggestions can be reported at http://roicentersvn/placatus/MonacoScriptEditorWidget/issues
+Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues)
