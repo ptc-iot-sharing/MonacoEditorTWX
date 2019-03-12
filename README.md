@@ -2,12 +2,12 @@
 
 # Thingworx Monaco Code Editor
 
-The purpose of this project is to replace the script editor in ThingWorx Composer with a better one.
+The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one.
 The new code editor is based on [Monaco Editor](https://microsoft.github.io/monaco-editor/index.html), the same editor used in [Visual Studio Code](https://code.visualstudio.com/). 
 
 This project offers compatibility with both the **Old Composer** and the **New Composer** (8.4 release only). Please refer to the installation guide for more information. A mashup builder widget is also available to display code in a mashup runtime.
 
-##Installation
+## Installation
 
 1. Download the zip package listed under the downloads section under [**Releases**](/placatus/MonacoScriptEditorWidget/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
 
@@ -27,6 +27,10 @@ This project offers compatibility with both the **Old Composer** and the **New C
    ```
 
 Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
+When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs to be redone.
+
+To remove the extension, just delete it using the Extension Management in Thingworx.
+
 
 ## Features
 ### Basic code editor features
@@ -98,4 +102,8 @@ In the new composer, press F1, select _Switch to Typescript_. The reverse action
 
 ## Reporting issues 
 
-Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues)
+Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues). They will be resolved if there is time available.
+
+## Disclaimer
+
+The **Monaco Editor for Thingworx is not official Thingworx product**. It is something developed to improve the life of a Thingworx developer and he needs to understand that it is **not supported** and any issues encountered are his own responsability.
