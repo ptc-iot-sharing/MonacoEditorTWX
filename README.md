@@ -106,4 +106,4 @@ Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEdi
 
 ## Disclaimer
 
-The** Monaco Editor for Thingworx is not official Thingworx product**. It is something developed to improve the life of a Thingworx developer and he needs to understand that it is **not supported** and any issues encountered are his own responsability.
+The **Monaco Editor for Thingworx is not official Thingworx product**. It is something developed to improve the life of a Thingworx developer and he needs to understand that it is **not supported** and any issues encountered are his own responsability.
