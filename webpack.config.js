@@ -28,7 +28,7 @@ var babelLoader = {
     options: {
         babelrc: false,
         cacheDirectory: true,
-        presets: [['@babel/preset-env', { useBuiltIns: "usage" }]],
+        presets: [['@babel/preset-env']],
         plugins: ["@babel/plugin-syntax-dynamic-import"]
     }
 };
