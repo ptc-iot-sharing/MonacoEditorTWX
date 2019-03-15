@@ -29,7 +29,13 @@ This project offers compatibility with both the **Old Composer** and the **New C
 Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
 When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs to be redone.
 
-To remove the extension, just delete it using the Extension Management in Thingworx.
+### Removing
+
+To remove the extension, just delete it using the Extension Management in Thingworx. Optionally, you can also undo the changes in step 3. above.
+
+### Upgrading
+
+After installing a new version of the widget, make sure you clear the browser cache. [Here](https://en.wikipedia.org/wiki/Wikipedia:Bypass_your_cache#Cache_clearing_and_disabling) is an example of how to do that.
 
 
 ## Features
