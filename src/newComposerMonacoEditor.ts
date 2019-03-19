@@ -569,7 +569,7 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
                 });
                 this.codeMirror.onLanguageChanged((newLanguage) => {
                     this.langMode.name = newLanguage;
-                    if(newLanguage == Languages.TwxJavascript && currentEditedModel) {
+                    if(newLanguage == Languages.TwxJavascript && currentEditedModel && currentEditedModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
                         currentEditedModel.serviceImplementation.configurationTables.Script.rows.pop();
                     }
                 });
