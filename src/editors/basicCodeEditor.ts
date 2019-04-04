@@ -347,7 +347,7 @@ export class MonacoCodeEditor {
                         const expandedOptions = unflattenJson(JSON.parse(confEditor.getModel().getValue()));
                         confEditor.updateOptions(expandedOptions.editor);
                         // theme has to be updated separately
-                        if (self._currentEditorSettings.editor.theme != expandedOptions.editor.theme) {
+                        if (expandedOptions.editor && self._currentEditorSettings.editor.theme != expandedOptions.editor.theme) {
                             monaco.editor.setTheme(expandedOptions.editor.theme);
                         }
                         self.monacoEditor.updateOptions(expandedOptions.editor);

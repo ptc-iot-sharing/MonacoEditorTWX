@@ -474,6 +474,9 @@ function(exports, I18N, Container, _, $, CodeMirror, CodemirrorGutterMessageMana
 
             try {
                 this.savedEditorPreferences = await this.userService.getUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY);
+                if(Object.keys(this.savedEditorPreferences).length == 0) {
+                    throw "No saved preferences exist";
+                }
             } catch (e) {
                 console.warn("Monaco: Failed to load settings from preferences. Using defaults...", e);
                 this.savedEditorPreferences = DEFAULT_EDITOR_SETTINGS;
