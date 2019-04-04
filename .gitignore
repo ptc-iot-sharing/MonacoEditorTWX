@@ -9,3 +9,5 @@ zip
 !loader/*
 !loader/*/**
 *.DS_Store
+README.pdf
+README.html

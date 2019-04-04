@@ -16,7 +16,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
    * In the old composer, the Monaco Script Editor is being used when editing services and subscriptions.
    * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
 
-3. If you are using ThingWorx 8.4.X and want to use Monaco Script Editor within the New Composer, also do the following steps.
+3. If you are using **ThingWorx 8.4.X** and want to use Monaco Script Editor within the New Composer, also do the following steps.
 
    1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
    2. Edit the file `index.html`.
@@ -27,7 +27,6 @@ This project offers compatibility with both the **Old Composer** and the **New C
    ```
 
 Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
-When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs to be redone.
 
 ### Removing
 
@@ -36,6 +35,8 @@ To remove the extension, just delete it using the Extension Management in Thingw
 ### Upgrading
 
 After installing a new version of the widget, make sure you clear the browser cache. [Here](https://en.wikipedia.org/wiki/Wikipedia:Bypass_your_cache#Cache_clearing_and_disabling) is an example of how to do that.
+
+When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs to be redone.
 
 
 ## Features
@@ -106,7 +107,7 @@ In the new composer, press F1, select _Switch to Typescript_. The reverse action
 * Thingworx snippets (iterate infotable, create infotable, iterate infotable fields)
 * In the new composer, the expression editor is also replaced with a proper editor
 
-## Reporting issues 
+## Reporting issues
 
 Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues). They will be resolved if there is time available.
 
