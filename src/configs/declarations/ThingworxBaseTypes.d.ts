@@ -59,7 +59,7 @@ declare namespace twx {
     export type USERNAME = string
     export interface DATETIME extends Date { }
     export interface XML { }
-    export interface JSON { }
+    export type JSON = any;
     export interface QUERY {
         filters?: any;
         sorts?: any;
