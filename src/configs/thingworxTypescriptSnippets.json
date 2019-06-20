@@ -30,6 +30,13 @@
         ],
         "description": "Iterate infotable datashape fields"
     },
+    "Logger Prefix Declare": {
+        "prefix": "lpd",
+        "body": [
+            "const loggerPrefix = `${me.name}::${1:serviceName}:: `;"
+        ],
+        "description": "Logger debug"
+    },
     "Logger debug": {
         "prefix": "ld",
         "body": [
