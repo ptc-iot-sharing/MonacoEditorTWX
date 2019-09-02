@@ -1,5 +1,3 @@
-
-
 # Thingworx Monaco Code Editor
 
 The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one.
@@ -8,6 +6,7 @@ The new code editor is based on [Monaco Editor](https://microsoft.github.io/mona
 This project offers compatibility with both the **Old Composer** and the **New Composer** (8.4 release only). Please refer to the installation guide for more information. A mashup builder widget is also available to display code in a mashup runtime.
 
 ## Installation
+
 
 1. Download the zip package listed under the downloads section under [**Releases**](/placatus/MonacoScriptEditorWidget/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
 
@@ -18,6 +17,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
 
 3. If you are using **ThingWorx 8.4.X** and want to use Monaco Script Editor within the New Composer, also do the following steps.
 
+### Option 1
    1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
    2. Edit the file `index.html`.
    3. After _line 9_, after the existing `<script>` tag, add the following: 
@@ -25,7 +25,28 @@ This project offers compatibility with both the **Old Composer** and the **New C
    ```html
    <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
    ```
+   
+   
+### Option 2
 
+Install a browser userscript extension. One popular one is TamperMonkey [Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) [firefox](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+Install the following script:
+```
+// ==UserScript==
+// @name         Load Monaco Remote
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Loads the monaco editor in the new composer
+// @author       You
+// @match        */Thingworx/Composer/index.html
+// @grant        none
+// ==/UserScript==
+
+var script = document.createElement("script");
+script.src = "/Thingworx/Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js";
+script.charset = "UTF-8";
+document.getElementsByTagName("head")[0].appendChild(script);
+```
 Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
 
 ### Removing
