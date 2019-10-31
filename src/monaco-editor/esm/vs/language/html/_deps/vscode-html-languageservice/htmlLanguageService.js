@@ -39,4 +39,3 @@ export function getLanguageService(options) {
 export function newHTMLDataProvider(id, customData) {
     return new HTMLDataProvider(id, customData);
 }
-//# sourceMappingURL=htmlLanguageService.js.map

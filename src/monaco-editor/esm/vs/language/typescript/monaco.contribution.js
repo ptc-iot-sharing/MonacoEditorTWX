@@ -6,6 +6,7 @@ import '../../editor/editor.api.js';
 'use strict';
 import * as tsDefinitions from '../../basic-languages/typescript/typescript.js';
 import * as jsDefinitions from '../../basic-languages/javascript/javascript.js';
+import { typescriptVersion } from './lib/typescriptServicesMetadata'; // do not import the whole typescriptServices here
 var Emitter = monaco.Emitter;
 var LanguageServiceDefaultsImpl = /** @class */ (function () {
     function LanguageServiceDefaultsImpl(langualgeId, compilerOptions, diagnosticsOptions) {
@@ -121,7 +122,7 @@ var ModuleKind;
     ModuleKind[ModuleKind["UMD"] = 3] = "UMD";
     ModuleKind[ModuleKind["System"] = 4] = "System";
     ModuleKind[ModuleKind["ES2015"] = 5] = "ES2015";
-    ModuleKind[ModuleKind["ESNext"] = 6] = "ESNext";
+    ModuleKind[ModuleKind["ESNext"] = 99] = "ESNext";
 })(ModuleKind || (ModuleKind = {}));
 var JsxEmit;
 (function (JsxEmit) {
@@ -143,9 +144,11 @@ var ScriptTarget;
     ScriptTarget[ScriptTarget["ES2016"] = 3] = "ES2016";
     ScriptTarget[ScriptTarget["ES2017"] = 4] = "ES2017";
     ScriptTarget[ScriptTarget["ES2018"] = 5] = "ES2018";
-    ScriptTarget[ScriptTarget["ESNext"] = 6] = "ESNext";
+    ScriptTarget[ScriptTarget["ES2019"] = 6] = "ES2019";
+    ScriptTarget[ScriptTarget["ES2020"] = 7] = "ES2020";
+    ScriptTarget[ScriptTarget["ESNext"] = 99] = "ESNext";
     ScriptTarget[ScriptTarget["JSON"] = 100] = "JSON";
-    ScriptTarget[ScriptTarget["Latest"] = 6] = "Latest";
+    ScriptTarget[ScriptTarget["Latest"] = 99] = "Latest";
 })(ScriptTarget || (ScriptTarget = {}));
 var ModuleResolutionKind;
 (function (ModuleResolutionKind) {
@@ -216,6 +219,7 @@ function createAPI() {
         ModuleResolutionKind: ModuleResolutionKind,
         typescriptDefaults: getLanguageDefaults("typescript"),
         javascriptDefaults: getLanguageDefaults("javascript"),
+        typescriptVersion: typescriptVersion,
         getLanguageDefaults: getLanguageDefaults,
         getTypeScriptWorker: getTypeScriptWorker,
         getJavaScriptWorker: getJavaScriptWorker,

@@ -24,6 +24,7 @@ var AbstractCodeEditorService = /** @class */ (function (_super) {
         _this._onCodeEditorAdd = _this._register(new Emitter());
         _this.onCodeEditorAdd = _this._onCodeEditorAdd.event;
         _this._onCodeEditorRemove = _this._register(new Emitter());
+        _this.onCodeEditorRemove = _this._onCodeEditorRemove.event;
         _this._onDiffEditorAdd = _this._register(new Emitter());
         _this._onDiffEditorRemove = _this._register(new Emitter());
         _this._codeEditors = Object.create(null);

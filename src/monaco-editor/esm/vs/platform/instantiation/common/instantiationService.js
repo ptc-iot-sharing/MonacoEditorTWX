@@ -16,13 +16,23 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import { illegalState } from '../../../base/common/errors.js';
-import { create } from '../../../base/common/types.js';
 import { Graph } from './graph.js';
 import { SyncDescriptor } from './descriptors.js';
 import { IInstantiationService, _util, optional } from './instantiation.js';
 import { ServiceCollection } from './serviceCollection.js';
+import { IdleValue } from '../../../base/common/async.js';
 // TRACING
 var _enableTracing = false;
+var _canUseProxy = typeof Proxy === 'function';
+var CyclicDependencyError = /** @class */ (function (_super) {
+    __extends(CyclicDependencyError, _super);
+    function CyclicDependencyError(graph) {
+        var _this = _super.call(this, 'cyclic dependency between services') || this;
+        _this.message = graph.toString();
+        return _this;
+    }
+    return CyclicDependencyError;
+}(Error));
 var InstantiationService = /** @class */ (function () {
     function InstantiationService(services, strict, parent) {
         if (services === void 0) { services = new ServiceCollection(); }
@@ -107,7 +117,7 @@ var InstantiationService = /** @class */ (function () {
             }
         }
         // now create the instance
-        return create.apply(null, [ctor].concat(args, serviceArgs));
+        return new (ctor.bind.apply(ctor, [void 0].concat(args.concat(serviceArgs))))();
     };
     InstantiationService.prototype._setServiceInstance = function (id, instance) {
         if (this._services.get(id) instanceof SyncDescriptor) {
@@ -141,25 +151,18 @@ var InstantiationService = /** @class */ (function () {
     };
     InstantiationService.prototype._createAndCacheServiceInstance = function (id, desc, _trace) {
         var graph = new Graph(function (data) { return data.id.toString(); });
-        function throwCycleError() {
-            var err = new Error('[createInstance] cyclic dependency between services');
-            err.message = graph.toString();
-            throw err;
-        }
-        var count = 0;
+        var cycleCount = 0;
         var stack = [{ id: id, desc: desc, _trace: _trace }];
         while (stack.length) {
             var item = stack.pop();
             graph.lookupOrInsertNode(item);
-            // TODO@joh use the graph to find a cycle
-            // a weak heuristic for cycle checks
-            if (count++ > 100) {
-                throwCycleError();
+            // a weak but working heuristic for cycle checks
+            if (cycleCount++ > 100) {
+                throw new CyclicDependencyError(graph);
             }
             // check all dependencies for existence and if they need to be created first
-            var dependencies = _util.getServiceDependencies(item.desc.ctor);
-            for (var _i = 0, dependencies_1 = dependencies; _i < dependencies_1.length; _i++) {
-                var dependency = dependencies_1[_i];
+            for (var _i = 0, _a = _util.getServiceDependencies(item.desc.ctor); _i < _a.length; _i++) {
+                var dependency = _a[_i];
                 var instanceOrDesc = this._getServiceInstanceOrDescriptor(dependency.id);
                 if (!instanceOrDesc && !dependency.optional) {
                     console.warn("[createInstance] " + id + " depends on " + dependency.id + " which is NOT registered.");
@@ -177,12 +180,12 @@ var InstantiationService = /** @class */ (function () {
             // nodes in the graph we have a cycle
             if (roots.length === 0) {
                 if (!graph.isEmpty()) {
-                    throwCycleError();
+                    throw new CyclicDependencyError(graph);
                 }
                 break;
             }
-            for (var _a = 0, roots_1 = roots; _a < roots_1.length; _a++) {
-                var data = roots_1[_a].data;
+            for (var _b = 0, roots_1 = roots; _b < roots_1.length; _b++) {
+                var data = roots_1[_b].data;
                 // create instance and overwrite the service collections
                 var instance = this._createServiceInstanceWithOwner(data.id, data.desc.ctor, data.desc.staticArguments, data.desc.supportsDelayedInstantiation, data._trace);
                 this._setServiceInstance(data.id, instance);
@@ -204,8 +207,27 @@ var InstantiationService = /** @class */ (function () {
         }
     };
     InstantiationService.prototype._createServiceInstance = function (ctor, args, _supportsDelayedInstantiation, _trace) {
+        var _this = this;
         if (args === void 0) { args = []; }
-        return this._createInstance(ctor, args, _trace);
+        if (!_supportsDelayedInstantiation || !_canUseProxy) {
+            // eager instantiation or no support JS proxies (e.g. IE11)
+            return this._createInstance(ctor, args, _trace);
+        }
+        else {
+            // Return a proxy object that's backed by an idle value. That
+            // strategy is to instantiate services in our idle time or when actually
+            // needed but not when injected into a consumer
+            var idle_1 = new IdleValue(function () { return _this._createInstance(ctor, args, _trace); });
+            return new Proxy(Object.create(null), {
+                get: function (_target, prop) {
+                    return idle_1.getValue()[prop];
+                },
+                set: function (_target, p, value) {
+                    idle_1.getValue()[p] = value;
+                    return true;
+                }
+            });
+        }
     };
     return InstantiationService;
 }());

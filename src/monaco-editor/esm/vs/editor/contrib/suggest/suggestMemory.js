@@ -25,8 +25,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { LRUCache, TernarySearchTree } from '../../../base/common/map.js';
-import { IStorageService } from '../../../platform/storage/common/storage.js';
-import { completionKindFromLegacyString } from '../../common/modes.js';
+import { IStorageService, WillSaveStateReason } from '../../../platform/storage/common/storage.js';
+import { completionKindFromString } from '../../common/modes.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
@@ -39,10 +39,10 @@ var Memory = /** @class */ (function () {
         if (items.length === 0) {
             return 0;
         }
-        var topScore = items[0].score;
+        var topScore = items[0].score[0];
         for (var i = 1; i < items.length; i++) {
             var _a = items[i], score = _a.score, suggestion = _a.completion;
-            if (score !== topScore) {
+            if (score[0] !== topScore) {
                 // stop when leaving the group of top matches
                 break;
             }
@@ -91,32 +91,41 @@ var LRUMemory = /** @class */ (function (_super) {
         });
     };
     LRUMemory.prototype.select = function (model, pos, items) {
-        // in order of completions, select the first
-        // that has been used in the past
-        var word = model.getWordUntilPosition(pos).word;
-        if (word.length !== 0) {
-            return _super.prototype.select.call(this, model, pos, items);
+        if (items.length === 0) {
+            return 0;
         }
         var lineSuffix = model.getLineContent(pos.lineNumber).substr(pos.column - 10, pos.column - 1);
         if (/\s$/.test(lineSuffix)) {
             return _super.prototype.select.call(this, model, pos, items);
         }
-        var res = -1;
+        var topScore = items[0].score[0];
+        var indexPreselect = -1;
+        var indexRecency = -1;
         var seq = -1;
         for (var i = 0; i < items.length; i++) {
-            var suggestion = items[i].completion;
-            var key = model.getLanguageIdentifier().language + "/" + suggestion.label;
-            var item = this._cache.get(key);
-            if (item && item.touch > seq && item.type === suggestion.kind && item.insertText === suggestion.insertText) {
+            if (items[i].score[0] !== topScore) {
+                // consider only top items
+                break;
+            }
+            var key = model.getLanguageIdentifier().language + "/" + items[i].completion.label;
+            var item = this._cache.peek(key);
+            if (item && item.touch > seq && item.type === items[i].completion.kind && item.insertText === items[i].completion.insertText) {
                 seq = item.touch;
-                res = i;
+                indexRecency = i;
+            }
+            if (items[i].completion.preselect && indexPreselect === -1) {
+                // stop when seeing an auto-select-item
+                return indexPreselect = i;
             }
         }
-        if (res === -1) {
-            return _super.prototype.select.call(this, model, pos, items);
+        if (indexRecency !== -1) {
+            return indexRecency;
+        }
+        else if (indexPreselect !== -1) {
+            return indexPreselect;
         }
         else {
-            return res;
+            return 0;
         }
     };
     LRUMemory.prototype.toJSON = function () {
@@ -132,7 +141,7 @@ var LRUMemory = /** @class */ (function (_super) {
         for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
             var _a = data_1[_i], key = _a[0], value = _a[1];
             value.touch = seq;
-            value.type = typeof value.type === 'number' ? value.type : completionKindFromLegacyString(value.type);
+            value.type = typeof value.type === 'number' ? value.type : completionKindFromString(value.type);
             this._cache.set(key, value);
         }
         this._seq = this._cache.size;
@@ -194,7 +203,7 @@ var PrefixMemory = /** @class */ (function (_super) {
             this._seq = data[0][1].touch + 1;
             for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
                 var _a = data_2[_i], key = _a[0], value = _a[1];
-                value.type = typeof value.type === 'number' ? value.type : completionKindFromLegacyString(value.type);
+                value.type = typeof value.type === 'number' ? value.type : completionKindFromString(value.type);
                 this._trie.set(key, value);
             }
         }
@@ -215,7 +224,11 @@ var SuggestMemoryService = /** @class */ (function (_super) {
             _this._update(mode, share, false);
         };
         _this._persistSoon = _this._register(new RunOnceScheduler(function () { return _this._saveState(); }, 500));
-        _this._register(_storageService.onWillSaveState(function () { return _this._saveState(); }));
+        _this._register(_storageService.onWillSaveState(function (e) {
+            if (e.reason === WillSaveStateReason.SHUTDOWN) {
+                _this._saveState();
+            }
+        }));
         _this._register(_this._configService.onDidChangeConfiguration(function (e) {
             if (e.affectsConfiguration('editor.suggestSelection') || e.affectsConfiguration('editor.suggest.shareSuggestSelections')) {
                 update();

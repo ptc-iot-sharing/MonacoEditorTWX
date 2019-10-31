@@ -48,6 +48,9 @@ var ConfigurationModel = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    ConfigurationModel.prototype.isEmpty = function () {
+        return this._keys.length === 0 && Object.keys(this._contents).length === 0 && this._overrides.length === 0;
+    };
     ConfigurationModel.prototype.getValue = function (section) {
         return section ? getConfigurationValue(this.contents, section) : this.contents;
     };
@@ -202,14 +205,16 @@ var DefaultConfigurationModel = /** @class */ (function (_super) {
 }(ConfigurationModel));
 export { DefaultConfigurationModel };
 var Configuration = /** @class */ (function () {
-    function Configuration(_defaultConfiguration, _userConfiguration, _workspaceConfiguration, _folderConfigurations, _memoryConfiguration, _memoryConfigurationByResource, _freeze) {
+    function Configuration(_defaultConfiguration, _localUserConfiguration, _remoteUserConfiguration, _workspaceConfiguration, _folderConfigurations, _memoryConfiguration, _memoryConfigurationByResource, _freeze) {
+        if (_remoteUserConfiguration === void 0) { _remoteUserConfiguration = new ConfigurationModel(); }
         if (_workspaceConfiguration === void 0) { _workspaceConfiguration = new ConfigurationModel(); }
         if (_folderConfigurations === void 0) { _folderConfigurations = new ResourceMap(); }
         if (_memoryConfiguration === void 0) { _memoryConfiguration = new ConfigurationModel(); }
         if (_memoryConfigurationByResource === void 0) { _memoryConfigurationByResource = new ResourceMap(); }
         if (_freeze === void 0) { _freeze = true; }
         this._defaultConfiguration = _defaultConfiguration;
-        this._userConfiguration = _userConfiguration;
+        this._localUserConfiguration = _localUserConfiguration;
+        this._remoteUserConfiguration = _remoteUserConfiguration;
         this._workspaceConfiguration = _workspaceConfiguration;
         this._folderConfigurations = _folderConfigurations;
         this._memoryConfiguration = _memoryConfiguration;
@@ -251,13 +256,42 @@ var Configuration = /** @class */ (function () {
         var memoryConfigurationModel = overrides.resource ? this._memoryConfigurationByResource.get(overrides.resource) || this._memoryConfiguration : this._memoryConfiguration;
         return {
             default: overrides.overrideIdentifier ? this._defaultConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._defaultConfiguration.freeze().getValue(key),
-            user: overrides.overrideIdentifier ? this._userConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._userConfiguration.freeze().getValue(key),
+            user: overrides.overrideIdentifier ? this.userConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.userConfiguration.freeze().getValue(key),
+            userLocal: overrides.overrideIdentifier ? this.localUserConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.localUserConfiguration.freeze().getValue(key),
+            userRemote: overrides.overrideIdentifier ? this.remoteUserConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.remoteUserConfiguration.freeze().getValue(key),
             workspace: workspace ? overrides.overrideIdentifier ? this._workspaceConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._workspaceConfiguration.freeze().getValue(key) : undefined,
             workspaceFolder: folderConfigurationModel ? overrides.overrideIdentifier ? folderConfigurationModel.freeze().override(overrides.overrideIdentifier).getValue(key) : folderConfigurationModel.freeze().getValue(key) : undefined,
             memory: overrides.overrideIdentifier ? memoryConfigurationModel.override(overrides.overrideIdentifier).getValue(key) : memoryConfigurationModel.getValue(key),
             value: consolidateConfigurationModel.getValue(key)
         };
     };
+    Object.defineProperty(Configuration.prototype, "userConfiguration", {
+        get: function () {
+            if (!this._userConfiguration) {
+                this._userConfiguration = this._remoteUserConfiguration.isEmpty() ? this._localUserConfiguration : this._localUserConfiguration.merge(this._remoteUserConfiguration);
+                if (this._freeze) {
+                    this._userConfiguration.freeze();
+                }
+            }
+            return this._userConfiguration;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Configuration.prototype, "localUserConfiguration", {
+        get: function () {
+            return this._localUserConfiguration;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Configuration.prototype, "remoteUserConfiguration", {
+        get: function () {
+            return this._remoteUserConfiguration;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Configuration.prototype.getConsolidateConfigurationModel = function (overrides, workspace) {
         var configurationModel = this.getConsolidatedConfigurationModelForResource(overrides, workspace);
         return overrides.overrideIdentifier ? configurationModel.override(overrides.overrideIdentifier) : configurationModel;
@@ -279,7 +313,7 @@ var Configuration = /** @class */ (function () {
     };
     Configuration.prototype.getWorkspaceConsolidatedConfiguration = function () {
         if (!this._workspaceConsolidatedConfiguration) {
-            this._workspaceConsolidatedConfiguration = this._defaultConfiguration.merge(this._userConfiguration, this._workspaceConfiguration, this._memoryConfiguration);
+            this._workspaceConsolidatedConfiguration = this._defaultConfiguration.merge(this.userConfiguration, this._workspaceConfiguration, this._memoryConfiguration);
             if (this._freeze) {
                 this._workspaceConfiguration = this._workspaceConfiguration.freeze();
             }
@@ -308,7 +342,7 @@ var Configuration = /** @class */ (function () {
         if (workspace && resource) {
             var root = workspace.getFolder(resource);
             if (root) {
-                return this._folderConfigurations.get(root.uri) || null;
+                return types.withUndefinedAsNull(this._folderConfigurations.get(root.uri));
             }
         }
         return null;

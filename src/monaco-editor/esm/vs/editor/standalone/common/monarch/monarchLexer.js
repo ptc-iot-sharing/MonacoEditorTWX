@@ -174,7 +174,6 @@ var MonarchLineState = /** @class */ (function () {
     };
     return MonarchLineState;
 }());
-var hasOwnProperty = Object.hasOwnProperty;
 var MonarchClassicTokensCollector = /** @class */ (function () {
     function MonarchClassicTokensCollector() {
         this._tokens = [];
@@ -317,21 +316,23 @@ var MonarchTokenizer = /** @class */ (function () {
     MonarchTokenizer.prototype.getLoadStatus = function () {
         var promises = [];
         for (var nestedModeId in this._embeddedModes) {
-            var tokenizationSupport = modes.TokenizationRegistry.get(nestedModeId);
-            if (tokenizationSupport) {
-                // The nested mode is already loaded
-                if (tokenizationSupport instanceof MonarchTokenizer) {
-                    var nestedModeStatus = tokenizationSupport.getLoadStatus();
-                    if (nestedModeStatus.loaded === false) {
-                        promises.push(nestedModeStatus.promise);
+            if (this._embeddedModes.hasOwnProperty(nestedModeId)) {
+                var tokenizationSupport = modes.TokenizationRegistry.get(nestedModeId);
+                if (tokenizationSupport) {
+                    // The nested mode is already loaded
+                    if (tokenizationSupport instanceof MonarchTokenizer) {
+                        var nestedModeStatus = tokenizationSupport.getLoadStatus();
+                        if (nestedModeStatus.loaded === false) {
+                            promises.push(nestedModeStatus.promise);
+                        }
                     }
+                    continue;
                 }
-                continue;
-            }
-            var tokenizationSupportPromise = modes.TokenizationRegistry.getPromise(nestedModeId);
-            if (tokenizationSupportPromise) {
-                // The nested mode is in the process of being loaded
-                promises.push(tokenizationSupportPromise);
+                var tokenizationSupportPromise = modes.TokenizationRegistry.getPromise(nestedModeId);
+                if (tokenizationSupportPromise) {
+                    // The nested mode is in the process of being loaded
+                    promises.push(tokenizationSupportPromise);
+                }
             }
         }
         if (promises.length === 0) {
@@ -376,11 +377,8 @@ var MonarchTokenizer = /** @class */ (function () {
         }
         var popOffset = -1;
         var hasEmbeddedPopRule = false;
-        for (var idx in rules) {
-            if (!hasOwnProperty.call(rules, idx)) {
-                continue;
-            }
-            var rule = rules[idx];
+        for (var _i = 0, rules_1 = rules; _i < rules_1.length; _i++) {
+            var rule = rules_1[_i];
             if (!monarchCommon.isIAction(rule.action) || rule.action.nextEmbedded !== '@pop') {
                 continue;
             }
@@ -473,16 +471,14 @@ var MonarchTokenizer = /** @class */ (function () {
                 }
                 // try each rule until we match
                 var restOfLine = line.substr(pos);
-                for (var idx in rules) {
-                    if (hasOwnProperty.call(rules, idx)) {
-                        var rule_1 = rules[idx];
-                        if (pos === 0 || !rule_1.matchOnlyAtLineStart) {
-                            matches = restOfLine.match(rule_1.regex);
-                            if (matches) {
-                                matched = matches[0];
-                                action = rule_1.action;
-                                break;
-                            }
+                for (var _i = 0, rules_2 = rules; _i < rules_2.length; _i++) {
+                    var rule_1 = rules_2[_i];
+                    if (pos === 0 || !rule_1.matchOnlyAtLineStart) {
+                        matches = restOfLine.match(rule_1.regex);
+                        if (matches) {
+                            matched = matches[0];
+                            action = rule_1.action;
+                            break;
                         }
                     }
                 }
@@ -700,6 +696,10 @@ var MonarchTokenizer = /** @class */ (function () {
     MonarchTokenizer.prototype._locateMode = function (mimetypeOrModeId) {
         if (!mimetypeOrModeId || !this._modeService.isRegisteredMode(mimetypeOrModeId)) {
             return null;
+        }
+        if (mimetypeOrModeId === this._modeId) {
+            // embedding myself...
+            return mimetypeOrModeId;
         }
         var modeId = this._modeService.getModeId(mimetypeOrModeId);
         if (modeId) {

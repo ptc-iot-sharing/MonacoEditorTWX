@@ -2239,4 +2239,3 @@ export var entities = {
     "zwj;": "\u200D",
     "zwnj;": "\u200C"
 };
-//# sourceMappingURL=htmlEntities.js.map

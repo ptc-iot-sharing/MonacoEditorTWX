@@ -172,4 +172,3 @@ function getAttributeLevelRanges(document, currNode, currOffset) {
         return [pair[0] + positionOffset, pair[1] + positionOffset];
     });
 }
-//# sourceMappingURL=htmlSelectionRange.js.map

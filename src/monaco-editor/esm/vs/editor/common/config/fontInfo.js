@@ -88,7 +88,8 @@ var BareFontInfo = /** @class */ (function () {
     /**
      * @internal
      */
-    BareFontInfo.createFromRawSettings = function (opts, zoomLevel) {
+    BareFontInfo.createFromRawSettings = function (opts, zoomLevel, ignoreEditorZoom) {
+        if (ignoreEditorZoom === void 0) { ignoreEditorZoom = false; }
         var fontFamily = _string(opts.fontFamily, EDITOR_FONT_DEFAULTS.fontFamily);
         var fontWeight = _string(opts.fontWeight, EDITOR_FONT_DEFAULTS.fontWeight);
         var fontSize = safeParseFloat(opts.fontSize, EDITOR_FONT_DEFAULTS.fontSize);
@@ -109,7 +110,7 @@ var BareFontInfo = /** @class */ (function () {
         }
         var letterSpacing = safeParseFloat(opts.letterSpacing, 0);
         letterSpacing = clamp(letterSpacing, MINIMUM_LETTER_SPACING, MAXIMUM_LETTER_SPACING);
-        var editorZoomLevelMultiplier = 1 + (EditorZoom.getZoomLevel() * 0.1);
+        var editorZoomLevelMultiplier = 1 + (ignoreEditorZoom ? 0 : EditorZoom.getZoomLevel() * 0.1);
         fontSize *= editorZoomLevelMultiplier;
         lineHeight *= editorZoomLevelMultiplier;
         return new BareFontInfo({

@@ -224,6 +224,7 @@ var DiffComputer = /** @class */ (function () {
         this.modifiedLines = modifiedLines;
         this.original = new LineMarkerSequence(originalLines);
         this.modified = new LineMarkerSequence(modifiedLines);
+        this.computationStartTime = (new Date()).getTime();
     }
     DiffComputer.prototype.computeDiff = function () {
         if (this.original.getLength() === 1 && this.original.getElementAtIndex(0).length === 0) {

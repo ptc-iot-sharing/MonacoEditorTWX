@@ -5,6 +5,8 @@
 'use strict';
 import * as htmlService from './_deps/vscode-html-languageservice/htmlLanguageService.js';
 import * as ls from './_deps/vscode-languageserver-types/main.js';
+import * as poli from './fillers/polyfills.js';
+poli.polyfill();
 var HTMLWorker = /** @class */ (function () {
     function HTMLWorker(ctx, createData) {
         this._ctx = ctx;

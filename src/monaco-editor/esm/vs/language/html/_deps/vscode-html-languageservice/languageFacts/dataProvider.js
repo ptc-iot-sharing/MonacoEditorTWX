@@ -93,4 +93,3 @@ var HTMLDataProvider = /** @class */ (function () {
     return HTMLDataProvider;
 }());
 export { HTMLDataProvider };
-//# sourceMappingURL=dataProvider.js.map

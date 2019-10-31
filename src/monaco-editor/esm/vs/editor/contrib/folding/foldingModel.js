@@ -7,6 +7,7 @@ import { FoldingRegions } from './foldingRanges.js';
 var FoldingModel = /** @class */ (function () {
     function FoldingModel(textModel, decorationProvider) {
         this._updateEventEmitter = new Emitter();
+        this.onDidChange = this._updateEventEmitter.event;
         this._textModel = textModel;
         this._decorationProvider = decorationProvider;
         this._regions = new FoldingRegions(new Uint32Array(0), new Uint32Array(0));
@@ -15,11 +16,6 @@ var FoldingModel = /** @class */ (function () {
     }
     Object.defineProperty(FoldingModel.prototype, "regions", {
         get: function () { return this._regions; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(FoldingModel.prototype, "onDidChange", {
-        get: function () { return this._updateEventEmitter.event; },
         enumerable: true,
         configurable: true
     });

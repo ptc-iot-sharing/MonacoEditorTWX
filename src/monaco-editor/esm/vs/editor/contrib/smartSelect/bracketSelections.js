@@ -172,8 +172,8 @@ var BracketSelectionRangeProvider = /** @class */ (function () {
                         }
                         var innerBracket = Range.fromPositions(bracket.range.getEndPosition(), closing.getStartPosition());
                         var outerBracket = Range.fromPositions(bracket.range.getStartPosition(), closing.getEndPosition());
-                        bucket.push({ range: innerBracket, kind: 'statement.brackets' });
-                        bucket.push({ range: outerBracket, kind: 'statement.brackets.full' });
+                        bucket.push({ range: innerBracket });
+                        bucket.push({ range: outerBracket });
                         BracketSelectionRangeProvider._addBracketLeading(model, outerBracket, bucket);
                     }
                 }
@@ -191,8 +191,8 @@ var BracketSelectionRangeProvider = /** @class */ (function () {
         var startLine = bracket.startLineNumber;
         var column = model.getLineFirstNonWhitespaceColumn(startLine);
         if (column !== 0 && column !== bracket.startColumn) {
-            bucket.push({ range: Range.fromPositions(new Position(startLine, column), bracket.getEndPosition()), kind: 'statement.brackets.leading' });
-            bucket.push({ range: Range.fromPositions(new Position(startLine, 1), bracket.getEndPosition()), kind: 'statement.brackets.leading.full' });
+            bucket.push({ range: Range.fromPositions(new Position(startLine, column), bracket.getEndPosition()) });
+            bucket.push({ range: Range.fromPositions(new Position(startLine, 1), bracket.getEndPosition()) });
         }
         // xxxxxxxx
         // {
@@ -202,8 +202,8 @@ var BracketSelectionRangeProvider = /** @class */ (function () {
         if (aboveLine > 0) {
             var column_1 = model.getLineFirstNonWhitespaceColumn(aboveLine);
             if (column_1 === bracket.startColumn && column_1 !== model.getLineLastNonWhitespaceColumn(aboveLine)) {
-                bucket.push({ range: Range.fromPositions(new Position(aboveLine, column_1), bracket.getEndPosition()), kind: 'statement.brackets.leading' });
-                bucket.push({ range: Range.fromPositions(new Position(aboveLine, 1), bracket.getEndPosition()), kind: 'statement.brackets.leading.full' });
+                bucket.push({ range: Range.fromPositions(new Position(aboveLine, column_1), bracket.getEndPosition()) });
+                bucket.push({ range: Range.fromPositions(new Position(aboveLine, 1), bracket.getEndPosition()) });
             }
         }
     };

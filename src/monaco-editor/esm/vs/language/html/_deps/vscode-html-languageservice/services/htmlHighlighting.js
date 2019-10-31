@@ -41,4 +41,3 @@ function getTagNameRange(tokenType, document, startOffset) {
     }
     return null;
 }
-//# sourceMappingURL=htmlHighlighting.js.map

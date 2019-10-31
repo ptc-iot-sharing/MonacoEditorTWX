@@ -8,4 +8,3 @@ export var VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', '
 export function isVoidElement(e) {
     return !!e && arrays.binarySearch(VOID_ELEMENTS, e.toLowerCase(), function (s1, s2) { return s1.localeCompare(s2); }) >= 0;
 }
-//# sourceMappingURL=fact.js.map

@@ -60,4 +60,3 @@ export function doHover(document, position, htmlDocument) {
     }
     return null;
 }
-//# sourceMappingURL=htmlHover.js.map

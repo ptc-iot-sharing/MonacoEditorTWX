@@ -327,6 +327,19 @@ var LinkedMap = /** @class */ (function () {
             this._size++;
         }
     };
+    LinkedMap.prototype.delete = function (key) {
+        return !!this.remove(key);
+    };
+    LinkedMap.prototype.remove = function (key) {
+        var item = this._map.get(key);
+        if (!item) {
+            return undefined;
+        }
+        this._map.delete(key);
+        this.removeItem(item);
+        this._size--;
+        return item.value;
+    };
     LinkedMap.prototype.forEach = function (callbackfn, thisArg) {
         var current = this._head;
         while (current) {
@@ -341,14 +354,14 @@ var LinkedMap = /** @class */ (function () {
     };
     /* VS Code / Monaco editor runs on es5 which has no Symbol.iterator
     keys(): IterableIterator<K> {
-        let current = this._head;
-        let iterator: IterableIterator<K> = {
+        const current = this._head;
+        const iterator: IterableIterator<K> = {
             [Symbol.iterator]() {
                 return iterator;
             },
             next():IteratorResult<K> {
                 if (current) {
-                    let result = { value: current.key, done: false };
+                    const result = { value: current.key, done: false };
                     current = current.next;
                     return result;
                 } else {
@@ -360,14 +373,14 @@ var LinkedMap = /** @class */ (function () {
     }
 
     values(): IterableIterator<V> {
-        let current = this._head;
-        let iterator: IterableIterator<V> = {
+        const current = this._head;
+        const iterator: IterableIterator<V> = {
             [Symbol.iterator]() {
                 return iterator;
             },
             next():IteratorResult<V> {
                 if (current) {
-                    let result = { value: current.value, done: false };
+                    const result = { value: current.value, done: false };
                     current = current.next;
                     return result;
                 } else {
@@ -426,6 +439,41 @@ var LinkedMap = /** @class */ (function () {
             this._tail.next = item;
         }
         this._tail = item;
+    };
+    LinkedMap.prototype.removeItem = function (item) {
+        if (item === this._head && item === this._tail) {
+            this._head = undefined;
+            this._tail = undefined;
+        }
+        else if (item === this._head) {
+            // This can only happend if size === 1 which is handle
+            // by the case above.
+            if (!item.next) {
+                throw new Error('Invalid list');
+            }
+            item.next.previous = undefined;
+            this._head = item.next;
+        }
+        else if (item === this._tail) {
+            // This can only happend if size === 1 which is handle
+            // by the case above.
+            if (!item.previous) {
+                throw new Error('Invalid list');
+            }
+            item.previous.next = undefined;
+            this._tail = item.previous;
+        }
+        else {
+            var next = item.next;
+            var previous = item.previous;
+            if (!next || !previous) {
+                throw new Error('Invalid list');
+            }
+            next.previous = previous;
+            previous.next = next;
+        }
+        item.next = undefined;
+        item.previous = undefined;
     };
     LinkedMap.prototype.touch = function (item, touch) {
         if (!this._head || !this._tail) {
@@ -503,6 +551,9 @@ var LRUCache = /** @class */ (function (_super) {
     }
     LRUCache.prototype.get = function (key) {
         return _super.prototype.get.call(this, key, 2 /* AsNew */);
+    };
+    LRUCache.prototype.peek = function (key) {
+        return _super.prototype.get.call(this, key, 0 /* None */);
     };
     LRUCache.prototype.set = function (key, value) {
         _super.prototype.set.call(this, key, value, 2 /* AsNew */);

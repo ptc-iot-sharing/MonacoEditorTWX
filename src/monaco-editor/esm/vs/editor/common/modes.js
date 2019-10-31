@@ -110,7 +110,7 @@ export var completionKindToCssClass = (function () {
 /**
  * @internal
  */
-export var completionKindFromLegacyString = (function () {
+export var completionKindFromString = (function () {
     var data = Object.create(null);
     data['method'] = 0 /* Method */;
     data['function'] = 1 /* Function */;
@@ -129,6 +129,7 @@ export var completionKindFromLegacyString = (function () {
     data['constant'] = 14 /* Constant */;
     data['enum'] = 15 /* Enum */;
     data['enum-member'] = 16 /* EnumMember */;
+    data['enumMember'] = 16 /* EnumMember */;
     data['keyword'] = 17 /* Keyword */;
     data['snippet'] = 25 /* Snippet */;
     data['text'] = 18 /* Text */;
@@ -138,8 +139,13 @@ export var completionKindFromLegacyString = (function () {
     data['customcolor'] = 22 /* Customcolor */;
     data['folder'] = 23 /* Folder */;
     data['type-parameter'] = 24 /* TypeParameter */;
-    return function (value) {
-        return data[value] || 'property';
+    data['typeParameter'] = 24 /* TypeParameter */;
+    return function (value, strict) {
+        var res = data[value];
+        if (typeof res === 'undefined' && !strict) {
+            res = 9 /* Property */;
+        }
+        return res;
     };
 })();
 export var SignatureHelpTriggerKind;

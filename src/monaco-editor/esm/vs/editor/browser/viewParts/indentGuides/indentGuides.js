@@ -30,6 +30,8 @@ var IndentGuidesOverlay = /** @class */ (function (_super) {
         _this._spaceWidth = _this._context.configuration.editor.fontInfo.spaceWidth;
         _this._enabled = _this._context.configuration.editor.viewInfo.renderIndentGuides;
         _this._activeIndentEnabled = _this._context.configuration.editor.viewInfo.highlightActiveIndentGuide;
+        var wrappingColumn = _this._context.configuration.editor.wrappingInfo.wrappingColumn;
+        _this._maxIndentLeft = wrappingColumn === -1 ? -1 : (wrappingColumn * _this._context.configuration.editor.fontInfo.typicalHalfwidthCharacterWidth);
         _this._renderResult = null;
         _this._context.addEventHandler(_this);
         return _this;
@@ -50,6 +52,10 @@ var IndentGuidesOverlay = /** @class */ (function (_super) {
         if (e.viewInfo) {
             this._enabled = this._context.configuration.editor.viewInfo.renderIndentGuides;
             this._activeIndentEnabled = this._context.configuration.editor.viewInfo.highlightActiveIndentGuide;
+        }
+        if (e.wrappingInfo || e.fontInfo) {
+            var wrappingColumn = this._context.configuration.editor.wrappingInfo.wrappingColumn;
+            this._maxIndentLeft = wrappingColumn === -1 ? -1 : (wrappingColumn * this._context.configuration.editor.fontInfo.typicalHalfwidthCharacterWidth);
         }
         return true;
     };
@@ -121,7 +127,7 @@ var IndentGuidesOverlay = /** @class */ (function (_super) {
                 var className = (containsActiveIndentGuide && i === activeIndentLevel ? 'cigra' : 'cigr');
                 result += "<div class=\"" + className + "\" style=\"left:" + left + "px;height:" + lineHeight + "px;width:" + indentWidth + "px\"></div>";
                 left += indentWidth;
-                if (left > scrollWidth) {
+                if (left > scrollWidth || (this._maxIndentLeft > 0 && left > this._maxIndentLeft)) {
                     break;
                 }
             }

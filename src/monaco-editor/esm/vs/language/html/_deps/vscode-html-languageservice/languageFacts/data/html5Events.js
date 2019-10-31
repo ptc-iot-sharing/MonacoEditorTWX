@@ -225,4 +225,3 @@ export var HTML5_EVENTS = [
         "description": "Playback has stopped because of a temporary lack of data."
     }
 ];
-//# sourceMappingURL=html5Events.js.map

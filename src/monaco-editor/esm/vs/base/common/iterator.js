@@ -27,6 +27,19 @@ export var Iterator;
         return _empty;
     }
     Iterator.empty = empty;
+    function single(value) {
+        var done = false;
+        return {
+            next: function () {
+                if (done) {
+                    return FIN;
+                }
+                done = true;
+                return { done: false, value: value };
+            }
+        };
+    }
+    Iterator.single = single;
     function fromArray(array, index, length) {
         if (index === void 0) { index = 0; }
         if (length === void 0) { length = array.length; }
@@ -88,12 +101,44 @@ export var Iterator;
         }
     }
     Iterator.forEach = forEach;
-    function collect(iterator) {
+    function collect(iterator, atMost) {
+        if (atMost === void 0) { atMost = Number.POSITIVE_INFINITY; }
         var result = [];
-        forEach(iterator, function (value) { return result.push(value); });
+        if (atMost === 0) {
+            return result;
+        }
+        var i = 0;
+        for (var next = iterator.next(); !next.done; next = iterator.next()) {
+            result.push(next.value);
+            if (++i >= atMost) {
+                break;
+            }
+        }
         return result;
     }
     Iterator.collect = collect;
+    function concat() {
+        var iterators = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            iterators[_i] = arguments[_i];
+        }
+        var i = 0;
+        return {
+            next: function () {
+                if (i >= iterators.length) {
+                    return FIN;
+                }
+                var iterator = iterators[i];
+                var result = iterator.next();
+                if (result.done) {
+                    i++;
+                    return this.next();
+                }
+                return result;
+            }
+        };
+    }
+    Iterator.concat = concat;
 })(Iterator || (Iterator = {}));
 export function getSequenceIterator(arg) {
     if (Array.isArray(arg)) {
@@ -113,6 +158,10 @@ var ArrayIterator = /** @class */ (function () {
         this.end = end;
         this.index = index;
     }
+    ArrayIterator.prototype.first = function () {
+        this.index = this.start;
+        return this.current();
+    };
     ArrayIterator.prototype.next = function () {
         this.index = Math.min(this.index + 1, this.end);
         return this.current();

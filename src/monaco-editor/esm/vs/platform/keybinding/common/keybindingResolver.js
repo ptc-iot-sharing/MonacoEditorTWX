@@ -1,4 +1,4 @@
-import { ContextKeyAndExpr } from '../../contextkey/common/contextkey.js';
+import { ContextKeyOrExpr } from '../../contextkey/common/contextkey.js';
 var KeybindingResolver = /** @class */ (function () {
     function KeybindingResolver(defaultKeybindings, overrides) {
         this._defaultKeybindings = defaultKeybindings;
@@ -128,7 +128,6 @@ var KeybindingResolver = /** @class */ (function () {
     };
     /**
      * Returns true if it is provable `a` implies `b`.
-     * **Precondition**: Assumes `a` and `b` are normalized!
      */
     KeybindingResolver.whenIsEntirelyIncluded = function (a, b) {
         if (!b) {
@@ -137,24 +136,31 @@ var KeybindingResolver = /** @class */ (function () {
         if (!a) {
             return false;
         }
-        var aExpressions = ((a instanceof ContextKeyAndExpr) ? a.expr : [a]);
-        var bExpressions = ((b instanceof ContextKeyAndExpr) ? b.expr : [b]);
-        var aIndex = 0;
-        for (var _i = 0, bExpressions_1 = bExpressions; _i < bExpressions_1.length; _i++) {
-            var bExpr = bExpressions_1[_i];
-            var bExprMatched = false;
-            while (!bExprMatched && aIndex < aExpressions.length) {
-                var aExpr = aExpressions[aIndex];
-                if (aExpr.equals(bExpr)) {
-                    bExprMatched = true;
-                }
-                aIndex++;
+        return this._implies(a, b);
+    };
+    /**
+     * Returns true if it is provable `p` implies `q`.
+     */
+    KeybindingResolver._implies = function (p, q) {
+        var notP = p.negate();
+        var terminals = function (node) {
+            if (node instanceof ContextKeyOrExpr) {
+                return node.expr;
             }
-            if (!bExprMatched) {
-                return false;
+            return [node];
+        };
+        var expr = terminals(notP).concat(terminals(q));
+        for (var i = 0; i < expr.length; i++) {
+            var a = expr[i];
+            var notA = a.negate();
+            for (var j = i + 1; j < expr.length; j++) {
+                var b = expr[j];
+                if (notA.equals(b)) {
+                    return true;
+                }
             }
         }
-        return true;
+        return false;
     };
     KeybindingResolver.prototype.lookupPrimaryKeybinding = function (commandId) {
         var items = this._lookupMap.get(commandId);

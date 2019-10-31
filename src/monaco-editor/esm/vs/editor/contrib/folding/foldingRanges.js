@@ -14,6 +14,7 @@ var FoldingRegions = /** @class */ (function () {
         this._endIndexes = endIndexes;
         this._collapseStates = new Uint32Array(Math.ceil(startIndexes.length / 32));
         this._types = types;
+        this._parentsComputed = false;
     }
     FoldingRegions.prototype.ensureParentIndices = function () {
         var _this = this;

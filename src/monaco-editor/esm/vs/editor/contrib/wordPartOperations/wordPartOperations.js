@@ -93,7 +93,7 @@ var CursorWordPartLeft = /** @class */ (function (_super) {
             inSelectionMode: false,
             wordNavigationType: 0 /* WordStart */,
             id: 'cursorWordPartLeft',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 0,
@@ -114,7 +114,7 @@ var CursorWordPartLeftSelect = /** @class */ (function (_super) {
             inSelectionMode: true,
             wordNavigationType: 0 /* WordStart */,
             id: 'cursorWordPartLeftSelect',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 0,
@@ -146,7 +146,7 @@ var CursorWordPartRight = /** @class */ (function (_super) {
             inSelectionMode: false,
             wordNavigationType: 2 /* WordEnd */,
             id: 'cursorWordPartRight',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 0,
@@ -165,7 +165,7 @@ var CursorWordPartRightSelect = /** @class */ (function (_super) {
             inSelectionMode: true,
             wordNavigationType: 2 /* WordEnd */,
             id: 'cursorWordPartRightSelect',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 0,

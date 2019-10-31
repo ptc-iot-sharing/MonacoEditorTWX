@@ -40,3 +40,6 @@ import './contrib/toggleTabFocusMode/toggleTabFocusMode.js';
 import './contrib/wordHighlighter/wordHighlighter.js';
 import './contrib/wordOperations/wordOperations.js';
 import './contrib/wordPartOperations/wordPartOperations.js';
+// Load up these strings even in VSCode, even if they are not used
+// in order to get them translated
+import './common/standaloneStrings.js';

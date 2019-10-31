@@ -9,7 +9,7 @@
  */
 export function createScanner(text, ignoreTrivia) {
     if (ignoreTrivia === void 0) { ignoreTrivia = false; }
-    var pos = 0, len = text.length, value = '', tokenOffset = 0, token = 16 /* Unknown */, scanError = 0 /* None */;
+    var pos = 0, len = text.length, value = '', tokenOffset = 0, token = 16 /* Unknown */, lineNumber = 0, lineStartOffset = 0, tokenLineStartOffset = 0, prevTokenLineStartOffset = 0, scanError = 0 /* None */;
     function scanHexDigits(count, exact) {
         var digits = 0;
         var value = 0;
@@ -166,6 +166,8 @@ export function createScanner(text, ignoreTrivia) {
         value = '';
         scanError = 0 /* None */;
         tokenOffset = pos;
+        lineStartOffset = lineNumber;
+        prevTokenLineStartOffset = tokenLineStartOffset;
         if (pos >= len) {
             // at the end
             tokenOffset = len;
@@ -189,6 +191,8 @@ export function createScanner(text, ignoreTrivia) {
                 pos++;
                 value += '\n';
             }
+            lineNumber++;
+            tokenLineStartOffset = pos;
             return token = 14 /* LineBreakTrivia */;
         }
         switch (code) {
@@ -244,6 +248,13 @@ export function createScanner(text, ignoreTrivia) {
                             break;
                         }
                         pos++;
+                        if (isLineBreak(ch)) {
+                            if (ch === 13 /* carriageReturn */ && text.charCodeAt(pos) === 10 /* lineFeed */) {
+                                pos++;
+                            }
+                            lineNumber++;
+                            tokenLineStartOffset = pos;
+                        }
                     }
                     if (!commentClosed) {
                         pos++;
@@ -333,7 +344,9 @@ export function createScanner(text, ignoreTrivia) {
         getTokenValue: function () { return value; },
         getTokenOffset: function () { return tokenOffset; },
         getTokenLength: function () { return pos - tokenOffset; },
-        getTokenError: function () { return scanError; }
+        getTokenStartLine: function () { return lineStartOffset; },
+        getTokenStartCharacter: function () { return tokenOffset - prevTokenLineStartOffset; },
+        getTokenError: function () { return scanError; },
     };
 }
 function isWhiteSpace(ch) {
@@ -347,4 +360,3 @@ function isLineBreak(ch) {
 function isDigit(ch) {
     return ch >= 48 /* _0 */ && ch <= 57 /* _9 */;
 }
-//# sourceMappingURL=scanner.js.map

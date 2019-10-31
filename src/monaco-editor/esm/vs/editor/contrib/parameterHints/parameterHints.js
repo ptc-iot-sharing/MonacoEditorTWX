@@ -25,7 +25,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import * as nls from '../../../nls.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
@@ -33,10 +33,13 @@ import { registerEditorAction, registerEditorContribution, EditorAction, EditorC
 import { ParameterHintsWidget } from './parameterHintsWidget.js';
 import { Context } from './provideSignatureHelp.js';
 import * as modes from '../../common/modes.js';
-var ParameterHintsController = /** @class */ (function () {
+var ParameterHintsController = /** @class */ (function (_super) {
+    __extends(ParameterHintsController, _super);
     function ParameterHintsController(editor, instantiationService) {
-        this.editor = editor;
-        this.widget = instantiationService.createInstance(ParameterHintsWidget, this.editor);
+        var _this = _super.call(this) || this;
+        _this.editor = editor;
+        _this.widget = _this._register(instantiationService.createInstance(ParameterHintsWidget, _this.editor));
+        return _this;
     }
     ParameterHintsController.get = function (editor) {
         return editor.getContribution(ParameterHintsController.ID);
@@ -56,15 +59,12 @@ var ParameterHintsController = /** @class */ (function () {
     ParameterHintsController.prototype.trigger = function (context) {
         this.widget.trigger(context);
     };
-    ParameterHintsController.prototype.dispose = function () {
-        dispose(this.widget);
-    };
     ParameterHintsController.ID = 'editor.controller.parameterHints';
     ParameterHintsController = __decorate([
         __param(1, IInstantiationService)
     ], ParameterHintsController);
     return ParameterHintsController;
-}());
+}(Disposable));
 var TriggerParameterHintsAction = /** @class */ (function (_super) {
     __extends(TriggerParameterHintsAction, _super);
     function TriggerParameterHintsAction() {

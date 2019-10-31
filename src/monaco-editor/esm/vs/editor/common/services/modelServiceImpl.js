@@ -25,7 +25,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { Emitter } from '../../../base/common/event.js';
-import { Disposable, dispose } from '../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import * as platform from '../../../base/common/platform.js';
 import { EDITOR_MODEL_DEFAULTS } from '../config/editorOptions.js';
 import { TextModel } from '../model/textModel.js';
@@ -37,12 +37,12 @@ function MODEL_ID(resource) {
 }
 var ModelData = /** @class */ (function () {
     function ModelData(model, onWillDispose, onDidChangeLanguage) {
+        this._modelEventListeners = new DisposableStore();
         this.model = model;
         this._languageSelection = null;
         this._languageSelectionListener = null;
-        this._modelEventListeners = [];
-        this._modelEventListeners.push(model.onWillDispose(function () { return onWillDispose(model); }));
-        this._modelEventListeners.push(model.onDidChangeLanguage(function (e) { return onDidChangeLanguage(model, e); }));
+        this._modelEventListeners.add(model.onWillDispose(function () { return onWillDispose(model); }));
+        this._modelEventListeners.add(model.onDidChangeLanguage(function (e) { return onDidChangeLanguage(model, e); }));
     }
     ModelData.prototype._disposeLanguageSelection = function () {
         if (this._languageSelectionListener) {
@@ -55,7 +55,7 @@ var ModelData = /** @class */ (function () {
         }
     };
     ModelData.prototype.dispose = function () {
-        this._modelEventListeners = dispose(this._modelEventListeners);
+        this._modelEventListeners.dispose();
         this._disposeLanguageSelection();
     };
     ModelData.prototype.setLanguage = function (languageSelection) {

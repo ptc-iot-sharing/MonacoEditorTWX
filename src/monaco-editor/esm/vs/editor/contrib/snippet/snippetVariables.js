@@ -3,10 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as nls from '../../../nls.js';
-import { basename, dirname } from '../../../base/common/path.js';
+import * as path from '../../../base/common/path.js';
+import { dirname } from '../../../base/common/resources.js';
 import { Text } from './snippetParser.js';
 import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
-import { getLeadingWhitespace, commonPrefixLength, isFalsyOrWhitespace, pad } from '../../../base/common/strings.js';
+import { getLeadingWhitespace, commonPrefixLength, isFalsyOrWhitespace, pad, endsWith } from '../../../base/common/strings.js';
+import { isSingleFolderWorkspaceIdentifier, toWorkspaceIdentifier, WORKSPACE_EXTENSION } from '../../../platform/workspaces/common/workspaces.js';
 var CompositeSnippetVariableResolver = /** @class */ (function () {
     function CompositeSnippetVariableResolver(_delegates) {
         this._delegates = _delegates;
@@ -79,17 +81,18 @@ var SelectionBasedVariableResolver = /** @class */ (function () {
 }());
 export { SelectionBasedVariableResolver };
 var ModelBasedVariableResolver = /** @class */ (function () {
-    function ModelBasedVariableResolver(_model) {
+    function ModelBasedVariableResolver(_labelService, _model) {
+        this._labelService = _labelService;
         this._model = _model;
         //
     }
     ModelBasedVariableResolver.prototype.resolve = function (variable) {
         var name = variable.name;
         if (name === 'TM_FILENAME') {
-            return basename(this._model.uri.fsPath);
+            return path.basename(this._model.uri.fsPath);
         }
         else if (name === 'TM_FILENAME_BASE') {
-            var name_1 = basename(this._model.uri.fsPath);
+            var name_1 = path.basename(this._model.uri.fsPath);
             var idx = name_1.lastIndexOf('.');
             if (idx <= 0) {
                 return name_1;
@@ -98,12 +101,14 @@ var ModelBasedVariableResolver = /** @class */ (function () {
                 return name_1.slice(0, idx);
             }
         }
-        else if (name === 'TM_DIRECTORY') {
-            var dir = dirname(this._model.uri.fsPath);
-            return dir !== '.' ? dir : '';
+        else if (name === 'TM_DIRECTORY' && this._labelService) {
+            if (path.dirname(this._model.uri.fsPath) === '.') {
+                return '';
+            }
+            return this._labelService.getUriLabel(dirname(this._model.uri));
         }
-        else if (name === 'TM_FILEPATH') {
-            return this._model.uri.fsPath;
+        else if (name === 'TM_FILEPATH' && this._labelService) {
+            return this._labelService.getUriLabel(this._model.uri);
         }
         return undefined;
     };
@@ -111,26 +116,25 @@ var ModelBasedVariableResolver = /** @class */ (function () {
 }());
 export { ModelBasedVariableResolver };
 var ClipboardBasedVariableResolver = /** @class */ (function () {
-    function ClipboardBasedVariableResolver(_clipboardService, _selectionIdx, _selectionCount) {
-        this._clipboardService = _clipboardService;
+    function ClipboardBasedVariableResolver(_clipboardText, _selectionIdx, _selectionCount) {
+        this._clipboardText = _clipboardText;
         this._selectionIdx = _selectionIdx;
         this._selectionCount = _selectionCount;
         //
     }
     ClipboardBasedVariableResolver.prototype.resolve = function (variable) {
-        if (variable.name !== 'CLIPBOARD' || !this._clipboardService) {
+        if (variable.name !== 'CLIPBOARD') {
             return undefined;
         }
-        var text = this._clipboardService.readText();
-        if (!text) {
+        if (!this._clipboardText) {
             return undefined;
         }
-        var lines = text.split(/\r\n|\n|\r/).filter(function (s) { return !isFalsyOrWhitespace(s); });
+        var lines = this._clipboardText.split(/\r\n|\n|\r/).filter(function (s) { return !isFalsyOrWhitespace(s); });
         if (lines.length === this._selectionCount) {
             return lines[this._selectionIdx];
         }
         else {
-            return text;
+            return this._clipboardText;
         }
     };
     return ClipboardBasedVariableResolver;
@@ -200,6 +204,9 @@ var TimeBasedVariableResolver = /** @class */ (function () {
         else if (name === 'CURRENT_MONTH_NAME_SHORT') {
             return TimeBasedVariableResolver.monthNamesShort[new Date().getMonth()];
         }
+        else if (name === 'CURRENT_SECONDS_UNIX') {
+            return String(Math.floor(Date.now() / 1000));
+        }
         return undefined;
     };
     TimeBasedVariableResolver.dayNames = [nls.localize('Sunday', "Sunday"), nls.localize('Monday', "Monday"), nls.localize('Tuesday', "Tuesday"), nls.localize('Wednesday', "Wednesday"), nls.localize('Thursday', "Thursday"), nls.localize('Friday', "Friday"), nls.localize('Saturday', "Saturday")];
@@ -209,3 +216,28 @@ var TimeBasedVariableResolver = /** @class */ (function () {
     return TimeBasedVariableResolver;
 }());
 export { TimeBasedVariableResolver };
+var WorkspaceBasedVariableResolver = /** @class */ (function () {
+    function WorkspaceBasedVariableResolver(_workspaceService) {
+        this._workspaceService = _workspaceService;
+        //
+    }
+    WorkspaceBasedVariableResolver.prototype.resolve = function (variable) {
+        if (variable.name !== 'WORKSPACE_NAME' || !this._workspaceService) {
+            return undefined;
+        }
+        var workspaceIdentifier = toWorkspaceIdentifier(this._workspaceService.getWorkspace());
+        if (!workspaceIdentifier) {
+            return undefined;
+        }
+        if (isSingleFolderWorkspaceIdentifier(workspaceIdentifier)) {
+            return path.basename(workspaceIdentifier.path);
+        }
+        var filename = path.basename(workspaceIdentifier.configPath.path);
+        if (endsWith(filename, WORKSPACE_EXTENSION)) {
+            filename = filename.substr(0, filename.length - WORKSPACE_EXTENSION.length - 1);
+        }
+        return filename;
+    };
+    return WorkspaceBasedVariableResolver;
+}());
+export { WorkspaceBasedVariableResolver };

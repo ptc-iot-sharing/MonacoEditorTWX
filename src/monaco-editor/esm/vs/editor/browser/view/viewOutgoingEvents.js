@@ -33,6 +33,7 @@ var ViewOutgoingEvents = /** @class */ (function (_super) {
         _this.onMouseDown = null;
         _this.onMouseDrag = null;
         _this.onMouseDrop = null;
+        _this.onMouseWheel = null;
         _this._viewModel = viewModel;
         return _this;
     }
@@ -94,6 +95,11 @@ var ViewOutgoingEvents = /** @class */ (function (_super) {
     ViewOutgoingEvents.prototype.emitMouseDrop = function (e) {
         if (this.onMouseDrop) {
             this.onMouseDrop(this._convertViewToModelMouseEvent(e));
+        }
+    };
+    ViewOutgoingEvents.prototype.emitMouseWheel = function (e) {
+        if (this.onMouseWheel) {
+            this.onMouseWheel(e);
         }
     };
     ViewOutgoingEvents.prototype._convertViewToModelMouseEvent = function (e) {

@@ -115,19 +115,7 @@ var ItemRegistry = /** @class */ (function () {
     }
     ItemRegistry.prototype.register = function (item) {
         Assert.ok(!this.isRegistered(item.id), 'item already registered: ' + item.id);
-        var disposable = combinedDisposable([
-            this._onDidRevealItem.add(item.onDidReveal),
-            this._onExpandItem.add(item.onExpand),
-            this._onDidExpandItem.add(item.onDidExpand),
-            this._onCollapseItem.add(item.onCollapse),
-            this._onDidCollapseItem.add(item.onDidCollapse),
-            this._onDidAddTraitItem.add(item.onDidAddTrait),
-            this._onDidRemoveTraitItem.add(item.onDidRemoveTrait),
-            this._onDidRefreshItem.add(item.onDidRefresh),
-            this._onRefreshItemChildren.add(item.onRefreshChildren),
-            this._onDidRefreshItemChildren.add(item.onDidRefreshChildren),
-            this._onDidDisposeItem.add(item.onDidDispose)
-        ]);
+        var disposable = combinedDisposable(this._onDidRevealItem.add(item.onDidReveal), this._onExpandItem.add(item.onExpand), this._onDidExpandItem.add(item.onDidExpand), this._onCollapseItem.add(item.onCollapse), this._onDidCollapseItem.add(item.onDidCollapse), this._onDidAddTraitItem.add(item.onDidAddTrait), this._onDidRemoveTraitItem.add(item.onDidRemoveTrait), this._onDidRefreshItem.add(item.onDidRefresh), this._onRefreshItemChildren.add(item.onRefreshChildren), this._onDidRefreshItemChildren.add(item.onDidRefreshChildren), this._onDidDisposeItem.add(item.onDidDispose));
         this.items[item.id] = { item: item, disposable: disposable };
     };
     ItemRegistry.prototype.deregister = function (item) {

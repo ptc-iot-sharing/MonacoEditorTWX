@@ -48,13 +48,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import * as nls from '../../../nls.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
 import { IStorageService } from '../../../platform/storage/common/storage.js';
-import { ReferenceWidget } from './referencesWidget.js';
+import { ReferenceWidget, LayoutData } from './referencesWidget.js';
 import { Range } from '../../common/core/range.js';
 import { Position } from '../../common/core/position.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
@@ -67,8 +67,8 @@ var ReferencesController = /** @class */ (function () {
         this._instantiationService = _instantiationService;
         this._storageService = _storageService;
         this._configurationService = _configurationService;
+        this._disposables = new DisposableStore();
         this._requestIdPool = 0;
-        this._disposables = [];
         this._ignoreModelChangeEvent = false;
         this._editor = editor;
         this._referenceSearchVisible = ctxReferenceSearchVisible.bindTo(contextKeyService);
@@ -84,11 +84,11 @@ var ReferencesController = /** @class */ (function () {
         dispose(this._disposables);
         if (this._widget) {
             dispose(this._widget);
-            this._widget = null;
+            this._widget = undefined;
         }
         if (this._model) {
             dispose(this._model);
-            this._model = null;
+            this._model = undefined;
         }
     };
     ReferencesController.prototype.toggleWidget = function (range, modelPromise, options) {
@@ -104,26 +104,26 @@ var ReferencesController = /** @class */ (function () {
         }
         this._referenceSearchVisible.set(true);
         // close the widget on model/mode changes
-        this._disposables.push(this._editor.onDidChangeModelLanguage(function () { _this.closeWidget(); }));
-        this._disposables.push(this._editor.onDidChangeModel(function () {
+        this._disposables.add(this._editor.onDidChangeModelLanguage(function () { _this.closeWidget(); }));
+        this._disposables.add(this._editor.onDidChangeModel(function () {
             if (!_this._ignoreModelChangeEvent) {
                 _this.closeWidget();
             }
         }));
         var storageKey = 'peekViewLayout';
-        var data = JSON.parse(this._storageService.get(storageKey, 0 /* GLOBAL */, '{}'));
+        var data = LayoutData.fromJSON(this._storageService.get(storageKey, 0 /* GLOBAL */, '{}'));
         this._widget = this._instantiationService.createInstance(ReferenceWidget, this._editor, this._defaultTreeKeyboardSupport, data);
         this._widget.setTitle(nls.localize('labelLoading', "Loading..."));
         this._widget.show(range);
-        this._disposables.push(this._widget.onDidClose(function () {
+        this._disposables.add(this._widget.onDidClose(function () {
             modelPromise.cancel();
             if (_this._widget) {
                 _this._storageService.store(storageKey, JSON.stringify(_this._widget.layoutData), 0 /* GLOBAL */);
-                _this._widget = null;
+                _this._widget = undefined;
             }
             _this.closeWidget();
         }));
-        this._disposables.push(this._widget.onDidSelectReference(function (event) {
+        this._disposables.add(this._widget.onDidSelectReference(function (event) {
             var element = event.element, kind = event.kind;
             switch (kind) {
                 case 'open':
@@ -216,13 +216,13 @@ var ReferencesController = /** @class */ (function () {
     ReferencesController.prototype.closeWidget = function () {
         if (this._widget) {
             dispose(this._widget);
-            this._widget = null;
+            this._widget = undefined;
         }
         this._referenceSearchVisible.reset();
-        this._disposables = dispose(this._disposables);
+        this._disposables.clear();
         if (this._model) {
             dispose(this._model);
-            this._model = null;
+            this._model = undefined;
         }
         this._editor.focus();
         this._requestIdPool += 1; // Cancel pending requests

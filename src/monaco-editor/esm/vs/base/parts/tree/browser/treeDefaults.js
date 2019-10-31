@@ -27,8 +27,8 @@ var KeybindingDispatcher = /** @class */ (function () {
 export { KeybindingDispatcher };
 var DefaultController = /** @class */ (function () {
     function DefaultController(options) {
-        if (options === void 0) { options = { clickBehavior: 0 /* ON_MOUSE_DOWN */, keyboardSupport: true, openMode: 0 /* SINGLE_CLICK */ }; }
         var _this = this;
+        if (options === void 0) { options = { clickBehavior: 0 /* ON_MOUSE_DOWN */, keyboardSupport: true, openMode: 0 /* SINGLE_CLICK */ }; }
         this.options = options;
         this.downKeyBindingDispatcher = new KeybindingDispatcher();
         this.upKeyBindingDispatcher = new KeybindingDispatcher();

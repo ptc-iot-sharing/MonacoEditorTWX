@@ -42,7 +42,10 @@ export var EditorContextKeys;
     EditorContextKeys.hasDocumentSymbolProvider = new RawContextKey('editorHasDocumentSymbolProvider', false);
     EditorContextKeys.hasReferenceProvider = new RawContextKey('editorHasReferenceProvider', false);
     EditorContextKeys.hasRenameProvider = new RawContextKey('editorHasRenameProvider', false);
+    EditorContextKeys.hasSignatureHelpProvider = new RawContextKey('editorHasSignatureHelpProvider', false);
+    // -- mode context keys: formatting
     EditorContextKeys.hasDocumentFormattingProvider = new RawContextKey('editorHasDocumentFormattingProvider', false);
     EditorContextKeys.hasDocumentSelectionFormattingProvider = new RawContextKey('editorHasDocumentSelectionFormattingProvider', false);
-    EditorContextKeys.hasSignatureHelpProvider = new RawContextKey('editorHasSignatureHelpProvider', false);
+    EditorContextKeys.hasMultipleDocumentFormattingProvider = new RawContextKey('editorHasMultipleDocumentFormattingProvider', false);
+    EditorContextKeys.hasMultipleDocumentSelectionFormattingProvider = new RawContextKey('editorHasMultipleDocumentSelectionFormattingProvider', false);
 })(EditorContextKeys || (EditorContextKeys = {}));

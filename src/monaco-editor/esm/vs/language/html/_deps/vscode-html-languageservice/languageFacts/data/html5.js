@@ -1208,4 +1208,3 @@ export var HTML5_VALUE_MAP = [
         ]
     }
 ];
-//# sourceMappingURL=html5.js.map

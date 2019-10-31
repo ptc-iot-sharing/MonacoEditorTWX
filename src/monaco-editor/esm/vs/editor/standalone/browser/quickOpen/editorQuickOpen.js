@@ -32,6 +32,9 @@ import { IThemeService } from '../../../../platform/theme/common/themeService.js
 var QuickOpenController = /** @class */ (function () {
     function QuickOpenController(editor, themeService) {
         this.themeService = themeService;
+        this.widget = null;
+        this.rangeHighlightDecorationId = null;
+        this.lastKnownEditorSelection = null;
         this.editor = editor;
     }
     QuickOpenController.get = function (editor) {

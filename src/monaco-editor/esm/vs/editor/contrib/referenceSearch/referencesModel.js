@@ -5,14 +5,15 @@
 import { localize } from '../../../nls.js';
 import { Emitter } from '../../../base/common/event.js';
 import { basename } from '../../../base/common/resources.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import * as strings from '../../../base/common/strings.js';
 import { defaultGenerator } from '../../../base/common/idGenerator.js';
 import { Range } from '../../common/core/range.js';
 var OneReference = /** @class */ (function () {
-    function OneReference(parent, _range) {
+    function OneReference(parent, _range, isProviderFirst) {
         this.parent = parent;
         this._range = _range;
+        this.isProviderFirst = isProviderFirst;
         this._onRefChanged = new Emitter();
         this.onRefChanged = this._onRefChanged.event;
         this.id = defaultGenerator.nextId();
@@ -58,12 +59,13 @@ var FilePreview = /** @class */ (function () {
         var word = model.getWordUntilPosition({ lineNumber: startLineNumber, column: startColumn - n });
         var beforeRange = new Range(startLineNumber, word.startColumn, startLineNumber, startColumn);
         var afterRange = new Range(endLineNumber, endColumn, endLineNumber, Number.MAX_VALUE);
-        var ret = {
-            before: model.getValueInRange(beforeRange).replace(/^\s+/, strings.empty),
-            inside: model.getValueInRange(range),
-            after: model.getValueInRange(afterRange).replace(/\s+$/, strings.empty)
+        var before = model.getValueInRange(beforeRange).replace(/^\s+/, strings.empty);
+        var inside = model.getValueInRange(range);
+        var after = model.getValueInRange(afterRange).replace(/\s+$/, strings.empty);
+        return {
+            value: before + inside + after,
+            highlight: { start: before.length, end: before.length + inside.length }
         };
-        return ret;
     };
     return FilePreview;
 }());
@@ -159,12 +161,13 @@ export { FileReferences };
 var ReferencesModel = /** @class */ (function () {
     function ReferencesModel(references) {
         var _this = this;
+        this._disposables = new DisposableStore();
         this.groups = [];
         this.references = [];
         this._onDidChangeReferenceRange = new Emitter();
         this.onDidChangeReferenceRange = this._onDidChangeReferenceRange.event;
-        this._disposables = [];
         // grouping and sorting
+        var providersFirst = references[0];
         references.sort(ReferencesModel._compareReferences);
         var current;
         for (var _i = 0, references_1 = references; _i < references_1.length; _i++) {
@@ -177,8 +180,8 @@ var ReferencesModel = /** @class */ (function () {
             // append, check for equality first!
             if (current.children.length === 0
                 || !Range.equalsRange(ref.range, current.children[current.children.length - 1].range)) {
-                var oneRef = new OneReference(current, ref.targetSelectionRange || ref.range);
-                this._disposables.push(oneRef.onRefChanged(function (e) { return _this._onDidChangeReferenceRange.fire(e); }));
+                var oneRef = new OneReference(current, ref.targetSelectionRange || ref.range, providersFirst === ref);
+                this._disposables.add(oneRef.onRefChanged(function (e) { return _this._onDidChangeReferenceRange.fire(e); }));
                 this.references.push(oneRef);
                 current.children.push(oneRef);
             }
@@ -259,11 +262,19 @@ var ReferencesModel = /** @class */ (function () {
         }
         return undefined;
     };
+    ReferencesModel.prototype.firstReference = function () {
+        for (var _i = 0, _a = this.references; _i < _a.length; _i++) {
+            var ref = _a[_i];
+            if (ref.isProviderFirst) {
+                return ref;
+            }
+        }
+        return this.references[0];
+    };
     ReferencesModel.prototype.dispose = function () {
         dispose(this.groups);
-        dispose(this._disposables);
+        this._disposables.dispose();
         this.groups.length = 0;
-        this._disposables.length = 0;
     };
     ReferencesModel._compareReferences = function (a, b) {
         var auri = a.uri.toString();

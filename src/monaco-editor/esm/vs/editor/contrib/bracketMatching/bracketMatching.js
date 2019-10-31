@@ -37,7 +37,7 @@ var JumpToBracketAction = /** @class */ (function (_super) {
             id: 'editor.action.jumpToBracket',
             label: nls.localize('smartSelect.jumpBracket', "Go to Bracket"),
             alias: 'Go to Bracket',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
                 primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 88 /* US_BACKSLASH */,
@@ -61,7 +61,7 @@ var SelectToBracketAction = /** @class */ (function (_super) {
             id: 'editor.action.selectToBracket',
             label: nls.localize('smartSelect.selectToBracket', "Select to Bracket"),
             alias: 'Select to Bracket',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     SelectToBracketAction.prototype.run = function (accessor, editor) {

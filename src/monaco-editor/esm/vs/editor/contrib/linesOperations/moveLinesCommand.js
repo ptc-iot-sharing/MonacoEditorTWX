@@ -14,14 +14,17 @@ var MoveLinesCommand = /** @class */ (function () {
         this._selection = selection;
         this._isMovingDown = isMovingDown;
         this._autoIndent = autoIndent;
+        this._selectionId = null;
         this._moveEndLineSelectionShrink = false;
     }
     MoveLinesCommand.prototype.getEditOperations = function (model, builder) {
         var modelLineCount = model.getLineCount();
         if (this._isMovingDown && this._selection.endLineNumber === modelLineCount) {
+            this._selectionId = builder.trackSelection(this._selection);
             return;
         }
         if (!this._isMovingDown && this._selection.startLineNumber === 1) {
+            this._selectionId = builder.trackSelection(this._selection);
             return;
         }
         this._moveEndPositionDown = false;

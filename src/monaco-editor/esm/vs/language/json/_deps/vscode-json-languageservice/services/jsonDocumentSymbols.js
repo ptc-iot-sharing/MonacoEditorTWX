@@ -5,7 +5,7 @@
 import * as Parser from '../parser/jsonParser.js';
 import * as Strings from '../utils/strings.js';
 import { colorFromHex } from '../utils/colors.js';
-import { SymbolKind, Range, Location, TextEdit } from '../../vscode-languageserver-types/main.js';
+import { SymbolKind, Range, Location, TextEdit } from '../_deps/vscode-languageserver-types/main.js';
 var JSONDocumentSymbols = /** @class */ (function () {
     function JSONDocumentSymbols(schemaService) {
         this.schemaService = schemaService;

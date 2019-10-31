@@ -18,7 +18,8 @@ var __extends = (this && this.__extends) || (function () {
 var _a;
 var Scanner = /** @class */ (function () {
     function Scanner() {
-        this.text('');
+        this.value = '';
+        this.pos = 0;
     }
     Scanner.isDigitCharacter = function (ch) {
         return ch >= 48 /* Digit0 */ && ch <= 57 /* Digit9 */;
@@ -271,7 +272,9 @@ export { Choice };
 var Transform = /** @class */ (function (_super) {
     __extends(Transform, _super);
     function Transform() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this_1 = _super !== null && _super.apply(this, arguments) || this;
+        _this_1.regexp = new RegExp('');
+        return _this_1;
     }
     Transform.prototype.resolve = function (value) {
         var _this = this;
@@ -507,6 +510,7 @@ export { TextmateSnippet };
 var SnippetParser = /** @class */ (function () {
     function SnippetParser() {
         this._scanner = new Scanner();
+        this._token = { type: 14 /* EOF */, pos: 0, len: 0 };
     }
     SnippetParser.escape = function (value) {
         return value.replace(/\$|}|\\/g, '\\$&');
@@ -578,16 +582,23 @@ var SnippetParser = /** @class */ (function () {
         if (this._token.type === 14 /* EOF */) {
             return false;
         }
-        var start = this._token;
-        while (this._token.type !== type) {
+        var res = '';
+        var pos = this._token.pos;
+        var prevToken = { type: 14 /* EOF */, pos: 0, len: 0 };
+        while (this._token.type !== type || prevToken.type === 5 /* Backslash */) {
+            if (this._token.type === type) {
+                res += this._scanner.value.substring(pos, prevToken.pos);
+                pos = this._token.pos;
+            }
+            prevToken = this._token;
             this._token = this._scanner.next();
             if (this._token.type === 14 /* EOF */) {
                 return false;
             }
         }
-        var value = this._scanner.value.substring(start.pos, this._token.pos);
+        res += this._scanner.value.substring(pos, this._token.pos);
         this._token = this._scanner.next();
-        return value;
+        return res;
     };
     SnippetParser.prototype._parse = function (marker) {
         return this._parseEscaped(marker)

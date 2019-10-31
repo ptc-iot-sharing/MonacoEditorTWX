@@ -2,8 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dispose } from '../../../base/common/lifecycle.js';
 import './renameInputField.css';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { localize } from '../../../nls.js';
@@ -14,7 +14,7 @@ var RenameInputField = /** @class */ (function () {
     function RenameInputField(editor, themeService, contextKeyService) {
         var _this = this;
         this.themeService = themeService;
-        this._disposables = [];
+        this._disposables = new DisposableStore();
         // Editor.IContentWidget.allowEditorOverflow
         this.allowEditorOverflow = true;
         this._currentAcceptInput = null;
@@ -22,18 +22,18 @@ var RenameInputField = /** @class */ (function () {
         this._visibleContextKey = CONTEXT_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);
         this._editor = editor;
         this._editor.addContentWidget(this);
-        this._disposables.push(editor.onDidChangeConfiguration(function (e) {
+        this._disposables.add(editor.onDidChangeConfiguration(function (e) {
             if (e.fontInfo) {
                 _this.updateFont();
             }
         }));
-        this._disposables.push(themeService.onThemeChange(function (theme) { return _this.onThemeChange(theme); }));
+        this._disposables.add(themeService.onThemeChange(function (theme) { return _this.onThemeChange(theme); }));
     }
     RenameInputField.prototype.onThemeChange = function (theme) {
         this.updateStyles(theme);
     };
     RenameInputField.prototype.dispose = function () {
-        this._disposables = dispose(this._disposables);
+        this._disposables.dispose();
         this._editor.removeContentWidget(this);
     };
     RenameInputField.prototype.getId = function () {
@@ -100,9 +100,9 @@ var RenameInputField = /** @class */ (function () {
         this._inputField.setAttribute('selectionStart', selectionStart.toString());
         this._inputField.setAttribute('selectionEnd', selectionEnd.toString());
         this._inputField.size = Math.max((where.endColumn - where.startColumn) * 1.1, 20);
-        var disposeOnDone = [];
+        var disposeOnDone = new DisposableStore();
         var always = function () {
-            dispose(disposeOnDone);
+            disposeOnDone.dispose();
             _this._hide();
         };
         return new Promise(function (resolve) {
@@ -128,8 +128,8 @@ var RenameInputField = /** @class */ (function () {
                     _this.cancelInput(true);
                 }
             };
-            disposeOnDone.push(_this._editor.onDidChangeCursorSelection(onCursorChanged));
-            disposeOnDone.push(_this._editor.onDidBlurEditorWidget(function () { return _this.cancelInput(false); }));
+            disposeOnDone.add(_this._editor.onDidChangeCursorSelection(onCursorChanged));
+            disposeOnDone.add(_this._editor.onDidBlurEditorWidget(function () { return _this.cancelInput(false); }));
             _this._show();
         }).then(function (newValue) {
             always();

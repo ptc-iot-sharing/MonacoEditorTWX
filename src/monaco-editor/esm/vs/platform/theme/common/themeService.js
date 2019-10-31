@@ -12,6 +12,7 @@ export function themeColorFromId(id) {
 }
 // base themes
 export var DARK = 'dark';
+export var LIGHT = 'light';
 export var HIGH_CONTRAST = 'hc';
 export function getThemeTypeSelector(type) {
     switch (type) {

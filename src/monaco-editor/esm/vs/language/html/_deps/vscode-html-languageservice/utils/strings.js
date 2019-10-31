@@ -62,4 +62,3 @@ export function isLetterOrDigit(text, index) {
     var c = text.charCodeAt(index);
     return (_a <= c && c <= _z) || (_A <= c && c <= _Z) || (_0 <= c && c <= _9);
 }
-//# sourceMappingURL=strings.js.map

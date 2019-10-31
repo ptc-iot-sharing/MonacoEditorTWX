@@ -20,22 +20,23 @@ import { Event, Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { isUndefinedOrNull } from '../../../base/common/types.js';
 export var IStorageService = createDecorator('storageService');
+export var WillSaveStateReason;
+(function (WillSaveStateReason) {
+    WillSaveStateReason[WillSaveStateReason["NONE"] = 0] = "NONE";
+    WillSaveStateReason[WillSaveStateReason["SHUTDOWN"] = 1] = "SHUTDOWN";
+})(WillSaveStateReason || (WillSaveStateReason = {}));
 var InMemoryStorageService = /** @class */ (function (_super) {
     __extends(InMemoryStorageService, _super);
     function InMemoryStorageService() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._serviceBrand = undefined;
+        _this._serviceBrand = null;
         _this._onDidChangeStorage = _this._register(new Emitter());
+        _this.onDidChangeStorage = _this._onDidChangeStorage.event;
         _this.onWillSaveState = Event.None;
         _this.globalCache = new Map();
         _this.workspaceCache = new Map();
         return _this;
     }
-    Object.defineProperty(InMemoryStorageService.prototype, "onDidChangeStorage", {
-        get: function () { return this._onDidChangeStorage.event; },
-        enumerable: true,
-        configurable: true
-    });
     InMemoryStorageService.prototype.getCache = function (scope) {
         return scope === 0 /* GLOBAL */ ? this.globalCache : this.workspaceCache;
     };

@@ -8,6 +8,7 @@ var ReplaceAllCommand = /** @class */ (function () {
         this._editorSelection = editorSelection;
         this._ranges = ranges;
         this._replaceStrings = replaceStrings;
+        this._trackedEditorSelectionId = null;
     }
     ReplaceAllCommand.prototype.getEditOperations = function (model, builder) {
         if (this._ranges.length > 0) {

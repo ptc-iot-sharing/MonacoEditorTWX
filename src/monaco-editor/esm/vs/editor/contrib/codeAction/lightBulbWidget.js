@@ -15,54 +15,81 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 import * as dom from '../../../base/browser/dom.js';
 import { GlobalMouseMoveMonitor, standardMouseMoveMerger } from '../../../base/browser/globalMouseMoveMonitor.js';
-import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import './lightBulbWidget.css';
 import { TextModel } from '../../common/model/textModel.js';
-import { CodeActionsState } from './codeActionModel.js';
-import { CodeActionKind } from './codeActionTrigger.js';
+import * as nls from '../../../nls.js';
+import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
+var LightBulbState;
+(function (LightBulbState) {
+    LightBulbState.Hidden = new /** @class */ (function () {
+        function class_1() {
+            this.type = 0 /* Hidden */;
+        }
+        return class_1;
+    }());
+    var Showing = /** @class */ (function () {
+        function Showing(actions, editorPosition, widgetPosition) {
+            this.actions = actions;
+            this.editorPosition = editorPosition;
+            this.widgetPosition = widgetPosition;
+            this.type = 1 /* Showing */;
+        }
+        return Showing;
+    }());
+    LightBulbState.Showing = Showing;
+})(LightBulbState || (LightBulbState = {}));
 var LightBulbWidget = /** @class */ (function (_super) {
     __extends(LightBulbWidget, _super);
-    function LightBulbWidget(editor) {
+    function LightBulbWidget(_editor, _quickFixActionId, _keybindingService) {
         var _this = _super.call(this) || this;
+        _this._editor = _editor;
+        _this._quickFixActionId = _quickFixActionId;
+        _this._keybindingService = _keybindingService;
         _this._onClick = _this._register(new Emitter());
         _this.onClick = _this._onClick.event;
-        _this._state = CodeActionsState.Empty;
-        _this._futureFixes = new CancellationTokenSource();
+        _this._state = LightBulbState.Hidden;
         _this._domNode = document.createElement('div');
         _this._domNode.className = 'lightbulb-glyph';
-        _this._editor = editor;
         _this._editor.addContentWidget(_this);
-        _this._register(_this._editor.onDidChangeModel(function (_) { return _this._futureFixes.cancel(); }));
-        _this._register(_this._editor.onDidChangeModelLanguage(function (_) { return _this._futureFixes.cancel(); }));
         _this._register(_this._editor.onDidChangeModelContent(function (_) {
             // cancel when the line in question has been removed
             var editorModel = _this._editor.getModel();
-            if (_this._state.type !== 1 /* Triggered */ || !editorModel || _this._state.position.lineNumber >= editorModel.getLineCount()) {
-                _this._futureFixes.cancel();
+            if (_this._state.type !== 1 /* Showing */ || !editorModel || _this._state.editorPosition.lineNumber >= editorModel.getLineCount()) {
+                _this.hide();
             }
         }));
-        _this._register(dom.addStandardDisposableListener(_this._domNode, 'click', function (e) {
-            if (_this._state.type !== 1 /* Triggered */) {
+        _this._register(dom.addStandardDisposableListener(_this._domNode, 'mousedown', function (e) {
+            if (_this._state.type !== 1 /* Showing */) {
                 return;
             }
             // Make sure that focus / cursor location is not lost when clicking widget icon
             _this._editor.focus();
+            e.preventDefault();
             // a bit of extra work to make sure the menu
             // doesn't cover the line-text
             var _a = dom.getDomNodePagePosition(_this._domNode), top = _a.top, height = _a.height;
             var lineHeight = _this._editor.getConfiguration().lineHeight;
             var pad = Math.floor(lineHeight / 3);
-            if (_this._position && _this._position.position !== null && _this._position.position.lineNumber < _this._state.position.lineNumber) {
+            if (_this._state.widgetPosition.position !== null && _this._state.widgetPosition.position.lineNumber < _this._state.editorPosition.lineNumber) {
                 pad += lineHeight;
             }
             _this._onClick.fire({
                 x: e.posx,
                 y: top + height + pad,
-                state: _this._state
+                actions: _this._state.actions
             });
         }));
         _this._register(dom.addDisposableListener(_this._domNode, 'mouseenter', function (e) {
@@ -84,6 +111,8 @@ var LightBulbWidget = /** @class */ (function (_super) {
                 _this.hide();
             }
         }));
+        _this._updateLightBulbTitle();
+        _this._register(_this._keybindingService.onDidUpdateKeybindings(_this._updateLightBulbTitle, _this));
         return _this;
     }
     LightBulbWidget.prototype.dispose = function () {
@@ -97,60 +126,21 @@ var LightBulbWidget = /** @class */ (function (_super) {
         return this._domNode;
     };
     LightBulbWidget.prototype.getPosition = function () {
-        return this._position;
+        return this._state.type === 1 /* Showing */ ? this._state.widgetPosition : null;
     };
-    LightBulbWidget.prototype.tryShow = function (newState) {
+    LightBulbWidget.prototype.update = function (actions, atPosition) {
         var _this = this;
-        if (newState.type !== 1 /* Triggered */ || this._position && (!newState.position || this._position.position && this._position.position.lineNumber !== newState.position.lineNumber)) {
-            // hide when getting a 'hide'-request or when currently
-            // showing on another line
-            this.hide();
+        if (actions.actions.length <= 0) {
+            return this.hide();
         }
-        else if (this._futureFixes) {
-            // cancel pending show request in any case
-            this._futureFixes.cancel();
-        }
-        this._futureFixes = new CancellationTokenSource();
-        var token = this._futureFixes.token;
-        this._state = newState;
-        if (this._state.type === CodeActionsState.Empty.type) {
-            return;
-        }
-        var selection = this._state.rangeOrSelection;
-        this._state.actions.then(function (fixes) {
-            if (!token.isCancellationRequested && fixes && fixes.length > 0 && selection) {
-                _this._show(fixes);
-            }
-            else {
-                _this.hide();
-            }
-        }).catch(function () {
-            _this.hide();
-        });
-    };
-    Object.defineProperty(LightBulbWidget.prototype, "title", {
-        get: function () {
-            return this._domNode.title;
-        },
-        set: function (value) {
-            this._domNode.title = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    LightBulbWidget.prototype._show = function (codeActions) {
-        var _this = this;
         var config = this._editor.getConfiguration();
         if (!config.contribInfo.lightbulbEnabled) {
-            return;
+            return this.hide();
         }
-        if (this._state.type !== 1 /* Triggered */) {
-            return;
-        }
-        var _a = this._state.position, lineNumber = _a.lineNumber, column = _a.column;
+        var lineNumber = atPosition.lineNumber, column = atPosition.column;
         var model = this._editor.getModel();
         if (!model) {
-            return;
+            return this.hide();
         }
         var tabSize = model.getOptions().tabSize;
         var lineContent = model.getLineContent(lineNumber);
@@ -170,24 +160,42 @@ var LightBulbWidget = /** @class */ (function (_super) {
             else if (column * config.fontInfo.spaceWidth < 22) {
                 // cannot show lightbulb above/below and showing
                 // it inline would overlay the cursor...
-                this.hide();
-                return;
+                return this.hide();
             }
         }
-        this._position = {
+        this._state = new LightBulbState.Showing(actions, atPosition, {
             position: { lineNumber: effectiveLineNumber, column: 1 },
             preference: LightBulbWidget._posPref
-        };
-        dom.toggleClass(this._domNode, 'autofixable', codeActions.some(function (fix) { return !!fix.kind && CodeActionKind.QuickFix.contains(new CodeActionKind(fix.kind)) && !!fix.isPreferred; }));
+        });
+        dom.toggleClass(this._domNode, 'autofixable', actions.hasAutoFix);
         this._editor.layoutContentWidget(this);
     };
+    Object.defineProperty(LightBulbWidget.prototype, "title", {
+        set: function (value) {
+            this._domNode.title = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     LightBulbWidget.prototype.hide = function () {
-        this._position = null;
-        this._state = CodeActionsState.Empty;
-        this._futureFixes.cancel();
+        this._state = LightBulbState.Hidden;
         this._editor.layoutContentWidget(this);
+    };
+    LightBulbWidget.prototype._updateLightBulbTitle = function () {
+        var kb = this._keybindingService.lookupKeybinding(this._quickFixActionId);
+        var title;
+        if (kb) {
+            title = nls.localize('quickFixWithKb', "Show Fixes ({0})", kb.getLabel());
+        }
+        else {
+            title = nls.localize('quickFix', "Show Fixes");
+        }
+        this.title = title;
     };
     LightBulbWidget._posPref = [0 /* EXACT */];
+    LightBulbWidget = __decorate([
+        __param(2, IKeybindingService)
+    ], LightBulbWidget);
     return LightBulbWidget;
 }(Disposable));
 export { LightBulbWidget };

@@ -2,16 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Range } from '../../vscode-languageserver-types/main.js';
+import { Range, SelectionRange } from '../_deps/vscode-languageserver-types/main.js';
 import { createScanner } from '../../jsonc-parser/main.js';
-import { SelectionRangeKind } from '../jsonLanguageTypes.js';
 export function getSelectionRanges(document, positions, doc) {
     function getSelectionRange(position) {
         var offset = document.offsetAt(position);
         var node = doc.getNodeFromOffset(offset, true);
-        if (!node) {
-            return [];
-        }
         var result = [];
         while (node) {
             switch (node.type) {
@@ -40,13 +36,17 @@ export function getSelectionRanges(document, positions, doc) {
             }
             node = node.parent;
         }
-        return result;
+        var current = undefined;
+        for (var index = result.length - 1; index >= 0; index--) {
+            current = SelectionRange.create(result[index], current);
+        }
+        if (!current) {
+            current = SelectionRange.create(Range.create(position, position));
+        }
+        return current;
     }
     function newRange(start, end) {
-        return {
-            range: Range.create(document.positionAt(start), document.positionAt(end)),
-            kind: SelectionRangeKind.Declaration
-        };
+        return Range.create(document.positionAt(start), document.positionAt(end));
     }
     var scanner = createScanner(document.getText(), true);
     function getOffsetAfterNextToken(offset, expectedToken) {

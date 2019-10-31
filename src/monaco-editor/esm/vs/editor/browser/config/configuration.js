@@ -217,9 +217,9 @@ var CSSBasedConfiguration = /** @class */ (function (_super) {
 }(Disposable));
 var Configuration = /** @class */ (function (_super) {
     __extends(Configuration, _super);
-    function Configuration(options, referenceDomElement, accessibilityService) {
+    function Configuration(isSimpleWidget, options, referenceDomElement, accessibilityService) {
         if (referenceDomElement === void 0) { referenceDomElement = null; }
-        var _this = _super.call(this, options) || this;
+        var _this = _super.call(this, isSimpleWidget, options) || this;
         _this.accessibilityService = accessibilityService;
         _this._elementSizeObserver = _this._register(new ElementSizeObserver(referenceDomElement, function () { return _this._onReferenceDomElementSizeChanged(); }));
         _this._register(CSSBasedConfiguration.INSTANCE.onDidChange(function () { return _this._onCSSBasedConfigurationChanged(); }));

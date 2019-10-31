@@ -2,11 +2,13 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { fuzzyScore, fuzzyScoreGracefulAggressive, anyScore, FuzzyScore } from '../../../base/common/filters.js';
-import { isDisposable } from '../../../base/common/lifecycle.js';
+import { fuzzyScore, fuzzyScoreGracefulAggressive, FuzzyScore, anyScore } from '../../../base/common/filters.js';
 import { EDITOR_DEFAULTS } from '../../common/config/editorOptions.js';
+import { compareIgnoreCase } from '../../../base/common/strings.js';
 var LineContext = /** @class */ (function () {
-    function LineContext() {
+    function LineContext(leadingLineContent, characterCountDelta) {
+        this.leadingLineContent = leadingLineContent;
+        this.characterCountDelta = characterCountDelta;
     }
     return LineContext;
 }());
@@ -28,18 +30,6 @@ var CompletionModel = /** @class */ (function () {
             this._snippetCompareFn = CompletionModel._compareCompletionItemsSnippetsDown;
         }
     }
-    CompletionModel.prototype.dispose = function () {
-        var seen = new Set();
-        for (var _i = 0, _a = this._items; _i < _a.length; _i++) {
-            var container = _a[_i].container;
-            if (!seen.has(container)) {
-                seen.add(container);
-                if (isDisposable(container)) {
-                    container.dispose();
-                }
-            }
-        }
-    };
     Object.defineProperty(CompletionModel.prototype, "lineContext", {
         get: function () {
             return this._lineContext;
@@ -167,8 +157,16 @@ var CompletionModel = /** @class */ (function () {
                     if (!match) {
                         continue; // NO match
                     }
-                    item.score = anyScore(word, wordLow, 0, item.completion.label, item.labelLow, 0);
-                    item.score[0] = match[0]; // use score from filterText
+                    if (compareIgnoreCase(item.completion.filterText, item.completion.label) === 0) {
+                        // filterText and label are actually the same -> use good highlights
+                        item.score = match;
+                    }
+                    else {
+                        // re-run the scorer on the label in the hope of a result BUT use the rank
+                        // of the filterText-match
+                        item.score = anyScore(word, wordLow, wordPos, item.completion.label, item.labelLow, 0);
+                        item.score[0] = match[0]; // use score from filterText
+                    }
                 }
                 else {
                     // by default match `word` against the `label`

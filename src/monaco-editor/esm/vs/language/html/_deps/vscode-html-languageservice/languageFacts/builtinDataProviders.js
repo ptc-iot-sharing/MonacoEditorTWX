@@ -15,4 +15,3 @@ export function handleCustomDataProviders(providers) {
         customDataProviders.push(p);
     });
 }
-//# sourceMappingURL=builtinDataProviders.js.map

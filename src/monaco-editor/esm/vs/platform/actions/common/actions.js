@@ -35,38 +35,37 @@ export function isIMenuItem(item) {
 export var IMenuService = createDecorator('menuService');
 export var MenuRegistry = new /** @class */ (function () {
     function class_1() {
-        this._commands = Object.create(null);
-        this._menuItems = Object.create(null);
+        this._commands = new Map();
+        this._menuItems = new Map();
         this._onDidChangeMenu = new Emitter();
         this.onDidChangeMenu = this._onDidChangeMenu.event;
     }
     class_1.prototype.addCommand = function (command) {
         var _this = this;
-        this._commands[command.id] = command;
+        this._commands.set(command.id, command);
         this._onDidChangeMenu.fire(0 /* CommandPalette */);
         return {
             dispose: function () {
-                if (delete _this._commands[command.id]) {
+                if (_this._commands.delete(command.id)) {
                     _this._onDidChangeMenu.fire(0 /* CommandPalette */);
                 }
             }
         };
     };
     class_1.prototype.getCommand = function (id) {
-        return this._commands[id];
+        return this._commands.get(id);
     };
     class_1.prototype.getCommands = function () {
-        var result = Object.create(null);
-        for (var key in this._commands) {
-            result[key] = this.getCommand(key);
-        }
-        return result;
+        var map = new Map();
+        this._commands.forEach(function (value, key) { return map.set(key, value); });
+        return map;
     };
     class_1.prototype.appendMenuItem = function (id, item) {
         var _this = this;
-        var array = this._menuItems[id];
+        var array = this._menuItems.get(id);
         if (!array) {
-            this._menuItems[id] = array = [item];
+            array = [item];
+            this._menuItems.set(id, array);
         }
         else {
             array.push(item);
@@ -83,7 +82,7 @@ export var MenuRegistry = new /** @class */ (function () {
         };
     };
     class_1.prototype.getMenuItems = function (id) {
-        var result = (this._menuItems[id] || []).slice(0);
+        var result = (this._menuItems.get(id) || []).slice(0);
         if (id === 0 /* CommandPalette */) {
             // CommandPalette is special because it shows
             // all commands by default
@@ -101,11 +100,11 @@ export var MenuRegistry = new /** @class */ (function () {
                 set.add(alt.id);
             }
         }
-        for (var id in this._commands) {
+        this._commands.forEach(function (command, id) {
             if (!set.has(id)) {
-                result.push({ command: this._commands[id] });
+                result.push({ command: command });
             }
-        }
+        });
     };
     return class_1;
 }());
@@ -117,11 +116,11 @@ var ExecuteCommandAction = /** @class */ (function (_super) {
         return _this;
     }
     ExecuteCommandAction.prototype.run = function () {
+        var _a;
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        var _a;
         return (_a = this._commandService).executeCommand.apply(_a, [this.id].concat(args));
     };
     ExecuteCommandAction = __decorate([
@@ -154,6 +153,12 @@ var MenuItemAction = /** @class */ (function (_super) {
         _this.alt = alt ? new MenuItemAction(alt, undefined, _this._options, contextKeyService, commandService) : undefined;
         return _this;
     }
+    MenuItemAction.prototype.dispose = function () {
+        if (this.alt) {
+            this.alt.dispose();
+        }
+        _super.prototype.dispose.call(this);
+    };
     MenuItemAction.prototype.run = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {

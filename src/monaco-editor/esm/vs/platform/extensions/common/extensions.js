@@ -19,6 +19,15 @@ var ExtensionIdentifier = /** @class */ (function () {
         this.value = value;
         this._lower = value.toLowerCase();
     }
+    /**
+     * Gives the value by which to index (for equality).
+     */
+    ExtensionIdentifier.toKey = function (id) {
+        if (typeof id === 'string') {
+            return id.toLowerCase();
+        }
+        return id._lower;
+    };
     return ExtensionIdentifier;
 }());
 export { ExtensionIdentifier };

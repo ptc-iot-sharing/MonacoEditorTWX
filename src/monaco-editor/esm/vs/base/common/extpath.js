@@ -1,5 +1,13 @@
 import { startsWithIgnoreCase } from './strings.js';
-import { sep } from './path.js';
+import { sep, posix } from './path.js';
+/**
+ * Takes a Windows OS path and changes backward slashes to forward slashes.
+ * This should only be done for OS paths from Windows (or user provided paths potentially from Windows).
+ * Using it on a Linux or MaxOS path might change it.
+ */
+export function toSlashes(osPath) {
+    return osPath.replace(/[\\/]/g, posix.sep);
+}
 export function isEqualOrParent(path, candidate, ignoreCase, separator) {
     if (separator === void 0) { separator = sep; }
     if (path === candidate) {

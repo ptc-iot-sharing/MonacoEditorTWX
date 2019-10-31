@@ -18,7 +18,7 @@ export var createScanner = scanner.createScanner;
 export var getLocation = parser.getLocation;
 /**
  * Parses the given text and returns the object the JSON content represents. On invalid input, the parser tries to be as fault tolerant as possible, but still return a result.
- * Therefore always check the errors list to find out if the input was valid.
+ * Therefore, always check the errors list to find out if the input was valid.
  */
 export var parse = parser.parse;
 /**
@@ -30,7 +30,7 @@ export var parseTree = parser.parseTree;
  */
 export var findNodeAtLocation = parser.findNodeAtLocation;
 /**
- * Finds the most inner node at the given offset. If includeRightBound is set, also finds nodes that end at the given offset.
+ * Finds the innermost node at the given offset. If includeRightBound is set, also finds nodes that end at the given offset.
  */
 export var findNodeAtOffset = parser.findNodeAtOffset;
 /**
@@ -82,7 +82,7 @@ export function printParseErrorCode(code) {
  * removals of text segments. All offsets refer to the original state of the document. No two edits must change or remove the same range of
  * text in the original document. However, multiple edits can have
  * the same offset, for example multiple inserts, or an insert followed by a remove or replace. The order in the array defines which edit is applied first.
- * To apply edits to an input, you can use `applyEdits`
+ * To apply edits to an input, you can use `applyEdits`.
  */
 export function format(documentText, range, options) {
     return formatter.format(documentText, range, options);
@@ -100,7 +100,7 @@ export function format(documentText, range, options) {
  * removals of text segments. All offsets refer to the original state of the document. No two edits must change or remove the same range of
  * text in the original document. However, multiple edits can have
  * the same offset, for example multiple inserts, or an insert followed by a remove or replace. The order in the array defines which edit is applied first.
- * To apply edits to an input, you can use `applyEdits`
+ * To apply edits to an input, you can use `applyEdits`.
  */
 export function modify(text, path, value, options) {
     return edit.setProperty(text, path, value, options.formattingOptions, options.getInsertionIndex);
@@ -114,4 +114,3 @@ export function applyEdits(text, edits) {
     }
     return text;
 }
-//# sourceMappingURL=main.js.map

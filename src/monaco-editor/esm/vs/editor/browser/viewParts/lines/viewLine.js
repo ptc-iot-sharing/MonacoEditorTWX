@@ -21,7 +21,7 @@ import * as platform from '../../../../base/common/platform.js';
 import { RangeUtil } from './rangeUtil.js';
 import { HorizontalRange } from '../../../common/view/renderingContext.js';
 import { LineDecoration } from '../../../common/viewLayout/lineDecorations.js';
-import { CharacterMapping, RenderLineInput, renderViewLine } from '../../../common/viewLayout/viewLineRenderer.js';
+import { CharacterMapping, RenderLineInput, renderViewLine, LineRange } from '../../../common/viewLayout/viewLineRenderer.js';
 import { HIGH_CONTRAST } from '../../../../platform/theme/common/themeService.js';
 var canUseFastRenderedViewLine = (function () {
     if (platform.isNative) {
@@ -128,7 +128,7 @@ var ViewLine = /** @class */ (function () {
         this._options = newOptions;
     };
     ViewLine.prototype.onSelectionChanged = function () {
-        if (alwaysRenderInlineSelection || this._options.themeType === HIGH_CONTRAST) {
+        if (alwaysRenderInlineSelection || this._options.themeType === HIGH_CONTRAST || this._options.renderWhitespace === 'selection') {
             this._isMaybeInvalid = true;
             return true;
         }
@@ -143,7 +143,9 @@ var ViewLine = /** @class */ (function () {
         var lineData = viewportData.getViewLineRenderingData(lineNumber);
         var options = this._options;
         var actualInlineDecorations = LineDecoration.filter(lineData.inlineDecorations, lineNumber, lineData.minColumn, lineData.maxColumn);
-        if (alwaysRenderInlineSelection || options.themeType === HIGH_CONTRAST) {
+        // Only send selection information when needed for rendering whitespace
+        var selectionsOnLine = null;
+        if (alwaysRenderInlineSelection || options.themeType === HIGH_CONTRAST || this._options.renderWhitespace === 'selection') {
             var selections = viewportData.selections;
             for (var _i = 0, selections_1 = selections; _i < selections_1.length; _i++) {
                 var selection = selections_1[_i];
@@ -154,11 +156,19 @@ var ViewLine = /** @class */ (function () {
                 var startColumn = (selection.startLineNumber === lineNumber ? selection.startColumn : lineData.minColumn);
                 var endColumn = (selection.endLineNumber === lineNumber ? selection.endColumn : lineData.maxColumn);
                 if (startColumn < endColumn) {
-                    actualInlineDecorations.push(new LineDecoration(startColumn, endColumn, 'inline-selected-text', 0 /* Regular */));
+                    if (this._options.renderWhitespace !== 'selection') {
+                        actualInlineDecorations.push(new LineDecoration(startColumn, endColumn, 'inline-selected-text', 0 /* Regular */));
+                    }
+                    else {
+                        if (!selectionsOnLine) {
+                            selectionsOnLine = [];
+                        }
+                        selectionsOnLine.push(new LineRange(startColumn - 1, endColumn - 1));
+                    }
                 }
             }
         }
-        var renderLineInput = new RenderLineInput(options.useMonospaceOptimizations, options.canUseHalfwidthRightwardsArrow, lineData.content, lineData.continuesWithWrappedLine, lineData.isBasicASCII, lineData.containsRTL, lineData.minColumn - 1, lineData.tokens, actualInlineDecorations, lineData.tabSize, options.spaceWidth, options.stopRenderingLineAfter, options.renderWhitespace, options.renderControlCharacters, options.fontLigatures);
+        var renderLineInput = new RenderLineInput(options.useMonospaceOptimizations, options.canUseHalfwidthRightwardsArrow, lineData.content, lineData.continuesWithWrappedLine, lineData.isBasicASCII, lineData.containsRTL, lineData.minColumn - 1, lineData.tokens, actualInlineDecorations, lineData.tabSize, options.spaceWidth, options.stopRenderingLineAfter, options.renderWhitespace, options.renderControlCharacters, options.fontLigatures, selectionsOnLine);
         if (this._renderedViewLine && this._renderedViewLine.input.equals(renderLineInput)) {
             // no need to do anything, we have the same render input
             return false;

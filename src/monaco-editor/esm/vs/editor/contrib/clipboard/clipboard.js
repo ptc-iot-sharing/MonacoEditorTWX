@@ -67,7 +67,7 @@ var ExecCommandCutAction = /** @class */ (function (_super) {
         // Do not bind cut keybindings in the browser,
         // since browsers do that for us and it avoids security prompts
         if (!platform.isNative) {
-            kbOpts = null;
+            kbOpts = undefined;
         }
         _this = _super.call(this, 'cut', {
             id: 'editor.action.clipboardCutAction',
@@ -113,13 +113,13 @@ var ExecCommandCopyAction = /** @class */ (function (_super) {
         // Do not bind copy keybindings in the browser,
         // since browsers do that for us and it avoids security prompts
         if (!platform.isNative) {
-            kbOpts = null;
+            kbOpts = undefined;
         }
         _this = _super.call(this, 'copy', {
             id: 'editor.action.clipboardCopyAction',
             label: nls.localize('actions.clipboard.copyLabel', "Copy"),
             alias: 'Copy',
-            precondition: null,
+            precondition: undefined,
             kbOpts: kbOpts,
             menuOpts: {
                 group: CLIPBOARD_CONTEXT_MENU_GROUP,
@@ -142,12 +142,6 @@ var ExecCommandCopyAction = /** @class */ (function (_super) {
         if (!emptySelectionClipboard && editor.getSelection().isEmpty()) {
             return;
         }
-        // Prevent copying an empty line by accident
-        if (editor.getSelections().length === 1 && editor.getSelection().isEmpty()) {
-            if (editor.getModel().getLineFirstNonWhitespaceColumn(editor.getSelection().positionLineNumber) === 0) {
-                return;
-            }
-        }
         _super.prototype.run.call(this, accessor, editor);
     };
     return ExecCommandCopyAction;
@@ -165,7 +159,7 @@ var ExecCommandPasteAction = /** @class */ (function (_super) {
         // Do not bind paste keybindings in the browser,
         // since browsers do that for us and it avoids security prompts
         if (!platform.isNative) {
-            kbOpts = null;
+            kbOpts = undefined;
         }
         _this = _super.call(this, 'paste', {
             id: 'editor.action.clipboardPasteAction',
@@ -195,7 +189,7 @@ var ExecCommandCopyWithSyntaxHighlightingAction = /** @class */ (function (_supe
             id: 'editor.action.clipboardCopyWithSyntaxHighlightingAction',
             label: nls.localize('actions.clipboard.copyWithSyntaxHighlightingLabel', "Copy With Syntax Highlighting"),
             alias: 'Copy With Syntax Highlighting',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 0,

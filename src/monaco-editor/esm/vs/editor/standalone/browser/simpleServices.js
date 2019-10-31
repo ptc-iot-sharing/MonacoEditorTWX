@@ -24,12 +24,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { localize } from '../../../nls.js';
+import * as strings from '../../../base/common/strings.js';
 import * as dom from '../../../base/browser/dom.js';
 import { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';
-import { Emitter } from '../../../base/common/event.js';
+import { Emitter, Event } from '../../../base/common/event.js';
 import { SimpleKeybinding, createKeybinding } from '../../../base/common/keyCodes.js';
-import { ImmortalReference, combinedDisposable, toDisposable } from '../../../base/common/lifecycle.js';
+import { ImmortalReference, toDisposable, DisposableStore, Disposable } from '../../../base/common/lifecycle.js';
 import { OS, isLinux, isMacintosh } from '../../../base/common/platform.js';
 import Severity from '../../../base/common/severity.js';
 import { URI } from '../../../base/common/uri.js';
@@ -49,6 +49,7 @@ import { ResolvedKeybindingItem } from '../../../platform/keybinding/common/reso
 import { USLayoutResolvedKeybinding } from '../../../platform/keybinding/common/usLayoutResolvedKeybinding.js';
 import { NoOpNotification } from '../../../platform/notification/common/notification.js';
 import { WorkspaceFolder } from '../../../platform/workspace/common/workspace.js';
+import { SimpleServicesNLS } from '../../common/standaloneStrings.js';
 var SimpleModel = /** @class */ (function () {
     function SimpleModel(model) {
         this.model = model;
@@ -85,7 +86,10 @@ var SimpleEditorModelResolverService = /** @class */ (function () {
     };
     SimpleEditorModelResolverService.prototype.createModelReference = function (resource) {
         var _this = this;
-        var model = withTypedEditor(this.editor, function (editor) { return _this.findModel(editor, resource); }, function (diffEditor) { return _this.findModel(diffEditor.getOriginalEditor(), resource) || _this.findModel(diffEditor.getModifiedEditor(), resource); });
+        var model = null;
+        if (this.editor) {
+            model = withTypedEditor(this.editor, function (editor) { return _this.findModel(editor, resource); }, function (diffEditor) { return _this.findModel(diffEditor.getOriginalEditor(), resource) || _this.findModel(diffEditor.getModifiedEditor(), resource); });
+        }
         if (!model) {
             return Promise.reject(new Error("Model not found"));
         }
@@ -101,15 +105,15 @@ var SimpleEditorModelResolverService = /** @class */ (function () {
     return SimpleEditorModelResolverService;
 }());
 export { SimpleEditorModelResolverService };
-var SimpleProgressService = /** @class */ (function () {
-    function SimpleProgressService() {
+var SimpleEditorProgressService = /** @class */ (function () {
+    function SimpleEditorProgressService() {
     }
-    SimpleProgressService.prototype.showWhile = function (promise, delay) {
+    SimpleEditorProgressService.prototype.showWhile = function (promise, delay) {
         return Promise.resolve(undefined);
     };
-    return SimpleProgressService;
+    return SimpleEditorProgressService;
 }());
-export { SimpleProgressService };
+export { SimpleEditorProgressService };
 var SimpleDialogService = /** @class */ (function () {
     function SimpleDialogService() {
     }
@@ -142,25 +146,17 @@ var SimpleNotificationService = /** @class */ (function () {
         }
         return SimpleNotificationService.NO_OP;
     };
+    SimpleNotificationService.prototype.status = function (message, options) {
+        return Disposable.None;
+    };
     SimpleNotificationService.NO_OP = new NoOpNotification();
     return SimpleNotificationService;
 }());
 export { SimpleNotificationService };
-var BrowserAccessibilityService = /** @class */ (function () {
-    function BrowserAccessibilityService() {
-        this._accessibilitySupport = 0 /* Unknown */;
-        this._onDidChangeAccessibilitySupport = new Emitter();
-        this.onDidChangeAccessibilitySupport = this._onDidChangeAccessibilitySupport.event;
-    }
-    BrowserAccessibilityService.prototype.getAccessibilitySupport = function () {
-        return this._accessibilitySupport;
-    };
-    return BrowserAccessibilityService;
-}());
-export { BrowserAccessibilityService };
 var StandaloneCommandService = /** @class */ (function () {
     function StandaloneCommandService(instantiationService) {
         this._onWillExecuteCommand = new Emitter();
+        this._onDidExecuteCommand = new Emitter();
         this._instantiationService = instantiationService;
         this._dynamicCommands = Object.create(null);
     }
@@ -182,8 +178,9 @@ var StandaloneCommandService = /** @class */ (function () {
             return Promise.reject(new Error("command '" + id + "' not found"));
         }
         try {
-            this._onWillExecuteCommand.fire({ commandId: id });
+            this._onWillExecuteCommand.fire({ commandId: id, args: args });
             var result = this._instantiationService.invokeFunction.apply(this._instantiationService, [command.handler].concat(args));
+            this._onDidExecuteCommand.fire({ commandId: id, args: args });
             return Promise.resolve(result);
         }
         catch (err) {
@@ -214,7 +211,7 @@ var StandaloneKeybindingService = /** @class */ (function (_super) {
         if (!keybinding) {
             throw new Error("Invalid keybinding");
         }
-        var toDispose = [];
+        var toDispose = new DisposableStore();
         this._dynamicKeybindings.push({
             keybinding: keybinding,
             command: commandId,
@@ -222,7 +219,7 @@ var StandaloneKeybindingService = /** @class */ (function (_super) {
             weight1: 1000,
             weight2: 0
         });
-        toDispose.push(toDisposable(function () {
+        toDispose.add(toDisposable(function () {
             for (var i = 0; i < _this._dynamicKeybindings.length; i++) {
                 var kb = _this._dynamicKeybindings[i];
                 if (kb.command === commandId) {
@@ -234,7 +231,7 @@ var StandaloneKeybindingService = /** @class */ (function (_super) {
         }));
         var commandService = this._commandService;
         if (commandService instanceof StandaloneCommandService) {
-            toDispose.push(commandService.addCommand({
+            toDispose.add(commandService.addCommand({
                 id: commandId,
                 handler: handler
             }));
@@ -243,7 +240,7 @@ var StandaloneKeybindingService = /** @class */ (function (_super) {
             throw new Error('Unknown command service!');
         }
         this.updateResolver({ source: 1 /* Default */ });
-        return combinedDisposable(toDispose);
+        return toDispose;
     };
     StandaloneKeybindingService.prototype.updateResolver = function (event) {
         this._cachedResolver = null;
@@ -264,11 +261,11 @@ var StandaloneKeybindingService = /** @class */ (function (_super) {
         var result = [], resultLen = 0;
         for (var _i = 0, items_1 = items; _i < items_1.length; _i++) {
             var item = items_1[_i];
-            var when = (item.when ? item.when.normalize() : null);
+            var when = item.when || undefined;
             var keybinding = item.keybinding;
             if (!keybinding) {
                 // This might be a removal keybinding item in user settings => accept it
-                result[resultLen++] = new ResolvedKeybindingItem(null, item.command, item.commandArgs, when, isDefault);
+                result[resultLen++] = new ResolvedKeybindingItem(undefined, item.command, item.commandArgs, when, isDefault);
             }
             else {
                 var resolvedKeybindings = this.resolveKeybinding(keybinding);
@@ -325,9 +322,9 @@ var SimpleResourceConfigurationService = /** @class */ (function () {
     function SimpleResourceConfigurationService(configurationService) {
         var _this = this;
         this.configurationService = configurationService;
-        this._onDidChangeConfigurationEmitter = new Emitter();
+        this._onDidChangeConfiguration = new Emitter();
         this.configurationService.onDidChangeConfiguration(function (e) {
-            _this._onDidChangeConfigurationEmitter.fire(e);
+            _this._onDidChangeConfiguration.fire(e);
         });
     }
     SimpleResourceConfigurationService.prototype.getValue = function (resource, arg2, arg3) {
@@ -362,9 +359,13 @@ var SimpleResourcePropertiesService = /** @class */ (function () {
 export { SimpleResourcePropertiesService };
 var StandaloneTelemetryService = /** @class */ (function () {
     function StandaloneTelemetryService() {
+        this._serviceBrand = undefined;
     }
     StandaloneTelemetryService.prototype.publicLog = function (eventName, data) {
         return Promise.resolve(undefined);
+    };
+    StandaloneTelemetryService.prototype.publicLog2 = function (eventName, data) {
+        return this.publicLog(eventName, data);
     };
     return StandaloneTelemetryService;
 }());
@@ -433,7 +434,7 @@ var SimpleBulkEditService = /** @class */ (function () {
         });
         return Promise.resolve({
             selection: undefined,
-            ariaSummary: localize('summary', 'Made {0} edits in {1} files', totalEdits, totalFiles)
+            ariaSummary: strings.format(SimpleServicesNLS.bulkEditServiceSummary, totalEdits, totalFiles)
         });
     };
     return SimpleBulkEditService;
@@ -451,3 +452,18 @@ var SimpleUriLabelService = /** @class */ (function () {
     return SimpleUriLabelService;
 }());
 export { SimpleUriLabelService };
+var SimpleLayoutService = /** @class */ (function () {
+    function SimpleLayoutService(_container) {
+        this._container = _container;
+        this.onLayout = Event.None;
+    }
+    Object.defineProperty(SimpleLayoutService.prototype, "container", {
+        get: function () {
+            return this._container;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return SimpleLayoutService;
+}());
+export { SimpleLayoutService };

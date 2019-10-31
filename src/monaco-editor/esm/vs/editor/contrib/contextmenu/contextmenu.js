@@ -26,8 +26,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 import * as nls from '../../../nls.js';
 import * as dom from '../../../base/browser/dom.js';
-import { ActionItem, Separator } from '../../../base/browser/ui/actionbar/actionbar.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { ActionViewItem, Separator } from '../../../base/browser/ui/actionbar/actionbar.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { IMenuService } from '../../../platform/actions/common/actions.js';
@@ -42,16 +42,16 @@ var ContextMenuController = /** @class */ (function () {
         this._contextKeyService = _contextKeyService;
         this._keybindingService = _keybindingService;
         this._menuService = _menuService;
-        this._toDispose = [];
+        this._toDispose = new DisposableStore();
         this._contextMenuIsBeingShownCount = 0;
         this._editor = editor;
-        this._toDispose.push(this._editor.onContextMenu(function (e) { return _this._onContextMenu(e); }));
-        this._toDispose.push(this._editor.onDidScrollChange(function (e) {
-            if (_this._contextMenuIsBeingShownCount > 0 && e.scrollTopChanged) {
+        this._toDispose.add(this._editor.onContextMenu(function (e) { return _this._onContextMenu(e); }));
+        this._toDispose.add(this._editor.onMouseWheel(function (e) {
+            if (_this._contextMenuIsBeingShownCount > 0) {
                 _this._contextViewService.hideContextView();
             }
         }));
-        this._toDispose.push(this._editor.onKeyDown(function (e) {
+        this._toDispose.add(this._editor.onKeyDown(function (e) {
             if (e.keyCode === 58 /* ContextMenu */) {
                 // Chrome is funny like that
                 e.preventDefault();
@@ -157,19 +157,19 @@ var ContextMenuController = /** @class */ (function () {
         this._contextMenuService.showContextMenu({
             getAnchor: function () { return anchor; },
             getActions: function () { return actions; },
-            getActionItem: function (action) {
+            getActionViewItem: function (action) {
                 var keybinding = _this._keybindingFor(action);
                 if (keybinding) {
-                    return new ActionItem(action, action, { label: true, keybinding: keybinding.getLabel(), isMenu: true });
+                    return new ActionViewItem(action, action, { label: true, keybinding: keybinding.getLabel(), isMenu: true });
                 }
-                var customActionItem = action;
-                if (typeof customActionItem.getActionItem === 'function') {
-                    return customActionItem.getActionItem();
+                var customActionViewItem = action;
+                if (typeof customActionViewItem.getActionViewItem === 'function') {
+                    return customActionViewItem.getActionViewItem();
                 }
-                return new ActionItem(action, action, { icon: true, label: true, isMenu: true });
+                return new ActionViewItem(action, action, { icon: true, label: true, isMenu: true });
             },
             getKeyBinding: function (action) {
-                return _this._keybindingFor(action) || undefined;
+                return _this._keybindingFor(action);
             },
             onHide: function (wasCancelled) {
                 _this._contextMenuIsBeingShownCount--;
@@ -190,7 +190,7 @@ var ContextMenuController = /** @class */ (function () {
         if (this._contextMenuIsBeingShownCount > 0) {
             this._contextViewService.hideContextView();
         }
-        this._toDispose = dispose(this._toDispose);
+        this._toDispose.dispose();
     };
     ContextMenuController.ID = 'editor.contrib.contextmenu';
     ContextMenuController = __decorate([
@@ -210,7 +210,7 @@ var ShowContextMenu = /** @class */ (function (_super) {
             id: 'editor.action.showContextMenu',
             label: nls.localize('action.showContextMenu.label', "Show Editor Context Menu"),
             alias: 'Show Editor Context Menu',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 1024 /* Shift */ | 68 /* F10 */,

@@ -164,4 +164,3 @@ export function getFoldingRanges(document, context) {
     }
     return ranges;
 }
-//# sourceMappingURL=htmlFolding.js.map

@@ -54,6 +54,9 @@ export function tokenizeLineToHTML(text, viewLineTokens, colorMap, startOffset, 
                     // zero width space, because carriage return would introduce a line break
                     partContent += '&#8203';
                     break;
+                case 32 /* Space */:
+                    partContent += '&nbsp;';
+                    break;
                 default:
                     partContent += String.fromCharCode(charCode);
             }

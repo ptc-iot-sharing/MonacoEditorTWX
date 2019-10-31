@@ -39,7 +39,7 @@ var __extends = (this && this.__extends) || (function () {
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import { isWindows } from './platform.js';
+import * as process from './process.js';
 var CHAR_UPPERCASE_A = 65; /* A */
 var CHAR_LOWERCASE_A = 97; /* a */
 var CHAR_UPPERCASE_Z = 90; /* Z */
@@ -49,11 +49,6 @@ var CHAR_FORWARD_SLASH = 47; /* / */
 var CHAR_BACKWARD_SLASH = 92; /* \ */
 var CHAR_COLON = 58; /* : */
 var CHAR_QUESTION_MARK = 63; /* ? */
-var safeProcess = (typeof process === 'undefined') ? {
-    cwd: function () { return '/'; },
-    env: {},
-    get platform() { return isWindows ? 'win32' : 'posix'; }
-} : process;
 var ErrorInvalidArgType = /** @class */ (function (_super) {
     __extends(ErrorInvalidArgType, _super);
     function ErrorInvalidArgType(name, expected, actual) {
@@ -67,11 +62,11 @@ var ErrorInvalidArgType = /** @class */ (function (_super) {
         else {
             determiner = 'must be';
         }
-        var msg;
         var type = name.indexOf('.') !== -1 ? 'property' : 'argument';
-        msg = "The \"" + name + "\" " + type + " " + determiner + " of type " + expected;
+        var msg = "The \"" + name + "\" " + type + " " + determiner + " of type " + expected;
         msg += ". Received type " + typeof actual;
         _this = _super.call(this, msg) || this;
+        _this.code = 'ERR_INVALID_ARG_TYPE';
         return _this;
     }
     return ErrorInvalidArgType;
@@ -197,7 +192,7 @@ export var win32 = {
                 path = pathSegments[i];
             }
             else if (!resolvedDevice) {
-                path = safeProcess.cwd();
+                path = process.cwd();
             }
             else {
                 // Windows has the concept of drive-specific current working
@@ -205,7 +200,7 @@ export var win32 = {
                 // absolute path, get cwd for that drive, or the process cwd if
                 // the drive cwd is not available. We're sure the device is not
                 // a UNC path at this points, because UNC paths are always absolute.
-                path = safeProcess.env['=' + resolvedDevice] || safeProcess.cwd();
+                path = process.env['=' + resolvedDevice] || process.cwd();
                 // Verify that a cwd was found and that it actually points
                 // to our drive. If not, default to the drive's root.
                 if (path === undefined ||
@@ -512,7 +507,7 @@ export var win32 = {
         //   path.join('//server', 'share') -> '\\\\server\\share\\')
         var needsReplace = true;
         var slashCount = 0;
-        if (isPathSeparator(firstPart.charCodeAt(0))) {
+        if (typeof firstPart === 'string' && isPathSeparator(firstPart.charCodeAt(0))) {
             ++slashCount;
             var firstLen = firstPart.length;
             if (firstLen > 1) {
@@ -1133,7 +1128,7 @@ export var posix = {
                 path = pathSegments[i];
             }
             else {
-                path = safeProcess.cwd();
+                path = process.cwd();
             }
             validateString(path, 'path');
             // Skip empty entries
@@ -1579,10 +1574,10 @@ export var posix = {
 };
 posix.win32 = win32.win32 = win32;
 posix.posix = win32.posix = posix;
-export var normalize = (safeProcess.platform === 'win32' ? win32.normalize : posix.normalize);
-export var join = (safeProcess.platform === 'win32' ? win32.join : posix.join);
-export var relative = (safeProcess.platform === 'win32' ? win32.relative : posix.relative);
-export var dirname = (safeProcess.platform === 'win32' ? win32.dirname : posix.dirname);
-export var basename = (safeProcess.platform === 'win32' ? win32.basename : posix.basename);
-export var extname = (safeProcess.platform === 'win32' ? win32.extname : posix.extname);
-export var sep = (safeProcess.platform === 'win32' ? win32.sep : posix.sep);
+export var normalize = (process.platform === 'win32' ? win32.normalize : posix.normalize);
+export var join = (process.platform === 'win32' ? win32.join : posix.join);
+export var relative = (process.platform === 'win32' ? win32.relative : posix.relative);
+export var dirname = (process.platform === 'win32' ? win32.dirname : posix.dirname);
+export var basename = (process.platform === 'win32' ? win32.basename : posix.basename);
+export var extname = (process.platform === 'win32' ? win32.extname : posix.extname);
+export var sep = (process.platform === 'win32' ? win32.sep : posix.sep);

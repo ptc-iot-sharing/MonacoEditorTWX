@@ -168,13 +168,10 @@ var TokenizationSupport2Adapter = /** @class */ (function () {
 }());
 export { TokenizationSupport2Adapter };
 function isEncodedTokensProvider(provider) {
-    return provider['tokenizeEncoded'];
+    return 'tokenizeEncoded' in provider;
 }
 function isThenable(obj) {
-    if (typeof obj.then === 'function') {
-        return true;
-    }
-    return false;
+    return obj && typeof obj.then === 'function';
 }
 /**
  * Set the tokens provider for a language (manual implementation).
@@ -341,6 +338,18 @@ export function registerFoldingRangeProvider(languageId, provider) {
     return modes.FoldingRangeProviderRegistry.register(languageId, provider);
 }
 /**
+ * Register a declaration provider
+ */
+export function registerDeclarationProvider(languageId, provider) {
+    return modes.DeclarationProviderRegistry.register(languageId, provider);
+}
+/**
+ * Register a selection range provider
+ */
+export function registerSelectionRangeProvider(languageId, provider) {
+    return modes.SelectionRangeRegistry.register(languageId, provider);
+}
+/**
  * @internal
  */
 export function createMonacoLanguagesAPI() {
@@ -371,11 +380,15 @@ export function createMonacoLanguagesAPI() {
         registerLinkProvider: registerLinkProvider,
         registerColorProvider: registerColorProvider,
         registerFoldingRangeProvider: registerFoldingRangeProvider,
+        registerDeclarationProvider: registerDeclarationProvider,
+        registerSelectionRangeProvider: registerSelectionRangeProvider,
         // enums
         DocumentHighlightKind: standaloneEnums.DocumentHighlightKind,
         CompletionItemKind: standaloneEnums.CompletionItemKind,
+        CompletionItemTag: standaloneEnums.CompletionItemTag,
         CompletionItemInsertTextRule: standaloneEnums.CompletionItemInsertTextRule,
         SymbolKind: standaloneEnums.SymbolKind,
+        SymbolTag: standaloneEnums.SymbolTag,
         IndentAction: standaloneEnums.IndentAction,
         CompletionTriggerKind: standaloneEnums.CompletionTriggerKind,
         SignatureHelpTriggerKind: standaloneEnums.SignatureHelpTriggerKind,

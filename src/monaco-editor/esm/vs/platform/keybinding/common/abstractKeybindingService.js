@@ -21,22 +21,18 @@ import { Emitter, Event } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 var AbstractKeybindingService = /** @class */ (function (_super) {
     __extends(AbstractKeybindingService, _super);
-    function AbstractKeybindingService(contextKeyService, commandService, telemetryService, notificationService, statusService) {
+    function AbstractKeybindingService(_contextKeyService, _commandService, _telemetryService, _notificationService) {
         var _this = _super.call(this) || this;
-        _this._contextKeyService = contextKeyService;
-        _this._commandService = commandService;
-        _this._telemetryService = telemetryService;
-        _this._statusService = statusService;
-        _this._notificationService = notificationService;
+        _this._contextKeyService = _contextKeyService;
+        _this._commandService = _commandService;
+        _this._telemetryService = _telemetryService;
+        _this._notificationService = _notificationService;
+        _this._onDidUpdateKeybindings = _this._register(new Emitter());
         _this._currentChord = null;
         _this._currentChordChecker = new IntervalTimer();
         _this._currentChordStatusMessage = null;
-        _this._onDidUpdateKeybindings = _this._register(new Emitter());
         return _this;
     }
-    AbstractKeybindingService.prototype.dispose = function () {
-        _super.prototype.dispose.call(this);
-    };
     Object.defineProperty(AbstractKeybindingService.prototype, "onDidUpdateKeybindings", {
         get: function () {
             return this._onDidUpdateKeybindings ? this._onDidUpdateKeybindings.event : Event.None; // Sinon stubbing walks properties on prototype
@@ -44,12 +40,15 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    AbstractKeybindingService.prototype.dispose = function () {
+        _super.prototype.dispose.call(this);
+    };
     AbstractKeybindingService.prototype.lookupKeybinding = function (commandId) {
         var result = this._getResolver().lookupPrimaryKeybinding(commandId);
         if (!result) {
             return undefined;
         }
-        return result.resolvedKeybinding || undefined;
+        return result.resolvedKeybinding;
     };
     AbstractKeybindingService.prototype.softDispatch = function (e, target) {
         var keybinding = this.resolveKeyboardEvent(e);
@@ -72,9 +71,7 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
             keypress: firstPart,
             label: keypressLabel
         };
-        if (this._statusService) {
-            this._currentChordStatusMessage = this._statusService.setStatusMessage(nls.localize('first.chord', "({0}) was pressed. Waiting for second key of chord...", keypressLabel));
-        }
+        this._currentChordStatusMessage = this._notificationService.status(nls.localize('first.chord', "({0}) was pressed. Waiting for second key of chord...", keypressLabel));
         var chordEnterTime = Date.now();
         this._currentChordChecker.cancelAndSet(function () {
             if (!_this._documentHasFocus()) {
@@ -120,9 +117,9 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
             this._enterChordMode(firstPart, keypressLabel);
             return shouldPreventDefault;
         }
-        if (this._statusService && this._currentChord) {
+        if (this._currentChord) {
             if (!resolveResult || !resolveResult.commandId) {
-                this._statusService.setStatusMessage(nls.localize('missing.chord', "The key combination ({0}, {1}) is not a command.", this._currentChord.label, keypressLabel), 10 * 1000 /* 10s */);
+                this._notificationService.status(nls.localize('missing.chord', "The key combination ({0}, {1}) is not a command.", this._currentChord.label, keypressLabel), { hideAfter: 10 * 1000 /* 10s */ });
                 shouldPreventDefault = true;
             }
         }
@@ -137,13 +134,7 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
             else {
                 this._commandService.executeCommand(resolveResult.commandId, resolveResult.commandArgs).then(undefined, function (err) { return _this._notificationService.warn(err); });
             }
-            /* __GDPR__
-                "workbenchActionExecuted" : {
-                    "id" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-                    "from": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
-                }
-            */
-            this._telemetryService.publicLog('workbenchActionExecuted', { id: resolveResult.commandId, from: 'keybinding' });
+            this._telemetryService.publicLog2('workbenchActionExecuted', { id: resolveResult.commandId, from: 'keybinding' });
         }
         return shouldPreventDefault;
     };

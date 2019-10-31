@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-export var LANGUAGE_DEFAULT = 'en';
+var LANGUAGE_DEFAULT = 'en';
 var _isWindows = false;
 var _isMacintosh = false;
 var _isLinux = false;
@@ -11,13 +11,14 @@ var _isWeb = false;
 var _locale = undefined;
 var _language = LANGUAGE_DEFAULT;
 var _translationsConfigFile = undefined;
+var _userAgent = undefined;
 var isElectronRenderer = (typeof process !== 'undefined' && typeof process.versions !== 'undefined' && typeof process.versions.electron !== 'undefined' && process.type === 'renderer');
 // OS detection
 if (typeof navigator === 'object' && !isElectronRenderer) {
-    var userAgent = navigator.userAgent;
-    _isWindows = userAgent.indexOf('Windows') >= 0;
-    _isMacintosh = userAgent.indexOf('Macintosh') >= 0;
-    _isLinux = userAgent.indexOf('Linux') >= 0;
+    _userAgent = navigator.userAgent;
+    _isWindows = _userAgent.indexOf('Windows') >= 0;
+    _isMacintosh = _userAgent.indexOf('Macintosh') >= 0;
+    _isLinux = _userAgent.indexOf('Linux') >= 0;
     _isWeb = true;
     _locale = navigator.language;
     _language = _locale;
@@ -44,16 +45,14 @@ else if (typeof process === 'object') {
     _isNative = true;
 }
 var _platform = 0 /* Web */;
-if (_isNative) {
-    if (_isMacintosh) {
-        _platform = 1 /* Mac */;
-    }
-    else if (_isWindows) {
-        _platform = 3 /* Windows */;
-    }
-    else if (_isLinux) {
-        _platform = 2 /* Linux */;
-    }
+if (_isMacintosh) {
+    _platform = 1 /* Mac */;
+}
+else if (_isWindows) {
+    _platform = 3 /* Windows */;
+}
+else if (_isLinux) {
+    _platform = 2 /* Linux */;
 }
 export var isWindows = _isWindows;
 export var isMacintosh = _isMacintosh;

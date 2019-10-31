@@ -60,10 +60,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import * as dom from '../../../base/browser/dom.js';
-import { Sash } from '../../../base/browser/ui/sash/sash.js';
 import { Color } from '../../../base/common/color.js';
-import { Emitter } from '../../../base/common/event.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { Emitter, Event } from '../../../base/common/event.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import { Schemas } from '../../../base/common/network.js';
 import { basenameOrAuthority, dirname } from '../../../base/common/resources.js';
 import './media/referencesWidget.css';
@@ -79,8 +78,9 @@ import { ILabelService } from '../../../platform/label/common/label.js';
 import { WorkbenchAsyncDataTree } from '../../../platform/list/browser/listService.js';
 import { activeContrastBorder, contrastBorder, registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { PeekViewWidget } from './peekViewWidget.js';
+import { PeekViewWidget, IPeekViewService } from './peekViewWidget.js';
 import { FileReferences, OneReference } from './referencesModel.js';
+import { SplitView, Sizing } from '../../../base/browser/ui/splitview/splitview.js';
 var DecorationsManager = /** @class */ (function () {
     function DecorationsManager(_editor, _model) {
         var _this = this;
@@ -88,18 +88,18 @@ var DecorationsManager = /** @class */ (function () {
         this._model = _model;
         this._decorations = new Map();
         this._decorationIgnoreSet = new Set();
-        this._callOnDispose = [];
-        this._callOnModelChange = [];
-        this._callOnDispose.push(this._editor.onDidChangeModel(function () { return _this._onModelChanged(); }));
+        this._callOnDispose = new DisposableStore();
+        this._callOnModelChange = new DisposableStore();
+        this._callOnDispose.add(this._editor.onDidChangeModel(function () { return _this._onModelChanged(); }));
         this._onModelChanged();
     }
     DecorationsManager.prototype.dispose = function () {
-        this._callOnModelChange = dispose(this._callOnModelChange);
-        this._callOnDispose = dispose(this._callOnDispose);
+        this._callOnModelChange.dispose();
+        this._callOnDispose.dispose();
         this.removeDecorations();
     };
     DecorationsManager.prototype._onModelChanged = function () {
-        this._callOnModelChange = dispose(this._callOnModelChange);
+        this._callOnModelChange.clear();
         var model = this._editor.getModel();
         if (model) {
             for (var _i = 0, _a = this._model.groups; _i < _a.length; _i++) {
@@ -116,7 +116,7 @@ var DecorationsManager = /** @class */ (function () {
         if (!this._editor.hasModel()) {
             return;
         }
-        this._callOnModelChange.push(this._editor.getModel().onDidChangeDecorations(function (event) { return _this._onDecorationChanged(); }));
+        this._callOnModelChange.add(this._editor.getModel().onDidChangeDecorations(function (event) { return _this._onDecorationChanged(); }));
         var newDecorations = [];
         var newDecorationsActualIndex = [];
         for (var i = 0, len = reference.children.length; i < len; i++) {
@@ -188,100 +188,65 @@ var DecorationsManager = /** @class */ (function () {
     });
     return DecorationsManager;
 }());
-var VSash = /** @class */ (function () {
-    function VSash(container, ratio) {
-        var _this = this;
-        this._disposables = [];
-        this._onDidChangePercentages = new Emitter();
-        this._ratio = ratio;
-        this._sash = new Sash(container, {
-            getVerticalSashLeft: function () { return _this._width * _this._ratio; },
-            getVerticalSashHeight: function () { return _this._height; }
-        });
-        // compute the current widget clientX postion since
-        // the sash works with clientX when dragging
-        var clientX;
-        this._disposables.push(this._sash.onDidStart(function (e) {
-            clientX = e.startX - (_this._width * _this.ratio);
-        }));
-        this._disposables.push(this._sash.onDidChange(function (e) {
-            // compute the new position of the sash and from that
-            // compute the new ratio that we are using
-            var newLeft = e.currentX - clientX;
-            if (newLeft > 20 && newLeft + 20 < _this._width) {
-                _this._ratio = newLeft / _this._width;
-                _this._sash.layout();
-                _this._onDidChangePercentages.fire(_this);
-            }
-        }));
+var LayoutData = /** @class */ (function () {
+    function LayoutData() {
+        this.ratio = 0.7;
+        this.heightInLines = 18;
     }
-    VSash.prototype.dispose = function () {
-        this._sash.dispose();
-        this._onDidChangePercentages.dispose();
-        dispose(this._disposables);
+    LayoutData.fromJSON = function (raw) {
+        var ratio;
+        var heightInLines;
+        try {
+            var data = JSON.parse(raw);
+            ratio = data.ratio;
+            heightInLines = data.heightInLines;
+        }
+        catch (_a) {
+            //
+        }
+        return {
+            ratio: ratio || 0.7,
+            heightInLines: heightInLines || 18
+        };
     };
-    Object.defineProperty(VSash.prototype, "onDidChangePercentages", {
-        get: function () {
-            return this._onDidChangePercentages.event;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(VSash.prototype, "width", {
-        set: function (value) {
-            this._width = value;
-            this._sash.layout();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(VSash.prototype, "height", {
-        set: function (value) {
-            this._height = value;
-            this._sash.layout();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(VSash.prototype, "percentages", {
-        get: function () {
-            var left = 100 * this._ratio;
-            var right = 100 - left;
-            return [left + "%", right + "%"];
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(VSash.prototype, "ratio", {
-        get: function () {
-            return this._ratio;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return VSash;
+    return LayoutData;
 }());
+export { LayoutData };
 export var ctxReferenceWidgetSearchTreeFocused = new RawContextKey('referenceSearchTreeFocused', true);
 /**
  * ZoneWidget that is shown inside the editor
  */
 var ReferenceWidget = /** @class */ (function (_super) {
     __extends(ReferenceWidget, _super);
-    function ReferenceWidget(editor, _defaultTreeKeyboardSupport, layoutData, themeService, _textModelResolverService, _instantiationService, _uriLabel) {
+    function ReferenceWidget(editor, _defaultTreeKeyboardSupport, layoutData, themeService, _textModelResolverService, _instantiationService, _peekViewService, _uriLabel) {
         var _this = _super.call(this, editor, { showFrame: false, showArrow: true, isResizeable: true, isAccessible: true }) || this;
         _this._defaultTreeKeyboardSupport = _defaultTreeKeyboardSupport;
         _this.layoutData = layoutData;
         _this._textModelResolverService = _textModelResolverService;
         _this._instantiationService = _instantiationService;
+        _this._peekViewService = _peekViewService;
         _this._uriLabel = _uriLabel;
-        _this._disposeOnNewModel = [];
-        _this._callOnDispose = [];
+        _this._disposeOnNewModel = new DisposableStore();
+        _this._callOnDispose = new DisposableStore();
         _this._onDidSelectReference = new Emitter();
+        _this._dim = { height: 0, width: 0 };
         _this._applyTheme(themeService.getTheme());
-        _this._callOnDispose.push(themeService.onThemeChange(_this._applyTheme.bind(_this)));
+        _this._callOnDispose.add(themeService.onThemeChange(_this._applyTheme.bind(_this)));
+        _this._peekViewService.addExclusiveWidget(editor, _this);
         _this.create();
         return _this;
     }
+    ReferenceWidget.prototype.dispose = function () {
+        this.setModel(undefined);
+        this._callOnDispose.dispose();
+        this._disposeOnNewModel.dispose();
+        dispose(this._preview);
+        dispose(this._previewNotAvailableMessage);
+        dispose(this._tree);
+        dispose(this._previewModelReference);
+        this._splitView.dispose();
+        _super.prototype.dispose.call(this);
+    };
     ReferenceWidget.prototype._applyTheme = function (theme) {
         var borderColor = theme.getColor(peekViewBorder) || Color.transparent;
         this.style({
@@ -291,12 +256,6 @@ var ReferenceWidget = /** @class */ (function (_super) {
             primaryHeadingColor: theme.getColor(peekViewTitleForeground),
             secondaryHeadingColor: theme.getColor(peekViewTitleInfoForeground)
         });
-    };
-    ReferenceWidget.prototype.dispose = function () {
-        this.setModel(undefined);
-        this._callOnDispose = dispose(this._callOnDispose);
-        dispose(this._preview, this._previewNotAvailableMessage, this._tree, this._sash, this._previewModelReference);
-        _super.prototype.dispose.call(this);
     };
     Object.defineProperty(ReferenceWidget.prototype, "onDidSelectReference", {
         get: function () {
@@ -327,6 +286,7 @@ var ReferenceWidget = /** @class */ (function (_super) {
         // message pane
         this._messageContainer = dom.append(containerElement, dom.$('div.messages'));
         dom.hide(this._messageContainer);
+        this._splitView = new SplitView(containerElement, { orientation: 1 /* HORIZONTAL */ });
         // editor
         this._previewContainer = dom.append(containerElement, dom.$('div.preview.inline'));
         var options = {
@@ -347,22 +307,8 @@ var ReferenceWidget = /** @class */ (function (_super) {
         this._preview = this._instantiationService.createInstance(EmbeddedCodeEditorWidget, this._previewContainer, options, this.editor);
         dom.hide(this._previewContainer);
         this._previewNotAvailableMessage = TextModel.createFromString(nls.localize('missingPreviewMessage', "no preview available"));
-        // sash
-        this._sash = new VSash(containerElement, this.layoutData.ratio || 0.8);
-        this._sash.onDidChangePercentages(function () {
-            var _a = _this._sash.percentages, left = _a[0], right = _a[1];
-            _this._previewContainer.style.width = left;
-            _this._treeContainer.style.width = right;
-            _this._preview.layout();
-            _this._tree.layout(_this.height, _this.width && _this.width * (1 - _this._sash.ratio));
-            _this.layoutData.ratio = _this._sash.ratio;
-        });
         // tree
         this._treeContainer = dom.append(containerElement, dom.$('div.ref-tree.inline'));
-        var renderers = [
-            this._instantiationService.createInstance(FileReferencesRenderer),
-            this._instantiationService.createInstance(OneReferenceRenderer),
-        ];
         var treeOptions = {
             ariaLabel: nls.localize('treeAriaLabel', "References"),
             keyboardSupport: this._defaultTreeKeyboardSupport,
@@ -370,9 +316,37 @@ var ReferenceWidget = /** @class */ (function (_super) {
             keyboardNavigationLabelProvider: this._instantiationService.createInstance(StringRepresentationProvider),
             identityProvider: new IdentityProvider()
         };
-        var treeDataSource = this._instantiationService.createInstance(DataSource);
-        this._tree = this._instantiationService.createInstance(WorkbenchAsyncDataTree, this._treeContainer, new Delegate(), renderers, treeDataSource, treeOptions);
+        this._tree = this._instantiationService.createInstance(WorkbenchAsyncDataTree, this._treeContainer, new Delegate(), [
+            this._instantiationService.createInstance(FileReferencesRenderer),
+            this._instantiationService.createInstance(OneReferenceRenderer),
+        ], this._instantiationService.createInstance(DataSource), treeOptions);
         ctxReferenceWidgetSearchTreeFocused.bindTo(this._tree.contextKeyService);
+        // split stuff
+        this._splitView.addView({
+            onDidChange: Event.None,
+            element: this._previewContainer,
+            minimumSize: 200,
+            maximumSize: Number.MAX_VALUE,
+            layout: function (width) {
+                _this._preview.layout({ height: _this._dim.height, width: width });
+            }
+        }, Sizing.Distribute);
+        this._splitView.addView({
+            onDidChange: Event.None,
+            element: this._treeContainer,
+            minimumSize: 100,
+            maximumSize: Number.MAX_VALUE,
+            layout: function (width) {
+                _this._treeContainer.style.height = _this._dim.height + "px";
+                _this._treeContainer.style.width = width + "px";
+                _this._tree.layout(_this._dim.height, width);
+            }
+        }, Sizing.Distribute);
+        this._disposables.add(this._splitView.onDidSashChange(function () {
+            if (_this._dim.width) {
+                _this.layoutData.ratio = _this._splitView.getViewSize(0) / _this._dim.width;
+            }
+        }, undefined));
         // listen on selection and focus
         var onEvent = function (element, kind) {
             if (element instanceof OneReference) {
@@ -392,10 +366,6 @@ var ReferenceWidget = /** @class */ (function (_super) {
                 // todo@joh make this a command
                 goto = true;
             }
-            else if (e.browserEvent instanceof MouseEvent) {
-                aside = e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey;
-                goto = e.browserEvent.detail === 2;
-            }
             if (aside) {
                 onEvent(e.elements[0], 'side');
             }
@@ -406,46 +376,32 @@ var ReferenceWidget = /** @class */ (function (_super) {
                 onEvent(e.elements[0], 'show');
             }
         });
-        this._tree.onMouseDblClick(function (e) {
-            var aside = e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey;
-            var goto = e.browserEvent.detail === 2;
+        this._tree.onDidOpen(function (e) {
+            var aside = (e.browserEvent instanceof MouseEvent) && (e.browserEvent.ctrlKey || e.browserEvent.metaKey || e.browserEvent.altKey);
+            var goto = !e.browserEvent || ((e.browserEvent instanceof MouseEvent) && e.browserEvent.detail === 2);
             if (aside) {
-                onEvent(e.element, 'side');
+                onEvent(e.elements[0], 'side');
             }
             else if (goto) {
-                onEvent(e.element, 'goto');
+                onEvent(e.elements[0], 'goto');
             }
             else {
-                onEvent(e.element, 'show');
+                onEvent(e.elements[0], 'show');
             }
         });
         dom.hide(this._treeContainer);
     };
+    ReferenceWidget.prototype._onWidth = function (width) {
+        if (this._dim) {
+            this._doLayoutBody(this._dim.height, width);
+        }
+    };
     ReferenceWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
         _super.prototype._doLayoutBody.call(this, heightInPixel, widthInPixel);
-        this.height = heightInPixel;
-        this.width = widthInPixel;
-        var height = heightInPixel + 'px';
-        this._sash.height = heightInPixel;
-        this._sash.width = widthInPixel;
-        // set height/width
-        var _a = this._sash.percentages, left = _a[0], right = _a[1];
-        this._previewContainer.style.height = height;
-        this._previewContainer.style.width = left;
-        this._treeContainer.style.height = height;
-        this._treeContainer.style.width = right;
-        // forward
-        this._tree.layout(heightInPixel, widthInPixel * (1 - this._sash.ratio));
-        this._preview.layout();
-        // store layout data
-        this.layoutData = {
-            heightInLines: this._viewZone ? this._viewZone.heightInLines : 0,
-            ratio: this._sash.ratio
-        };
-    };
-    ReferenceWidget.prototype._onWidth = function (widthInPixel) {
-        this._sash.width = widthInPixel;
-        this._preview.layout();
+        this._dim = { height: heightInPixel, width: widthInPixel };
+        this.layoutData.heightInLines = this._viewZone ? this._viewZone.heightInLines : this.layoutData.heightInLines;
+        this._splitView.layout(widthInPixel);
+        this._splitView.resizeView(0, widthInPixel * this.layoutData.ratio);
     };
     ReferenceWidget.prototype.setSelection = function (selection) {
         var _this = this;
@@ -461,7 +417,7 @@ var ReferenceWidget = /** @class */ (function (_super) {
     };
     ReferenceWidget.prototype.setModel = function (newModel) {
         // clean up
-        this._disposeOnNewModel = dispose(this._disposeOnNewModel);
+        this._disposeOnNewModel.clear();
         this._model = newModel;
         if (this._model) {
             return this._onNewModel();
@@ -481,11 +437,11 @@ var ReferenceWidget = /** @class */ (function (_super) {
         }
         dom.hide(this._messageContainer);
         this._decorationsManager = new DecorationsManager(this._preview, this._model);
-        this._disposeOnNewModel.push(this._decorationsManager);
+        this._disposeOnNewModel.add(this._decorationsManager);
         // listen on model changes
-        this._disposeOnNewModel.push(this._model.onDidChangeReferenceRange(function (reference) { return _this._tree.rerender(reference); }));
+        this._disposeOnNewModel.add(this._model.onDidChangeReferenceRange(function (reference) { return _this._tree.rerender(reference); }));
         // listen on editor
-        this._disposeOnNewModel.push(this._preview.onMouseDown(function (e) {
+        this._disposeOnNewModel.add(this._preview.onMouseDown(function (e) {
             var event = e.event, target = e.target;
             if (event.detail !== 2) {
                 return;
@@ -504,8 +460,7 @@ var ReferenceWidget = /** @class */ (function (_super) {
         dom.addClass(this.container, 'results-loaded');
         dom.show(this._treeContainer);
         dom.show(this._previewContainer);
-        this._preview.layout();
-        this._tree.layout();
+        this._splitView.layout(this._dim.width);
         this.focus();
         // pick input and a reference to begin with
         return this._tree.setInput(this._model.groups.length === 1 ? this._model.groups[0] : this._model);
@@ -584,7 +539,8 @@ var ReferenceWidget = /** @class */ (function (_super) {
         __param(3, IThemeService),
         __param(4, ITextModelService),
         __param(5, IInstantiationService),
-        __param(6, ILabelService)
+        __param(6, IPeekViewService),
+        __param(7, ILabelService)
     ], ReferenceWidget);
     return ReferenceWidget;
 }(PeekViewWidget));
@@ -607,7 +563,7 @@ export var peekViewEditorMatchHighlightBorder = registerColor('peekViewEditor.ma
 registerThemingParticipant(function (theme, collector) {
     var findMatchHighlightColor = theme.getColor(peekViewResultsMatchHighlight);
     if (findMatchHighlightColor) {
-        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .referenceMatch { background-color: " + findMatchHighlightColor + "; }");
+        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .referenceMatch .highlight { background-color: " + findMatchHighlightColor + "; }");
     }
     var referenceHighlightColor = theme.getColor(peekViewEditorMatchHighlight);
     if (referenceHighlightColor) {
@@ -619,7 +575,7 @@ registerThemingParticipant(function (theme, collector) {
     }
     var hcOutline = theme.getColor(activeContrastBorder);
     if (hcOutline) {
-        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .referenceMatch { border: 1px dotted " + hcOutline + "; box-sizing: border-box; }");
+        collector.addRule(".monaco-editor .reference-zone-widget .ref-tree .referenceMatch .highlight { border: 1px dotted " + hcOutline + "; box-sizing: border-box; }");
     }
     var resultsBackground = theme.getColor(peekViewResultsBackground);
     if (resultsBackground) {

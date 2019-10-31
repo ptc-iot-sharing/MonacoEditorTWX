@@ -76,10 +76,79 @@ var View = /** @class */ (function (_super) {
         // Keyboard handler
         _this._textAreaHandler = new TextAreaHandler(_this._context, viewController, _this.createTextAreaHandlerHelper());
         _this.viewParts.push(_this._textAreaHandler);
-        _this.createViewParts();
+        // These two dom nodes must be constructed up front, since references are needed in the layout provider (scrolling & co.)
+        _this.linesContent = createFastDomNode(document.createElement('div'));
+        _this.linesContent.setClassName('lines-content' + ' monaco-editor-background');
+        _this.linesContent.setPosition('absolute');
+        _this.domNode = createFastDomNode(document.createElement('div'));
+        _this.domNode.setClassName(_this.getEditorClassName());
+        _this.overflowGuardContainer = createFastDomNode(document.createElement('div'));
+        PartFingerprints.write(_this.overflowGuardContainer, 3 /* OverflowGuard */);
+        _this.overflowGuardContainer.setClassName('overflow-guard');
+        _this._scrollbar = new EditorScrollbar(_this._context, _this.linesContent, _this.domNode, _this.overflowGuardContainer);
+        _this.viewParts.push(_this._scrollbar);
+        // View Lines
+        _this.viewLines = new ViewLines(_this._context, _this.linesContent);
+        // View Zones
+        _this.viewZones = new ViewZones(_this._context);
+        _this.viewParts.push(_this.viewZones);
+        // Decorations overview ruler
+        var decorationsOverviewRuler = new DecorationsOverviewRuler(_this._context);
+        _this.viewParts.push(decorationsOverviewRuler);
+        var scrollDecoration = new ScrollDecorationViewPart(_this._context);
+        _this.viewParts.push(scrollDecoration);
+        var contentViewOverlays = new ContentViewOverlays(_this._context);
+        _this.viewParts.push(contentViewOverlays);
+        contentViewOverlays.addDynamicOverlay(new CurrentLineHighlightOverlay(_this._context));
+        contentViewOverlays.addDynamicOverlay(new SelectionsOverlay(_this._context));
+        contentViewOverlays.addDynamicOverlay(new IndentGuidesOverlay(_this._context));
+        contentViewOverlays.addDynamicOverlay(new DecorationsOverlay(_this._context));
+        var marginViewOverlays = new MarginViewOverlays(_this._context);
+        _this.viewParts.push(marginViewOverlays);
+        marginViewOverlays.addDynamicOverlay(new CurrentLineMarginHighlightOverlay(_this._context));
+        marginViewOverlays.addDynamicOverlay(new GlyphMarginOverlay(_this._context));
+        marginViewOverlays.addDynamicOverlay(new MarginViewLineDecorationsOverlay(_this._context));
+        marginViewOverlays.addDynamicOverlay(new LinesDecorationsOverlay(_this._context));
+        marginViewOverlays.addDynamicOverlay(new LineNumbersOverlay(_this._context));
+        var margin = new Margin(_this._context);
+        margin.getDomNode().appendChild(_this.viewZones.marginDomNode);
+        margin.getDomNode().appendChild(marginViewOverlays.getDomNode());
+        _this.viewParts.push(margin);
+        // Content widgets
+        _this.contentWidgets = new ViewContentWidgets(_this._context, _this.domNode);
+        _this.viewParts.push(_this.contentWidgets);
+        _this.viewCursors = new ViewCursors(_this._context);
+        _this.viewParts.push(_this.viewCursors);
+        // Overlay widgets
+        _this.overlayWidgets = new ViewOverlayWidgets(_this._context);
+        _this.viewParts.push(_this.overlayWidgets);
+        var rulers = new Rulers(_this._context);
+        _this.viewParts.push(rulers);
+        var minimap = new Minimap(_this._context);
+        _this.viewParts.push(minimap);
+        // -------------- Wire dom nodes up
+        if (decorationsOverviewRuler) {
+            var overviewRulerData = _this._scrollbar.getOverviewRulerLayoutInfo();
+            overviewRulerData.parent.insertBefore(decorationsOverviewRuler.getDomNode(), overviewRulerData.insertBefore);
+        }
+        _this.linesContent.appendChild(contentViewOverlays.getDomNode());
+        _this.linesContent.appendChild(rulers.domNode);
+        _this.linesContent.appendChild(_this.viewZones.domNode);
+        _this.linesContent.appendChild(_this.viewLines.getDomNode());
+        _this.linesContent.appendChild(_this.contentWidgets.domNode);
+        _this.linesContent.appendChild(_this.viewCursors.getDomNode());
+        _this.overflowGuardContainer.appendChild(margin.getDomNode());
+        _this.overflowGuardContainer.appendChild(_this._scrollbar.getDomNode());
+        _this.overflowGuardContainer.appendChild(scrollDecoration.getDomNode());
+        _this.overflowGuardContainer.appendChild(_this._textAreaHandler.textArea);
+        _this.overflowGuardContainer.appendChild(_this._textAreaHandler.textAreaCover);
+        _this.overflowGuardContainer.appendChild(_this.overlayWidgets.getDomNode());
+        _this.overflowGuardContainer.appendChild(minimap.getDomNode());
+        _this.domNode.appendChild(_this.overflowGuardContainer);
+        _this.domNode.appendChild(_this.contentWidgets.overflowingContentWidgetsDomNode);
         _this._setLayout();
         // Pointer handler
-        _this.pointerHandler = new PointerHandler(_this._context, viewController, _this.createPointerHandlerHelper());
+        _this.pointerHandler = _this._register(new PointerHandler(_this._context, viewController, _this.createPointerHandlerHelper()));
         _this._register(model.addEventListener(function (events) {
             _this.eventDispatcher.emitMany(events);
         }));
@@ -88,78 +157,6 @@ var View = /** @class */ (function (_super) {
         }));
         return _this;
     }
-    View.prototype.createViewParts = function () {
-        // These two dom nodes must be constructed up front, since references are needed in the layout provider (scrolling & co.)
-        this.linesContent = createFastDomNode(document.createElement('div'));
-        this.linesContent.setClassName('lines-content' + ' monaco-editor-background');
-        this.linesContent.setPosition('absolute');
-        this.domNode = createFastDomNode(document.createElement('div'));
-        this.domNode.setClassName(this.getEditorClassName());
-        this.overflowGuardContainer = createFastDomNode(document.createElement('div'));
-        PartFingerprints.write(this.overflowGuardContainer, 3 /* OverflowGuard */);
-        this.overflowGuardContainer.setClassName('overflow-guard');
-        this._scrollbar = new EditorScrollbar(this._context, this.linesContent, this.domNode, this.overflowGuardContainer);
-        this.viewParts.push(this._scrollbar);
-        // View Lines
-        this.viewLines = new ViewLines(this._context, this.linesContent);
-        // View Zones
-        this.viewZones = new ViewZones(this._context);
-        this.viewParts.push(this.viewZones);
-        // Decorations overview ruler
-        var decorationsOverviewRuler = new DecorationsOverviewRuler(this._context);
-        this.viewParts.push(decorationsOverviewRuler);
-        var scrollDecoration = new ScrollDecorationViewPart(this._context);
-        this.viewParts.push(scrollDecoration);
-        var contentViewOverlays = new ContentViewOverlays(this._context);
-        this.viewParts.push(contentViewOverlays);
-        contentViewOverlays.addDynamicOverlay(new CurrentLineHighlightOverlay(this._context));
-        contentViewOverlays.addDynamicOverlay(new SelectionsOverlay(this._context));
-        contentViewOverlays.addDynamicOverlay(new IndentGuidesOverlay(this._context));
-        contentViewOverlays.addDynamicOverlay(new DecorationsOverlay(this._context));
-        var marginViewOverlays = new MarginViewOverlays(this._context);
-        this.viewParts.push(marginViewOverlays);
-        marginViewOverlays.addDynamicOverlay(new CurrentLineMarginHighlightOverlay(this._context));
-        marginViewOverlays.addDynamicOverlay(new GlyphMarginOverlay(this._context));
-        marginViewOverlays.addDynamicOverlay(new MarginViewLineDecorationsOverlay(this._context));
-        marginViewOverlays.addDynamicOverlay(new LinesDecorationsOverlay(this._context));
-        marginViewOverlays.addDynamicOverlay(new LineNumbersOverlay(this._context));
-        var margin = new Margin(this._context);
-        margin.getDomNode().appendChild(this.viewZones.marginDomNode);
-        margin.getDomNode().appendChild(marginViewOverlays.getDomNode());
-        this.viewParts.push(margin);
-        // Content widgets
-        this.contentWidgets = new ViewContentWidgets(this._context, this.domNode);
-        this.viewParts.push(this.contentWidgets);
-        this.viewCursors = new ViewCursors(this._context);
-        this.viewParts.push(this.viewCursors);
-        // Overlay widgets
-        this.overlayWidgets = new ViewOverlayWidgets(this._context);
-        this.viewParts.push(this.overlayWidgets);
-        var rulers = new Rulers(this._context);
-        this.viewParts.push(rulers);
-        var minimap = new Minimap(this._context);
-        this.viewParts.push(minimap);
-        // -------------- Wire dom nodes up
-        if (decorationsOverviewRuler) {
-            var overviewRulerData = this._scrollbar.getOverviewRulerLayoutInfo();
-            overviewRulerData.parent.insertBefore(decorationsOverviewRuler.getDomNode(), overviewRulerData.insertBefore);
-        }
-        this.linesContent.appendChild(contentViewOverlays.getDomNode());
-        this.linesContent.appendChild(rulers.domNode);
-        this.linesContent.appendChild(this.viewZones.domNode);
-        this.linesContent.appendChild(this.viewLines.getDomNode());
-        this.linesContent.appendChild(this.contentWidgets.domNode);
-        this.linesContent.appendChild(this.viewCursors.getDomNode());
-        this.overflowGuardContainer.appendChild(margin.getDomNode());
-        this.overflowGuardContainer.appendChild(this._scrollbar.getDomNode());
-        this.overflowGuardContainer.appendChild(scrollDecoration.getDomNode());
-        this.overflowGuardContainer.appendChild(this._textAreaHandler.textArea);
-        this.overflowGuardContainer.appendChild(this._textAreaHandler.textAreaCover);
-        this.overflowGuardContainer.appendChild(this.overlayWidgets.getDomNode());
-        this.overflowGuardContainer.appendChild(minimap.getDomNode());
-        this.domNode.appendChild(this.overflowGuardContainer);
-        this.domNode.appendChild(this.contentWidgets.overflowingContentWidgetsDomNode);
-    };
     View.prototype._flushAccumulatedAndRenderNow = function () {
         this._renderNow();
     };
@@ -253,7 +250,6 @@ var View = /** @class */ (function (_super) {
         }
         this.eventDispatcher.removeEventHandler(this);
         this.outgoingEvents.dispose();
-        this.pointerHandler.dispose();
         this.viewLines.dispose();
         // Destroy view parts
         for (var i = 0, len = this.viewParts.length; i < len; i++) {
@@ -417,7 +413,7 @@ var View = /** @class */ (function (_super) {
     };
     View.prototype.layoutContentWidget = function (widgetData) {
         var newPosition = widgetData.position ? widgetData.position.position : null;
-        var newRange = widgetData.position ? widgetData.position.range : null;
+        var newRange = widgetData.position ? widgetData.position.range || null : null;
         var newPreference = widgetData.position ? widgetData.position.preference : null;
         this.contentWidgets.setWidgetPosition(widgetData.widget, newPosition, newRange, newPreference);
         this._scheduleRender();

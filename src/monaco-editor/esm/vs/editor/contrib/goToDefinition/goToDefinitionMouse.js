@@ -21,7 +21,7 @@ import { Range } from '../../common/core/range.js';
 import { DefinitionProviderRegistry } from '../../common/modes.js';
 import { registerEditorContribution } from '../../browser/editorExtensions.js';
 import { getDefinitionsAtPosition } from './goToDefinition.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { ITextModelService } from '../../common/services/resolverService.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import { editorActiveLinkForeground } from '../../../platform/theme/common/colorRegistry.js';
@@ -29,22 +29,24 @@ import { EditorState } from '../../browser/core/editorState.js';
 import { DefinitionAction, DefinitionActionConfig } from './goToDefinitionCommands.js';
 import { ClickLinkGesture } from './clickLinkGesture.js';
 import { Position } from '../../common/core/position.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
 var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
     function GotoDefinitionWithMouseEditorContribution(editor, textModelResolverService, modeService) {
         var _this = this;
         this.textModelResolverService = textModelResolverService;
         this.modeService = modeService;
-        this.toUnhook = [];
+        this.toUnhook = new DisposableStore();
         this.decorations = [];
-        this.editor = editor;
+        this.currentWordUnderMouse = null;
         this.previousPromise = null;
+        this.editor = editor;
         var linkGesture = new ClickLinkGesture(editor);
-        this.toUnhook.push(linkGesture);
-        this.toUnhook.push(linkGesture.onMouseMoveOrRelevantKeyDown(function (_a) {
+        this.toUnhook.add(linkGesture);
+        this.toUnhook.add(linkGesture.onMouseMoveOrRelevantKeyDown(function (_a) {
             var mouseEvent = _a[0], keyboardEvent = _a[1];
-            _this.startFindDefinition(mouseEvent, keyboardEvent || undefined);
+            _this.startFindDefinition(mouseEvent, withNullAsUndefined(keyboardEvent));
         }));
-        this.toUnhook.push(linkGesture.onExecute(function (mouseEvent) {
+        this.toUnhook.add(linkGesture.onExecute(function (mouseEvent) {
             if (_this.isEnabled(mouseEvent)) {
                 _this.gotoDefinition(mouseEvent.target, mouseEvent.hasSideBySideModifier).then(function () {
                     _this.removeDecorations();
@@ -54,7 +56,7 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
                 });
             }
         }));
-        this.toUnhook.push(linkGesture.onCancel(function () {
+        this.toUnhook.add(linkGesture.onCancel(function () {
             _this.removeDecorations();
             _this.currentWordUnderMouse = null;
         }));
@@ -117,7 +119,7 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
                         ref.dispose();
                         return;
                     }
-                    var previewValue = _this.getPreviewValue(textEditorModel, startLineNumber);
+                    var previewValue = _this.getPreviewValue(textEditorModel, startLineNumber, result_1);
                     var wordRange;
                     if (result_1.originSelectionRange) {
                         wordRange = Range.lift(result_1.originSelectionRange);
@@ -125,15 +127,15 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
                     else {
                         wordRange = new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
                     }
-                    var modeId = _this.modeService.getModeIdByFilepathOrFirstLine(textEditorModel.uri.fsPath);
+                    var modeId = _this.modeService.getModeIdByFilepathOrFirstLine(textEditorModel.uri);
                     _this.addDecoration(wordRange, new MarkdownString().appendCodeblock(modeId ? modeId : '', previewValue));
                     ref.dispose();
                 });
             }
         }).then(undefined, onUnexpectedError);
     };
-    GotoDefinitionWithMouseEditorContribution.prototype.getPreviewValue = function (textEditorModel, startLineNumber) {
-        var rangeToUse = this.getPreviewRangeBasedOnBrackets(textEditorModel, startLineNumber);
+    GotoDefinitionWithMouseEditorContribution.prototype.getPreviewValue = function (textEditorModel, startLineNumber, result) {
+        var rangeToUse = result.targetSelectionRange ? result.range : this.getPreviewRangeBasedOnBrackets(textEditorModel, startLineNumber);
         var numberOfLinesInRange = rangeToUse.endLineNumber - rangeToUse.startLineNumber;
         if (numberOfLinesInRange >= GotoDefinitionWithMouseEditorContribution.MAX_SOURCE_PREVIEW_LINES) {
             rangeToUse = this.getPreviewRangeBasedOnIndentation(textEditorModel, startLineNumber);
@@ -235,14 +237,14 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
     GotoDefinitionWithMouseEditorContribution.prototype.gotoDefinition = function (target, sideBySide) {
         var _this = this;
         this.editor.setPosition(target.position);
-        var action = new DefinitionAction(new DefinitionActionConfig(sideBySide, false, true, false), { alias: '', label: '', id: '', precondition: null });
+        var action = new DefinitionAction(new DefinitionActionConfig(sideBySide, false, true, false), { alias: '', label: '', id: '', precondition: undefined });
         return this.editor.invokeWithinContext(function (accessor) { return action.run(accessor, _this.editor); });
     };
     GotoDefinitionWithMouseEditorContribution.prototype.getId = function () {
         return GotoDefinitionWithMouseEditorContribution.ID;
     };
     GotoDefinitionWithMouseEditorContribution.prototype.dispose = function () {
-        this.toUnhook = dispose(this.toUnhook);
+        this.toUnhook.dispose();
     };
     GotoDefinitionWithMouseEditorContribution.ID = 'editor.contrib.gotodefinitionwithmouse';
     GotoDefinitionWithMouseEditorContribution.MAX_SOURCE_PREVIEW_LINES = 8;

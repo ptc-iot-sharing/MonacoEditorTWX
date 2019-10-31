@@ -18,7 +18,7 @@ var __extends = (this && this.__extends) || (function () {
 import * as nls from '../../../nls.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
-import { Disposable, dispose } from '../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { CursorMoveCommands } from '../../common/controller/cursorMoveCommands.js';
 import { Range } from '../../common/core/range.js';
@@ -37,7 +37,7 @@ var InsertCursorAbove = /** @class */ (function (_super) {
             id: 'editor.action.insertCursorAbove',
             label: nls.localize('mutlicursor.insertAbove', "Add Cursor Above"),
             alias: 'Add Cursor Above',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
                 primary: 2048 /* CtrlCmd */ | 512 /* Alt */ | 16 /* UpArrow */,
@@ -79,7 +79,7 @@ var InsertCursorBelow = /** @class */ (function (_super) {
             id: 'editor.action.insertCursorBelow',
             label: nls.localize('mutlicursor.insertBelow', "Add Cursor Below"),
             alias: 'Add Cursor Below',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
                 primary: 2048 /* CtrlCmd */ | 512 /* Alt */ | 18 /* DownArrow */,
@@ -121,7 +121,7 @@ var InsertCursorAtEndOfEachLineSelected = /** @class */ (function (_super) {
             id: 'editor.action.insertCursorAtEndOfEachLineSelected',
             label: nls.localize('mutlicursor.insertAtEndOfEachLineSelected', "Add Cursors to Line Ends"),
             alias: 'Add Cursors to Line Ends',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
                 primary: 1024 /* Shift */ | 512 /* Alt */ | 39 /* KEY_I */,
@@ -169,7 +169,7 @@ var InsertCursorAtEndOfLineSelected = /** @class */ (function (_super) {
             id: 'editor.action.addCursorsToBottom',
             label: nls.localize('mutlicursor.addCursorsToBottom', "Add Cursors To Bottom"),
             alias: 'Add Cursors To Bottom',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     InsertCursorAtEndOfLineSelected.prototype.run = function (accessor, editor) {
@@ -195,7 +195,7 @@ var InsertCursorAtTopOfLineSelected = /** @class */ (function (_super) {
             id: 'editor.action.addCursorsToTop',
             label: nls.localize('mutlicursor.addCursorsToTop', "Add Cursors To Top"),
             alias: 'Add Cursors To Top',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     InsertCursorAtTopOfLineSelected.prototype.run = function (accessor, editor) {
@@ -372,10 +372,10 @@ var MultiCursorSelectionController = /** @class */ (function (_super) {
     __extends(MultiCursorSelectionController, _super);
     function MultiCursorSelectionController(editor) {
         var _this = _super.call(this) || this;
+        _this._sessionDispose = _this._register(new DisposableStore());
         _this._editor = editor;
         _this._ignoreSelectionChange = false;
         _this._session = null;
-        _this._sessionDispose = [];
         return _this;
     }
     MultiCursorSelectionController.get = function (editor) {
@@ -404,26 +404,24 @@ var MultiCursorSelectionController = /** @class */ (function (_super) {
                 newState.isRegexOverride = 2 /* False */;
             }
             findController.getState().change(newState, false);
-            this._sessionDispose = [
-                this._editor.onDidChangeCursorSelection(function (e) {
-                    if (_this._ignoreSelectionChange) {
-                        return;
-                    }
+            this._sessionDispose.add(this._editor.onDidChangeCursorSelection(function (e) {
+                if (_this._ignoreSelectionChange) {
+                    return;
+                }
+                _this._endSession();
+            }));
+            this._sessionDispose.add(this._editor.onDidBlurEditorText(function () {
+                _this._endSession();
+            }));
+            this._sessionDispose.add(findController.getState().onFindReplaceStateChange(function (e) {
+                if (e.matchCase || e.wholeWord) {
                     _this._endSession();
-                }),
-                this._editor.onDidBlurEditorText(function () {
-                    _this._endSession();
-                }),
-                findController.getState().onFindReplaceStateChange(function (e) {
-                    if (e.matchCase || e.wholeWord) {
-                        _this._endSession();
-                    }
-                })
-            ];
+                }
+            }));
         }
     };
     MultiCursorSelectionController.prototype._endSession = function () {
-        this._sessionDispose = dispose(this._sessionDispose);
+        this._sessionDispose.clear();
         if (this._session && this._session.isDisconnectedFromFindController) {
             var newState = {
                 wholeWordOverride: 0 /* NotSet */,
@@ -573,7 +571,7 @@ var AddSelectionToNextFindMatchAction = /** @class */ (function (_super) {
             id: 'editor.action.addSelectionToNextFindMatch',
             label: nls.localize('addSelectionToNextFindMatch', "Add Selection To Next Find Match"),
             alias: 'Add Selection To Next Find Match',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
                 primary: 2048 /* CtrlCmd */ | 34 /* KEY_D */,
@@ -600,7 +598,7 @@ var AddSelectionToPreviousFindMatchAction = /** @class */ (function (_super) {
             id: 'editor.action.addSelectionToPreviousFindMatch',
             label: nls.localize('addSelectionToPreviousFindMatch', "Add Selection To Previous Find Match"),
             alias: 'Add Selection To Previous Find Match',
-            precondition: null,
+            precondition: undefined,
             menubarOpts: {
                 menuId: 22 /* MenubarSelectionMenu */,
                 group: '3_multi',
@@ -622,7 +620,7 @@ var MoveSelectionToNextFindMatchAction = /** @class */ (function (_super) {
             id: 'editor.action.moveSelectionToNextFindMatch',
             label: nls.localize('moveSelectionToNextFindMatch', "Move Last Selection To Next Find Match"),
             alias: 'Move Last Selection To Next Find Match',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
                 primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KEY_K */, 2048 /* CtrlCmd */ | 34 /* KEY_D */),
@@ -643,7 +641,7 @@ var MoveSelectionToPreviousFindMatchAction = /** @class */ (function (_super) {
             id: 'editor.action.moveSelectionToPreviousFindMatch',
             label: nls.localize('moveSelectionToPreviousFindMatch', "Move Last Selection To Previous Find Match"),
             alias: 'Move Last Selection To Previous Find Match',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     MoveSelectionToPreviousFindMatchAction.prototype._run = function (multiCursorController, findController) {
@@ -659,7 +657,7 @@ var SelectHighlightsAction = /** @class */ (function (_super) {
             id: 'editor.action.selectHighlights',
             label: nls.localize('selectAllOccurrencesOfFindMatch', "Select All Occurrences of Find Match"),
             alias: 'Select All Occurrences of Find Match',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
                 primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 42 /* KEY_L */,

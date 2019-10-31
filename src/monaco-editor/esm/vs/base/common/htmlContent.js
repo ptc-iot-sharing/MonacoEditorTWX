@@ -13,6 +13,10 @@ var MarkdownString = /** @class */ (function () {
         this.value += value.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
         return this;
     };
+    MarkdownString.prototype.appendMarkdown = function (value) {
+        this.value += value;
+        return this;
+    };
     MarkdownString.prototype.appendCodeblock = function (langId, code) {
         this.value += '\n```';
         this.value += langId;
@@ -78,4 +82,25 @@ export function removeMarkdownEscapes(text) {
         return text;
     }
     return text.replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1');
+}
+export function parseHrefAndDimensions(href) {
+    var dimensions = [];
+    var splitted = href.split('|').map(function (s) { return s.trim(); });
+    href = splitted[0];
+    var parameters = splitted[1];
+    if (parameters) {
+        var heightFromParams = /height=(\d+)/.exec(parameters);
+        var widthFromParams = /width=(\d+)/.exec(parameters);
+        var height = heightFromParams ? heightFromParams[1] : '';
+        var width = widthFromParams ? widthFromParams[1] : '';
+        var widthIsFinite = isFinite(parseInt(width));
+        var heightIsFinite = isFinite(parseInt(height));
+        if (widthIsFinite) {
+            dimensions.push("width=\"" + width + "\"");
+        }
+        if (heightIsFinite) {
+            dimensions.push("height=\"" + height + "\"");
+        }
+    }
+    return { href: href, dimensions: dimensions };
 }

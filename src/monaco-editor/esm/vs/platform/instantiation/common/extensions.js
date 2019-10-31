@@ -5,5 +5,8 @@
 import { SyncDescriptor } from './descriptors.js';
 var _registry = [];
 export function registerSingleton(id, ctor, supportsDelayedInstantiation) {
-    _registry.push({ id: id, descriptor: new SyncDescriptor(ctor, [], supportsDelayedInstantiation) });
+    _registry.push([id, new SyncDescriptor(ctor, [], supportsDelayedInstantiation)]);
+}
+export function getSingletonServiceDescriptors() {
+    return _registry;
 }

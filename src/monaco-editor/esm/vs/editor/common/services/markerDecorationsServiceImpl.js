@@ -33,6 +33,8 @@ import { IModelService } from './modelService.js';
 import { Range } from '../core/range.js';
 import { keys } from '../../../base/common/map.js';
 import { Schemas } from '../../../base/common/network.js';
+import { Emitter } from '../../../base/common/event.js';
+import { withUndefinedAsNull } from '../../../base/common/types.js';
 function MODEL_ID(resource) {
     return resource.toString();
 }
@@ -64,6 +66,7 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
     function MarkerDecorationsService(modelService, _markerService) {
         var _this = _super.call(this) || this;
         _this._markerService = _markerService;
+        _this._onDidChangeMarker = _this._register(new Emitter());
         _this._markerDecorations = new Map();
         modelService.getModels().forEach(function (model) { return _this._onModelAdded(model); });
         _this._register(modelService.onModelAdded(_this._onModelAdded, _this));
@@ -71,23 +74,28 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
         _this._register(_this._markerService.onMarkerChanged(_this._handleMarkerChange, _this));
         return _this;
     }
+    MarkerDecorationsService.prototype.dispose = function () {
+        _super.prototype.dispose.call(this);
+        this._markerDecorations.forEach(function (value) { return value.dispose(); });
+        this._markerDecorations.clear();
+    };
     MarkerDecorationsService.prototype.getMarker = function (model, decoration) {
         var markerDecorations = this._markerDecorations.get(MODEL_ID(model.uri));
-        return markerDecorations ? markerDecorations.getMarker(decoration) || null : null;
+        return markerDecorations ? withUndefinedAsNull(markerDecorations.getMarker(decoration)) : null;
     };
     MarkerDecorationsService.prototype._handleMarkerChange = function (changedResources) {
         var _this = this;
         changedResources.forEach(function (resource) {
             var markerDecorations = _this._markerDecorations.get(MODEL_ID(resource));
             if (markerDecorations) {
-                _this.updateDecorations(markerDecorations);
+                _this._updateDecorations(markerDecorations);
             }
         });
     };
     MarkerDecorationsService.prototype._onModelAdded = function (model) {
         var markerDecorations = new MarkerDecorations(model);
         this._markerDecorations.set(MODEL_ID(model.uri), markerDecorations);
-        this.updateDecorations(markerDecorations);
+        this._updateDecorations(markerDecorations);
     };
     MarkerDecorationsService.prototype._onModelRemoved = function (model) {
         var _this = this;
@@ -105,7 +113,7 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
             }
         }
     };
-    MarkerDecorationsService.prototype.updateDecorations = function (markerDecorations) {
+    MarkerDecorationsService.prototype._updateDecorations = function (markerDecorations) {
         var _this = this;
         // Limit to the first 500 errors/warnings
         var markers = this._markerService.read({ resource: markerDecorations.model.uri, take: 500 });
@@ -116,6 +124,7 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
             };
         });
         markerDecorations.update(markers, newModelDecorations);
+        this._onDidChangeMarker.fire(markerDecorations.model);
     };
     MarkerDecorationsService.prototype._createDecorationRange = function (model, rawMarker) {
         var ret = Range.lift(rawMarker);
@@ -193,6 +202,9 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
         if (marker.tags) {
             if (marker.tags.indexOf(1 /* Unnecessary */) !== -1) {
                 inlineClassName = "squiggly-inline-unnecessary" /* EditorUnnecessaryInlineDecoration */;
+            }
+            if (marker.tags.indexOf(2 /* Deprecated */) !== -1) {
+                inlineClassName = "squiggly-inline-deprecated" /* EditorDeprecatedInlineDecoration */;
             }
         }
         return {

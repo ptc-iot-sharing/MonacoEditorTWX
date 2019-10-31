@@ -166,4 +166,3 @@ export function applyEdit(text, edit) {
 export function isWS(text, offset) {
     return '\r\n \t'.indexOf(text.charAt(offset)) !== -1;
 }
-//# sourceMappingURL=edit.js.map

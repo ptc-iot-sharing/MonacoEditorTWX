@@ -15,7 +15,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-import * as nls from '../../../../nls.js';
+import * as strings from '../../../../base/common/strings.js';
 import * as browser from '../../../../base/browser/browser.js';
 import { onUnexpectedError } from '../../../../base/common/errors.js';
 import { matchesFuzzy } from '../../../../base/common/filters.js';
@@ -24,6 +24,7 @@ import { registerEditorAction } from '../../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../../common/editorContextKeys.js';
 import { BaseEditorQuickOpenAction } from './editorQuickOpen.js';
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
+import { QuickCommandNLS } from '../../../common/standaloneStrings.js';
 var EditorActionCommandEntry = /** @class */ (function (_super) {
     __extends(EditorActionCommandEntry, _super);
     function EditorActionCommandEntry(key, keyAriaLabel, highlights, action, editor) {
@@ -40,9 +41,9 @@ var EditorActionCommandEntry = /** @class */ (function (_super) {
     };
     EditorActionCommandEntry.prototype.getAriaLabel = function () {
         if (this.keyAriaLabel) {
-            return nls.localize('ariaLabelEntryWithKey', "{0}, {1}, commands", this.getLabel(), this.keyAriaLabel);
+            return strings.format(QuickCommandNLS.ariaLabelEntryWithKey, this.getLabel(), this.keyAriaLabel);
         }
-        return nls.localize('ariaLabelEntry', "{0}, commands", this.getLabel());
+        return strings.format(QuickCommandNLS.ariaLabelEntry, this.getLabel());
     };
     EditorActionCommandEntry.prototype.getGroupLabel = function () {
         return this.key;
@@ -72,11 +73,11 @@ export { EditorActionCommandEntry };
 var QuickCommandAction = /** @class */ (function (_super) {
     __extends(QuickCommandAction, _super);
     function QuickCommandAction() {
-        return _super.call(this, nls.localize('quickCommandActionInput', "Type the name of an action you want to execute"), {
+        return _super.call(this, QuickCommandNLS.quickCommandActionInput, {
             id: 'editor.action.quickCommand',
-            label: nls.localize('QuickCommandAction.label', "Command Palette"),
+            label: QuickCommandNLS.quickCommandActionLabel,
             alias: 'Command Palette',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
                 primary: (browser.isIE ? 512 /* Alt */ | 59 /* F1 */ : 59 /* F1 */),

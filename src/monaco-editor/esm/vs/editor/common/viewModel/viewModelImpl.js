@@ -17,6 +17,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { Color } from '../../../base/common/color.js';
 import * as strings from '../../../base/common/strings.js';
+import { EDITOR_FONT_DEFAULTS } from '../config/editorOptions.js';
 import { Position } from '../core/position.js';
 import { Range } from '../core/range.js';
 import { TokenizationRegistry } from '../modes.js';
@@ -455,6 +456,16 @@ var ViewModel = /** @class */ (function (_super) {
             }
         }
     };
+    ViewModel.prototype.invalidateMinimapColorCache = function () {
+        var decorations = this.model.getAllDecorations();
+        for (var _i = 0, decorations_2 = decorations; _i < decorations_2.length; _i++) {
+            var decoration = decorations_2[_i];
+            var opts = decoration.options.minimap;
+            if (opts) {
+                opts.invalidateCachedColor();
+            }
+        }
+    };
     ViewModel.prototype.getValueInRange = function (range, eol) {
         var modelRange = this.coordinatesConverter.convertViewRangeToModelRange(range);
         return this.model.getValueInRange(modelRange, eol);
@@ -535,10 +546,11 @@ var ViewModel = /** @class */ (function (_super) {
         }
         var fontInfo = this.configuration.editor.fontInfo;
         var colorMap = this._getColorMap();
+        var fontFamily = fontInfo.fontFamily === EDITOR_FONT_DEFAULTS.fontFamily ? fontInfo.fontFamily : "'" + fontInfo.fontFamily + "', " + EDITOR_FONT_DEFAULTS.fontFamily;
         return ("<div style=\""
             + ("color: " + colorMap[1 /* DefaultForeground */] + ";")
             + ("background-color: " + colorMap[2 /* DefaultBackground */] + ";")
-            + ("font-family: " + fontInfo.fontFamily + ";")
+            + ("font-family: " + fontFamily + ";")
             + ("font-weight: " + fontInfo.fontWeight + ";")
             + ("font-size: " + fontInfo.fontSize + "px;")
             + ("line-height: " + fontInfo.lineHeight + "px;")

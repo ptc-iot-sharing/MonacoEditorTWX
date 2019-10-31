@@ -60,6 +60,7 @@ var ViewLines = /** @class */ (function (_super) {
         _this._typicalHalfwidthCharacterWidth = conf.editor.fontInfo.typicalHalfwidthCharacterWidth;
         _this._isViewportWrapping = conf.editor.wrappingInfo.isViewportWrapping;
         _this._revealHorizontalRightPadding = conf.editor.viewInfo.revealHorizontalRightPadding;
+        _this._scrollOff = conf.editor.viewInfo.cursorSurroundingLines;
         _this._canUseLayerHinting = conf.editor.canUseLayerHinting;
         _this._viewLineOptions = new ViewLineOptions(conf, _this._context.theme.type);
         PartFingerprints.write(_this.domNode, 7 /* ViewLines */);
@@ -104,6 +105,7 @@ var ViewLines = /** @class */ (function (_super) {
         }
         if (e.viewInfo) {
             this._revealHorizontalRightPadding = conf.editor.viewInfo.revealHorizontalRightPadding;
+            this._scrollOff = conf.editor.viewInfo.cursorSurroundingLines;
         }
         if (e.canUseLayerHinting) {
             this._canUseLayerHinting = conf.editor.canUseLayerHinting;
@@ -478,6 +480,9 @@ var ViewLines = /** @class */ (function (_super) {
         // Have a box that includes one extra line height (for the horizontal scrollbar)
         boxStartY = this._context.viewLayout.getVerticalOffsetForLineNumber(range.startLineNumber);
         boxEndY = this._context.viewLayout.getVerticalOffsetForLineNumber(range.endLineNumber) + this._lineHeight;
+        var context = Math.min((viewportHeight / this._lineHeight) / 2, this._scrollOff);
+        boxStartY -= context * this._lineHeight;
+        boxEndY += Math.max(0, (context - 1)) * this._lineHeight;
         if (verticalType === 0 /* Simple */ || verticalType === 4 /* Bottom */) {
             // Reveal one line more when the last line would be covered by the scrollbar - arrow down case or revealing a line explicitly at bottom
             boxEndY += this._lineHeight;

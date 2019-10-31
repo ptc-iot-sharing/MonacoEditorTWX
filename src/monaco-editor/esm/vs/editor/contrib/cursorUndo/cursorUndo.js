@@ -106,7 +106,7 @@ var CursorUndo = /** @class */ (function (_super) {
             id: 'cursorUndo',
             label: nls.localize('cursor.undo', "Soft Undo"),
             alias: 'Soft Undo',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.textInputFocus,
                 primary: 2048 /* CtrlCmd */ | 51 /* KEY_U */,

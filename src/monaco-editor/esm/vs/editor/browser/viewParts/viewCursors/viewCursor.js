@@ -36,7 +36,7 @@ var ViewCursor = /** @class */ (function () {
         this._domNode.setLeft(0);
         Configuration.applyFontInfo(this._domNode, this._context.configuration.editor.fontInfo);
         this._domNode.setDisplay('none');
-        this.updatePosition(new Position(1, 1));
+        this._position = new Position(1, 1);
         this._lastRenderedContent = '';
         this._renderData = null;
     }
@@ -73,7 +73,7 @@ var ViewCursor = /** @class */ (function () {
         return true;
     };
     ViewCursor.prototype.onCursorPositionChanged = function (position) {
-        this.updatePosition(position);
+        this._position = position;
         return true;
     };
     ViewCursor.prototype._prepareRender = function (ctx) {
@@ -155,9 +155,6 @@ var ViewCursor = /** @class */ (function () {
             height: this._renderData.height,
             width: 2
         };
-    };
-    ViewCursor.prototype.updatePosition = function (newPosition) {
-        this._position = newPosition;
     };
     return ViewCursor;
 }());

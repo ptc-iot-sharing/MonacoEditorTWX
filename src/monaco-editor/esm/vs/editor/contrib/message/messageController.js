@@ -27,7 +27,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 import './messageController.css';
 import * as nls from '../../../nls.js';
 import { TimeoutTimer } from '../../../base/common/async.js';
-import { dispose, Disposable } from '../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore, MutableDisposable } from '../../../base/common/lifecycle.js';
 import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { Range } from '../../common/core/range.js';
 import { registerEditorContribution, EditorCommand, registerEditorCommand } from '../../browser/editorExtensions.js';
@@ -38,7 +38,9 @@ var MessageController = /** @class */ (function (_super) {
     __extends(MessageController, _super);
     function MessageController(editor, contextKeyService) {
         var _this = _super.call(this) || this;
-        _this._messageListeners = [];
+        _this.closeTimeout = 3000; // close after 3s
+        _this._messageWidget = _this._register(new MutableDisposable());
+        _this._messageListeners = _this._register(new DisposableStore());
         _this._editor = editor;
         _this._visible = MessageController.MESSAGE_VISIBLE.bindTo(contextKeyService);
         _this._register(_this._editor.onDidAttemptReadOnlyEdit(function () { return _this._onDidAttemptReadOnlyEdit(); }));
@@ -58,19 +60,18 @@ var MessageController = /** @class */ (function (_super) {
         var _this = this;
         alert(message);
         this._visible.set(true);
-        dispose(this._messageWidget);
-        this._messageListeners = dispose(this._messageListeners);
-        this._messageWidget = new MessageWidget(this._editor, position, message);
+        this._messageWidget.clear();
+        this._messageListeners.clear();
+        this._messageWidget.value = new MessageWidget(this._editor, position, message);
         // close on blur, cursor, model change, dispose
-        this._messageListeners.push(this._editor.onDidBlurEditorText(function () { return _this.closeMessage(); }));
-        this._messageListeners.push(this._editor.onDidChangeCursorPosition(function () { return _this.closeMessage(); }));
-        this._messageListeners.push(this._editor.onDidDispose(function () { return _this.closeMessage(); }));
-        this._messageListeners.push(this._editor.onDidChangeModel(function () { return _this.closeMessage(); }));
-        // close after 3s
-        this._messageListeners.push(new TimeoutTimer(function () { return _this.closeMessage(); }, 3000));
+        this._messageListeners.add(this._editor.onDidBlurEditorText(function () { return _this.closeMessage(); }));
+        this._messageListeners.add(this._editor.onDidChangeCursorPosition(function () { return _this.closeMessage(); }));
+        this._messageListeners.add(this._editor.onDidDispose(function () { return _this.closeMessage(); }));
+        this._messageListeners.add(this._editor.onDidChangeModel(function () { return _this.closeMessage(); }));
+        this._messageListeners.add(new TimeoutTimer(function () { return _this.closeMessage(); }, this.closeTimeout));
         // close on mouse move
         var bounds;
-        this._messageListeners.push(this._editor.onMouseMove(function (e) {
+        this._messageListeners.add(this._editor.onMouseMove(function (e) {
             // outside the text area
             if (!e.target.position) {
                 return;
@@ -87,8 +88,10 @@ var MessageController = /** @class */ (function (_super) {
     };
     MessageController.prototype.closeMessage = function () {
         this._visible.reset();
-        this._messageListeners = dispose(this._messageListeners);
-        this._messageListeners.push(MessageWidget.fadeOut(this._messageWidget));
+        this._messageListeners.clear();
+        if (this._messageWidget.value) {
+            this._messageListeners.add(MessageWidget.fadeOut(this._messageWidget.value));
+        }
     };
     MessageController.prototype._onDidAttemptReadOnlyEdit = function () {
         if (this._editor.hasModel()) {

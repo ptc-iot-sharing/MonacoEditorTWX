@@ -423,22 +423,22 @@ var PieceTreeBase = /** @class */ (function () {
         var result = [];
         var resultLen = 0;
         var searcher = new Searcher(searchData.wordSeparators, searchData.regex);
-        var startPostion = this.nodeAt2(searchRange.startLineNumber, searchRange.startColumn);
-        if (startPostion === null) {
+        var startPosition = this.nodeAt2(searchRange.startLineNumber, searchRange.startColumn);
+        if (startPosition === null) {
             return [];
         }
         var endPosition = this.nodeAt2(searchRange.endLineNumber, searchRange.endColumn);
         if (endPosition === null) {
             return [];
         }
-        var start = this.positionInBuffer(startPostion.node, startPostion.remainder);
+        var start = this.positionInBuffer(startPosition.node, startPosition.remainder);
         var end = this.positionInBuffer(endPosition.node, endPosition.remainder);
-        if (startPostion.node === endPosition.node) {
-            this.findMatchesInNode(startPostion.node, searcher, searchRange.startLineNumber, searchRange.startColumn, start, end, searchData, captureMatches, limitResultCount, resultLen, result);
+        if (startPosition.node === endPosition.node) {
+            this.findMatchesInNode(startPosition.node, searcher, searchRange.startLineNumber, searchRange.startColumn, start, end, searchData, captureMatches, limitResultCount, resultLen, result);
             return result;
         }
         var startLineNumber = searchRange.startLineNumber;
-        var currentNode = startPostion.node;
+        var currentNode = startPosition.node;
         while (currentNode !== endPosition.node) {
             var lineBreakCnt = this.getLineFeedCnt(currentNode.piece.bufferIndex, start, currentNode.piece.end);
             if (lineBreakCnt >= 1) {
@@ -465,9 +465,9 @@ var PieceTreeBase = /** @class */ (function () {
                 return result;
             }
             startLineNumber++;
-            startPostion = this.nodeAt2(startLineNumber, 1);
-            currentNode = startPostion.node;
-            start = this.positionInBuffer(startPostion.node, startPostion.remainder);
+            startPosition = this.nodeAt2(startLineNumber, 1);
+            currentNode = startPosition.node;
+            start = this.positionInBuffer(startPosition.node, startPosition.remainder);
         }
         if (startLineNumber === searchRange.endLineNumber) {
             var startColumn_3 = startLineNumber === searchRange.startLineNumber ? searchRange.startColumn - 1 : 0;

@@ -12,6 +12,13 @@ export var OverviewRulerLane;
     OverviewRulerLane[OverviewRulerLane["Right"] = 4] = "Right";
     OverviewRulerLane[OverviewRulerLane["Full"] = 7] = "Full";
 })(OverviewRulerLane || (OverviewRulerLane = {}));
+/**
+ * Position in the minimap to render the decoration.
+ */
+export var MinimapPosition;
+(function (MinimapPosition) {
+    MinimapPosition[MinimapPosition["Inline"] = 1] = "Inline";
+})(MinimapPosition || (MinimapPosition = {}));
 var TextModelResolvedOptions = /** @class */ (function () {
     /**
      * @internal

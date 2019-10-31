@@ -548,7 +548,7 @@ var DeleteAllLeftAction = /** @class */ (function (_super) {
                 }
             }
             else {
-                return selection;
+                return new Range(selection.startLineNumber, 1, selection.endLineNumber, selection.endColumn);
             }
         });
         return rangesToDelete;
@@ -826,6 +826,7 @@ var AbstractCaseAction = /** @class */ (function (_super) {
         if (model === null) {
             return;
         }
+        var wordSeparators = editor.getConfiguration().wordSeparators;
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             var selection = selections[i];
@@ -837,11 +838,11 @@ var AbstractCaseAction = /** @class */ (function (_super) {
                 }
                 var wordRange = new Range(cursor.lineNumber, word.startColumn, cursor.lineNumber, word.endColumn);
                 var text = model.getValueInRange(wordRange);
-                commands.push(new ReplaceCommandThatPreservesSelection(wordRange, this._modifyText(text), new Selection(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column)));
+                commands.push(new ReplaceCommandThatPreservesSelection(wordRange, this._modifyText(text, wordSeparators), new Selection(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column)));
             }
             else {
                 var text = model.getValueInRange(selection);
-                commands.push(new ReplaceCommandThatPreservesSelection(selection, this._modifyText(text), selection));
+                commands.push(new ReplaceCommandThatPreservesSelection(selection, this._modifyText(text, wordSeparators), selection));
             }
         }
         editor.pushUndoStop();
@@ -861,7 +862,7 @@ var UpperCaseAction = /** @class */ (function (_super) {
             precondition: EditorContextKeys.writable
         }) || this;
     }
-    UpperCaseAction.prototype._modifyText = function (text) {
+    UpperCaseAction.prototype._modifyText = function (text, wordSeparators) {
         return text.toLocaleUpperCase();
     };
     return UpperCaseAction;
@@ -877,12 +878,46 @@ var LowerCaseAction = /** @class */ (function (_super) {
             precondition: EditorContextKeys.writable
         }) || this;
     }
-    LowerCaseAction.prototype._modifyText = function (text) {
+    LowerCaseAction.prototype._modifyText = function (text, wordSeparators) {
         return text.toLocaleLowerCase();
     };
     return LowerCaseAction;
 }(AbstractCaseAction));
 export { LowerCaseAction };
+var TitleCaseAction = /** @class */ (function (_super) {
+    __extends(TitleCaseAction, _super);
+    function TitleCaseAction() {
+        return _super.call(this, {
+            id: 'editor.action.transformToTitlecase',
+            label: nls.localize('editor.transformToTitlecase', "Transform to Title Case"),
+            alias: 'Transform to Title Case',
+            precondition: EditorContextKeys.writable
+        }) || this;
+    }
+    TitleCaseAction.prototype._modifyText = function (text, wordSeparators) {
+        var separators = '\r\n\t ' + wordSeparators;
+        var excludedChars = separators.split('');
+        var title = '';
+        var startUpperCase = true;
+        for (var i = 0; i < text.length; i++) {
+            var currentChar = text[i];
+            if (excludedChars.indexOf(currentChar) >= 0) {
+                startUpperCase = true;
+                title += currentChar;
+            }
+            else if (startUpperCase) {
+                startUpperCase = false;
+                title += currentChar.toLocaleUpperCase();
+            }
+            else {
+                title += currentChar.toLocaleLowerCase();
+            }
+        }
+        return title;
+    };
+    return TitleCaseAction;
+}(AbstractCaseAction));
+export { TitleCaseAction };
 registerEditorAction(CopyLinesUpAction);
 registerEditorAction(CopyLinesDownAction);
 registerEditorAction(MoveLinesUpAction);
@@ -901,3 +936,4 @@ registerEditorAction(JoinLinesAction);
 registerEditorAction(TransposeAction);
 registerEditorAction(UpperCaseAction);
 registerEditorAction(LowerCaseAction);
+registerEditorAction(TitleCaseAction);

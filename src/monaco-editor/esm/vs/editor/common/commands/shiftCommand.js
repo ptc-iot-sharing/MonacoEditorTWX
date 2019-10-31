@@ -22,6 +22,7 @@ var ShiftCommand = /** @class */ (function () {
     function ShiftCommand(range, opts) {
         this._opts = opts;
         this._selection = range;
+        this._selectionId = null;
         this._useLastEditRangeForCursorEndPosition = false;
         this._selectionStartColumnStaysPut = false;
     }

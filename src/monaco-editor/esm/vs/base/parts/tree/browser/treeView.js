@@ -100,7 +100,10 @@ var ViewItem = /** @class */ (function () {
     function ViewItem(context, model) {
         var _this = this;
         this.width = 0;
+        this.needsRender = false;
+        this.uri = null;
         this.unbindDragStart = Lifecycle.Disposable.None;
+        this._draggable = false;
         this.context = context;
         this.model = model;
         this.id = this.model.id;
@@ -347,6 +350,7 @@ var TreeView = /** @class */ (function (_super) {
     function TreeView(context, container) {
         var _this = _super.call(this) || this;
         _this.model = null;
+        _this.lastPointerType = '';
         _this.lastClickTimeStamp = 0;
         _this.contentWidthUpdateDelayer = new Delayer(50);
         _this.isRefreshing = false;
@@ -358,8 +362,10 @@ var TreeView = /** @class */ (function (_super) {
         _this.dragAndDropScrollInterval = null;
         _this.dragAndDropScrollTimeout = null;
         _this.dragAndDropMouseY = null;
+        _this.highlightedItemWasDraggable = false;
         _this.onHiddenScrollTop = null;
         _this._onDOMFocus = new Emitter();
+        _this.onDOMFocus = _this._onDOMFocus.event;
         _this._onDOMBlur = new Emitter();
         _this._onDidScroll = new Emitter();
         TreeView.counter++;
@@ -476,11 +482,6 @@ var TreeView = /** @class */ (function (_super) {
         _this.applyStyles(context.options);
         return _this;
     }
-    Object.defineProperty(TreeView.prototype, "onDOMFocus", {
-        get: function () { return this._onDOMFocus.event; },
-        enumerable: true,
-        configurable: true
-    });
     TreeView.prototype.applyStyles = function (styles) {
         this.treeStyler.style(styles);
     };
@@ -1131,6 +1132,7 @@ var TreeView = /** @class */ (function (_super) {
     };
     TreeView.prototype.onDragOver = function (e) {
         var _this = this;
+        e.preventDefault(); // needed so that the drop event fires (https://stackoverflow.com/questions/21339924/drop-event-not-firing-in-chrome)
         var event = new Mouse.DragMouseEvent(e);
         var viewItem = this.getItemAround(event.target);
         if (!viewItem || (event.posx === 0 && event.posy === 0 && event.browserEvent.type === DOM.EventType.DRAG_LEAVE)) {

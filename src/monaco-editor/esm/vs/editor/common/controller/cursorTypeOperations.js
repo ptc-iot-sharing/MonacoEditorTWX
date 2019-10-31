@@ -2,6 +2,19 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import * as strings from '../../../base/common/strings.js';
 import { ReplaceCommand, ReplaceCommandWithOffsetCursorState, ReplaceCommandWithoutChangingPosition } from '../commands/replaceCommand.js';
@@ -372,12 +385,13 @@ var TypeOperations = /** @class */ (function () {
         }
         return null;
     };
-    TypeOperations._isAutoClosingCloseCharType = function (config, model, selections, ch) {
-        var autoCloseConfig = isQuote(ch) ? config.autoClosingQuotes : config.autoClosingBrackets;
-        if (autoCloseConfig === 'never' || !config.autoClosingPairsClose.hasOwnProperty(ch)) {
+    TypeOperations._isAutoClosingOvertype = function (config, model, selections, autoClosedCharacters, ch) {
+        if (config.autoClosingOvertype === 'never') {
             return false;
         }
-        var isEqualPair = (ch === config.autoClosingPairsClose[ch]);
+        if (!config.autoClosingPairsClose2.has(ch)) {
+            return false;
+        }
         for (var i = 0, len = selections.length; i < len; i++) {
             var selection = selections[i];
             if (!selection.isEmpty()) {
@@ -389,25 +403,24 @@ var TypeOperations = /** @class */ (function () {
             if (afterCharacter !== ch) {
                 return false;
             }
-            if (isEqualPair) {
-                var lineTextBeforeCursor = lineText.substr(0, position.column - 1);
-                var chCntBefore = this._countNeedlesInHaystack(lineTextBeforeCursor, ch);
-                if (chCntBefore % 2 === 0) {
+            // Must over-type a closing character typed by the editor
+            if (config.autoClosingOvertype === 'auto') {
+                var found = false;
+                for (var j = 0, lenJ = autoClosedCharacters.length; j < lenJ; j++) {
+                    var autoClosedCharacter = autoClosedCharacters[j];
+                    if (position.lineNumber === autoClosedCharacter.startLineNumber && position.column === autoClosedCharacter.startColumn) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     return false;
                 }
             }
         }
         return true;
     };
-    TypeOperations._countNeedlesInHaystack = function (haystack, needle) {
-        var cnt = 0;
-        var lastIndex = -1;
-        while ((lastIndex = haystack.indexOf(needle, lastIndex + 1)) !== -1) {
-            cnt++;
-        }
-        return cnt;
-    };
-    TypeOperations._runAutoClosingCloseCharType = function (prevEditOperationType, config, model, selections, ch) {
+    TypeOperations._runAutoClosingOvertype = function (prevEditOperationType, config, model, selections, ch) {
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             var selection = selections[i];
@@ -420,77 +433,108 @@ var TypeOperations = /** @class */ (function () {
             shouldPushStackElementAfter: false
         });
     };
-    TypeOperations._isBeforeClosingBrace = function (config, ch, characterAfter) {
-        var thisBraceIsSymmetric = (config.autoClosingPairsOpen[ch] === ch);
-        var isBeforeCloseBrace = false;
-        for (var otherCloseBrace in config.autoClosingPairsClose) {
-            var otherBraceIsSymmetric = (config.autoClosingPairsOpen[otherCloseBrace] === otherCloseBrace);
+    TypeOperations._isBeforeClosingBrace = function (config, autoClosingPair, characterAfter) {
+        var otherAutoClosingPairs = config.autoClosingPairsClose2.get(characterAfter);
+        if (!otherAutoClosingPairs) {
+            return false;
+        }
+        var thisBraceIsSymmetric = (autoClosingPair.open === autoClosingPair.close);
+        for (var _i = 0, otherAutoClosingPairs_1 = otherAutoClosingPairs; _i < otherAutoClosingPairs_1.length; _i++) {
+            var otherAutoClosingPair = otherAutoClosingPairs_1[_i];
+            var otherBraceIsSymmetric = (otherAutoClosingPair.open === otherAutoClosingPair.close);
             if (!thisBraceIsSymmetric && otherBraceIsSymmetric) {
                 continue;
             }
-            if (characterAfter === otherCloseBrace) {
-                isBeforeCloseBrace = true;
-                break;
+            return true;
+        }
+        return false;
+    };
+    TypeOperations._findAutoClosingPairOpen = function (config, model, positions, ch) {
+        var autoClosingPairCandidates = config.autoClosingPairsOpen2.get(ch);
+        if (!autoClosingPairCandidates) {
+            return null;
+        }
+        // Determine which auto-closing pair it is
+        var autoClosingPair = null;
+        for (var _i = 0, autoClosingPairCandidates_1 = autoClosingPairCandidates; _i < autoClosingPairCandidates_1.length; _i++) {
+            var autoClosingPairCandidate = autoClosingPairCandidates_1[_i];
+            if (autoClosingPair === null || autoClosingPairCandidate.open.length > autoClosingPair.open.length) {
+                var candidateIsMatch = true;
+                for (var _a = 0, positions_1 = positions; _a < positions_1.length; _a++) {
+                    var position = positions_1[_a];
+                    var relevantText = model.getValueInRange(new Range(position.lineNumber, position.column - autoClosingPairCandidate.open.length + 1, position.lineNumber, position.column));
+                    if (relevantText + ch !== autoClosingPairCandidate.open) {
+                        candidateIsMatch = false;
+                        break;
+                    }
+                }
+                if (candidateIsMatch) {
+                    autoClosingPair = autoClosingPairCandidate;
+                }
             }
         }
-        return isBeforeCloseBrace;
+        return autoClosingPair;
     };
-    TypeOperations._isAutoClosingOpenCharType = function (config, model, selections, ch) {
+    TypeOperations._isAutoClosingOpenCharType = function (config, model, selections, ch, insertOpenCharacter) {
         var chIsQuote = isQuote(ch);
         var autoCloseConfig = chIsQuote ? config.autoClosingQuotes : config.autoClosingBrackets;
-        if (autoCloseConfig === 'never' || !config.autoClosingPairsOpen.hasOwnProperty(ch)) {
-            return false;
+        if (autoCloseConfig === 'never') {
+            return null;
+        }
+        var autoClosingPair = this._findAutoClosingPairOpen(config, model, selections.map(function (s) { return s.getPosition(); }), ch);
+        if (!autoClosingPair) {
+            return null;
         }
         var shouldAutoCloseBefore = chIsQuote ? config.shouldAutoCloseBefore.quote : config.shouldAutoCloseBefore.bracket;
         for (var i = 0, len = selections.length; i < len; i++) {
             var selection = selections[i];
             if (!selection.isEmpty()) {
-                return false;
+                return null;
             }
             var position = selection.getPosition();
             var lineText = model.getLineContent(position.lineNumber);
-            // Do not auto-close ' or " after a word character
-            if (chIsQuote && position.column > 1) {
-                var wordSeparators = getMapForWordSeparators(config.wordSeparators);
-                var characterBeforeCode = lineText.charCodeAt(position.column - 2);
-                var characterBeforeType = wordSeparators.get(characterBeforeCode);
-                if (characterBeforeType === 0 /* Regular */) {
-                    return false;
-                }
-            }
             // Only consider auto closing the pair if a space follows or if another autoclosed pair follows
-            var characterAfter = lineText.charAt(position.column - 1);
-            if (characterAfter) {
-                var isBeforeCloseBrace = TypeOperations._isBeforeClosingBrace(config, ch, characterAfter);
+            if (lineText.length > position.column - 1) {
+                var characterAfter = lineText.charAt(position.column - 1);
+                var isBeforeCloseBrace = TypeOperations._isBeforeClosingBrace(config, autoClosingPair, characterAfter);
                 if (!isBeforeCloseBrace && !shouldAutoCloseBefore(characterAfter)) {
-                    return false;
+                    return null;
                 }
             }
             if (!model.isCheapToTokenize(position.lineNumber)) {
                 // Do not force tokenization
-                return false;
+                return null;
+            }
+            // Do not auto-close ' or " after a word character
+            if (autoClosingPair.open.length === 1 && chIsQuote && autoCloseConfig !== 'always') {
+                var wordSeparators = getMapForWordSeparators(config.wordSeparators);
+                if (insertOpenCharacter && position.column > 1 && wordSeparators.get(lineText.charCodeAt(position.column - 2)) === 0 /* Regular */) {
+                    return null;
+                }
+                if (!insertOpenCharacter && position.column > 2 && wordSeparators.get(lineText.charCodeAt(position.column - 3)) === 0 /* Regular */) {
+                    return null;
+                }
             }
             model.forceTokenization(position.lineNumber);
             var lineTokens = model.getLineTokens(position.lineNumber);
             var shouldAutoClosePair = false;
             try {
-                shouldAutoClosePair = LanguageConfigurationRegistry.shouldAutoClosePair(ch, lineTokens, position.column);
+                shouldAutoClosePair = LanguageConfigurationRegistry.shouldAutoClosePair(autoClosingPair, lineTokens, insertOpenCharacter ? position.column : position.column - 1);
             }
             catch (e) {
                 onUnexpectedError(e);
             }
             if (!shouldAutoClosePair) {
-                return false;
+                return null;
             }
         }
-        return true;
+        return autoClosingPair;
     };
-    TypeOperations._runAutoClosingOpenCharType = function (prevEditOperationType, config, model, selections, ch) {
+    TypeOperations._runAutoClosingOpenCharType = function (prevEditOperationType, config, model, selections, ch, insertOpenCharacter, autoClosingPair) {
         var commands = [];
         for (var i = 0, len = selections.length; i < len; i++) {
             var selection = selections[i];
-            var closeCharacter = config.autoClosingPairsOpen[ch];
-            commands[i] = new ReplaceCommandWithOffsetCursorState(selection, ch + closeCharacter, 0, -closeCharacter.length);
+            commands[i] = new TypeWithAutoClosingCommand(selection, ch, insertOpenCharacter, autoClosingPair.close);
         }
         return new EditOperationResult(1 /* Typing */, commands, {
             shouldPushStackElementBefore: true,
@@ -578,13 +622,6 @@ var TypeOperations = /** @class */ (function () {
         if (!electricAction) {
             return null;
         }
-        if (electricAction.appendText) {
-            var command = new ReplaceCommandWithOffsetCursorState(selection, ch + electricAction.appendText, 0, -electricAction.appendText.length);
-            return new EditOperationResult(1 /* Typing */, [command], {
-                shouldPushStackElementBefore: false,
-                shouldPushStackElementAfter: true
-            });
-        }
         if (electricAction.matchOpenBracket) {
             var endColumn = (lineTokens.getLineContent() + ch).lastIndexOf(electricAction.matchOpenBracket) + 1;
             var match = model.findMatchingBracketUp(electricAction.matchOpenBracket, {
@@ -613,77 +650,44 @@ var TypeOperations = /** @class */ (function () {
         }
         return null;
     };
-    TypeOperations.compositionEndWithInterceptors = function (prevEditOperationType, config, model, selections) {
-        if (config.autoClosingQuotes === 'never') {
+    /**
+     * This is very similar with typing, but the character is already in the text buffer!
+     */
+    TypeOperations.compositionEndWithInterceptors = function (prevEditOperationType, config, model, selections, autoClosedCharacters) {
+        var ch = null;
+        // extract last typed character
+        for (var _i = 0, selections_1 = selections; _i < selections_1.length; _i++) {
+            var selection = selections_1[_i];
+            if (!selection.isEmpty()) {
+                return null;
+            }
+            var position = selection.getPosition();
+            var currentChar = model.getValueInRange(new Range(position.lineNumber, position.column - 1, position.lineNumber, position.column));
+            if (ch === null) {
+                ch = currentChar;
+            }
+            else if (ch !== currentChar) {
+                return null;
+            }
+        }
+        if (!ch) {
             return null;
         }
-        var commands = [];
-        for (var i = 0; i < selections.length; i++) {
-            if (!selections[i].isEmpty()) {
-                continue;
-            }
-            var position = selections[i].getPosition();
-            var lineText = model.getLineContent(position.lineNumber);
-            var ch = lineText.charAt(position.column - 2);
-            if (config.autoClosingPairsClose.hasOwnProperty(ch)) { // first of all, it's a closing tag
-                if (ch === config.autoClosingPairsClose[ch] /** isEqualPair */) {
-                    var lineTextBeforeCursor = lineText.substr(0, position.column - 2);
-                    var chCntBefore = this._countNeedlesInHaystack(lineTextBeforeCursor, ch);
-                    if (chCntBefore % 2 === 1) {
-                        continue; // it pairs with the opening tag.
-                    }
-                }
-            }
-            // As we are not typing in a new character, so we don't need to run `_runAutoClosingCloseCharType`
-            // Next step, let's try to check if it's an open char.
-            if (config.autoClosingPairsOpen.hasOwnProperty(ch)) {
-                if (isQuote(ch) && position.column > 2) {
-                    var wordSeparators = getMapForWordSeparators(config.wordSeparators);
-                    var characterBeforeCode = lineText.charCodeAt(position.column - 3);
-                    var characterBeforeType = wordSeparators.get(characterBeforeCode);
-                    if (characterBeforeType === 0 /* Regular */) {
-                        continue;
-                    }
-                }
-                var characterAfter = lineText.charAt(position.column - 1);
-                if (characterAfter) {
-                    var isBeforeCloseBrace = TypeOperations._isBeforeClosingBrace(config, ch, characterAfter);
-                    var shouldAutoCloseBefore = isQuote(ch) ? config.shouldAutoCloseBefore.quote : config.shouldAutoCloseBefore.bracket;
-                    if (isBeforeCloseBrace) {
-                        // In normal auto closing logic, we will auto close if the cursor is even before a closing brace intentionally.
-                        // However for composition mode, we do nothing here as users might clear all the characters for composition and we don't want to do a unnecessary auto close.
-                        // Related: microsoft/vscode#57250.
-                        continue;
-                    }
-                    if (!shouldAutoCloseBefore(characterAfter)) {
-                        continue;
-                    }
-                }
-                if (!model.isCheapToTokenize(position.lineNumber)) {
-                    // Do not force tokenization
-                    continue;
-                }
-                model.forceTokenization(position.lineNumber);
-                var lineTokens = model.getLineTokens(position.lineNumber);
-                var shouldAutoClosePair = false;
-                try {
-                    shouldAutoClosePair = LanguageConfigurationRegistry.shouldAutoClosePair(ch, lineTokens, position.column - 1);
-                }
-                catch (e) {
-                    onUnexpectedError(e);
-                }
-                if (shouldAutoClosePair) {
-                    var closeCharacter = config.autoClosingPairsOpen[ch];
-                    commands[i] = new ReplaceCommandWithOffsetCursorState(selections[i], closeCharacter, 0, -closeCharacter.length);
-                }
-            }
+        if (this._isAutoClosingOvertype(config, model, selections, autoClosedCharacters, ch)) {
+            // Unfortunately, the close character is at this point "doubled", so we need to delete it...
+            var commands = selections.map(function (s) { return new ReplaceCommand(new Range(s.positionLineNumber, s.positionColumn, s.positionLineNumber, s.positionColumn + 1), '', false); });
+            return new EditOperationResult(1 /* Typing */, commands, {
+                shouldPushStackElementBefore: true,
+                shouldPushStackElementAfter: false
+            });
         }
-        return new EditOperationResult(1 /* Typing */, commands, {
-            shouldPushStackElementBefore: true,
-            shouldPushStackElementAfter: false
-        });
+        var autoClosingPairOpenCharType = this._isAutoClosingOpenCharType(config, model, selections, ch, false);
+        if (autoClosingPairOpenCharType) {
+            return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, false, autoClosingPairOpenCharType);
+        }
+        return null;
     };
-    TypeOperations.typeWithInterceptors = function (prevEditOperationType, config, model, selections, ch) {
+    TypeOperations.typeWithInterceptors = function (prevEditOperationType, config, model, selections, autoClosedCharacters, ch) {
         if (ch === '\n') {
             var commands_1 = [];
             for (var i = 0, len = selections.length; i < len; i++) {
@@ -711,11 +715,12 @@ var TypeOperations = /** @class */ (function () {
                 });
             }
         }
-        if (this._isAutoClosingCloseCharType(config, model, selections, ch)) {
-            return this._runAutoClosingCloseCharType(prevEditOperationType, config, model, selections, ch);
+        if (this._isAutoClosingOvertype(config, model, selections, autoClosedCharacters, ch)) {
+            return this._runAutoClosingOvertype(prevEditOperationType, config, model, selections, ch);
         }
-        if (this._isAutoClosingOpenCharType(config, model, selections, ch)) {
-            return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch);
+        var autoClosingPairOpenCharType = this._isAutoClosingOpenCharType(config, model, selections, ch, true);
+        if (autoClosingPairOpenCharType) {
+            return this._runAutoClosingOpenCharType(prevEditOperationType, config, model, selections, ch, true, autoClosingPairOpenCharType);
         }
         if (this._isSurroundSelectionType(config, model, selections, ch)) {
             return this._runSurroundSelectionType(prevEditOperationType, config, model, selections, ch);
@@ -792,3 +797,23 @@ var TypeOperations = /** @class */ (function () {
     return TypeOperations;
 }());
 export { TypeOperations };
+var TypeWithAutoClosingCommand = /** @class */ (function (_super) {
+    __extends(TypeWithAutoClosingCommand, _super);
+    function TypeWithAutoClosingCommand(selection, openCharacter, insertOpenCharacter, closeCharacter) {
+        var _this = _super.call(this, selection, (insertOpenCharacter ? openCharacter : '') + closeCharacter, 0, -closeCharacter.length) || this;
+        _this._openCharacter = openCharacter;
+        _this._closeCharacter = closeCharacter;
+        _this.closeCharacterRange = null;
+        _this.enclosingRange = null;
+        return _this;
+    }
+    TypeWithAutoClosingCommand.prototype.computeCursorState = function (model, helper) {
+        var inverseEditOperations = helper.getInverseEditOperations();
+        var range = inverseEditOperations[0].range;
+        this.closeCharacterRange = new Range(range.startLineNumber, range.endColumn - this._closeCharacter.length, range.endLineNumber, range.endColumn);
+        this.enclosingRange = new Range(range.startLineNumber, range.endColumn - this._openCharacter.length - this._closeCharacter.length, range.endLineNumber, range.endColumn);
+        return _super.prototype.computeCursorState.call(this, model, helper);
+    };
+    return TypeWithAutoClosingCommand;
+}(ReplaceCommandWithOffsetCursorState));
+export { TypeWithAutoClosingCommand };

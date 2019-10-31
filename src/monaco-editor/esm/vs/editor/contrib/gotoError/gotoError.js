@@ -61,7 +61,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import * as nls from '../../../nls.js';
 import { Emitter } from '../../../base/common/event.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IMarkerService, MarkerSeverity } from '../../../platform/markers/common/markers.js';
 import { Range } from '../../common/core/range.js';
@@ -79,17 +79,17 @@ import { IKeybindingService } from '../../../platform/keybinding/common/keybindi
 var MarkerModel = /** @class */ (function () {
     function MarkerModel(editor, markers) {
         var _this = this;
+        this._toUnbind = new DisposableStore();
         this._editor = editor;
         this._markers = [];
         this._nextIdx = -1;
-        this._toUnbind = [];
         this._ignoreSelectionChange = false;
         this._onCurrentMarkerChanged = new Emitter();
         this._onMarkerSetChanged = new Emitter();
         this.setMarkers(markers);
         // listen on editor
-        this._toUnbind.push(this._editor.onDidDispose(function () { return _this.dispose(); }));
-        this._toUnbind.push(this._editor.onDidChangeCursorPosition(function () {
+        this._toUnbind.add(this._editor.onDidDispose(function () { return _this.dispose(); }));
+        this._toUnbind.add(this._editor.onDidChangeCursorPosition(function () {
             if (_this._ignoreSelectionChange) {
                 return;
             }
@@ -231,7 +231,7 @@ var MarkerModel = /** @class */ (function () {
         return 1 + this._markers.indexOf(marker);
     };
     MarkerModel.prototype.dispose = function () {
-        this._toUnbind = dispose(this._toUnbind);
+        this._toUnbind.dispose();
     };
     return MarkerModel;
 }());
@@ -242,7 +242,9 @@ var MarkerController = /** @class */ (function () {
         this._themeService = _themeService;
         this._editorService = _editorService;
         this._keybindingService = _keybindingService;
-        this._disposeOnClose = [];
+        this._model = null;
+        this._widget = null;
+        this._disposeOnClose = new DisposableStore();
         this._editor = editor;
         this._widgetVisible = CONTEXT_MARKERS_NAVIGATION_VISIBLE.bindTo(this._contextKeyService);
     }
@@ -254,16 +256,16 @@ var MarkerController = /** @class */ (function () {
     };
     MarkerController.prototype.dispose = function () {
         this._cleanUp();
+        this._disposeOnClose.dispose();
     };
     MarkerController.prototype._cleanUp = function () {
         this._widgetVisible.reset();
-        this._disposeOnClose = dispose(this._disposeOnClose);
+        this._disposeOnClose.clear();
         this._widget = null;
         this._model = null;
     };
     MarkerController.prototype.getOrCreateModel = function () {
         var _this = this;
-        var _a;
         if (this._model) {
             return this._model;
         }
@@ -288,18 +290,22 @@ var MarkerController = /** @class */ (function () {
         ];
         this._widget = new MarkerNavigationWidget(this._editor, actions, this._themeService);
         this._widgetVisible.set(true);
-        this._disposeOnClose.push(this._model);
-        this._disposeOnClose.push(this._widget);
-        (_a = this._disposeOnClose).push.apply(_a, actions);
-        this._disposeOnClose.push(this._widget.onDidSelectRelatedInformation(function (related) {
+        this._widget.onDidClose(function () { return _this._cleanUp(); }, this, this._disposeOnClose);
+        this._disposeOnClose.add(this._model);
+        this._disposeOnClose.add(this._widget);
+        for (var _i = 0, actions_1 = actions; _i < actions_1.length; _i++) {
+            var action = actions_1[_i];
+            this._disposeOnClose.add(action);
+        }
+        this._disposeOnClose.add(this._widget.onDidSelectRelatedInformation(function (related) {
             _this._editorService.openCodeEditor({
                 resource: related.resource,
                 options: { pinned: true, revealIfOpened: true, selection: Range.lift(related).collapseToStart() }
             }, _this._editor).then(undefined, onUnexpectedError);
             _this.closeMarkersNavigation(false);
         }));
-        this._disposeOnClose.push(this._editor.onDidChangeModel(function () { return _this._cleanUp(); }));
-        this._disposeOnClose.push(this._model.onCurrentMarkerChanged(function (marker) {
+        this._disposeOnClose.add(this._editor.onDidChangeModel(function () { return _this._cleanUp(); }));
+        this._disposeOnClose.add(this._model.onCurrentMarkerChanged(function (marker) {
             if (!marker || !_this._model) {
                 _this._cleanUp();
             }
@@ -312,7 +318,7 @@ var MarkerController = /** @class */ (function () {
                 });
             }
         }));
-        this._disposeOnClose.push(this._model.onMarkerSetChanged(function () {
+        this._disposeOnClose.add(this._model.onMarkerSetChanged(function () {
             if (!_this._widget || !_this._widget.position || !_this._model) {
                 return;
             }
@@ -452,7 +458,7 @@ var NextMarkerAction = /** @class */ (function (_super) {
         return _super.call(this, true, false, {
             id: NextMarkerAction.ID,
             label: NextMarkerAction.LABEL,
-            alias: 'Go to Next Error or Warning',
+            alias: 'Go to Next Problem (Error, Warning, Info)',
             precondition: EditorContextKeys.writable,
             kbOpts: { kbExpr: EditorContextKeys.editorTextFocus, primary: 512 /* Alt */ | 66 /* F8 */, weight: 100 /* EditorContrib */ }
         }) || this;
@@ -468,7 +474,7 @@ var PrevMarkerAction = /** @class */ (function (_super) {
         return _super.call(this, false, false, {
             id: PrevMarkerAction.ID,
             label: PrevMarkerAction.LABEL,
-            alias: 'Go to Previous Error or Warning',
+            alias: 'Go to Previous Problem (Error, Warning, Info)',
             precondition: EditorContextKeys.writable,
             kbOpts: { kbExpr: EditorContextKeys.editorTextFocus, primary: 1024 /* Shift */ | 512 /* Alt */ | 66 /* F8 */, weight: 100 /* EditorContrib */ }
         }) || this;
@@ -483,7 +489,7 @@ var NextMarkerInFilesAction = /** @class */ (function (_super) {
         return _super.call(this, true, true, {
             id: 'editor.action.marker.nextInFiles',
             label: nls.localize('markerAction.nextInFiles.label', "Go to Next Problem in Files (Error, Warning, Info)"),
-            alias: 'Go to Next Error or Warning in Files',
+            alias: 'Go to Next Problem in Files (Error, Warning, Info)',
             precondition: EditorContextKeys.writable,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
@@ -500,7 +506,7 @@ var PrevMarkerInFilesAction = /** @class */ (function (_super) {
         return _super.call(this, false, true, {
             id: 'editor.action.marker.prevInFiles',
             label: nls.localize('markerAction.previousInFiles.label', "Go to Previous Problem in Files (Error, Warning, Info)"),
-            alias: 'Go to Previous Error or Warning in Files',
+            alias: 'Go to Previous Problem in Files (Error, Warning, Info)',
             precondition: EditorContextKeys.writable,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,

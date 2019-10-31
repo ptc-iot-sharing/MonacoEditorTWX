@@ -6,11 +6,16 @@ import { FIN } from './iterator.js';
 var Node = /** @class */ (function () {
     function Node(element) {
         this.element = element;
+        this.next = Node.Undefined;
+        this.prev = Node.Undefined;
     }
+    Node.Undefined = new Node(undefined);
     return Node;
 }());
 var LinkedList = /** @class */ (function () {
     function LinkedList() {
+        this._first = Node.Undefined;
+        this._last = Node.Undefined;
         this._size = 0;
     }
     Object.defineProperty(LinkedList.prototype, "size", {
@@ -21,7 +26,12 @@ var LinkedList = /** @class */ (function () {
         configurable: true
     });
     LinkedList.prototype.isEmpty = function () {
-        return !this._first;
+        return this._first === Node.Undefined;
+    };
+    LinkedList.prototype.clear = function () {
+        this._first = Node.Undefined;
+        this._last = Node.Undefined;
+        this._size = 0;
     };
     LinkedList.prototype.unshift = function (element) {
         return this._insert(element, false);
@@ -30,8 +40,9 @@ var LinkedList = /** @class */ (function () {
         return this._insert(element, true);
     };
     LinkedList.prototype._insert = function (element, atTheEnd) {
+        var _this = this;
         var newNode = new Node(element);
-        if (!this._first) {
+        if (this._first === Node.Undefined) {
             this._first = newNode;
             this._last = newNode;
         }
@@ -50,10 +61,16 @@ var LinkedList = /** @class */ (function () {
             oldFirst.prev = newNode;
         }
         this._size += 1;
-        return this._remove.bind(this, newNode);
+        var didRemove = false;
+        return function () {
+            if (!didRemove) {
+                didRemove = true;
+                _this._remove(newNode);
+            }
+        };
     };
     LinkedList.prototype.shift = function () {
-        if (!this._first) {
+        if (this._first === Node.Undefined) {
             return undefined;
         }
         else {
@@ -62,45 +79,47 @@ var LinkedList = /** @class */ (function () {
             return res;
         }
     };
-    LinkedList.prototype._remove = function (node) {
-        var candidate = this._first;
-        while (candidate instanceof Node) {
-            if (candidate !== node) {
-                candidate = candidate.next;
-                continue;
-            }
-            if (candidate.prev && candidate.next) {
-                // middle
-                var anchor = candidate.prev;
-                anchor.next = candidate.next;
-                candidate.next.prev = anchor;
-            }
-            else if (!candidate.prev && !candidate.next) {
-                // only node
-                this._first = undefined;
-                this._last = undefined;
-            }
-            else if (!candidate.next) {
-                // last
-                this._last = this._last.prev;
-                this._last.next = undefined;
-            }
-            else if (!candidate.prev) {
-                // first
-                this._first = this._first.next;
-                this._first.prev = undefined;
-            }
-            // done
-            this._size -= 1;
-            break;
+    LinkedList.prototype.pop = function () {
+        if (this._last === Node.Undefined) {
+            return undefined;
         }
+        else {
+            var res = this._last.element;
+            this._remove(this._last);
+            return res;
+        }
+    };
+    LinkedList.prototype._remove = function (node) {
+        if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {
+            // middle
+            var anchor = node.prev;
+            anchor.next = node.next;
+            node.next.prev = anchor;
+        }
+        else if (node.prev === Node.Undefined && node.next === Node.Undefined) {
+            // only node
+            this._first = Node.Undefined;
+            this._last = Node.Undefined;
+        }
+        else if (node.next === Node.Undefined) {
+            // last
+            this._last = this._last.prev;
+            this._last.next = Node.Undefined;
+        }
+        else if (node.prev === Node.Undefined) {
+            // first
+            this._first = this._first.next;
+            this._first.prev = Node.Undefined;
+        }
+        // done
+        this._size -= 1;
     };
     LinkedList.prototype.iterator = function () {
         var element;
         var node = this._first;
         return {
             next: function () {
-                if (!node) {
+                if (node === Node.Undefined) {
                     return FIN;
                 }
                 if (!element) {
@@ -113,6 +132,13 @@ var LinkedList = /** @class */ (function () {
                 return element;
             }
         };
+    };
+    LinkedList.prototype.toArray = function () {
+        var result = [];
+        for (var node = this._first; node !== Node.Undefined; node = node.next) {
+            result.push(node.element);
+        }
+        return result;
     };
     return LinkedList;
 }());

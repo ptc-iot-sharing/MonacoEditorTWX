@@ -16,7 +16,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import './gotoLine.css';
-import * as nls from '../../../../nls.js';
+import * as strings from '../../../../base/common/strings.js';
 import { QuickOpenEntry, QuickOpenModel } from '../../../../base/parts/quickopen/browser/quickOpenModel.js';
 import { isCodeEditor } from '../../../browser/editorBrowser.js';
 import { registerEditorAction } from '../../../browser/editorExtensions.js';
@@ -24,6 +24,7 @@ import { Position } from '../../../common/core/position.js';
 import { Range } from '../../../common/core/range.js';
 import { EditorContextKeys } from '../../../common/editorContextKeys.js';
 import { BaseEditorQuickOpenAction } from './editorQuickOpen.js';
+import { GoToLineNLS } from '../../../common/standaloneStrings.js';
 var GotoLineEntry = /** @class */ (function (_super) {
     __extends(GotoLineEntry, _super);
     function GotoLineEntry(line, editor, decorator) {
@@ -57,17 +58,17 @@ var GotoLineEntry = /** @class */ (function (_super) {
         var label;
         if (isValid) {
             if (position.column && position.column > 1) {
-                label = nls.localize('gotoLineLabelValidLineAndColumn', "Go to line {0} and character {1}", position.lineNumber, position.column);
+                label = strings.format(GoToLineNLS.gotoLineLabelValidLineAndColumn, position.lineNumber, position.column);
             }
             else {
-                label = nls.localize('gotoLineLabelValidLine', "Go to line {0}", position.lineNumber, position.column);
+                label = strings.format(GoToLineNLS.gotoLineLabelValidLine, position.lineNumber);
             }
         }
         else if (position.lineNumber < 1 || position.lineNumber > (model ? model.getLineCount() : 0)) {
-            label = nls.localize('gotoLineLabelEmptyWithLineLimit', "Type a line number between 1 and {0} to navigate to", model ? model.getLineCount() : 0);
+            label = strings.format(GoToLineNLS.gotoLineLabelEmptyWithLineLimit, model ? model.getLineCount() : 0);
         }
         else {
-            label = nls.localize('gotoLineLabelEmptyWithLineAndColumnLimit', "Type a character between 1 and {0} to navigate to", model ? model.getLineMaxColumn(position.lineNumber) : 0);
+            label = strings.format(GoToLineNLS.gotoLineLabelEmptyWithLineAndColumnLimit, model ? model.getLineMaxColumn(position.lineNumber) : 0);
         }
         return {
             position: position,
@@ -81,7 +82,7 @@ var GotoLineEntry = /** @class */ (function (_super) {
     GotoLineEntry.prototype.getAriaLabel = function () {
         var position = this.editor.getPosition();
         var currentLine = position ? position.lineNumber : 0;
-        return nls.localize('gotoLineAriaLabel', "Current Line: {0}. Go to line {0}.", currentLine, this.parseResult.label);
+        return strings.format(GoToLineNLS.gotoLineAriaLabel, currentLine, this.parseResult.label);
     };
     GotoLineEntry.prototype.run = function (mode, _context) {
         if (mode === 1 /* OPEN */) {
@@ -123,11 +124,11 @@ export { GotoLineEntry };
 var GotoLineAction = /** @class */ (function (_super) {
     __extends(GotoLineAction, _super);
     function GotoLineAction() {
-        return _super.call(this, nls.localize('gotoLineActionInput', "Type a line number, followed by an optional colon and a character number to navigate to"), {
+        return _super.call(this, GoToLineNLS.gotoLineActionInput, {
             id: 'editor.action.gotoLine',
-            label: nls.localize('GotoLineAction.label', "Go to Line..."),
+            label: GoToLineNLS.gotoLineActionLabel,
             alias: 'Go to Line...',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.focus,
                 primary: 2048 /* CtrlCmd */ | 37 /* KEY_G */,

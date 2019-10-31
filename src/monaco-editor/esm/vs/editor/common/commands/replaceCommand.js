@@ -64,6 +64,7 @@ var ReplaceCommandThatPreservesSelection = /** @class */ (function () {
         this._range = editRange;
         this._text = text;
         this._initialSelection = initialSelection;
+        this._selectionId = null;
     }
     ReplaceCommandThatPreservesSelection.prototype.getEditOperations = function (model, builder) {
         builder.addEditOperation(this._range, this._text);

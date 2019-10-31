@@ -29,7 +29,7 @@ var __assign = (this && this.__assign) || function () {
 import { createCancelablePromise, Delayer } from '../../../base/common/async.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
-import { Disposable } from '../../../base/common/lifecycle.js';
+import { Disposable, MutableDisposable } from '../../../base/common/lifecycle.js';
 import { CharacterSet } from '../../common/core/characterClassifier.js';
 import * as modes from '../../common/modes.js';
 import { provideSignatureHelp } from './provideSignatureHelp.js';
@@ -41,12 +41,14 @@ var ParameterHintState;
         }
         return class_1;
     }());
-    ParameterHintState.Pending = new /** @class */ (function () {
-        function class_2() {
+    var Pending = /** @class */ (function () {
+        function Pending(request) {
+            this.request = request;
             this.type = 2 /* Pending */;
         }
-        return class_2;
+        return Pending;
     }());
+    ParameterHintState.Pending = Pending;
     var Active = /** @class */ (function () {
         function Active(hints) {
             this.hints = hints;
@@ -63,12 +65,13 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this._onChangedHints = _this._register(new Emitter());
         _this.onChangedHints = _this._onChangedHints.event;
-        _this.state = ParameterHintState.Default;
+        _this.triggerOnType = false;
+        _this._state = ParameterHintState.Default;
+        _this._lastSignatureHelpResult = _this._register(new MutableDisposable());
         _this.triggerChars = new CharacterSet();
         _this.retriggerChars = new CharacterSet();
         _this.triggerId = 0;
         _this.editor = editor;
-        _this.enabled = false;
         _this.throttledDelayer = new Delayer(delay);
         _this._register(_this.editor.onDidChangeConfiguration(function () { return _this.onEditorConfigurationChange(); }));
         _this._register(_this.editor.onDidChangeModel(function (e) { return _this.onModelChanged(); }));
@@ -81,6 +84,17 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         _this.onModelChanged();
         return _this;
     }
+    Object.defineProperty(ParameterHintsModel.prototype, "state", {
+        get: function () { return this._state; },
+        set: function (value) {
+            if (this._state.type === 2 /* Pending */) {
+                this._state.request.cancel();
+            }
+            this._state = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     ParameterHintsModel.prototype.cancel = function (silent) {
         if (silent === void 0) { silent = false; }
         this.state = ParameterHintState.Default;
@@ -88,15 +102,11 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         if (!silent) {
             this._onChangedHints.fire(undefined);
         }
-        if (this.provideSignatureHelpRequest) {
-            this.provideSignatureHelpRequest.cancel();
-            this.provideSignatureHelpRequest = undefined;
-        }
     };
     ParameterHintsModel.prototype.trigger = function (context, delay) {
         var _this = this;
         var model = this.editor.getModel();
-        if (model === null || !modes.SignatureHelpProviderRegistry.has(model)) {
+        if (!model || !modes.SignatureHelpProviderRegistry.has(model)) {
             return;
         }
         var triggerId = ++this.triggerId;
@@ -152,26 +162,35 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         }
         var model = this.editor.getModel();
         var position = this.editor.getPosition();
-        this.state = ParameterHintState.Pending;
-        this.provideSignatureHelpRequest = createCancelablePromise(function (token) {
+        this.state = new ParameterHintState.Pending(createCancelablePromise(function (token) {
             return provideSignatureHelp(model, position, triggerContext, token);
-        });
-        return this.provideSignatureHelpRequest.then(function (result) {
+        }));
+        return this.state.request.then(function (result) {
             // Check that we are still resolving the correct signature help
             if (triggerId !== _this.triggerId) {
+                if (result) {
+                    result.dispose();
+                }
                 return false;
             }
-            if (!result || !result.signatures || result.signatures.length === 0) {
+            if (!result || !result.value.signatures || result.value.signatures.length === 0) {
+                if (result) {
+                    result.dispose();
+                }
+                _this._lastSignatureHelpResult.clear();
                 _this.cancel();
                 return false;
             }
             else {
-                _this.state = new ParameterHintState.Active(result);
+                _this.state = new ParameterHintState.Active(result.value);
+                _this._lastSignatureHelpResult.value = result;
                 _this._onChangedHints.fire(_this.state.hints);
                 return true;
             }
         }).catch(function (error) {
-            _this.state = ParameterHintState.Default;
+            if (triggerId === _this.triggerId) {
+                _this.state = ParameterHintState.Default;
+            }
             onUnexpectedError(error);
             return false;
         });
@@ -209,7 +228,7 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         }
     };
     ParameterHintsModel.prototype.onDidType = function (text) {
-        if (!this.enabled) {
+        if (!this.triggerOnType) {
             return;
         }
         var lastCharIndex = text.length - 1;
@@ -235,8 +254,8 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         }
     };
     ParameterHintsModel.prototype.onEditorConfigurationChange = function () {
-        this.enabled = this.editor.getConfiguration().contribInfo.parameterHints.enabled;
-        if (!this.enabled) {
+        this.triggerOnType = this.editor.getConfiguration().contribInfo.parameterHints.enabled;
+        if (!this.triggerOnType) {
             this.cancel();
         }
     };

@@ -77,7 +77,7 @@ var DiagnosticsAdapter = /** @class */ (function () {
             return worker.doValidation(resource.toString()).then(function (diagnostics) {
                 var markers = diagnostics.map(function (d) { return toDiagnostics(resource, d); });
                 var model = monaco.editor.getModel(resource);
-                if (model.getModeId() === languageId) {
+                if (model && model.getModeId() === languageId) {
                     monaco.editor.setModelMarkers(model, languageId, markers);
                 }
             });
@@ -340,7 +340,8 @@ var DocumentSymbolAdapter = /** @class */ (function () {
                 containerName: item.containerName,
                 kind: toSymbolKind(item.kind),
                 range: toRange(item.location.range),
-                selectionRange: toRange(item.location.range)
+                selectionRange: toRange(item.location.range),
+                tags: []
             }); });
         });
     };

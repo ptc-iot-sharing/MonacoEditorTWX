@@ -69,11 +69,11 @@ export function dirname(resource) {
  * @returns The resulting URI.
  */
 export function joinPath(resource) {
+    var _a;
     var pathFragment = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         pathFragment[_i - 1] = arguments[_i];
     }
-    var _a;
     var joinedPath;
     if (resource.scheme === Schemas.file) {
         joinedPath = URI.file(paths.join.apply(paths, [originalFSPath(resource)].concat(pathFragment))).path;
@@ -113,7 +113,7 @@ export function normalizePath(resource) {
 export function originalFSPath(uri) {
     var value;
     var uriPath = uri.path;
-    if (uri.authority && uriPath.length > 1 && uri.scheme === 'file') {
+    if (uri.authority && uriPath.length > 1 && uri.scheme === Schemas.file) {
         // unc path: file://shares/c$/far/boo
         value = "//" + uri.authority + uriPath;
     }
@@ -131,6 +131,34 @@ export function originalFSPath(uri) {
         value = value.replace(/\//g, '\\');
     }
     return value;
+}
+/**
+ * Returns a relative path between two URIs. If the URIs don't have the same schema or authority, `undefined` is returned.
+ * The returned relative path always uses forward slashes.
+ */
+export function relativePath(from, to, ignoreCase) {
+    if (ignoreCase === void 0) { ignoreCase = hasToIgnoreCase(from); }
+    if (from.scheme !== to.scheme || !isEqualAuthority(from.authority, to.authority)) {
+        return undefined;
+    }
+    if (from.scheme === Schemas.file) {
+        var relativePath_1 = paths.relative(from.path, to.path);
+        return isWindows ? extpath.toSlashes(relativePath_1) : relativePath_1;
+    }
+    var fromPath = from.path || '/', toPath = to.path || '/';
+    if (ignoreCase) {
+        // make casing of fromPath match toPath
+        var i = 0;
+        for (var len = Math.min(fromPath.length, toPath.length); i < len; i++) {
+            if (fromPath.charCodeAt(i) !== toPath.charCodeAt(i)) {
+                if (fromPath.charAt(i).toLowerCase() !== toPath.charAt(i).toLowerCase()) {
+                    break;
+                }
+            }
+        }
+        fromPath = toPath.substr(0, i) + fromPath.substr(i);
+    }
+    return paths.posix.relative(fromPath, toPath);
 }
 /**
  * Data URI related helpers.

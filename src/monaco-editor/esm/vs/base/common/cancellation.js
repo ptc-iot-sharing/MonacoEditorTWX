@@ -75,7 +75,10 @@ var MutableToken = /** @class */ (function () {
     return MutableToken;
 }());
 var CancellationTokenSource = /** @class */ (function () {
-    function CancellationTokenSource() {
+    function CancellationTokenSource(parent) {
+        this._token = undefined;
+        this._parentListener = undefined;
+        this._parentListener = parent && parent.onCancellationRequested(this.cancel, this);
     }
     Object.defineProperty(CancellationTokenSource.prototype, "token", {
         get: function () {
@@ -102,6 +105,9 @@ var CancellationTokenSource = /** @class */ (function () {
         }
     };
     CancellationTokenSource.prototype.dispose = function () {
+        if (this._parentListener) {
+            this._parentListener.dispose();
+        }
         if (!this._token) {
             // ensure to initialize with an empty token if we had none
             this._token = CancellationToken.None;

@@ -6,6 +6,7 @@
 export var MarkerTag;
 (function (MarkerTag) {
     MarkerTag[MarkerTag["Unnecessary"] = 1] = "Unnecessary";
+    MarkerTag[MarkerTag["Deprecated"] = 2] = "Deprecated";
 })(MarkerTag || (MarkerTag = {}));
 export var MarkerSeverity;
 (function (MarkerSeverity) {
@@ -225,6 +226,13 @@ export var OverviewRulerLane;
     OverviewRulerLane[OverviewRulerLane["Right"] = 4] = "Right";
     OverviewRulerLane[OverviewRulerLane["Full"] = 7] = "Full";
 })(OverviewRulerLane || (OverviewRulerLane = {}));
+/**
+ * Position in the minimap to render the decoration.
+ */
+export var MinimapPosition;
+(function (MinimapPosition) {
+    MinimapPosition[MinimapPosition["Inline"] = 1] = "Inline";
+})(MinimapPosition || (MinimapPosition = {}));
 /**
  * End of line character preference.
  */
@@ -570,6 +578,10 @@ export var CompletionItemKind;
     CompletionItemKind[CompletionItemKind["TypeParameter"] = 24] = "TypeParameter";
     CompletionItemKind[CompletionItemKind["Snippet"] = 25] = "Snippet";
 })(CompletionItemKind || (CompletionItemKind = {}));
+export var CompletionItemTag;
+(function (CompletionItemTag) {
+    CompletionItemTag[CompletionItemTag["Deprecated"] = 1] = "Deprecated";
+})(CompletionItemTag || (CompletionItemTag = {}));
 export var CompletionItemInsertTextRule;
 (function (CompletionItemInsertTextRule) {
     /**
@@ -647,3 +659,7 @@ export var SymbolKind;
     SymbolKind[SymbolKind["Operator"] = 24] = "Operator";
     SymbolKind[SymbolKind["TypeParameter"] = 25] = "TypeParameter";
 })(SymbolKind || (SymbolKind = {}));
+export var SymbolTag;
+(function (SymbolTag) {
+    SymbolTag[SymbolTag["Deprecated"] = 1] = "Deprecated";
+})(SymbolTag || (SymbolTag = {}));

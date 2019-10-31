@@ -27,7 +27,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 import './hover.css';
 import * as nls from '../../../nls.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
@@ -39,24 +39,20 @@ import { editorHoverBackground, editorHoverBorder, editorHoverHighlight, textCod
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import { IMarkerDecorationsService } from '../../common/services/markersDecorationService.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
-import { IContextMenuService } from '../../../platform/contextview/browser/contextView.js';
-import { IBulkEditService } from '../../browser/services/bulkEditService.js';
-import { ICommandService } from '../../../platform/commands/common/commands.js';
 var ModesHoverController = /** @class */ (function () {
-    function ModesHoverController(_editor, _openerService, _modeService, _markerDecorationsService, _keybindingService, _contextMenuService, _bulkEditService, _commandService, _themeService) {
+    function ModesHoverController(_editor, _openerService, _modeService, _markerDecorationsService, _keybindingService, _themeService) {
         var _this = this;
         this._editor = _editor;
         this._openerService = _openerService;
         this._modeService = _modeService;
         this._markerDecorationsService = _markerDecorationsService;
         this._keybindingService = _keybindingService;
-        this._contextMenuService = _contextMenuService;
-        this._bulkEditService = _bulkEditService;
-        this._commandService = _commandService;
         this._themeService = _themeService;
-        this._toUnhook = [];
+        this._toUnhook = new DisposableStore();
         this._isMouseDown = false;
         this._hoverClicked = false;
+        this._contentWidget = null;
+        this._glyphWidget = null;
         this._hookEvents();
         this._didChangeConfigurationHandler = this._editor.onDidChangeConfiguration(function (e) {
             if (e.contribInfo) {
@@ -69,7 +65,7 @@ var ModesHoverController = /** @class */ (function () {
     Object.defineProperty(ModesHoverController.prototype, "contentWidget", {
         get: function () {
             if (!this._contentWidget) {
-                this._createHoverWidget();
+                this._createHoverWidgets();
             }
             return this._contentWidget;
         },
@@ -79,7 +75,7 @@ var ModesHoverController = /** @class */ (function () {
     Object.defineProperty(ModesHoverController.prototype, "glyphWidget", {
         get: function () {
             if (!this._glyphWidget) {
-                this._createHoverWidget();
+                this._createHoverWidgets();
             }
             return this._glyphWidget;
         },
@@ -96,21 +92,21 @@ var ModesHoverController = /** @class */ (function () {
         this._isHoverEnabled = hoverOpts.enabled;
         this._isHoverSticky = hoverOpts.sticky;
         if (this._isHoverEnabled) {
-            this._toUnhook.push(this._editor.onMouseDown(function (e) { return _this._onEditorMouseDown(e); }));
-            this._toUnhook.push(this._editor.onMouseUp(function (e) { return _this._onEditorMouseUp(e); }));
-            this._toUnhook.push(this._editor.onMouseMove(function (e) { return _this._onEditorMouseMove(e); }));
-            this._toUnhook.push(this._editor.onKeyDown(function (e) { return _this._onKeyDown(e); }));
-            this._toUnhook.push(this._editor.onDidChangeModelDecorations(function () { return _this._onModelDecorationsChanged(); }));
+            this._toUnhook.add(this._editor.onMouseDown(function (e) { return _this._onEditorMouseDown(e); }));
+            this._toUnhook.add(this._editor.onMouseUp(function (e) { return _this._onEditorMouseUp(e); }));
+            this._toUnhook.add(this._editor.onMouseMove(function (e) { return _this._onEditorMouseMove(e); }));
+            this._toUnhook.add(this._editor.onKeyDown(function (e) { return _this._onKeyDown(e); }));
+            this._toUnhook.add(this._editor.onDidChangeModelDecorations(function () { return _this._onModelDecorationsChanged(); }));
         }
         else {
-            this._toUnhook.push(this._editor.onMouseMove(hideWidgetsEventHandler));
+            this._toUnhook.add(this._editor.onMouseMove(hideWidgetsEventHandler));
         }
-        this._toUnhook.push(this._editor.onMouseLeave(hideWidgetsEventHandler));
-        this._toUnhook.push(this._editor.onDidChangeModel(hideWidgetsEventHandler));
-        this._toUnhook.push(this._editor.onDidScrollChange(function (e) { return _this._onEditorScrollChanged(e); }));
+        this._toUnhook.add(this._editor.onMouseLeave(hideWidgetsEventHandler));
+        this._toUnhook.add(this._editor.onDidChangeModel(hideWidgetsEventHandler));
+        this._toUnhook.add(this._editor.onDidScrollChange(function (e) { return _this._onEditorScrollChanged(e); }));
     };
     ModesHoverController.prototype._unhookEvents = function () {
-        this._toUnhook = dispose(this._toUnhook);
+        this._toUnhook.clear();
     };
     ModesHoverController.prototype._onModelDecorationsChanged = function () {
         this.contentWidget.onModelDecorationsChanged();
@@ -186,14 +182,14 @@ var ModesHoverController = /** @class */ (function () {
         }
     };
     ModesHoverController.prototype._hideWidgets = function () {
-        if (!this._contentWidget || (this._isMouseDown && this._hoverClicked && this._contentWidget.isColorPickerVisible())) {
+        if (!this._glyphWidget || !this._contentWidget || (this._isMouseDown && this._hoverClicked && this._contentWidget.isColorPickerVisible())) {
             return;
         }
         this._glyphWidget.hide();
         this._contentWidget.hide();
     };
-    ModesHoverController.prototype._createHoverWidget = function () {
-        this._contentWidget = new ModesContentHoverWidget(this._editor, this._markerDecorationsService, this._themeService, this._keybindingService, this._contextMenuService, this._bulkEditService, this._commandService, this._modeService, this._openerService);
+    ModesHoverController.prototype._createHoverWidgets = function () {
+        this._contentWidget = new ModesContentHoverWidget(this._editor, this._markerDecorationsService, this._themeService, this._keybindingService, this._modeService, this._openerService);
         this._glyphWidget = new ModesGlyphHoverWidget(this._editor, this._modeService, this._openerService);
     };
     ModesHoverController.prototype.showContentHover = function (range, mode, focus) {
@@ -204,6 +200,7 @@ var ModesHoverController = /** @class */ (function () {
     };
     ModesHoverController.prototype.dispose = function () {
         this._unhookEvents();
+        this._toUnhook.dispose();
         this._didChangeConfigurationHandler.dispose();
         if (this._glyphWidget) {
             this._glyphWidget.dispose();
@@ -218,10 +215,7 @@ var ModesHoverController = /** @class */ (function () {
         __param(2, IModeService),
         __param(3, IMarkerDecorationsService),
         __param(4, IKeybindingService),
-        __param(5, IContextMenuService),
-        __param(6, IBulkEditService),
-        __param(7, ICommandService),
-        __param(8, IThemeService)
+        __param(5, IThemeService)
     ], ModesHoverController);
     return ModesHoverController;
 }());
@@ -239,7 +233,7 @@ var ShowHoverAction = /** @class */ (function (_super) {
                 ]
             }, "Show Hover"),
             alias: 'Show Hover',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
                 primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KEY_K */, 2048 /* CtrlCmd */ | 39 /* KEY_I */),

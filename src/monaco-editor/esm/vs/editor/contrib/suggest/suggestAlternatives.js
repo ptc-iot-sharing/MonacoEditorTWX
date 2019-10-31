@@ -16,6 +16,7 @@ import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/
 var SuggestAlternatives = /** @class */ (function () {
     function SuggestAlternatives(_editor, contextKeyService) {
         this._editor = _editor;
+        this._index = 0;
         this._ckOtherSuggestions = SuggestAlternatives.OtherSuggestions.bindTo(contextKeyService);
     }
     SuggestAlternatives.prototype.dispose = function () {

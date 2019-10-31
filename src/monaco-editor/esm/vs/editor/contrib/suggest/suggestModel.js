@@ -6,12 +6,11 @@ import { isNonEmptyArray } from '../../../base/common/arrays.js';
 import { TimeoutTimer } from '../../../base/common/async.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
-import { dispose } from '../../../base/common/lifecycle.js';
-import { values } from '../../../base/common/map.js';
+import { dispose, DisposableStore, isDisposable } from '../../../base/common/lifecycle.js';
 import { Selection } from '../../common/core/selection.js';
-import { CompletionProviderRegistry } from '../../common/modes.js';
+import { CompletionProviderRegistry, completionKindFromString } from '../../common/modes.js';
 import { CompletionModel } from './completionModel.js';
-import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport } from './suggest.js';
+import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport, CompletionOptions } from './suggest.js';
 import { SnippetController2 } from '../snippet/snippetController2.js';
 import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { WordDistance } from './wordDistance.js';
@@ -51,10 +50,11 @@ var SuggestModel = /** @class */ (function () {
         var _this = this;
         this._editor = _editor;
         this._editorWorker = _editorWorker;
-        this._toDispose = [];
+        this._toDispose = new DisposableStore();
+        this._quickSuggestDelay = 10;
         this._triggerQuickSuggest = new TimeoutTimer();
-        this._triggerRefilter = new TimeoutTimer();
         this._state = 0 /* Idle */;
+        this._completionDisposables = new DisposableStore();
         this._onDidCancel = new Emitter();
         this._onDidTrigger = new Emitter();
         this._onDidSuggest = new Emitter();
@@ -63,35 +63,35 @@ var SuggestModel = /** @class */ (function () {
         this.onDidSuggest = this._onDidSuggest.event;
         this._currentSelection = this._editor.getSelection() || new Selection(1, 1, 1, 1);
         // wire up various listeners
-        this._toDispose.push(this._editor.onDidChangeModel(function () {
+        this._toDispose.add(this._editor.onDidChangeModel(function () {
             _this._updateTriggerCharacters();
             _this.cancel();
         }));
-        this._toDispose.push(this._editor.onDidChangeModelLanguage(function () {
+        this._toDispose.add(this._editor.onDidChangeModelLanguage(function () {
             _this._updateTriggerCharacters();
             _this.cancel();
         }));
-        this._toDispose.push(this._editor.onDidChangeConfiguration(function () {
+        this._toDispose.add(this._editor.onDidChangeConfiguration(function () {
             _this._updateTriggerCharacters();
             _this._updateQuickSuggest();
         }));
-        this._toDispose.push(CompletionProviderRegistry.onDidChange(function () {
+        this._toDispose.add(CompletionProviderRegistry.onDidChange(function () {
             _this._updateTriggerCharacters();
             _this._updateActiveSuggestSession();
         }));
-        this._toDispose.push(this._editor.onDidChangeCursorSelection(function (e) {
+        this._toDispose.add(this._editor.onDidChangeCursorSelection(function (e) {
             _this._onCursorChange(e);
         }));
         var editorIsComposing = false;
-        this._toDispose.push(this._editor.onCompositionStart(function () {
+        this._toDispose.add(this._editor.onCompositionStart(function () {
             editorIsComposing = true;
         }));
-        this._toDispose.push(this._editor.onCompositionEnd(function () {
+        this._toDispose.add(this._editor.onCompositionEnd(function () {
             // refilter when composition ends
             editorIsComposing = false;
             _this._refilterCompletionItems();
         }));
-        this._toDispose.push(this._editor.onDidChangeModelContent(function () {
+        this._toDispose.add(this._editor.onDidChangeModelContent(function () {
             // only filter completions when the editor isn't
             // composing a character, e.g. ¨ + u makes ü but just
             // ¨ cannot be used for filtering
@@ -103,9 +103,10 @@ var SuggestModel = /** @class */ (function () {
         this._updateQuickSuggest();
     }
     SuggestModel.prototype.dispose = function () {
-        dispose([this._onDidCancel, this._onDidSuggest, this._onDidTrigger, this._triggerCharacterListener, this._triggerQuickSuggest, this._triggerRefilter]);
-        this._toDispose = dispose(this._toDispose);
-        dispose(this._completionModel);
+        dispose(this._triggerCharacterListener);
+        dispose([this._onDidCancel, this._onDidSuggest, this._onDidTrigger, this._triggerQuickSuggest]);
+        this._toDispose.dispose();
+        this._completionDisposables.dispose();
         this.cancel();
     };
     // --- handle configuration & precondition changes
@@ -143,7 +144,7 @@ var SuggestModel = /** @class */ (function () {
                 // keep existing items that where not computed by the
                 // supports/providers that want to trigger now
                 var items = _this._completionModel ? _this._completionModel.adopt(supports) : undefined;
-                _this.trigger({ auto: true, shy: false, triggerCharacter: lastChar }, Boolean(_this._completionModel), values(supports), items);
+                _this.trigger({ auto: true, shy: false, triggerCharacter: lastChar }, Boolean(_this._completionModel), supports, items);
             }
         });
     };
@@ -158,18 +159,19 @@ var SuggestModel = /** @class */ (function () {
     SuggestModel.prototype.cancel = function (retrigger) {
         if (retrigger === void 0) { retrigger = false; }
         if (this._state !== 0 /* Idle */) {
-            this._triggerRefilter.cancel();
             this._triggerQuickSuggest.cancel();
             if (this._requestToken) {
                 this._requestToken.cancel();
                 this._requestToken = undefined;
             }
             this._state = 0 /* Idle */;
-            dispose(this._completionModel);
             this._completionModel = undefined;
             this._context = undefined;
             this._onDidCancel.fire({ retrigger: retrigger });
         }
+    };
+    SuggestModel.prototype.clear = function () {
+        this._completionDisposables.clear();
     };
     SuggestModel.prototype._updateActiveSuggestSession = function () {
         if (this._state !== 0 /* Idle */) {
@@ -217,6 +219,9 @@ var SuggestModel = /** @class */ (function () {
             }
             this.cancel();
             this._triggerQuickSuggest.cancelAndSet(function () {
+                if (_this._state !== 0 /* Idle */) {
+                    return;
+                }
                 if (!LineContext.shouldAutoTrigger(_this._editor)) {
                     return;
                 }
@@ -252,14 +257,15 @@ var SuggestModel = /** @class */ (function () {
     };
     SuggestModel.prototype._refilterCompletionItems = function () {
         var _this = this;
-        if (this._state === 0 /* Idle */) {
-            return;
-        }
-        if (!this._editor.hasModel()) {
-            return;
-        }
-        // refine active suggestion
-        this._triggerRefilter.cancelAndSet(function () {
+        // Re-filter suggestions. This MUST run async because filtering/scoring
+        // uses the model content AND the cursor position. The latter is NOT
+        // updated when the document has changed (the event which drives this method)
+        // and therefore a little pause (next mirco task) is needed. See:
+        // https://stackoverflow.com/questions/25915634/difference-between-microtask-and-macrotask-within-an-event-loop-context#25933985
+        Promise.resolve().then(function () {
+            if (_this._state === 0 /* Idle */) {
+                return;
+            }
             if (!_this._editor.hasModel()) {
                 return;
             }
@@ -267,7 +273,7 @@ var SuggestModel = /** @class */ (function () {
             var position = _this._editor.getPosition();
             var ctx = new LineContext(model, position, _this._state === 2 /* Auto */, false);
             _this._onNewContext(ctx);
-        }, 25);
+        });
     };
     SuggestModel.prototype.trigger = function (context, retrigger, onlyFrom, existingItems) {
         var _this = this;
@@ -281,7 +287,7 @@ var SuggestModel = /** @class */ (function () {
         // Cancel previous requests, change state & update UI
         this.cancel(retrigger);
         this._state = auto ? 2 /* Auto */ : 1 /* Manual */;
-        this._onDidTrigger.fire({ auto: auto, shy: context.shy });
+        this._onDidTrigger.fire({ auto: auto, shy: context.shy, position: this._editor.getPosition() });
         // Capture context when request was sent
         this._context = ctx;
         // Build context for request
@@ -292,15 +298,41 @@ var SuggestModel = /** @class */ (function () {
                 triggerCharacter: context.triggerCharacter
             };
         }
-        else if (onlyFrom && onlyFrom.length) {
+        else if (onlyFrom && onlyFrom.size > 0) {
             suggestCtx = { triggerKind: 2 /* TriggerForIncompleteCompletions */ };
         }
         else {
             suggestCtx = { triggerKind: 0 /* Invoke */ };
         }
         this._requestToken = new CancellationTokenSource();
+        // kind filter and snippet sort rules
+        var contribInfo = this._editor.getConfiguration().contribInfo;
+        var itemKindFilter = new Set();
+        var snippetSortOrder = 1 /* Inline */;
+        switch (contribInfo.suggest.snippets) {
+            case 'top':
+                snippetSortOrder = 0 /* Top */;
+                break;
+            // 	↓ that's the default anyways...
+            // case 'inline':
+            // 	snippetSortOrder = SnippetSortOrder.Inline;
+            // 	break;
+            case 'bottom':
+                snippetSortOrder = 2 /* Bottom */;
+                break;
+            case 'none':
+                itemKindFilter.add(25 /* Snippet */);
+                break;
+        }
+        // kind filter
+        for (var key in contribInfo.suggest.filteredTypes) {
+            var kind = completionKindFromString(key, true);
+            if (typeof kind !== 'undefined' && contribInfo.suggest.filteredTypes[key] === false) {
+                itemKindFilter.add(kind);
+            }
+        }
         var wordDistance = WordDistance.create(this._editorWorker, this._editor);
-        var items = provideSuggestionItems(model, this._editor.getPosition(), this._editor.getConfiguration().contribInfo.suggest.snippets, onlyFrom, suggestCtx, this._requestToken.token);
+        var items = provideSuggestionItems(model, this._editor.getPosition(), new CompletionOptions(snippetSortOrder, itemKindFilter, onlyFrom), suggestCtx, this._requestToken.token);
         Promise.all([items, wordDistance]).then(function (_a) {
             var items = _a[0], wordDistance = _a[1];
             dispose(_this._requestToken);
@@ -312,15 +344,21 @@ var SuggestModel = /** @class */ (function () {
             }
             var model = _this._editor.getModel();
             if (isNonEmptyArray(existingItems)) {
-                var cmpFn = getSuggestionComparator(_this._editor.getConfiguration().contribInfo.suggest.snippets);
+                var cmpFn = getSuggestionComparator(snippetSortOrder);
                 items = items.concat(existingItems).sort(cmpFn);
             }
             var ctx = new LineContext(model, _this._editor.getPosition(), auto, context.shy);
-            dispose(_this._completionModel);
             _this._completionModel = new CompletionModel(items, _this._context.column, {
                 leadingLineContent: ctx.leadingLineContent,
                 characterCountDelta: ctx.column - _this._context.column
             }, wordDistance, _this._editor.getConfiguration().contribInfo.suggest);
+            // store containers so that they can be disposed later
+            for (var _i = 0, items_1 = items; _i < items_1.length; _i++) {
+                var item = items_1[_i];
+                if (isDisposable(item.container)) {
+                    _this._completionDisposables.add(item.container);
+                }
+            }
             _this._onNewContext(ctx);
         }).catch(onUnexpectedError);
     };
@@ -357,7 +395,7 @@ var SuggestModel = /** @class */ (function () {
             // typed -> moved cursor RIGHT & incomple model & still on a word -> retrigger
             var incomplete = this._completionModel.incomplete;
             var adopted = this._completionModel.adopt(incomplete);
-            this.trigger({ auto: this._state === 2 /* Auto */, shy: false }, true, values(incomplete), adopted);
+            this.trigger({ auto: this._state === 2 /* Auto */, shy: false }, true, incomplete, adopted);
         }
         else {
             // typed -> moved cursor RIGHT -> update UI

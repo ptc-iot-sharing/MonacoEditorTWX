@@ -35,11 +35,11 @@ import * as dom from '../../../base/browser/dom.js';
 import { localize } from '../../../nls.js';
 import { getBaseLabel } from '../../../base/common/labels.js';
 import { dirname, basename } from '../../../base/common/resources.js';
-import { escape } from '../../../base/common/strings.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
-import { createMatches } from '../../../base/common/filters.js';
+import { FuzzyScore, createMatches } from '../../../base/common/filters.js';
+import { HighlightedLabel } from '../../../base/browser/ui/highlightedlabel/highlightedLabel.js';
 var DataSource = /** @class */ (function () {
     function DataSource(_resolverService) {
         this._resolverService = _resolverService;
@@ -98,8 +98,14 @@ var StringRepresentationProvider = /** @class */ (function () {
         this._keybindingService = _keybindingService;
     }
     StringRepresentationProvider.prototype.getKeyboardNavigationLabel = function (element) {
-        // todo@joao `OneReference` elements are lazy and their "real" label
-        // isn't known yet
+        if (element instanceof OneReference) {
+            var preview = element.parent.preview;
+            var parts = preview && preview.preview(element.range);
+            if (parts) {
+                return parts.value;
+            }
+        }
+        // FileReferences or unresolved OneReference
         return basename(element.uri);
     };
     StringRepresentationProvider.prototype.mightProducePrintableCharacter = function (event) {
@@ -180,25 +186,27 @@ export { FileReferencesRenderer };
 //#region render: Reference
 var OneReferenceTemplate = /** @class */ (function () {
     function OneReferenceTemplate(container) {
-        var parent = document.createElement('div');
-        this.before = document.createElement('span');
-        this.inside = document.createElement('span');
-        this.after = document.createElement('span');
-        dom.addClass(this.inside, 'referenceMatch');
-        dom.addClass(parent, 'reference');
-        parent.appendChild(this.before);
-        parent.appendChild(this.inside);
-        parent.appendChild(this.after);
-        container.appendChild(parent);
+        this.label = new HighlightedLabel(container, false);
     }
-    OneReferenceTemplate.prototype.set = function (element) {
+    OneReferenceTemplate.prototype.set = function (element, score) {
         var filePreview = element.parent.preview;
         var preview = filePreview && filePreview.preview(element.range);
-        if (preview) {
-            var before = preview.before, inside = preview.inside, after = preview.after;
-            this.before.innerHTML = escape(before);
-            this.inside.innerHTML = escape(inside);
-            this.after.innerHTML = escape(after);
+        if (!preview) {
+            // this means we FAILED to resolve the document...
+            this.label.set(basename(element.uri) + ":" + (element.range.startLineNumber + 1) + ":" + (element.range.startColumn + 1));
+        }
+        else {
+            // render search match as highlight unless
+            // we have score, then render the score
+            var value = preview.value, highlight = preview.highlight;
+            if (score && !FuzzyScore.isDefault(score)) {
+                dom.toggleClass(this.label.element, 'referenceMatch', false);
+                this.label.set(value, createMatches(score));
+            }
+            else {
+                dom.toggleClass(this.label.element, 'referenceMatch', true);
+                this.label.set(value, [highlight]);
+            }
         }
     };
     return OneReferenceTemplate;
@@ -210,11 +218,10 @@ var OneReferenceRenderer = /** @class */ (function () {
     OneReferenceRenderer.prototype.renderTemplate = function (container) {
         return new OneReferenceTemplate(container);
     };
-    OneReferenceRenderer.prototype.renderElement = function (element, index, templateData) {
-        templateData.set(element.element);
+    OneReferenceRenderer.prototype.renderElement = function (node, index, templateData) {
+        templateData.set(node.element, node.filterData);
     };
     OneReferenceRenderer.prototype.disposeTemplate = function () {
-        //
     };
     OneReferenceRenderer.id = 'OneReferenceRenderer';
     return OneReferenceRenderer;

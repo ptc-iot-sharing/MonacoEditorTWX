@@ -308,7 +308,7 @@ module.exports = function (env, argv) {
                         .auth(options.thingworxUser, options.thingworxPassword);
 
                     if (err) {
-                        console.error("Failed to delete widget from thingworx");
+                        console.error("Failed to delete widget from thingworx: " + err);
                         //throw err;
                     }
                     if (httpResponse.statusCode != 200) {

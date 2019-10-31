@@ -131,6 +131,11 @@ var TypeScriptWorker = /** @class */ (function () {
         TypeScriptWorker.clearFiles(diagnostics);
         return Promise.resolve(diagnostics);
     };
+    TypeScriptWorker.prototype.getSuggestionDiagnostics = function (fileName) {
+        var diagnostics = this._languageService.getSuggestionDiagnostics(fileName);
+        TypeScriptWorker.clearFiles(diagnostics);
+        return Promise.resolve(diagnostics);
+    };
     TypeScriptWorker.prototype.getCompilerOptionsDiagnostics = function (fileName) {
         var diagnostics = this._languageService.getCompilerOptionsDiagnostics();
         TypeScriptWorker.clearFiles(diagnostics);
@@ -168,6 +173,12 @@ var TypeScriptWorker = /** @class */ (function () {
     };
     TypeScriptWorker.prototype.getFormattingEditsAfterKeystroke = function (fileName, postion, ch, options) {
         return Promise.resolve(this._languageService.getFormattingEditsAfterKeystroke(fileName, postion, ch, options));
+    };
+    TypeScriptWorker.prototype.findRenameLocations = function (fileName, positon, findInStrings, findInComments, providePrefixAndSuffixTextForRename) {
+        return Promise.resolve(this._languageService.findRenameLocations(fileName, positon, findInStrings, findInComments, providePrefixAndSuffixTextForRename));
+    };
+    TypeScriptWorker.prototype.getRenameInfo = function (fileName, positon, options) {
+        return Promise.resolve(this._languageService.getRenameInfo(fileName, positon, options));
     };
     TypeScriptWorker.prototype.getEmitOutput = function (fileName) {
         return Promise.resolve(this._languageService.getEmitOutput(fileName));
@@ -453,6 +464,10 @@ var TypeScriptWorker = /** @class */ (function () {
         }
         buildOutline(currentFile);
         return tokens;
+    };
+    TypeScriptWorker.prototype.getCodeFixesAtPosition = function (fileName, start, end, errorCodes, formatOptions) {
+        var preferences = {};
+        return Promise.resolve(this._languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences));
     };
     TypeScriptWorker.prototype.updateExtraLibs = function (extraLibs) {
         this._extraLibs = extraLibs;

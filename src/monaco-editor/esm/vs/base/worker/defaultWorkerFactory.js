@@ -17,25 +17,31 @@ function getWorker(workerId, label) {
     // ESM-comment-begin
     // 	if (typeof require === 'function') {
     // 		// check if the JS lives on a different origin
-    // 
     // 		const workerMain = require.toUrl('./' + workerId);
-    // 		if (/^(http:)|(https:)|(file:)/.test(workerMain)) {
-    // 			const currentUrl = String(window.location);
-    // 			const currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
-    // 			if (workerMain.substring(0, currentOrigin.length) !== currentOrigin) {
-    // 				// this is the cross-origin case
-    // 				// i.e. the webpage is running at a different origin than where the scripts are loaded from
-    // 				const workerBaseUrl = workerMain.substr(0, workerMain.length - 'vs/base/worker/workerMain.js'.length);
-    // 				const js = `/*${label}*/self.MonacoEnvironment={baseUrl: '${workerBaseUrl}'};importScripts('${workerMain}');/*${label}*/`;
-    // 				const url = `data:text/javascript;charset=utf-8,${encodeURIComponent(js)}`;
-    // 				return new Worker(url);
-    // 			}
-    // 		}
-    // 		return new Worker(workerMain + '#' + label);
+    // 		const workerUrl = getWorkerBootstrapUrl(workerMain, label);
+    // 		return new Worker(workerUrl, { name: label });
     // 	}
     // ESM-comment-end
     throw new Error("You must define a function MonacoEnvironment.getWorkerUrl or MonacoEnvironment.getWorker");
 }
+// ESM-comment-begin
+// export function getWorkerBootstrapUrl(scriptPath: string, label: string): string {
+// 	if (/^(http:)|(https:)|(file:)/.test(scriptPath)) {
+// 		const currentUrl = String(window.location);
+// 		const currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
+// 		if (scriptPath.substring(0, currentOrigin.length) !== currentOrigin) {
+// 			// this is the cross-origin case
+// 			// i.e. the webpage is running at a different origin than where the scripts are loaded from
+// 			const myPath = 'vs/base/worker/defaultWorkerFactory.js';
+// 			const workerBaseUrl = require.toUrl(myPath).slice(0, -myPath.length);
+// 			const js = `/*${label}*/self.MonacoEnvironment={baseUrl: '${workerBaseUrl}'};importScripts('${scriptPath}');/*${label}*/`;
+// 			const url = `data:text/javascript;charset=utf-8,${encodeURIComponent(js)}`;
+// 			return url;
+// 		}
+// 	}
+// 	return scriptPath + '#' + label;
+// }
+// ESM-comment-end
 function isPromiseLike(obj) {
     if (typeof obj.then === 'function') {
         return true;
@@ -56,7 +62,7 @@ var WebWorker = /** @class */ (function () {
         else {
             this.worker = Promise.resolve(workerOrPromise);
         }
-        this.postMessage(moduleId);
+        this.postMessage(moduleId, []);
         this.worker.then(function (w) {
             w.onmessage = function (ev) {
                 onMessageCallback(ev.data);
@@ -70,9 +76,9 @@ var WebWorker = /** @class */ (function () {
     WebWorker.prototype.getId = function () {
         return this.id;
     };
-    WebWorker.prototype.postMessage = function (msg) {
+    WebWorker.prototype.postMessage = function (message, transfer) {
         if (this.worker) {
-            this.worker.then(function (w) { return w.postMessage(msg); });
+            this.worker.then(function (w) { return w.postMessage(message, transfer); });
         }
     };
     WebWorker.prototype.dispose = function () {

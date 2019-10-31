@@ -28,6 +28,31 @@ import { EmbeddedCodeEditorWidget } from '../../browser/widget/embeddedCodeEdito
 import { ZoneWidget } from '../zoneWidget/zoneWidget.js';
 import * as nls from '../../../nls.js';
 import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
+export var IPeekViewService = createDecorator('IPeekViewService');
+registerSingleton(IPeekViewService, /** @class */ (function () {
+    function class_1() {
+        this._widgets = new Map();
+    }
+    class_1.prototype.addExclusiveWidget = function (editor, widget) {
+        var _this = this;
+        var existing = this._widgets.get(editor);
+        if (existing) {
+            existing.listener.dispose();
+            existing.widget.dispose();
+        }
+        var remove = function () {
+            var data = _this._widgets.get(editor);
+            if (data && data.widget === widget) {
+                data.listener.dispose();
+                _this._widgets.delete(editor);
+            }
+        };
+        this._widgets.set(editor, { widget: widget, listener: widget.onDidClose(remove) });
+    };
+    return class_1;
+}()));
 export var PeekContext;
 (function (PeekContext) {
     PeekContext.inPeekEditor = new RawContextKey('inReferenceSearchEditor', true);
@@ -108,20 +133,22 @@ var PeekViewWidget = /** @class */ (function (_super) {
         var titleElement = dom.$('.peekview-title');
         dom.append(this._headElement, titleElement);
         dom.addStandardDisposableListener(titleElement, 'click', function (event) { return _this._onTitleClick(event); });
-        this._headingIcon = dom.$('span');
+        this._fillTitleIcon(titleElement);
         this._primaryHeading = dom.$('span.filename');
         this._secondaryHeading = dom.$('span.dirname');
         this._metaHeading = dom.$('span.meta');
-        dom.append(titleElement, this._headingIcon, this._primaryHeading, this._secondaryHeading, this._metaHeading);
+        dom.append(titleElement, this._primaryHeading, this._secondaryHeading, this._metaHeading);
         var actionsContainer = dom.$('.peekview-actions');
         dom.append(this._headElement, actionsContainer);
         var actionBarOptions = this._getActionBarOptions();
         this._actionbarWidget = new ActionBar(actionsContainer, actionBarOptions);
-        this._disposables.push(this._actionbarWidget);
+        this._disposables.add(this._actionbarWidget);
         this._actionbarWidget.push(new Action('peekview.close', nls.localize('label.close', "Close"), 'close-peekview-action', true, function () {
             _this.dispose();
             return Promise.resolve();
         }), { label: false, icon: true });
+    };
+    PeekViewWidget.prototype._fillTitleIcon = function (container) {
     };
     PeekViewWidget.prototype._getActionBarOptions = function () {
         return {};
@@ -129,25 +156,26 @@ var PeekViewWidget = /** @class */ (function (_super) {
     PeekViewWidget.prototype._onTitleClick = function (event) {
         // implement me
     };
-    PeekViewWidget.prototype.setTitleIcon = function (iconClassName) {
-        this._headingIcon.className = iconClassName ? "icon " + iconClassName : '';
-    };
     PeekViewWidget.prototype.setTitle = function (primaryHeading, secondaryHeading) {
-        this._primaryHeading.innerHTML = strings.escape(primaryHeading);
-        this._primaryHeading.setAttribute('aria-label', primaryHeading);
-        if (secondaryHeading) {
-            this._secondaryHeading.innerHTML = strings.escape(secondaryHeading);
-        }
-        else {
-            dom.clearNode(this._secondaryHeading);
+        if (this._primaryHeading && this._secondaryHeading) {
+            this._primaryHeading.innerHTML = strings.escape(primaryHeading);
+            this._primaryHeading.setAttribute('aria-label', primaryHeading);
+            if (secondaryHeading) {
+                this._secondaryHeading.innerHTML = strings.escape(secondaryHeading);
+            }
+            else {
+                dom.clearNode(this._secondaryHeading);
+            }
         }
     };
     PeekViewWidget.prototype.setMetaTitle = function (value) {
-        if (value) {
-            this._metaHeading.innerHTML = strings.escape(value);
-        }
-        else {
-            dom.clearNode(this._metaHeading);
+        if (this._metaHeading) {
+            if (value) {
+                this._metaHeading.innerHTML = strings.escape(value);
+            }
+            else {
+                dom.clearNode(this._metaHeading);
+            }
         }
     };
     PeekViewWidget.prototype._doLayout = function (heightInPixel, widthInPixel) {
@@ -162,11 +190,15 @@ var PeekViewWidget = /** @class */ (function (_super) {
         this._doLayoutBody(bodyHeight, widthInPixel);
     };
     PeekViewWidget.prototype._doLayoutHead = function (heightInPixel, widthInPixel) {
-        this._headElement.style.height = heightInPixel + "px";
-        this._headElement.style.lineHeight = this._headElement.style.height;
+        if (this._headElement) {
+            this._headElement.style.height = heightInPixel + "px";
+            this._headElement.style.lineHeight = this._headElement.style.height;
+        }
     };
     PeekViewWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
-        this._bodyElement.style.height = heightInPixel + "px";
+        if (this._bodyElement) {
+            this._bodyElement.style.height = heightInPixel + "px";
+        }
     };
     return PeekViewWidget;
 }(ZoneWidget));

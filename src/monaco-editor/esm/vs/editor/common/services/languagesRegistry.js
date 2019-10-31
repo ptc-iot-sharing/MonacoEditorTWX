@@ -244,11 +244,11 @@ var LanguagesRegistry = /** @class */ (function (_super) {
         }
         return this._languages[modeId].identifier;
     };
-    LanguagesRegistry.prototype.getModeIdsFromFilepathOrFirstLine = function (filepath, firstLine) {
-        if (!filepath && !firstLine) {
+    LanguagesRegistry.prototype.getModeIdsFromFilepathOrFirstLine = function (resource, firstLine) {
+        if (!resource && !firstLine) {
             return [];
         }
-        var mimeTypes = mime.guessMimeTypes(filepath, firstLine);
+        var mimeTypes = mime.guessMimeTypes(resource, firstLine);
         return this.extractModeIds(mimeTypes.join(','));
     };
     return LanguagesRegistry;

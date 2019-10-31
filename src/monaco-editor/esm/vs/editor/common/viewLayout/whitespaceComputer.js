@@ -2,12 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import * as strings from '../../../base/common/strings.js';
 /**
  * Represent whitespaces in between lines and provide fast CRUD management methods.
  * The whitespaces are sorted ascending by `afterLineNumber`.
  */
 var WhitespaceComputer = /** @class */ (function () {
     function WhitespaceComputer() {
+        this._instanceId = strings.singleLetterHash(++WhitespaceComputer.INSTANCE_COUNT);
         this._heights = [];
         this._minWidths = [];
         this._ids = [];
@@ -59,14 +61,13 @@ var WhitespaceComputer = /** @class */ (function () {
         ordinal = ordinal | 0;
         heightInPx = heightInPx | 0;
         minWidth = minWidth | 0;
-        var id = (++this._lastWhitespaceId);
+        var id = this._instanceId + (++this._lastWhitespaceId);
         var insertionIndex = WhitespaceComputer.findInsertionIndex(this._afterLineNumbers, afterLineNumber, this._ordinals, ordinal);
         this._insertWhitespaceAtIndex(id, insertionIndex, afterLineNumber, ordinal, heightInPx, minWidth);
         this._minWidth = -1; /* marker for not being computed */
         return id;
     };
     WhitespaceComputer.prototype._insertWhitespaceAtIndex = function (id, insertIndex, afterLineNumber, ordinal, heightInPx, minWidth) {
-        id = id | 0;
         insertIndex = insertIndex | 0;
         afterLineNumber = afterLineNumber | 0;
         ordinal = ordinal | 0;
@@ -86,14 +87,13 @@ var WhitespaceComputer = /** @class */ (function () {
                 this._whitespaceId2Index[sid] = oldIndex + 1;
             }
         }
-        this._whitespaceId2Index[id.toString()] = insertIndex;
+        this._whitespaceId2Index[id] = insertIndex;
         this._prefixSumValidIndex = Math.min(this._prefixSumValidIndex, insertIndex - 1);
     };
     /**
      * Change properties associated with a certain whitespace.
      */
     WhitespaceComputer.prototype.changeWhitespace = function (id, newAfterLineNumber, newHeight) {
-        id = id | 0;
         newAfterLineNumber = newAfterLineNumber | 0;
         newHeight = newHeight | 0;
         var hasChanges = false;
@@ -109,11 +109,9 @@ var WhitespaceComputer = /** @class */ (function () {
      * @return Returns true if the whitespace is found and if the new height is different than the old height
      */
     WhitespaceComputer.prototype.changeWhitespaceHeight = function (id, newHeightInPx) {
-        id = id | 0;
         newHeightInPx = newHeightInPx | 0;
-        var sid = id.toString();
-        if (this._whitespaceId2Index.hasOwnProperty(sid)) {
-            var index = this._whitespaceId2Index[sid];
+        if (this._whitespaceId2Index.hasOwnProperty(id)) {
+            var index = this._whitespaceId2Index[id];
             if (this._heights[index] !== newHeightInPx) {
                 this._heights[index] = newHeightInPx;
                 this._prefixSumValidIndex = Math.min(this._prefixSumValidIndex, index - 1);
@@ -130,11 +128,9 @@ var WhitespaceComputer = /** @class */ (function () {
      * @return Returns true if the whitespace is found and if the new line number is different than the old line number
      */
     WhitespaceComputer.prototype.changeWhitespaceAfterLineNumber = function (id, newAfterLineNumber) {
-        id = id | 0;
         newAfterLineNumber = newAfterLineNumber | 0;
-        var sid = id.toString();
-        if (this._whitespaceId2Index.hasOwnProperty(sid)) {
-            var index = this._whitespaceId2Index[sid];
+        if (this._whitespaceId2Index.hasOwnProperty(id)) {
+            var index = this._whitespaceId2Index[id];
             if (this._afterLineNumbers[index] !== newAfterLineNumber) {
                 // `afterLineNumber` changed for this whitespace
                 // Record old ordinal
@@ -160,11 +156,9 @@ var WhitespaceComputer = /** @class */ (function () {
      * @return Returns true if the whitespace is found and it is removed.
      */
     WhitespaceComputer.prototype.removeWhitespace = function (id) {
-        id = id | 0;
-        var sid = id.toString();
-        if (this._whitespaceId2Index.hasOwnProperty(sid)) {
-            var index = this._whitespaceId2Index[sid];
-            delete this._whitespaceId2Index[sid];
+        if (this._whitespaceId2Index.hasOwnProperty(id)) {
+            var index = this._whitespaceId2Index[id];
+            delete this._whitespaceId2Index[id];
             this._removeWhitespaceAtIndex(index);
             this._minWidth = -1; /* marker for not being computed */
             return true;
@@ -378,6 +372,7 @@ var WhitespaceComputer = /** @class */ (function () {
         }
         return result;
     };
+    WhitespaceComputer.INSTANCE_COUNT = 0;
     return WhitespaceComputer;
 }());
 export { WhitespaceComputer };

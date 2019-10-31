@@ -17,6 +17,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as dom from '../../../base/browser/dom.js';
 import { EventType, Gesture } from '../../../base/browser/touch.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
 import { MouseHandler } from './mouseHandler.js';
 import { EditorMouseEvent } from '../editorDom.js';
 function gestureChangeEventMerger(lastEvent, currentEvent) {
@@ -187,9 +188,6 @@ var TouchHandler = /** @class */ (function (_super) {
         _this._register(dom.addDisposableListener(_this.viewHelper.linesContentDomNode, EventType.Contextmenu, function (e) { return _this._onContextMenu(new EditorMouseEvent(e, _this.viewHelper.viewDomNode), false); }));
         return _this;
     }
-    TouchHandler.prototype.dispose = function () {
-        _super.prototype.dispose.call(this);
-    };
     TouchHandler.prototype.onTap = function (event) {
         event.preventDefault();
         this.viewHelper.focusTextArea();
@@ -203,27 +201,27 @@ var TouchHandler = /** @class */ (function (_super) {
     };
     return TouchHandler;
 }(MouseHandler));
-var PointerHandler = /** @class */ (function () {
+var PointerHandler = /** @class */ (function (_super) {
+    __extends(PointerHandler, _super);
     function PointerHandler(context, viewController, viewHelper) {
+        var _this = _super.call(this) || this;
         if (window.navigator.msPointerEnabled) {
-            this.handler = new MsPointerHandler(context, viewController, viewHelper);
+            _this.handler = _this._register(new MsPointerHandler(context, viewController, viewHelper));
         }
         else if (window.TouchEvent) {
-            this.handler = new TouchHandler(context, viewController, viewHelper);
+            _this.handler = _this._register(new TouchHandler(context, viewController, viewHelper));
         }
         else if (window.navigator.pointerEnabled || window.PointerEvent) {
-            this.handler = new StandardPointerHandler(context, viewController, viewHelper);
+            _this.handler = _this._register(new StandardPointerHandler(context, viewController, viewHelper));
         }
         else {
-            this.handler = new MouseHandler(context, viewController, viewHelper);
+            _this.handler = _this._register(new MouseHandler(context, viewController, viewHelper));
         }
+        return _this;
     }
     PointerHandler.prototype.getTargetAtClientPoint = function (clientX, clientY) {
         return this.handler.getTargetAtClientPoint(clientX, clientY);
     };
-    PointerHandler.prototype.dispose = function () {
-        this.handler.dispose();
-    };
     return PointerHandler;
-}());
+}(Disposable));
 export { PointerHandler };

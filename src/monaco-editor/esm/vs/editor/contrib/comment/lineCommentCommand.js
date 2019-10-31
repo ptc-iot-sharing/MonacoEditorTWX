@@ -12,9 +12,11 @@ import { BlockCommentCommand } from './blockCommentCommand.js';
 var LineCommentCommand = /** @class */ (function () {
     function LineCommentCommand(selection, tabSize, type) {
         this._selection = selection;
+        this._selectionId = null;
         this._tabSize = tabSize;
         this._type = type;
         this._deltaColumn = 0;
+        this._moveEndPositionDown = false;
     }
     /**
      * Do an initial pass over the lines and gather info about the line comment string.

@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { Range } from '../../common/core/range.js';
-import { OverviewRulerLane } from '../../common/model.js';
+import { OverviewRulerLane, MinimapPosition } from '../../common/model.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
-import { overviewRulerFindMatchForeground } from '../../../platform/theme/common/colorRegistry.js';
+import { overviewRulerFindMatchForeground, minimapFindMatch } from '../../../platform/theme/common/colorRegistry.js';
 import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 var FindDecorations = /** @class */ (function () {
     function FindDecorations(editor) {
@@ -231,6 +231,10 @@ var FindDecorations = /** @class */ (function () {
         overviewRuler: {
             color: themeColorFromId(overviewRulerFindMatchForeground),
             position: OverviewRulerLane.Center
+        },
+        minimap: {
+            color: themeColorFromId(minimapFindMatch),
+            position: MinimapPosition.Inline
         }
     });
     FindDecorations._FIND_MATCH_DECORATION = ModelDecorationOptions.register({
@@ -240,6 +244,10 @@ var FindDecorations = /** @class */ (function () {
         overviewRuler: {
             color: themeColorFromId(overviewRulerFindMatchForeground),
             position: OverviewRulerLane.Center
+        },
+        minimap: {
+            color: themeColorFromId(minimapFindMatch),
+            position: MinimapPosition.Inline
         }
     });
     FindDecorations._FIND_MATCH_NO_OVERVIEW_DECORATION = ModelDecorationOptions.register({

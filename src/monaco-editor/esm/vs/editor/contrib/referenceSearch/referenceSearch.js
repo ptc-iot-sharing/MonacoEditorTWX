@@ -45,6 +45,7 @@ import { CommandsRegistry } from '../../../platform/commands/common/commands.js'
 import { URI } from '../../../base/common/uri.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
+import { coalesce, flatten } from '../../../base/common/arrays.js';
 export var defaultReferenceSearchOptions = {
     getMetaTitle: function (model) {
         return model.references.length > 1 ? nls.localize('meta.titleReference', " – {0} references", model.references.length) : '';
@@ -74,7 +75,7 @@ var ReferenceAction = /** @class */ (function (_super) {
         return _super.call(this, {
             id: 'editor.action.referenceSearch.trigger',
             label: nls.localize('references.action.label', "Peek References"),
-            alias: 'Find All References',
+            alias: 'Peek References',
             precondition: ContextKeyExpr.and(EditorContextKeys.hasReferenceProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInEmbeddedEditor.toNegated()),
             kbOpts: {
                 kbExpr: EditorContextKeys.editorTextFocus,
@@ -264,15 +265,6 @@ export function provideReferences(model, position, token) {
             onUnexpectedExternalError(err);
         });
     });
-    return Promise.all(promises).then(function (references) {
-        var result = [];
-        for (var _i = 0, references_1 = references; _i < references_1.length; _i++) {
-            var ref = references_1[_i];
-            if (ref) {
-                result.push.apply(result, ref);
-            }
-        }
-        return result;
-    });
+    return Promise.all(promises).then(function (references) { return flatten(coalesce(references)); });
 }
 registerDefaultLanguageCommand('_executeReferenceProvider', function (model, position) { return provideReferences(model, position, CancellationToken.None); });

@@ -163,35 +163,6 @@ export function equals(one, other) {
     }
     return true;
 }
-function arrayToHash(array) {
-    var result = {};
-    for (var _i = 0, array_1 = array; _i < array_1.length; _i++) {
-        var e = array_1[_i];
-        result[e] = true;
-    }
-    return result;
-}
-/**
- * Given an array of strings, returns a function which, given a string
- * returns true or false whether the string is in that array.
- */
-export function createKeywordMatcher(arr, caseInsensitive) {
-    if (caseInsensitive === void 0) { caseInsensitive = false; }
-    if (caseInsensitive) {
-        arr = arr.map(function (x) { return x.toLowerCase(); });
-    }
-    var hash = arrayToHash(arr);
-    if (caseInsensitive) {
-        return function (word) {
-            return hash[word.toLowerCase()] !== undefined && hash.hasOwnProperty(word.toLowerCase());
-        };
-    }
-    else {
-        return function (word) {
-            return hash[word] !== undefined && hash.hasOwnProperty(word);
-        };
-    }
-}
 export function getOrDefault(obj, fn, defaultValue) {
     var result = fn(obj);
     return typeof result === 'undefined' ? defaultValue : result;

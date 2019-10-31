@@ -8,6 +8,7 @@ var SortLinesCommand = /** @class */ (function () {
     function SortLinesCommand(selection, descending) {
         this.selection = selection;
         this.descending = descending;
+        this.selectionId = null;
     }
     SortLinesCommand.prototype.getEditOperations = function (model, builder) {
         var op = sortLines(model, this.selection, this.descending);

@@ -10,3 +10,7 @@
     list-style: disc outside none;
     margin: 0 0 9px 25px;
 }
+
+.monaco-findInput .wrapper > textarea {
+    opacity: 1;
+}

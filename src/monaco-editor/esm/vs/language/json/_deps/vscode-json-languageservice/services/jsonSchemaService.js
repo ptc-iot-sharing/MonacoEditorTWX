@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as Json from '../../jsonc-parser/main.js';
-import URI from '../../vscode-uri/index.js';
+import { URI } from '../../vscode-uri/index.js';
 import * as Strings from '../utils/strings.js';
 import * as Parser from '../parser/jsonParser.js';
 import * as nls from '../../../fillers/vscode-nls.js';
@@ -170,7 +170,12 @@ var JSONSchemaService = /** @class */ (function () {
     };
     JSONSchemaService.prototype.normalizeId = function (id) {
         // remove trailing '#', normalize drive capitalization
-        return URI.parse(id).toString();
+        try {
+            return URI.parse(id).toString();
+        }
+        catch (e) {
+            return id;
+        }
     };
     JSONSchemaService.prototype.setSchemaContributions = function (schemaContributions) {
         if (schemaContributions.schemas) {

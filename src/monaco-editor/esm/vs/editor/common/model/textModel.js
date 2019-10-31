@@ -18,7 +18,6 @@ var __extends = (this && this.__extends) || (function () {
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
-import { StopWatch } from '../../../base/common/stopwatch.js';
 import * as strings from '../../../base/common/strings.js';
 import { URI } from '../../../base/common/uri.js';
 import { EDITOR_MODEL_DEFAULTS } from '../config/editorOptions.js';
@@ -32,14 +31,15 @@ import { IntervalNode, IntervalTree, getNodeIsInOverviewRuler, recomputeMaxEnd }
 import { PieceTreeTextBufferBuilder } from './pieceTreeTextBuffer/pieceTreeTextBufferBuilder.js';
 import { InternalModelContentChangeEvent, ModelRawContentChangedEvent, ModelRawEOLChanged, ModelRawFlush, ModelRawLineChanged, ModelRawLinesDeleted, ModelRawLinesInserted } from './textModelEvents.js';
 import { SearchParams, TextModelSearch } from './textModelSearch.js';
-import { ModelLinesTokens, ModelTokensChangedEventBuilder } from './textModelTokens.js';
+import { TextModelTokenization } from './textModelTokens.js';
 import { getWordAtText } from './wordHelper.js';
-import { TokenizationRegistry } from '../modes.js';
 import { LanguageConfigurationRegistry } from '../modes/languageConfigurationRegistry.js';
 import { NULL_LANGUAGE_IDENTIFIER } from '../modes/nullMode.js';
 import { ignoreBracketsInToken } from '../modes/supports.js';
 import { BracketsUtils } from '../modes/supports/richEditBrackets.js';
-var CHEAP_TOKENIZATION_LENGTH_LIMIT = 2048;
+import { withUndefinedAsNull } from '../../../base/common/types.js';
+import { TokensStore, countEOL } from './tokensStore.js';
+import { Color } from '../../../base/common/color.js';
 function createTextBufferBuilder() {
     return new PieceTreeTextBufferBuilder();
 }
@@ -53,17 +53,6 @@ export function createTextBuffer(value, defaultEOL) {
     return factory.create(defaultEOL);
 }
 var MODEL_ID = 0;
-/**
- * Produces 'a'-'z', followed by 'A'-'Z'... followed by 'a'-'z', etc.
- */
-function singleLetter(result) {
-    var LETTERS_CNT = (90 /* Z */ - 65 /* A */ + 1);
-    result = result % (2 * LETTERS_CNT);
-    if (result < LETTERS_CNT) {
-        return String.fromCharCode(97 /* a */ + result);
-    }
-    return String.fromCharCode(65 /* A */ + result - LETTERS_CNT);
-}
 var LIMIT_FIND_COUNT = 999;
 export var LONG_LINE_BOUNDARY = 10000;
 var invalidFunc = function () { throw new Error("Invalid change accessor"); };
@@ -86,6 +75,8 @@ var TextModel = /** @class */ (function (_super) {
         _this.onDidChangeTokens = _this._onDidChangeTokens.event;
         _this._onDidChangeOptions = _this._register(new Emitter());
         _this.onDidChangeOptions = _this._onDidChangeOptions.event;
+        _this._onDidChangeAttached = _this._register(new Emitter());
+        _this.onDidChangeAttached = _this._onDidChangeAttached.event;
         _this._eventEmitter = _this._register(new DidChangeContentEmitter());
         // Generate a new unique model id
         MODEL_ID++;
@@ -113,34 +104,17 @@ var TextModel = /** @class */ (function (_super) {
             _this._isTooLargeForTokenization = false;
         }
         _this._isTooLargeForSyncing = (bufferTextLength > TextModel.MODEL_SYNC_LIMIT);
-        _this._setVersionId(1);
+        _this._versionId = 1;
+        _this._alternativeVersionId = 1;
         _this._isDisposed = false;
         _this._isDisposing = false;
         _this._languageIdentifier = languageIdentifier || NULL_LANGUAGE_IDENTIFIER;
-        _this._tokenizationListener = TokenizationRegistry.onDidChange(function (e) {
-            if (e.changedLanguages.indexOf(_this._languageIdentifier.language) === -1) {
-                return;
-            }
-            _this._resetTokenizationState();
-            _this.emitModelTokensChangedEvent({
-                tokenizationSupportChanged: true,
-                ranges: [{
-                        fromLineNumber: 1,
-                        toLineNumber: _this.getLineCount()
-                    }]
-            });
-            if (_this._shouldAutoTokenize()) {
-                _this._warmUpTokens();
-            }
-        });
-        _this._revalidateTokensTimeout = -1;
         _this._languageRegistryListener = LanguageConfigurationRegistry.onDidChange(function (e) {
             if (e.languageIdentifier.id === _this._languageIdentifier.id) {
                 _this._onDidChangeLanguageConfiguration.fire({});
             }
         });
-        _this._resetTokenizationState();
-        _this._instanceId = singleLetter(MODEL_ID);
+        _this._instanceId = strings.singleLetterHash(MODEL_ID);
         _this._lastDecorationId = 0;
         _this._decorations = Object.create(null);
         _this._decorationsTree = new DecorationsTrees();
@@ -148,6 +122,8 @@ var TextModel = /** @class */ (function (_super) {
         _this._isUndoing = false;
         _this._isRedoing = false;
         _this._trimAutoWhitespaceLines = null;
+        _this._tokens = new TokensStore();
+        _this._tokenization = new TextModelTokenization(_this);
         return _this;
     }
     TextModel.createFromString = function (text, options, languageIdentifier, uri) {
@@ -181,17 +157,18 @@ var TextModel = /** @class */ (function (_super) {
     TextModel.prototype.onDidChangeRawContent = function (listener) {
         return this._eventEmitter.slowEvent(function (e) { return listener(e.rawContentChangedEvent); });
     };
+    TextModel.prototype.onDidChangeContentFast = function (listener) {
+        return this._eventEmitter.fastEvent(function (e) { return listener(e.contentChangedEvent); });
+    };
     TextModel.prototype.onDidChangeContent = function (listener) {
         return this._eventEmitter.slowEvent(function (e) { return listener(e.contentChangedEvent); });
     };
     TextModel.prototype.dispose = function () {
         this._isDisposing = true;
         this._onWillDispose.fire();
-        this._tokenizationListener.dispose();
         this._languageRegistryListener.dispose();
-        this._clearTimers();
+        this._tokenization.dispose();
         this._isDisposed = true;
-        // Null out members, such that any use of a disposed model will throw exceptions sooner rather than later
         _super.prototype.dispose.call(this);
         this._isDisposing = false;
     };
@@ -243,8 +220,8 @@ var TextModel = /** @class */ (function (_super) {
         var endColumn = this.getLineMaxColumn(endLineNumber);
         this._buffer = textBuffer;
         this._increaseVersionId();
-        // Cancel tokenization, clear all tokens and begin tokenizing
-        this._resetTokenizationState();
+        // Flush all tokens
+        this._tokens.flush();
         // Destroy all my decorations
         this._decorations = Object.create(null);
         this._decorationsTree = new DecorationsTrees();
@@ -297,30 +274,17 @@ var TextModel = /** @class */ (function (_super) {
             recomputeMaxEnd(node);
         }
     };
-    TextModel.prototype._resetTokenizationState = function () {
-        this._clearTimers();
-        var tokenizationSupport = (this._isTooLargeForTokenization
-            ? null
-            : TokenizationRegistry.get(this._languageIdentifier.language));
-        this._tokens = new ModelLinesTokens(this._languageIdentifier, tokenizationSupport);
-        this._beginBackgroundTokenization();
-    };
-    TextModel.prototype._clearTimers = function () {
-        if (this._revalidateTokensTimeout !== -1) {
-            clearTimeout(this._revalidateTokensTimeout);
-            this._revalidateTokensTimeout = -1;
-        }
-    };
     TextModel.prototype.onBeforeAttached = function () {
         this._attachedEditorCount++;
-        // Warm up tokens for the editor
-        this._warmUpTokens();
+        if (this._attachedEditorCount === 1) {
+            this._onDidChangeAttached.fire(undefined);
+        }
     };
     TextModel.prototype.onBeforeDetached = function () {
         this._attachedEditorCount--;
-    };
-    TextModel.prototype._shouldAutoTokenize = function () {
-        return this.isAttachedToEditor();
+        if (this._attachedEditorCount === 0) {
+            this._onDidChangeAttached.fire(undefined);
+        }
     };
     TextModel.prototype.isAttachedToEditor = function () {
         return this._attachedEditorCount > 0;
@@ -465,10 +429,7 @@ var TextModel = /** @class */ (function (_super) {
         return this._buffer.getPositionAt(offset);
     };
     TextModel.prototype._increaseVersionId = function () {
-        this._setVersionId(this._versionId + 1);
-    };
-    TextModel.prototype._setVersionId = function (newVersionId) {
-        this._versionId = newVersionId;
+        this._versionId = this._versionId + 1;
         this._alternativeVersionId = this._versionId;
     };
     TextModel.prototype._overwriteAlternativeVersionId = function (newAlternativeVersionId) {
@@ -629,20 +590,20 @@ var TextModel = /** @class */ (function (_super) {
      * @param strict Do NOT allow a position inside a high-low surrogate pair
      */
     TextModel.prototype._isValidPosition = function (lineNumber, column, strict) {
-        if (isNaN(lineNumber)) {
+        if (typeof lineNumber !== 'number' || typeof column !== 'number') {
             return false;
         }
-        if (lineNumber < 1) {
+        if (isNaN(lineNumber) || isNaN(column)) {
+            return false;
+        }
+        if (lineNumber < 1 || column < 1) {
+            return false;
+        }
+        if ((lineNumber | 0) !== lineNumber || (column | 0) !== column) {
             return false;
         }
         var lineCount = this._buffer.getLineCount();
         if (lineNumber > lineCount) {
-            return false;
-        }
-        if (isNaN(column)) {
-            return false;
-        }
-        if (column < 1) {
             return false;
         }
         var maxColumn = this.getLineMaxColumn(lineNumber);
@@ -939,36 +900,6 @@ var TextModel = /** @class */ (function (_super) {
             this._onDidChangeDecorations.endDeferredEmit();
         }
     };
-    TextModel._eolCount = function (text) {
-        var eolCount = 0;
-        var firstLineLength = 0;
-        for (var i = 0, len = text.length; i < len; i++) {
-            var chr = text.charCodeAt(i);
-            if (chr === 13 /* CarriageReturn */) {
-                if (eolCount === 0) {
-                    firstLineLength = i;
-                }
-                eolCount++;
-                if (i + 1 < len && text.charCodeAt(i + 1) === 10 /* LineFeed */) {
-                    // \r\n... case
-                    i++; // skip \n
-                }
-                else {
-                    // \r... case
-                }
-            }
-            else if (chr === 10 /* LineFeed */) {
-                if (eolCount === 0) {
-                    firstLineLength = i;
-                }
-                eolCount++;
-            }
-        }
-        if (eolCount === 0) {
-            firstLineLength = text.length;
-        }
-        return [eolCount, firstLineLength];
-    };
     TextModel.prototype._applyEdits = function (rawOperations) {
         for (var i = 0, len = rawOperations.length; i < len; i++) {
             rawOperations[i].range = this.validateRange(rawOperations[i].range);
@@ -983,14 +914,8 @@ var TextModel = /** @class */ (function (_super) {
             var lineCount = oldLineCount;
             for (var i = 0, len = contentChanges.length; i < len; i++) {
                 var change = contentChanges[i];
-                var _a = TextModel._eolCount(change.text), eolCount = _a[0], firstLineLength = _a[1];
-                try {
-                    this._tokens.applyEdits(change.range, eolCount, firstLineLength);
-                }
-                catch (err) {
-                    // emergency recovery => reset tokens
-                    this._tokens = new ModelLinesTokens(this._tokens.languageIdentifier, this._tokens.tokenizationSupport);
-                }
+                var _a = countEOL(change.text), eolCount = _a[0], firstLineLength = _a[1];
+                this._tokens.acceptEdit(change.range, eolCount, firstLineLength);
                 this._onDidChangeDecorations.fire();
                 this._decorationsTree.acceptReplace(change.rangeOffset, change.rangeLength, change.text.length, change.forceMoveMarkers);
                 var startLineNumber = change.range.startLineNumber;
@@ -1032,9 +957,6 @@ var TextModel = /** @class */ (function (_super) {
                 isRedoing: this._isRedoing,
                 isFlush: false
             });
-        }
-        if (this._tokens.hasLinesToTokenize(this._buffer)) {
-            this._beginBackgroundTokenization();
         }
         return result.reverseEdits;
     };
@@ -1357,106 +1279,60 @@ var TextModel = /** @class */ (function (_super) {
     };
     //#endregion
     //#region Tokenization
+    TextModel.prototype.setLineTokens = function (lineNumber, tokens) {
+        if (lineNumber < 1 || lineNumber > this.getLineCount()) {
+            throw new Error('Illegal value for lineNumber');
+        }
+        this._tokens.setTokens(this._languageIdentifier.id, lineNumber - 1, this._buffer.getLineLength(lineNumber), tokens);
+    };
+    TextModel.prototype.setTokens = function (tokens) {
+        if (tokens.length === 0) {
+            return;
+        }
+        var ranges = [];
+        for (var i = 0, len = tokens.length; i < len; i++) {
+            var element = tokens[i];
+            ranges.push({ fromLineNumber: element.startLineNumber, toLineNumber: element.startLineNumber + element.tokens.length - 1 });
+            for (var j = 0, lenJ = element.tokens.length; j < lenJ; j++) {
+                this.setLineTokens(element.startLineNumber + j, element.tokens[j]);
+            }
+        }
+        this._emitModelTokensChangedEvent({
+            tokenizationSupportChanged: false,
+            ranges: ranges
+        });
+    };
     TextModel.prototype.tokenizeViewport = function (startLineNumber, endLineNumber) {
-        if (!this._tokens.tokenizationSupport) {
-            // nothing to do
-            return;
-        }
         startLineNumber = Math.max(1, startLineNumber);
-        endLineNumber = Math.min(this.getLineCount(), endLineNumber);
-        if (endLineNumber <= this._tokens.inValidLineStartIndex) {
-            // nothing to do
-            return;
-        }
-        if (startLineNumber <= this._tokens.inValidLineStartIndex) {
-            // tokenization has reached the viewport start...
-            this.forceTokenization(endLineNumber);
-            return;
-        }
-        var nonWhitespaceColumn = this.getLineFirstNonWhitespaceColumn(startLineNumber);
-        var fakeLines = [];
-        var initialState = null;
-        for (var i = startLineNumber - 1; nonWhitespaceColumn > 0 && i >= 1; i--) {
-            var newNonWhitespaceIndex = this.getLineFirstNonWhitespaceColumn(i);
-            if (newNonWhitespaceIndex === 0) {
-                continue;
-            }
-            if (newNonWhitespaceIndex < nonWhitespaceColumn) {
-                initialState = this._tokens._getState(i - 1);
-                if (initialState) {
-                    break;
-                }
-                fakeLines.push(this.getLineContent(i));
-                nonWhitespaceColumn = newNonWhitespaceIndex;
-            }
-        }
-        if (!initialState) {
-            initialState = this._tokens.tokenizationSupport.getInitialState();
-        }
-        var state = initialState.clone();
-        for (var i = fakeLines.length - 1; i >= 0; i--) {
-            var r = this._tokens._tokenizeText(this._buffer, fakeLines[i], state);
-            if (r) {
-                state = r.endState.clone();
-            }
-            else {
-                state = initialState.clone();
-            }
-        }
-        var eventBuilder = new ModelTokensChangedEventBuilder();
-        for (var i = startLineNumber; i <= endLineNumber; i++) {
-            var text = this.getLineContent(i);
-            var r = this._tokens._tokenizeText(this._buffer, text, state);
-            if (r) {
-                this._tokens._setTokens(this._tokens.languageIdentifier.id, i - 1, text.length, r.tokens);
-                // We cannot trust these states/tokens to be valid!
-                // (see https://github.com/Microsoft/vscode/issues/67607)
-                this._tokens._setIsInvalid(i - 1, true);
-                this._tokens._setState(i - 1, state);
-                state = r.endState.clone();
-                eventBuilder.registerChangedTokens(i);
-            }
-            else {
-                state = initialState.clone();
-            }
-        }
-        var e = eventBuilder.build();
-        if (e) {
+        endLineNumber = Math.min(this._buffer.getLineCount(), endLineNumber);
+        this._tokenization.tokenizeViewport(startLineNumber, endLineNumber);
+    };
+    TextModel.prototype.clearTokens = function () {
+        this._tokens.flush();
+        this._emitModelTokensChangedEvent({
+            tokenizationSupportChanged: true,
+            ranges: [{
+                    fromLineNumber: 1,
+                    toLineNumber: this._buffer.getLineCount()
+                }]
+        });
+    };
+    TextModel.prototype._emitModelTokensChangedEvent = function (e) {
+        if (!this._isDisposing) {
             this._onDidChangeTokens.fire(e);
         }
     };
-    TextModel.prototype.flushTokens = function () {
-        this._resetTokenizationState();
-        this.emitModelTokensChangedEvent({
-            tokenizationSupportChanged: false,
-            ranges: [{
-                    fromLineNumber: 1,
-                    toLineNumber: this.getLineCount()
-                }]
-        });
+    TextModel.prototype.resetTokenization = function () {
+        this._tokenization.reset();
     };
     TextModel.prototype.forceTokenization = function (lineNumber) {
         if (lineNumber < 1 || lineNumber > this.getLineCount()) {
             throw new Error('Illegal value for lineNumber');
         }
-        var eventBuilder = new ModelTokensChangedEventBuilder();
-        this._tokens._updateTokensUntilLine(this._buffer, eventBuilder, lineNumber);
-        var e = eventBuilder.build();
-        if (e) {
-            this._onDidChangeTokens.fire(e);
-        }
+        this._tokenization.forceTokenization(lineNumber);
     };
     TextModel.prototype.isCheapToTokenize = function (lineNumber) {
-        if (!this._tokens.isCheapToTokenize(lineNumber)) {
-            return false;
-        }
-        if (lineNumber < this._tokens.inValidLineStartIndex + 1) {
-            return true;
-        }
-        if (this.getLineLength(lineNumber) < CHEAP_TOKENIZATION_LENGTH_LIMIT) {
-            return true;
-        }
-        return false;
+        return this._tokenization.isCheapToTokenize(lineNumber);
     };
     TextModel.prototype.tokenizeIfCheap = function (lineNumber) {
         if (this.isCheapToTokenize(lineNumber)) {
@@ -1470,7 +1346,7 @@ var TextModel = /** @class */ (function (_super) {
         return this._getLineTokens(lineNumber);
     };
     TextModel.prototype._getLineTokens = function (lineNumber) {
-        var lineText = this._buffer.getLineContent(lineNumber);
+        var lineText = this.getLineContent(lineNumber);
         return this._tokens.getTokens(this._languageIdentifier.id, lineNumber - 1, lineText);
     };
     TextModel.prototype.getLanguageIdentifier = function () {
@@ -1489,70 +1365,13 @@ var TextModel = /** @class */ (function (_super) {
             newLanguage: languageIdentifier.language
         };
         this._languageIdentifier = languageIdentifier;
-        // Cancel tokenization, clear all tokens and begin tokenizing
-        this._resetTokenizationState();
-        this.emitModelTokensChangedEvent({
-            tokenizationSupportChanged: true,
-            ranges: [{
-                    fromLineNumber: 1,
-                    toLineNumber: this.getLineCount()
-                }]
-        });
         this._onDidChangeLanguage.fire(e);
         this._onDidChangeLanguageConfiguration.fire({});
     };
-    TextModel.prototype.getLanguageIdAtPosition = function (_lineNumber, _column) {
-        if (!this._tokens.tokenizationSupport) {
-            return this._languageIdentifier.id;
-        }
-        var _a = this.validatePosition({ lineNumber: _lineNumber, column: _column }), lineNumber = _a.lineNumber, column = _a.column;
-        var lineTokens = this._getLineTokens(lineNumber);
-        return lineTokens.getLanguageId(lineTokens.findTokenIndexAtOffset(column - 1));
-    };
-    TextModel.prototype._beginBackgroundTokenization = function () {
-        var _this = this;
-        if (this._shouldAutoTokenize() && this._revalidateTokensTimeout === -1) {
-            this._revalidateTokensTimeout = setTimeout(function () {
-                _this._revalidateTokensTimeout = -1;
-                _this._revalidateTokensNow();
-            }, 0);
-        }
-    };
-    TextModel.prototype._warmUpTokens = function () {
-        // Warm up first 100 lines (if it takes less than 50ms)
-        var maxLineNumber = Math.min(100, this.getLineCount());
-        this._revalidateTokensNow(maxLineNumber);
-        if (this._tokens.hasLinesToTokenize(this._buffer)) {
-            this._beginBackgroundTokenization();
-        }
-    };
-    TextModel.prototype._revalidateTokensNow = function (toLineNumber) {
-        if (toLineNumber === void 0) { toLineNumber = this._buffer.getLineCount(); }
-        var MAX_ALLOWED_TIME = 20;
-        var eventBuilder = new ModelTokensChangedEventBuilder();
-        var sw = StopWatch.create(false);
-        while (this._tokens.hasLinesToTokenize(this._buffer)) {
-            if (sw.elapsed() > MAX_ALLOWED_TIME) {
-                // Stop if MAX_ALLOWED_TIME is reached
-                break;
-            }
-            var tokenizedLineNumber = this._tokens._tokenizeOneLine(this._buffer, eventBuilder);
-            if (tokenizedLineNumber >= toLineNumber) {
-                break;
-            }
-        }
-        if (this._tokens.hasLinesToTokenize(this._buffer)) {
-            this._beginBackgroundTokenization();
-        }
-        var e = eventBuilder.build();
-        if (e) {
-            this._onDidChangeTokens.fire(e);
-        }
-    };
-    TextModel.prototype.emitModelTokensChangedEvent = function (e) {
-        if (!this._isDisposing) {
-            this._onDidChangeTokens.fire(e);
-        }
+    TextModel.prototype.getLanguageIdAtPosition = function (lineNumber, column) {
+        var position = this.validatePosition(new Position(lineNumber, column));
+        var lineTokens = this.getLineTokens(position.lineNumber);
+        return lineTokens.getLanguageId(lineTokens.findTokenIndexAtOffset(position.column - 1));
     };
     // Having tokens allows implementing additional helper methods
     TextModel.prototype.getWordAtPosition = function (_position) {
@@ -2237,12 +2056,20 @@ var DecorationsTrees = /** @class */ (function () {
 function cleanClassName(className) {
     return className.replace(/[^a-z0-9\-_]/gi, ' ');
 }
-var ModelDecorationOverviewRulerOptions = /** @class */ (function () {
-    function ModelDecorationOverviewRulerOptions(options) {
+var DecorationOptions = /** @class */ (function () {
+    function DecorationOptions(options) {
         this.color = options.color || strings.empty;
         this.darkColor = options.darkColor || strings.empty;
-        this.position = (typeof options.position === 'number' ? options.position : model.OverviewRulerLane.Center);
-        this._resolvedColor = null;
+    }
+    return DecorationOptions;
+}());
+var ModelDecorationOverviewRulerOptions = /** @class */ (function (_super) {
+    __extends(ModelDecorationOverviewRulerOptions, _super);
+    function ModelDecorationOverviewRulerOptions(options) {
+        var _this = _super.call(this, options) || this;
+        _this._resolvedColor = null;
+        _this.position = (typeof options.position === 'number' ? options.position : model.OverviewRulerLane.Center);
+        return _this;
     }
     ModelDecorationOverviewRulerOptions.prototype.getColor = function (theme) {
         if (!this._resolvedColor) {
@@ -2269,19 +2096,50 @@ var ModelDecorationOverviewRulerOptions = /** @class */ (function () {
         return c.toString();
     };
     return ModelDecorationOverviewRulerOptions;
-}());
+}(DecorationOptions));
 export { ModelDecorationOverviewRulerOptions };
+var ModelDecorationMinimapOptions = /** @class */ (function (_super) {
+    __extends(ModelDecorationMinimapOptions, _super);
+    function ModelDecorationMinimapOptions(options) {
+        var _this = _super.call(this, options) || this;
+        _this.position = options.position;
+        return _this;
+    }
+    ModelDecorationMinimapOptions.prototype.getColor = function (theme) {
+        if (!this._resolvedColor) {
+            if (theme.type !== 'light' && this.darkColor) {
+                this._resolvedColor = this._resolveColor(this.darkColor, theme);
+            }
+            else {
+                this._resolvedColor = this._resolveColor(this.color, theme);
+            }
+        }
+        return this._resolvedColor;
+    };
+    ModelDecorationMinimapOptions.prototype.invalidateCachedColor = function () {
+        this._resolvedColor = undefined;
+    };
+    ModelDecorationMinimapOptions.prototype._resolveColor = function (color, theme) {
+        if (typeof color === 'string') {
+            return Color.fromHex(color);
+        }
+        return theme.getColor(color.id);
+    };
+    return ModelDecorationMinimapOptions;
+}(DecorationOptions));
+export { ModelDecorationMinimapOptions };
 var ModelDecorationOptions = /** @class */ (function () {
     function ModelDecorationOptions(options) {
         this.stickiness = options.stickiness || 0 /* AlwaysGrowsWhenTypingAtEdges */;
         this.zIndex = options.zIndex || 0;
         this.className = options.className ? cleanClassName(options.className) : null;
-        this.hoverMessage = options.hoverMessage || null;
-        this.glyphMarginHoverMessage = options.glyphMarginHoverMessage || null;
+        this.hoverMessage = withUndefinedAsNull(options.hoverMessage);
+        this.glyphMarginHoverMessage = withUndefinedAsNull(options.glyphMarginHoverMessage);
         this.isWholeLine = options.isWholeLine || false;
         this.showIfCollapsed = options.showIfCollapsed || false;
         this.collapseOnReplaceEdit = options.collapseOnReplaceEdit || false;
         this.overviewRuler = options.overviewRuler ? new ModelDecorationOverviewRulerOptions(options.overviewRuler) : null;
+        this.minimap = options.minimap ? new ModelDecorationMinimapOptions(options.minimap) : null;
         this.glyphMarginClassName = options.glyphMarginClassName ? cleanClassName(options.glyphMarginClassName) : null;
         this.linesDecorationsClassName = options.linesDecorationsClassName ? cleanClassName(options.linesDecorationsClassName) : null;
         this.marginClassName = options.marginClassName ? cleanClassName(options.marginClassName) : null;

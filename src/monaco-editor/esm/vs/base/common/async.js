@@ -2,22 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 import { CancellationTokenSource } from './cancellation.js';
 import * as errors from './errors.js';
-import { Disposable, toDisposable } from './lifecycle.js';
+import { toDisposable } from './lifecycle.js';
 export function isThenable(obj) {
     return obj && typeof obj.then === 'function';
 }
@@ -53,6 +40,9 @@ export function createCancelablePromise(callback) {
         };
         return class_1;
     }());
+}
+export function raceCancellation(promise, token, defaultValue) {
+    return Promise.race([promise, new Promise(function (resolve) { return token.onCancellationRequested(function () { return resolve(defaultValue); }); })]);
 }
 /**
  * A helper to delay execution of a task that is being requested often.
@@ -167,19 +157,15 @@ export function first(promiseFactories, shouldStop, defaultValue) {
     };
     return loop();
 }
-var TimeoutTimer = /** @class */ (function (_super) {
-    __extends(TimeoutTimer, _super);
+var TimeoutTimer = /** @class */ (function () {
     function TimeoutTimer(runner, timeout) {
-        var _this = _super.call(this) || this;
-        _this._token = -1;
+        this._token = -1;
         if (typeof runner === 'function' && typeof timeout === 'number') {
-            _this.setIfNotSet(runner, timeout);
+            this.setIfNotSet(runner, timeout);
         }
-        return _this;
     }
     TimeoutTimer.prototype.dispose = function () {
         this.cancel();
-        _super.prototype.dispose.call(this);
     };
     TimeoutTimer.prototype.cancel = function () {
         if (this._token !== -1) {
@@ -207,18 +193,14 @@ var TimeoutTimer = /** @class */ (function (_super) {
         }, timeout);
     };
     return TimeoutTimer;
-}(Disposable));
+}());
 export { TimeoutTimer };
-var IntervalTimer = /** @class */ (function (_super) {
-    __extends(IntervalTimer, _super);
+var IntervalTimer = /** @class */ (function () {
     function IntervalTimer() {
-        var _this = _super.call(this) || this;
-        _this._token = -1;
-        return _this;
+        this._token = -1;
     }
     IntervalTimer.prototype.dispose = function () {
         this.cancel();
-        _super.prototype.dispose.call(this);
     };
     IntervalTimer.prototype.cancel = function () {
         if (this._token !== -1) {
@@ -233,7 +215,7 @@ var IntervalTimer = /** @class */ (function (_super) {
         }, interval);
     };
     return IntervalTimer;
-}(Disposable));
+}());
 export { IntervalTimer };
 var RunOnceScheduler = /** @class */ (function () {
     function RunOnceScheduler(runner, timeout) {
@@ -333,6 +315,7 @@ export var runWhenIdle;
 var IdleValue = /** @class */ (function () {
     function IdleValue(executor) {
         var _this = this;
+        this._didRun = false;
         this._executor = function () {
             try {
                 _this._value = executor();
@@ -362,4 +345,3 @@ var IdleValue = /** @class */ (function () {
     return IdleValue;
 }());
 export { IdleValue };
-//#endregion

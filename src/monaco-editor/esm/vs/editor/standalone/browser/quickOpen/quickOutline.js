@@ -16,7 +16,6 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import './quickOutline.css';
-import * as nls from '../../../../nls.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { matchesFuzzy } from '../../../../base/common/filters.js';
 import * as strings from '../../../../base/common/strings.js';
@@ -27,6 +26,7 @@ import { EditorContextKeys } from '../../../common/editorContextKeys.js';
 import { DocumentSymbolProviderRegistry, symbolKindToCssClass } from '../../../common/modes.js';
 import { getDocumentSymbols } from '../../../contrib/quickOpen/quickOpen.js';
 import { BaseEditorQuickOpenAction } from './editorQuickOpen.js';
+import { QuickOutlineNLS } from '../../../common/standaloneStrings.js';
 var SCOPE_PREFIX = ':';
 var SymbolEntry = /** @class */ (function (_super) {
     __extends(SymbolEntry, _super);
@@ -45,7 +45,7 @@ var SymbolEntry = /** @class */ (function (_super) {
         return this.name;
     };
     SymbolEntry.prototype.getAriaLabel = function () {
-        return nls.localize('entryAriaLabel', "{0}, symbols", this.name);
+        return strings.format(QuickOutlineNLS.entryAriaLabel, this.name);
     };
     SymbolEntry.prototype.getIcon = function () {
         return this.type;
@@ -90,9 +90,9 @@ export { SymbolEntry };
 var QuickOutlineAction = /** @class */ (function (_super) {
     __extends(QuickOutlineAction, _super);
     function QuickOutlineAction() {
-        return _super.call(this, nls.localize('quickOutlineActionInput', "Type the name of an identifier you wish to navigate to"), {
+        return _super.call(this, QuickOutlineNLS.quickOutlineActionInput, {
             id: 'editor.action.quickOutline',
-            label: nls.localize('QuickOutlineAction.label', "Go to Symbol..."),
+            label: QuickOutlineNLS.quickOutlineActionLabel,
             alias: 'Go to Symbol...',
             precondition: EditorContextKeys.hasDocumentSymbolProvider,
             kbOpts: {
@@ -159,7 +159,7 @@ var QuickOutlineAction = /** @class */ (function (_super) {
             var highlights = matchesFuzzy(normalizedSearchValue, label);
             if (highlights) {
                 // Show parent scope as description
-                var description = null;
+                var description = undefined;
                 if (element.containerName) {
                     description = element.containerName;
                 }
@@ -206,22 +206,22 @@ var QuickOutlineAction = /** @class */ (function (_super) {
         }
         // Mark first entry as outline
         else if (results.length > 0) {
-            results[0].setGroupLabel(nls.localize('symbols', "symbols ({0})", results.length));
+            results[0].setGroupLabel(strings.format(QuickOutlineNLS._symbols_, results.length));
         }
         return results;
     };
     QuickOutlineAction.prototype.typeToLabel = function (type, count) {
         switch (type) {
-            case 'module': return nls.localize('modules', "modules ({0})", count);
-            case 'class': return nls.localize('class', "classes ({0})", count);
-            case 'interface': return nls.localize('interface', "interfaces ({0})", count);
-            case 'method': return nls.localize('method', "methods ({0})", count);
-            case 'function': return nls.localize('function', "functions ({0})", count);
-            case 'property': return nls.localize('property', "properties ({0})", count);
-            case 'variable': return nls.localize('variable', "variables ({0})", count);
-            case 'var': return nls.localize('variable2', "variables ({0})", count);
-            case 'constructor': return nls.localize('_constructor', "constructors ({0})", count);
-            case 'call': return nls.localize('call', "calls ({0})", count);
+            case 'module': return strings.format(QuickOutlineNLS._modules_, count);
+            case 'class': return strings.format(QuickOutlineNLS._class_, count);
+            case 'interface': return strings.format(QuickOutlineNLS._interface_, count);
+            case 'method': return strings.format(QuickOutlineNLS._method_, count);
+            case 'function': return strings.format(QuickOutlineNLS._function_, count);
+            case 'property': return strings.format(QuickOutlineNLS._property_, count);
+            case 'variable': return strings.format(QuickOutlineNLS._variable_, count);
+            case 'var': return strings.format(QuickOutlineNLS._variable2_, count);
+            case 'constructor': return strings.format(QuickOutlineNLS._constructor_, count);
+            case 'call': return strings.format(QuickOutlineNLS._call_, count);
         }
         return type;
     };

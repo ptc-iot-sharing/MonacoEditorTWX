@@ -38,4 +38,3 @@ function nodeToName(node) {
     }
     return name || '?';
 }
-//# sourceMappingURL=htmlSymbolsProvider.js.map

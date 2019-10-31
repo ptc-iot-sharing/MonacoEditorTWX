@@ -62,7 +62,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import * as nls from '../../../nls.js';
 import { illegalArgument, onUnexpectedError } from '../../../base/common/errors.js';
 import { IContextKeyService, ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
-import { IProgressService } from '../../../platform/progress/common/progress.js';
+import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
 import { registerEditorAction, registerEditorContribution, EditorAction, EditorCommand, registerEditorCommand, registerDefaultLanguageCommand } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { RenameInputField, CONTEXT_RENAME_INPUT_VISIBLE } from './renameInputField.js';
@@ -310,7 +310,7 @@ var RenameController = /** @class */ (function (_super) {
     RenameController = __decorate([
         __param(1, INotificationService),
         __param(2, IBulkEditService),
-        __param(3, IProgressService),
+        __param(3, IEditorProgressService),
         __param(4, IContextKeyService),
         __param(5, IThemeService)
     ], RenameController);

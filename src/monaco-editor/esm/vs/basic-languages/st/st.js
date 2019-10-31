@@ -160,12 +160,22 @@ export var language = {
     // The main tokenizer for our languages
     tokenizer: {
         root: [
-            [/(T|DT|TOD)#[0-9:-_shmyd]*/, 'tag'],
-            [/[A-Za-z]{1,6}#[0-9]*/, 'tag'],
-            [/\%(I|Q|M)(X|B|W|D|L)[0-9\.]*/, 'tag'],
+            [/(\.\.)/, 'delimiter'],
+            [/\b(16#[0-9A-Fa-f\_]*)+\b/, 'number.hex'],
+            [/\b(2#[01\_]+)+\b/, 'number.binary'],
+            [/\b(8#[0-9\_]*)+\b/, 'number.octal'],
+            [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+            [/\b(L?REAL)#[0-9\_\.e]+\b/, 'number.float'],
+            [/\b(BYTE|(?:D|L)?WORD|U?(?:S|D|L)?INT)#[0-9\_]+\b/, 'number'],
+            [/\d+/, 'number'],
+            [/\b(T|DT|TOD)#[0-9:-_shmyd]+\b/, 'tag'],
+            [/\%(I|Q|M)(X|B|W|D|L)[0-9\.]+/, 'tag'],
             [/\%(I|Q|M)[0-9\.]*/, 'tag'],
-            [/(TO_|CTU_|CTD_|CTUD_|MUX_|SEL_)[A_Za-z]*/, 'predefined'],
-            [/[A_Za-z]*(_TO_)[A_Za-z]*/, 'predefined'],
+            [/\b[A-Za-z]{1,6}#[0-9]+/, 'tag'],
+            [/\b(TO_|CTU_|CTD_|CTUD_|MUX_|SEL_)[A_Za-z]+\b/, 'predefined'],
+            [/\b[A_Za-z]+(_TO_)[A_Za-z]+\b/, 'predefined'],
+            [/[;]/, 'delimiter'],
+            [/[.]/, { token: 'delimiter', next: '@params' }],
             // identifiers and keywords
             [/[a-zA-Z_]\w*/, {
                     cases: {
@@ -180,18 +190,17 @@ export var language = {
                     }
                 }],
             { include: '@whitespace' },
-            [/[;.]/, 'delimiter'],
             [/[{}()\[\]]/, '@brackets'],
-            [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-            [/16#[0-9a-fA-F]+/, 'number.hex'],
-            [/2#[0-9_]+/, 'number.binary'],
-            [/\d+/, 'number'],
             [/"([^"\\]|\\.)*$/, 'string.invalid'],
             [/"/, { token: 'string.quote', bracket: '@open', next: '@string_dq' }],
             [/'/, { token: 'string.quote', bracket: '@open', next: '@string_sq' }],
             [/'[^\\']'/, 'string'],
             [/(')(@escapes)(')/, ['string', 'string.escape', 'string']],
             [/'/, 'string.invalid']
+        ],
+        params: [
+            [/\b[A-Za-z0-9_]+\b(?=\()/, { token: 'identifier', next: '@pop' }],
+            [/\b[A-Za-z0-9_]+\b/, 'variable.name', '@pop']
         ],
         comment: [
             [/[^\/*]+/, 'comment'],

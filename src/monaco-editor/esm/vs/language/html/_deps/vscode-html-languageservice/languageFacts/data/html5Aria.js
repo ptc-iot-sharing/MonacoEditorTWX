@@ -225,4 +225,3 @@ export var ARIA_ATTRIBUTES = [
         "description": "Indicates keyboard shortcuts that an author has implemented to activate or give focus to an element.\n"
     }
 ];
-//# sourceMappingURL=html5Aria.js.map

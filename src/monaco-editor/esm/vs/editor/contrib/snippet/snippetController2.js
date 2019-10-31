@@ -2,6 +2,17 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,7 +22,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { dispose } from '../../../base/common/lifecycle.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import { repeat } from '../../../base/common/strings.js';
 import { EditorCommand, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
@@ -21,11 +32,20 @@ import { showSimpleSuggestions } from '../suggest/suggest.js';
 import { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { ILogService } from '../../../platform/log/common/log.js';
 import { SnippetSession } from './snippetSession.js';
+var _defaultOptions = {
+    overwriteBefore: 0,
+    overwriteAfter: 0,
+    undoStopBefore: true,
+    undoStopAfter: true,
+    adjustWhitespace: true,
+    clipboardText: undefined
+};
 var SnippetController2 = /** @class */ (function () {
     function SnippetController2(_editor, _logService, contextKeyService) {
         this._editor = _editor;
         this._logService = _logService;
-        this._snippetListener = [];
+        this._snippetListener = new DisposableStore();
+        this._modelVersionId = -1;
         this._inSnippet = SnippetController2.InSnippetMode.bindTo(contextKeyService);
         this._hasNextTabstop = SnippetController2.HasNextTabstop.bindTo(contextKeyService);
         this._hasPrevTabstop = SnippetController2.HasPrevTabstop.bindTo(contextKeyService);
@@ -38,21 +58,17 @@ var SnippetController2 = /** @class */ (function () {
         this._hasPrevTabstop.reset();
         this._hasNextTabstop.reset();
         dispose(this._session);
+        this._snippetListener.dispose();
     };
     SnippetController2.prototype.getId = function () {
         return 'snippetController2';
     };
-    SnippetController2.prototype.insert = function (template, overwriteBefore, overwriteAfter, undoStopBefore, undoStopAfter, adjustWhitespace) {
-        if (overwriteBefore === void 0) { overwriteBefore = 0; }
-        if (overwriteAfter === void 0) { overwriteAfter = 0; }
-        if (undoStopBefore === void 0) { undoStopBefore = true; }
-        if (undoStopAfter === void 0) { undoStopAfter = true; }
-        if (adjustWhitespace === void 0) { adjustWhitespace = true; }
+    SnippetController2.prototype.insert = function (template, opts) {
         // this is here to find out more about the yet-not-understood
         // error that sometimes happens when we fail to inserted a nested
         // snippet
         try {
-            this._doInsert(template, overwriteBefore, overwriteAfter, undoStopBefore, undoStopAfter, adjustWhitespace);
+            this._doInsert(template, typeof opts === 'undefined' ? _defaultOptions : __assign({}, _defaultOptions, opts));
         }
         catch (e) {
             this.cancel();
@@ -62,39 +78,32 @@ var SnippetController2 = /** @class */ (function () {
             this._logService.error('existing_template=', this._session ? this._session._logInfo() : '<no_session>');
         }
     };
-    SnippetController2.prototype._doInsert = function (template, overwriteBefore, overwriteAfter, undoStopBefore, undoStopAfter, adjustWhitespace) {
+    SnippetController2.prototype._doInsert = function (template, opts) {
         var _this = this;
-        if (overwriteBefore === void 0) { overwriteBefore = 0; }
-        if (overwriteAfter === void 0) { overwriteAfter = 0; }
-        if (undoStopBefore === void 0) { undoStopBefore = true; }
-        if (undoStopAfter === void 0) { undoStopAfter = true; }
-        if (adjustWhitespace === void 0) { adjustWhitespace = true; }
         if (!this._editor.hasModel()) {
             return;
         }
         // don't listen while inserting the snippet
         // as that is the inflight state causing cancelation
-        this._snippetListener = dispose(this._snippetListener);
-        if (undoStopBefore) {
+        this._snippetListener.clear();
+        if (opts.undoStopBefore) {
             this._editor.getModel().pushStackElement();
         }
         if (!this._session) {
             this._modelVersionId = this._editor.getModel().getAlternativeVersionId();
-            this._session = new SnippetSession(this._editor, template, overwriteBefore, overwriteAfter, adjustWhitespace);
+            this._session = new SnippetSession(this._editor, template, opts);
             this._session.insert();
         }
         else {
-            this._session.merge(template, overwriteBefore, overwriteAfter, adjustWhitespace);
+            this._session.merge(template, opts);
         }
-        if (undoStopAfter) {
+        if (opts.undoStopAfter) {
             this._editor.getModel().pushStackElement();
         }
         this._updateState();
-        this._snippetListener = [
-            this._editor.onDidChangeModelContent(function (e) { return e.isFlush && _this.cancel(); }),
-            this._editor.onDidChangeModel(function () { return _this.cancel(); }),
-            this._editor.onDidChangeCursorSelection(function () { return _this._updateState(); })
-        ];
+        this._snippetListener.add(this._editor.onDidChangeModelContent(function (e) { return e.isFlush && _this.cancel(); }));
+        this._snippetListener.add(this._editor.onDidChangeModel(function () { return _this.cancel(); }));
+        this._snippetListener.add(this._editor.onDidChangeCursorSelection(function () { return _this._updateState(); }));
     };
     SnippetController2.prototype._updateState = function () {
         if (!this._session || !this._editor.hasModel()) {
@@ -144,7 +153,7 @@ var SnippetController2 = /** @class */ (function () {
                     insertText: option.value,
                     // insertText: `\${1|${after.concat(before).join(',')}|}$0`,
                     // snippetType: 'textmate',
-                    sortText: repeat('a', i),
+                    sortText: repeat('a', i + 1),
                     range: Range.fromPositions(_this._editor.getPosition(), _this._editor.getPosition().delta(0, first_1.value.length))
                 };
             }));
@@ -155,14 +164,21 @@ var SnippetController2 = /** @class */ (function () {
             this.next();
         }
     };
-    SnippetController2.prototype.cancel = function () {
+    SnippetController2.prototype.cancel = function (resetSelection) {
+        if (resetSelection === void 0) { resetSelection = false; }
         this._inSnippet.reset();
         this._hasPrevTabstop.reset();
         this._hasNextTabstop.reset();
-        dispose(this._snippetListener);
+        this._snippetListener.clear();
         dispose(this._session);
         this._session = undefined;
         this._modelVersionId = -1;
+        if (resetSelection) {
+            // reset selection to the primary cursor when being asked
+            // for. this happens when explicitly cancelling snippet mode,
+            // e.g. when pressing ESC
+            this._editor.setSelections([this._editor.getSelection()]);
+        }
     };
     SnippetController2.prototype.prev = function () {
         if (this._session) {
@@ -214,7 +230,7 @@ registerEditorCommand(new CommandCtor({
 registerEditorCommand(new CommandCtor({
     id: 'leaveSnippet',
     precondition: SnippetController2.InSnippetMode,
-    handler: function (ctrl) { return ctrl.cancel(); },
+    handler: function (ctrl) { return ctrl.cancel(true); },
     kbOpts: {
         weight: 100 /* EditorContrib */ + 30,
         kbExpr: EditorContextKeys.editorTextFocus,

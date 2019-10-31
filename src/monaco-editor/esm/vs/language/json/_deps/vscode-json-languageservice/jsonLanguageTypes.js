@@ -1,27 +1,5 @@
-import { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, MarkupKind } from '../vscode-languageserver-types/main.js';
-export { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind };
-// #region Proposed types, remove once added to vscode-languageserver-types
-/**
- * Enum of known selection range kinds
- */
-export var SelectionRangeKind;
-(function (SelectionRangeKind) {
-    /**
-     * Empty Kind.
-     */
-    SelectionRangeKind["Empty"] = "";
-    /**
-     * The statment kind, its value is `statement`, possible extensions can be
-     * `statement.if` etc
-     */
-    SelectionRangeKind["Statement"] = "statement";
-    /**
-     * The declaration kind, its value is `declaration`, possible extensions can be
-     * `declaration.function`, `declaration.class` etc.
-     */
-    SelectionRangeKind["Declaration"] = "declaration";
-})(SelectionRangeKind || (SelectionRangeKind = {}));
-// #endregion
+import { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, MarkupKind, SelectionRange } from './_deps/vscode-languageserver-types/main.js';
+export { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, SelectionRange };
 /**
  * Error codes used by diagnostics
  */

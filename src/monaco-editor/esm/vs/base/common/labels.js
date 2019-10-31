@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 import { URI } from './uri.js';
 import { posix, normalize } from './path.js';
-import { ltrim, startsWithIgnoreCase, rtrim, startsWith } from './strings.js';
+import { startsWithIgnoreCase, rtrim, startsWith } from './strings.js';
 import { Schemas } from './network.js';
 import { isLinux, isWindows } from './platform.js';
-import { isEqual, basename } from './resources.js';
+import { isEqual, basename, relativePath } from './resources.js';
 /**
  * @deprecated use LabelService instead
  */
@@ -25,8 +25,7 @@ export function getPathLabel(resource, userHomeProvider, rootProvider) {
                 pathLabel = ''; // no label if paths are identical
             }
             else {
-                // TODO: isidor use resources.relative
-                pathLabel = normalize(ltrim(resource.path.substr(baseResource.uri.path.length), posix.sep));
+                pathLabel = relativePath(baseResource.uri, resource);
             }
             if (hasMultipleRoots) {
                 var rootName = (baseResource && baseResource.name) ? baseResource.name : basename(baseResource.uri);

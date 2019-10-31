@@ -155,7 +155,10 @@ var Widget = /** @class */ (function () {
         this._contentWidth = this._context.configuration.editor.layoutInfo.contentWidth;
         this._contentLeft = this._context.configuration.editor.layoutInfo.contentLeft;
         this._lineHeight = this._context.configuration.editor.lineHeight;
-        this._setPosition(null, null);
+        this._position = null;
+        this._range = null;
+        this._viewPosition = null;
+        this._viewRange = null;
         this._preference = [];
         this._cachedDomNodeClientWidth = -1;
         this._cachedDomNodeClientHeight = -1;
@@ -181,8 +184,8 @@ var Widget = /** @class */ (function () {
         this._setPosition(this._position, this._range);
     };
     Widget.prototype._setPosition = function (position, range) {
-        this._position = position || null;
-        this._range = range || null;
+        this._position = position;
+        this._range = range;
         this._viewPosition = null;
         this._viewRange = null;
         if (this._position) {
@@ -205,7 +208,7 @@ var Widget = /** @class */ (function () {
     };
     Widget.prototype.setPosition = function (position, range, preference) {
         this._setPosition(position, range);
-        this._preference = preference || null;
+        this._preference = preference;
         this._cachedDomNodeClientWidth = -1;
         this._cachedDomNodeClientHeight = -1;
     };
@@ -248,10 +251,6 @@ var Widget = /** @class */ (function () {
     Widget.prototype._layoutBoxInPage = function (topLeft, bottomLeft, width, height, ctx) {
         var aboveLeft0 = topLeft.left - ctx.scrollLeft;
         var belowLeft0 = bottomLeft.left - ctx.scrollLeft;
-        if (aboveLeft0 < 0 || aboveLeft0 > this._contentWidth) {
-            // Don't render if position is scrolled outside viewport
-            return null;
-        }
         var aboveTop = topLeft.top - height;
         var belowTop = bottomLeft.top + this._lineHeight;
         var aboveLeft = aboveLeft0 + this._contentLeft;

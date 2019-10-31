@@ -13,7 +13,8 @@ var ViewModelDecorations = /** @class */ (function () {
         this._linesCollection = linesCollection;
         this._coordinatesConverter = coordinatesConverter;
         this._decorationsCache = Object.create(null);
-        this._clearCachedModelDecorationsResolver();
+        this._cachedModelDecorationsResolver = null;
+        this._cachedModelDecorationsResolverViewRange = null;
     }
     ViewModelDecorations.prototype._clearCachedModelDecorationsResolver = function () {
         this._cachedModelDecorationsResolver = null;

@@ -25,7 +25,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import './inspectTokens.css';
-import * as nls from '../../../../nls.js';
 import { Color } from '../../../../base/common/color.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { escape } from '../../../../base/common/strings.js';
@@ -36,6 +35,7 @@ import { IModeService } from '../../../common/services/modeService.js';
 import { IStandaloneThemeService } from '../../common/standaloneThemeService.js';
 import { editorHoverBackground, editorHoverBorder } from '../../../../platform/theme/common/colorRegistry.js';
 import { HIGH_CONTRAST, registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';
+import { InspectTokensNLS } from '../../../common/standaloneStrings.js';
 var InspectTokensController = /** @class */ (function (_super) {
     __extends(InspectTokensController, _super);
     function InspectTokensController(editor, standaloneColorService, modeService) {
@@ -85,9 +85,9 @@ var InspectTokens = /** @class */ (function (_super) {
     function InspectTokens() {
         return _super.call(this, {
             id: 'editor.action.inspectTokens',
-            label: nls.localize('inspectTokens', "Developer: Inspect Tokens"),
+            label: InspectTokensNLS.inspectTokensAction,
             alias: 'Developer: Inspect Tokens',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     InspectTokens.prototype.run = function (accessor, editor) {

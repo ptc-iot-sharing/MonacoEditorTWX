@@ -24,10 +24,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { IContextKeyService, ContextKeyDefinedExpr, ContextKeyExpr, ContextKeyAndExpr, ContextKeyEqualsExpr, RawContextKey } from '../contextkey/common/contextkey.js';
-import { HistoryInputBox } from '../../base/browser/ui/inputbox/inputBox.js';
+import { IContextKeyService, ContextKeyExpr, RawContextKey } from '../contextkey/common/contextkey.js';
 import { FindInput } from '../../base/browser/ui/findinput/findInput.js';
 import { KeybindingsRegistry } from '../keybinding/common/keybindingsRegistry.js';
+import { ReplaceInput } from '../../base/browser/ui/findinput/replaceInput.js';
 export var HistoryNavigationWidgetContext = 'historyNavigationWidget';
 export var HistoryNavigationEnablementContext = 'historyNavigationEnabled';
 function bindContextScopedWidget(contextKeyService, widget, contextKey) {
@@ -45,19 +45,6 @@ export function createAndBindHistoryNavigationWidgetScopedContextKeyService(cont
     var historyNavigationEnablement = new RawContextKey(HistoryNavigationEnablementContext, true).bindTo(scopedContextKeyService);
     return { scopedContextKeyService: scopedContextKeyService, historyNavigationEnablement: historyNavigationEnablement };
 }
-var ContextScopedHistoryInputBox = /** @class */ (function (_super) {
-    __extends(ContextScopedHistoryInputBox, _super);
-    function ContextScopedHistoryInputBox(container, contextViewProvider, options, contextKeyService) {
-        var _this = _super.call(this, container, contextViewProvider, options) || this;
-        _this._register(createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, { target: _this.element, historyNavigator: _this }).scopedContextKeyService);
-        return _this;
-    }
-    ContextScopedHistoryInputBox = __decorate([
-        __param(3, IContextKeyService)
-    ], ContextScopedHistoryInputBox);
-    return ContextScopedHistoryInputBox;
-}(HistoryInputBox));
-export { ContextScopedHistoryInputBox };
 var ContextScopedFindInput = /** @class */ (function (_super) {
     __extends(ContextScopedFindInput, _super);
     function ContextScopedFindInput(container, contextViewProvider, options, contextKeyService, showFindOptions) {
@@ -72,10 +59,24 @@ var ContextScopedFindInput = /** @class */ (function (_super) {
     return ContextScopedFindInput;
 }(FindInput));
 export { ContextScopedFindInput };
+var ContextScopedReplaceInput = /** @class */ (function (_super) {
+    __extends(ContextScopedReplaceInput, _super);
+    function ContextScopedReplaceInput(container, contextViewProvider, options, contextKeyService, showReplaceOptions) {
+        if (showReplaceOptions === void 0) { showReplaceOptions = false; }
+        var _this = _super.call(this, container, contextViewProvider, showReplaceOptions, options) || this;
+        _this._register(createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, { target: _this.inputBox.element, historyNavigator: _this.inputBox }).scopedContextKeyService);
+        return _this;
+    }
+    ContextScopedReplaceInput = __decorate([
+        __param(3, IContextKeyService)
+    ], ContextScopedReplaceInput);
+    return ContextScopedReplaceInput;
+}(ReplaceInput));
+export { ContextScopedReplaceInput };
 KeybindingsRegistry.registerCommandAndKeybindingRule({
     id: 'history.showPrevious',
     weight: 200 /* WorkbenchContrib */,
-    when: ContextKeyExpr.and(new ContextKeyDefinedExpr(HistoryNavigationWidgetContext), new ContextKeyEqualsExpr(HistoryNavigationEnablementContext, true)),
+    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationEnablementContext, true)),
     primary: 16 /* UpArrow */,
     secondary: [512 /* Alt */ | 16 /* UpArrow */],
     handler: function (accessor, arg2) {
@@ -89,7 +90,7 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 KeybindingsRegistry.registerCommandAndKeybindingRule({
     id: 'history.showNext',
     weight: 200 /* WorkbenchContrib */,
-    when: new ContextKeyAndExpr([new ContextKeyDefinedExpr(HistoryNavigationWidgetContext), new ContextKeyEqualsExpr(HistoryNavigationEnablementContext, true)]),
+    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationEnablementContext, true)),
     primary: 18 /* DownArrow */,
     secondary: [512 /* Alt */ | 18 /* DownArrow */],
     handler: function (accessor, arg2) {

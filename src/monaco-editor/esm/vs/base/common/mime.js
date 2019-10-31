@@ -5,6 +5,8 @@
 import { basename, posix } from './path.js';
 import { endsWith, startsWithUTF8BOM } from './strings.js';
 import { match } from './glob.js';
+import { Schemas } from './network.js';
+import { DataUri } from './resources.js';
 export var MIME_TEXT = 'text/plain';
 export var MIME_UNKNOWN = 'application/unknown';
 var registeredAssociations = [];
@@ -63,7 +65,21 @@ function toTextMimeAssociationItem(association) {
 /**
  * Given a file, return the best matching mime type for it
  */
-export function guessMimeTypes(path, firstLine) {
+export function guessMimeTypes(resource, firstLine) {
+    var path;
+    if (resource) {
+        switch (resource.scheme) {
+            case Schemas.file:
+                path = resource.fsPath;
+                break;
+            case Schemas.data:
+                var metadata = DataUri.parseMetaData(resource);
+                path = metadata.get(DataUri.META_DATA_LABEL);
+                break;
+            default:
+                path = resource.path;
+        }
+    }
     if (!path) {
         return [MIME_UNKNOWN];
     }
@@ -138,8 +154,10 @@ function guessMimeTypeByFirstline(firstLine) {
         firstLine = firstLine.substr(1);
     }
     if (firstLine.length > 0) {
-        for (var _i = 0, registeredAssociations_1 = registeredAssociations; _i < registeredAssociations_1.length; _i++) {
-            var association = registeredAssociations_1[_i];
+        // We want to prioritize associations based on the order they are registered so that the last registered
+        // association wins over all other. This is for https://github.com/Microsoft/vscode/issues/20074
+        for (var i = registeredAssociations.length - 1; i >= 0; i--) {
+            var association = registeredAssociations[i];
             if (!association.firstline) {
                 continue;
             }

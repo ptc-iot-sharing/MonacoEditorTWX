@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic, TextEdit, FormattingOptions, MarkedString } from '../vscode-languageserver-types/main.js';
+import { TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic, TextEdit, FormattingOptions, MarkedString } from './_deps/vscode-languageserver-types/main.js';
 import { JSONCompletion } from './services/jsonCompletion.js';
 import { JSONHover } from './services/jsonHover.js';
 import { JSONValidation } from './services/jsonValidation.js';

@@ -47,15 +47,15 @@ var StandaloneTheme = /** @class */ (function () {
     };
     StandaloneTheme.prototype.getColors = function () {
         if (!this.colors) {
-            var colors = Object.create(null);
+            var colors = new Map();
             for (var id in this.themeData.colors) {
-                colors[id] = Color.fromHex(this.themeData.colors[id]);
+                colors.set(id, Color.fromHex(this.themeData.colors[id]));
             }
             if (this.themeData.inherit) {
                 var baseData = getBuiltinRules(this.themeData.base);
                 for (var id in baseData.colors) {
-                    if (!colors[id]) {
-                        colors[id] = Color.fromHex(baseData.colors[id]);
+                    if (!colors.has(id)) {
+                        colors.set(id, Color.fromHex(baseData.colors[id]));
                     }
                 }
             }
@@ -64,7 +64,7 @@ var StandaloneTheme = /** @class */ (function () {
         return this.colors;
     };
     StandaloneTheme.prototype.getColor = function (colorId, useDefault) {
-        var color = this.getColors()[colorId];
+        var color = this.getColors().get(colorId);
         if (color) {
             return color;
         }

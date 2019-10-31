@@ -2,6 +2,19 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -40,66 +53,68 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { getDomNodePagePosition } from '../../../base/browser/dom.js';
 import { Action } from '../../../base/common/actions.js';
 import { canceled } from '../../../base/common/errors.js';
-import { Emitter } from '../../../base/common/event.js';
 import { Position } from '../../common/core/position.js';
-var CodeActionContextMenu = /** @class */ (function () {
-    function CodeActionContextMenu(_editor, _contextMenuService, _onApplyCodeAction) {
-        this._editor = _editor;
-        this._contextMenuService = _contextMenuService;
-        this._onApplyCodeAction = _onApplyCodeAction;
-        this._onDidExecuteCodeAction = new Emitter();
-        this.onDidExecuteCodeAction = this._onDidExecuteCodeAction.event;
+import { Disposable, MutableDisposable } from '../../../base/common/lifecycle.js';
+var CodeActionWidget = /** @class */ (function (_super) {
+    __extends(CodeActionWidget, _super);
+    function CodeActionWidget(_editor, _contextMenuService, _delegate) {
+        var _this = _super.call(this) || this;
+        _this._editor = _editor;
+        _this._contextMenuService = _contextMenuService;
+        _this._delegate = _delegate;
+        _this._showingActions = _this._register(new MutableDisposable());
+        _this._visible = false;
+        return _this;
     }
-    CodeActionContextMenu.prototype.show = function (actionsToShow, at) {
+    CodeActionWidget.prototype.show = function (codeActions, at) {
         return __awaiter(this, void 0, void 0, function () {
-            var codeActions, actions;
+            var actions;
             var _this = this;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, actionsToShow];
-                    case 1:
-                        codeActions = _a.sent();
-                        if (!this._editor.getDomNode()) {
-                            // cancel when editor went off-dom
-                            return [2 /*return*/, Promise.reject(canceled())];
-                        }
-                        actions = codeActions.map(function (action) { return _this.codeActionToAction(action); });
-                        this._contextMenuService.showContextMenu({
-                            getAnchor: function () {
-                                if (Position.isIPosition(at)) {
-                                    at = _this._toCoords(at);
-                                }
-                                return at || { x: 0, y: 0 };
-                            },
-                            getActions: function () { return actions; },
-                            onHide: function () {
-                                _this._visible = false;
-                                _this._editor.focus();
-                            },
-                            autoSelectFirstItem: true
-                        });
-                        return [2 /*return*/];
+                if (!codeActions.actions.length) {
+                    this._visible = false;
+                    return [2 /*return*/];
                 }
+                if (!this._editor.getDomNode()) {
+                    // cancel when editor went off-dom
+                    this._visible = false;
+                    return [2 /*return*/, Promise.reject(canceled())];
+                }
+                this._visible = true;
+                actions = codeActions.actions.map(function (action) { return _this.codeActionToAction(action); });
+                this._showingActions.value = codeActions;
+                this._contextMenuService.showContextMenu({
+                    getAnchor: function () {
+                        if (Position.isIPosition(at)) {
+                            at = _this._toCoords(at);
+                        }
+                        return at || { x: 0, y: 0 };
+                    },
+                    getActions: function () { return actions; },
+                    onHide: function () {
+                        _this._visible = false;
+                        _this._editor.focus();
+                    },
+                    autoSelectFirstItem: true
+                });
+                return [2 /*return*/];
             });
         });
     };
-    CodeActionContextMenu.prototype.codeActionToAction = function (action) {
+    CodeActionWidget.prototype.codeActionToAction = function (action) {
         var _this = this;
         var id = action.command ? action.command.id : action.title;
         var title = action.title;
-        return new Action(id, title, undefined, true, function () {
-            return _this._onApplyCodeAction(action)
-                .finally(function () { return _this._onDidExecuteCodeAction.fire(undefined); });
-        });
+        return new Action(id, title, undefined, true, function () { return _this._delegate.onSelectCodeAction(action); });
     };
-    Object.defineProperty(CodeActionContextMenu.prototype, "isVisible", {
+    Object.defineProperty(CodeActionWidget.prototype, "isVisible", {
         get: function () {
             return this._visible;
         },
         enumerable: true,
         configurable: true
     });
-    CodeActionContextMenu.prototype._toCoords = function (position) {
+    CodeActionWidget.prototype._toCoords = function (position) {
         if (!this._editor.hasModel()) {
             return { x: 0, y: 0 };
         }
@@ -112,6 +127,6 @@ var CodeActionContextMenu = /** @class */ (function () {
         var y = editorCoords.top + cursorCoords.top + cursorCoords.height;
         return { x: x, y: y };
     };
-    return CodeActionContextMenu;
-}());
-export { CodeActionContextMenu };
+    return CodeActionWidget;
+}(Disposable));
+export { CodeActionWidget };

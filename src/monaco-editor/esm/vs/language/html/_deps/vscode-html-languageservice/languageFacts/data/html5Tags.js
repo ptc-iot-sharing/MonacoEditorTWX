@@ -1932,4 +1932,3 @@ export var HTML5_TAGS = [
         ]
     }
 ];
-//# sourceMappingURL=html5Tags.js.map

@@ -26,7 +26,7 @@ var ToggleTabFocusModeAction = /** @class */ (function (_super) {
             id: ToggleTabFocusModeAction.ID,
             label: nls.localize({ key: 'toggle.tabMovesFocus', comment: ['Turn on/off use of tab key for moving focus around VS Code'] }, "Toggle Tab Key Moves Focus"),
             alias: 'Toggle Tab Key Moves Focus',
-            precondition: null,
+            precondition: undefined,
             kbOpts: {
                 kbExpr: null,
                 primary: 2048 /* CtrlCmd */ | 43 /* KEY_M */,

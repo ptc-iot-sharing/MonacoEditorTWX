@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { RunOnceScheduler, TimeoutTimer } from '../../../base/common/async.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import { ReplaceCommand, ReplaceCommandThatPreservesSelection } from '../../common/commands/replaceCommand.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
@@ -46,6 +46,7 @@ export var FIND_IDS = {
     ToggleWholeWordCommand: 'toggleFindWholeWord',
     ToggleRegexCommand: 'toggleFindRegex',
     ToggleSearchScopeCommand: 'toggleFindInSelection',
+    TogglePreserveCaseCommand: 'togglePreserveCase',
     ReplaceOneAction: 'editor.action.replaceOne',
     ReplaceAllAction: 'editor.action.replaceAll',
     SelectAllMatchesAction: 'editor.action.selectAllMatches'
@@ -55,16 +56,16 @@ var RESEARCH_DELAY = 240;
 var FindModelBoundToEditorModel = /** @class */ (function () {
     function FindModelBoundToEditorModel(editor, state) {
         var _this = this;
+        this._toDispose = new DisposableStore();
         this._editor = editor;
         this._state = state;
-        this._toDispose = [];
         this._isDisposed = false;
         this._startSearchingTimer = new TimeoutTimer();
         this._decorations = new FindDecorations(editor);
-        this._toDispose.push(this._decorations);
+        this._toDispose.add(this._decorations);
         this._updateDecorationsScheduler = new RunOnceScheduler(function () { return _this.research(false); }, 100);
-        this._toDispose.push(this._updateDecorationsScheduler);
-        this._toDispose.push(this._editor.onDidChangeCursorPosition(function (e) {
+        this._toDispose.add(this._updateDecorationsScheduler);
+        this._toDispose.add(this._editor.onDidChangeCursorPosition(function (e) {
             if (e.reason === 3 /* Explicit */
                 || e.reason === 5 /* Undo */
                 || e.reason === 6 /* Redo */) {
@@ -72,7 +73,7 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
             }
         }));
         this._ignoreModelContentChanged = false;
-        this._toDispose.push(this._editor.onDidChangeModelContent(function (e) {
+        this._toDispose.add(this._editor.onDidChangeModelContent(function (e) {
             if (_this._ignoreModelContentChanged) {
                 return;
             }
@@ -83,13 +84,13 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
             _this._decorations.setStartPosition(_this._editor.getPosition());
             _this._updateDecorationsScheduler.schedule();
         }));
-        this._toDispose.push(this._state.onFindReplaceStateChange(function (e) { return _this._onStateChanged(e); }));
+        this._toDispose.add(this._state.onFindReplaceStateChange(function (e) { return _this._onStateChanged(e); }));
         this.research(false, this._state.searchScope);
     }
     FindModelBoundToEditorModel.prototype.dispose = function () {
         this._isDisposed = true;
         dispose(this._startSearchingTimer);
-        this._toDispose = dispose(this._toDispose);
+        this._toDispose.dispose();
     };
     FindModelBoundToEditorModel.prototype._onStateChanged = function (e) {
         var _this = this;
@@ -328,11 +329,11 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
         }
         var replacePattern = this._getReplacePattern();
         var selection = this._editor.getSelection();
-        var nextMatch = this._getNextMatch(selection.getStartPosition(), replacePattern.hasReplacementPatterns, false);
+        var nextMatch = this._getNextMatch(selection.getStartPosition(), true, false);
         if (nextMatch) {
             if (selection.equalsRange(nextMatch.range)) {
                 // selection sits on a find match => replace it!
-                var replaceString = replacePattern.buildReplaceString(nextMatch.matches);
+                var replaceString = replacePattern.buildReplaceString(nextMatch.matches, this._state.preserveCase);
                 var command = new ReplaceCommand(selection, replaceString);
                 this._executeEditorCommand('replace', command);
                 this._decorations.setStartPosition(new Position(selection.startLineNumber, selection.startColumn + replaceString.length));
@@ -384,13 +385,14 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
         var fullModelRange = model.getFullModelRange();
         var replacePattern = this._getReplacePattern();
         var resultText;
-        if (replacePattern.hasReplacementPatterns) {
+        var preserveCase = this._state.preserveCase;
+        if (replacePattern.hasReplacementPatterns || preserveCase) {
             resultText = modelText.replace(searchRegex, function () {
-                return replacePattern.buildReplaceString(arguments);
+                return replacePattern.buildReplaceString(arguments, preserveCase);
             });
         }
         else {
-            resultText = modelText.replace(searchRegex, replacePattern.buildReplaceString(null));
+            resultText = modelText.replace(searchRegex, replacePattern.buildReplaceString(null, preserveCase));
         }
         var command = new ReplaceCommandThatPreservesSelection(fullModelRange, resultText, this._editor.getSelection());
         this._executeEditorCommand('replaceAll', command);
@@ -398,10 +400,10 @@ var FindModelBoundToEditorModel = /** @class */ (function () {
     FindModelBoundToEditorModel.prototype._regularReplaceAll = function (findScope) {
         var replacePattern = this._getReplacePattern();
         // Get all the ranges (even more than the highlighted ones)
-        var matches = this._findMatches(findScope, replacePattern.hasReplacementPatterns, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
+        var matches = this._findMatches(findScope, replacePattern.hasReplacementPatterns || this._state.preserveCase, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
         var replaceStrings = [];
         for (var i = 0, len = matches.length; i < len; i++) {
-            replaceStrings[i] = replacePattern.buildReplaceString(matches[i].matches);
+            replaceStrings[i] = replacePattern.buildReplaceString(matches[i].matches, this._state.preserveCase);
         }
         var command = new ReplaceAllCommand(this._editor.getSelection(), matches.map(function (m) { return m.range; }), replaceStrings);
         this._executeEditorCommand('replaceAll', command);

@@ -390,4 +390,3 @@ export function createScanner(input, initialOffset, initialState) {
         getTokenError: function () { return tokenError; }
     };
 }
-//# sourceMappingURL=htmlScanner.js.map

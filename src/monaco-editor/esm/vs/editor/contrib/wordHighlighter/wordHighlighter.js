@@ -29,7 +29,7 @@ import * as arrays from '../../../base/common/arrays.js';
 import { createCancelablePromise, first, timeout } from '../../../base/common/async.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { onUnexpectedError, onUnexpectedExternalError } from '../../../base/common/errors.js';
-import { Disposable, dispose } from '../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerDefaultLanguageCommand, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
@@ -146,6 +146,7 @@ registerDefaultLanguageCommand('_executeDocumentHighlights', function (model, po
 var WordHighlighter = /** @class */ (function () {
     function WordHighlighter(editor, contextKeyService) {
         var _this = this;
+        this.toUnhook = new DisposableStore();
         this.workerRequestTokenId = 0;
         this.workerRequestCompleted = false;
         this.workerRequestValue = [];
@@ -156,8 +157,7 @@ var WordHighlighter = /** @class */ (function () {
         this._ignorePositionChangeEvent = false;
         this.occurrencesHighlight = this.editor.getConfiguration().contribInfo.occurrencesHighlight;
         this.model = this.editor.getModel();
-        this.toUnhook = [];
-        this.toUnhook.push(editor.onDidChangeCursorPosition(function (e) {
+        this.toUnhook.add(editor.onDidChangeCursorPosition(function (e) {
             if (_this._ignorePositionChangeEvent) {
                 // We are changing the position => ignore this event
                 return;
@@ -169,10 +169,10 @@ var WordHighlighter = /** @class */ (function () {
             }
             _this._onPositionChanged(e);
         }));
-        this.toUnhook.push(editor.onDidChangeModelContent(function (e) {
+        this.toUnhook.add(editor.onDidChangeModelContent(function (e) {
             _this._stopAll();
         }));
-        this.toUnhook.push(editor.onDidChangeConfiguration(function (e) {
+        this.toUnhook.add(editor.onDidChangeConfiguration(function (e) {
             var newValue = _this.editor.getConfiguration().contribInfo.occurrencesHighlight;
             if (_this.occurrencesHighlight !== newValue) {
                 _this.occurrencesHighlight = newValue;
@@ -370,7 +370,7 @@ var WordHighlighter = /** @class */ (function () {
     };
     WordHighlighter.prototype.dispose = function () {
         this._stopAll();
-        this.toUnhook = dispose(this.toUnhook);
+        this.toUnhook.dispose();
     };
     WordHighlighter._WRITE_OPTIONS = ModelDecorationOptions.register({
         stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
@@ -402,6 +402,7 @@ var WordHighlighterContribution = /** @class */ (function (_super) {
     __extends(WordHighlighterContribution, _super);
     function WordHighlighterContribution(editor, contextKeyService) {
         var _this = _super.call(this) || this;
+        _this.wordHighligher = null;
         var createWordHighlighterIfPossible = function () {
             if (editor.hasModel()) {
                 _this.wordHighligher = new WordHighlighter(editor, contextKeyService);

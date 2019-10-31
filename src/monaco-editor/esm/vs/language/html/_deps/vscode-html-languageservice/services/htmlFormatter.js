@@ -145,4 +145,3 @@ function isEOL(text, offset) {
 function isWhitespace(text, offset) {
     return ' \t'.indexOf(text.charAt(offset)) !== -1;
 }
-//# sourceMappingURL=htmlFormatter.js.map

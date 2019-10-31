@@ -16,6 +16,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import { EditorWorkerClient } from './editorWorkerServiceImpl.js';
+import * as types from '../../../base/common/types.js';
 /**
  * Create a new web worker that has model syncing capabilities built in.
  * Specify an AMD module to load that will `create` an object that will be proxied.
@@ -29,14 +30,28 @@ var MonacoWebWorkerImpl = /** @class */ (function (_super) {
         var _this = _super.call(this, modelService, opts.label) || this;
         _this._foreignModuleId = opts.moduleId;
         _this._foreignModuleCreateData = opts.createData || null;
+        _this._foreignModuleHost = opts.host || null;
         _this._foreignProxy = null;
         return _this;
     }
+    // foreign host request
+    MonacoWebWorkerImpl.prototype.fhr = function (method, args) {
+        if (!this._foreignModuleHost || typeof this._foreignModuleHost[method] !== 'function') {
+            return Promise.reject(new Error('Missing method ' + method + ' or missing main thread foreign host.'));
+        }
+        try {
+            return Promise.resolve(this._foreignModuleHost[method].apply(this._foreignModuleHost, args));
+        }
+        catch (e) {
+            return Promise.reject(e);
+        }
+    };
     MonacoWebWorkerImpl.prototype._getForeignProxy = function () {
         var _this = this;
         if (!this._foreignProxy) {
             this._foreignProxy = this._getProxy().then(function (proxy) {
-                return proxy.loadForeignModule(_this._foreignModuleId, _this._foreignModuleCreateData).then(function (foreignMethods) {
+                var foreignHostMethods = _this._foreignModuleHost ? types.getAllMethodNames(_this._foreignModuleHost) : [];
+                return proxy.loadForeignModule(_this._foreignModuleId, _this._foreignModuleCreateData, foreignHostMethods).then(function (foreignMethods) {
                     _this._foreignModuleCreateData = null;
                     var proxyMethodRequest = function (method, args) {
                         return proxy.fmr(method, args);

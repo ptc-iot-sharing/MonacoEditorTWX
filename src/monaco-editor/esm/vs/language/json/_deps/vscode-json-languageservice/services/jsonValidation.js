@@ -3,9 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { UnresolvedSchema } from './jsonSchemaService.js';
-import { Diagnostic, DiagnosticSeverity, Range } from '../../vscode-languageserver-types/main.js';
+import { Diagnostic, DiagnosticSeverity, Range } from '../_deps/vscode-languageserver-types/main.js';
 import { ErrorCode } from '../jsonLanguageTypes.js';
 import * as nls from '../../../fillers/vscode-nls.js';
+import { isBoolean } from '../utils/objects.js';
 var localize = nls.loadMessageBundle();
 var JSONValidation = /** @class */ (function () {
     function JSONValidation(jsonSchemaService, promiseConstructor) {
@@ -58,7 +59,10 @@ var JSONValidation = /** @class */ (function () {
                     }
                 }
                 if (schemaAllowsComments(schema.schema)) {
-                    trailingCommaSeverity = commentSeverity = void 0;
+                    commentSeverity = void 0;
+                }
+                if (schemaAllowsTrailingCommas(schema.schema)) {
+                    trailingCommaSeverity = void 0;
                 }
             }
             for (var _i = 0, _a = jsonDocument.syntaxErrors; _i < _a.length; _i++) {
@@ -95,14 +99,37 @@ export { JSONValidation };
 var idCounter = 0;
 function schemaAllowsComments(schemaRef) {
     if (schemaRef && typeof schemaRef === 'object') {
-        if (schemaRef.allowComments) {
-            return true;
+        if (isBoolean(schemaRef.allowComments)) {
+            return schemaRef.allowComments;
         }
         if (schemaRef.allOf) {
-            return schemaRef.allOf.some(schemaAllowsComments);
+            for (var _i = 0, _a = schemaRef.allOf; _i < _a.length; _i++) {
+                var schema = _a[_i];
+                var allow = schemaAllowsComments(schema);
+                if (isBoolean(allow)) {
+                    return allow;
+                }
+            }
         }
     }
-    return false;
+    return undefined;
+}
+function schemaAllowsTrailingCommas(schemaRef) {
+    if (schemaRef && typeof schemaRef === 'object') {
+        if (isBoolean(schemaRef.allowsTrailingCommas)) {
+            return schemaRef.allowsTrailingCommas;
+        }
+        if (schemaRef.allOf) {
+            for (var _i = 0, _a = schemaRef.allOf; _i < _a.length; _i++) {
+                var schema = _a[_i];
+                var allow = schemaAllowsTrailingCommas(schema);
+                if (isBoolean(allow)) {
+                    return allow;
+                }
+            }
+        }
+    }
+    return undefined;
 }
 function toDiagnosticSeverity(severityLevel) {
     switch (severityLevel) {

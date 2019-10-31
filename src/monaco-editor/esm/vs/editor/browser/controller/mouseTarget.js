@@ -21,6 +21,7 @@ import { PartFingerprints } from '../view/viewPart.js';
 import { ViewLine } from '../viewParts/lines/viewLine.js';
 import { Position } from '../../common/core/position.js';
 import { Range as EditorRange } from '../../common/core/range.js';
+import { CursorColumns } from '../../common/controller/cursorCommon.js';
 var MouseTarget = /** @class */ (function () {
     function MouseTarget(element, type, mouseColumn, position, range, detail) {
         if (mouseColumn === void 0) { mouseColumn = 0; }
@@ -271,7 +272,12 @@ var HitTestRequest = /** @class */ (function (_super) {
         if (position === void 0) { position = null; }
         if (range === void 0) { range = null; }
         if (detail === void 0) { detail = null; }
-        return new MouseTarget(this.target, type, this.mouseColumn, position, range, detail);
+        var mouseColumn = this.mouseColumn;
+        if (position && position.column < this._ctx.model.getLineMaxColumn(position.lineNumber)) {
+            // Most likely, the line contains foreign decorations...
+            mouseColumn = CursorColumns.visibleColumnFromColumn(this._ctx.model.getLineContent(position.lineNumber), position.column, this._ctx.model.getOptions().tabSize) + 1;
+        }
+        return new MouseTarget(this.target, type, mouseColumn, position, range, detail);
     };
     HitTestRequest.prototype.withTarget = function (target) {
         return new HitTestRequest(this._ctx, this.editorPos, this.pos, target);

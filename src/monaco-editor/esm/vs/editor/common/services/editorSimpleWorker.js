@@ -28,7 +28,7 @@ import { ensureValidWordDefinition, getWordAtText } from '../model/wordHelper.js
 import { computeLinks } from '../modes/linkComputer.js';
 import { BasicInplaceReplace } from '../modes/supports/inplaceReplaceSupport.js';
 import { createMonacoBaseAPI } from '../standalone/standaloneBase.js';
-import { getAllPropertyNames } from '../../../base/common/types.js';
+import * as types from '../../../base/common/types.js';
 /**
  * @internal
  */
@@ -239,13 +239,43 @@ var MirrorModel = /** @class */ (function (_super) {
 /**
  * @internal
  */
-var BaseEditorSimpleWorker = /** @class */ (function () {
-    function BaseEditorSimpleWorker(foreignModuleFactory) {
+var EditorSimpleWorker = /** @class */ (function () {
+    function EditorSimpleWorker(host, foreignModuleFactory) {
+        this._host = host;
+        this._models = Object.create(null);
         this._foreignModuleFactory = foreignModuleFactory;
         this._foreignModule = null;
     }
+    EditorSimpleWorker.prototype.dispose = function () {
+        this._models = Object.create(null);
+    };
+    EditorSimpleWorker.prototype._getModel = function (uri) {
+        return this._models[uri];
+    };
+    EditorSimpleWorker.prototype._getModels = function () {
+        var _this = this;
+        var all = [];
+        Object.keys(this._models).forEach(function (key) { return all.push(_this._models[key]); });
+        return all;
+    };
+    EditorSimpleWorker.prototype.acceptNewModel = function (data) {
+        this._models[data.url] = new MirrorModel(URI.parse(data.url), data.lines, data.EOL, data.versionId);
+    };
+    EditorSimpleWorker.prototype.acceptModelChanged = function (strURL, e) {
+        if (!this._models[strURL]) {
+            return;
+        }
+        var model = this._models[strURL];
+        model.onEvents(e);
+    };
+    EditorSimpleWorker.prototype.acceptRemovedModel = function (strURL) {
+        if (!this._models[strURL]) {
+            return;
+        }
+        delete this._models[strURL];
+    };
     // ---- BEGIN diff --------------------------------------------------------------------------
-    BaseEditorSimpleWorker.prototype.computeDiff = function (originalUrl, modifiedUrl, ignoreTrimWhitespace) {
+    EditorSimpleWorker.prototype.computeDiff = function (originalUrl, modifiedUrl, ignoreTrimWhitespace) {
         var original = this._getModel(originalUrl);
         var modified = this._getModel(modifiedUrl);
         if (!original || !modified) {
@@ -266,7 +296,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
             changes: changes
         });
     };
-    BaseEditorSimpleWorker.prototype._modelsAreIdentical = function (original, modified) {
+    EditorSimpleWorker.prototype._modelsAreIdentical = function (original, modified) {
         var originalLineCount = original.getLineCount();
         var modifiedLineCount = modified.getLineCount();
         if (originalLineCount !== modifiedLineCount) {
@@ -281,7 +311,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         }
         return true;
     };
-    BaseEditorSimpleWorker.prototype.computeMoreMinimalEdits = function (modelUrl, edits) {
+    EditorSimpleWorker.prototype.computeMoreMinimalEdits = function (modelUrl, edits) {
         var model = this._getModel(modelUrl);
         if (!model) {
             return Promise.resolve(edits);
@@ -313,7 +343,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
                 continue;
             }
             // make sure diff won't take too long
-            if (Math.max(text.length, original.length) > BaseEditorSimpleWorker._diffLimit) {
+            if (Math.max(text.length, original.length) > EditorSimpleWorker._diffLimit) {
                 result.push({ range: range, text: text });
                 continue;
             }
@@ -339,24 +369,27 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         return Promise.resolve(result);
     };
     // ---- END minimal edits ---------------------------------------------------------------
-    BaseEditorSimpleWorker.prototype.computeLinks = function (modelUrl) {
+    EditorSimpleWorker.prototype.computeLinks = function (modelUrl) {
         var model = this._getModel(modelUrl);
         if (!model) {
             return Promise.resolve(null);
         }
         return Promise.resolve(computeLinks(model));
     };
-    BaseEditorSimpleWorker.prototype.textualSuggest = function (modelUrl, position, wordDef, wordDefFlags) {
+    EditorSimpleWorker.prototype.textualSuggest = function (modelUrl, position, wordDef, wordDefFlags) {
         var model = this._getModel(modelUrl);
         if (!model) {
             return Promise.resolve(null);
         }
+        var seen = Object.create(null);
         var suggestions = [];
         var wordDefRegExp = new RegExp(wordDef, wordDefFlags);
-        var currentWord = model.getWordUntilPosition(position, wordDefRegExp);
-        var seen = Object.create(null);
-        seen[currentWord.word] = true;
-        for (var iter = model.createWordIterator(wordDefRegExp), e = iter.next(); !e.done && suggestions.length <= BaseEditorSimpleWorker._suggestionsLimit; e = iter.next()) {
+        var wordUntil = model.getWordUntilPosition(position, wordDefRegExp);
+        var wordAt = model.getWordAtPosition(position, wordDefRegExp);
+        if (wordAt) {
+            seen[model.getValueInRange(wordAt)] = true;
+        }
+        for (var iter = model.createWordIterator(wordDefRegExp), e = iter.next(); !e.done && suggestions.length <= EditorSimpleWorker._suggestionsLimit; e = iter.next()) {
             var word = e.value;
             if (seen[word]) {
                 continue;
@@ -369,14 +402,14 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
                 kind: 18 /* Text */,
                 label: word,
                 insertText: word,
-                range: { startLineNumber: position.lineNumber, startColumn: currentWord.startColumn, endLineNumber: position.lineNumber, endColumn: currentWord.endColumn }
+                range: { startLineNumber: position.lineNumber, startColumn: wordUntil.startColumn, endLineNumber: position.lineNumber, endColumn: wordUntil.endColumn }
             });
         }
         return Promise.resolve({ suggestions: suggestions });
     };
     // ---- END suggest --------------------------------------------------------------------------
     //#region -- word ranges --
-    BaseEditorSimpleWorker.prototype.computeWordRanges = function (modelUrl, range, wordDef, wordDefFlags) {
+    EditorSimpleWorker.prototype.computeWordRanges = function (modelUrl, range, wordDef, wordDefFlags) {
         var model = this._getModel(modelUrl);
         if (!model) {
             return Promise.resolve(Object.create(null));
@@ -406,7 +439,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         return Promise.resolve(result);
     };
     //#endregion
-    BaseEditorSimpleWorker.prototype.navigateValueSet = function (modelUrl, range, up, wordDef, wordDefFlags) {
+    EditorSimpleWorker.prototype.navigateValueSet = function (modelUrl, range, up, wordDef, wordDefFlags) {
         var model = this._getModel(modelUrl);
         if (!model) {
             return Promise.resolve(null);
@@ -430,9 +463,14 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         return Promise.resolve(result);
     };
     // ---- BEGIN foreign module support --------------------------------------------------------------------------
-    BaseEditorSimpleWorker.prototype.loadForeignModule = function (moduleId, createData) {
+    EditorSimpleWorker.prototype.loadForeignModule = function (moduleId, createData, foreignHostMethods) {
         var _this = this;
+        var proxyMethodRequest = function (method, args) {
+            return _this._host.fhr(method, args);
+        };
+        var foreignHost = types.createProxyObject(foreignHostMethods, proxyMethodRequest);
         var ctx = {
+            host: foreignHost,
             getMirrorModels: function () {
                 return _this._getModels();
             }
@@ -440,28 +478,14 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         if (this._foreignModuleFactory) {
             this._foreignModule = this._foreignModuleFactory(ctx, createData);
             // static foreing module
-            var methods = [];
-            for (var _i = 0, _a = getAllPropertyNames(this._foreignModule); _i < _a.length; _i++) {
-                var prop = _a[_i];
-                if (typeof this._foreignModule[prop] === 'function') {
-                    methods.push(prop);
-                }
-            }
-            return Promise.resolve(methods);
+            return Promise.resolve(types.getAllMethodNames(this._foreignModule));
         }
         // ESM-comment-begin
         // 		return new Promise<any>((resolve, reject) => {
         // 			require([moduleId], (foreignModule: { create: IForeignModuleFactory }) => {
         // 				this._foreignModule = foreignModule.create(ctx, createData);
         // 
-        // 				let methods: string[] = [];
-        // 				for (const prop of getAllPropertyNames(this._foreignModule)) {
-        // 					if (typeof this._foreignModule[prop] === 'function') {
-        // 						methods.push(prop);
-        // 					}
-        // 				}
-        // 
-        // 				resolve(methods);
+        // 				resolve(types.getAllMethodNames(this._foreignModule));
         // 
         // 			}, reject);
         // 		});
@@ -471,7 +495,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         // ESM-uncomment-end
     };
     // foreign method request
-    BaseEditorSimpleWorker.prototype.fmr = function (method, args) {
+    EditorSimpleWorker.prototype.fmr = function (method, args) {
         if (!this._foreignModule || typeof this._foreignModule[method] !== 'function') {
             return Promise.reject(new Error('Missing requestHandler or method: ' + method));
         }
@@ -484,59 +508,18 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
     };
     // ---- END diff --------------------------------------------------------------------------
     // ---- BEGIN minimal edits ---------------------------------------------------------------
-    BaseEditorSimpleWorker._diffLimit = 10000;
+    EditorSimpleWorker._diffLimit = 100000;
     // ---- BEGIN suggest --------------------------------------------------------------------------
-    BaseEditorSimpleWorker._suggestionsLimit = 10000;
-    return BaseEditorSimpleWorker;
+    EditorSimpleWorker._suggestionsLimit = 10000;
+    return EditorSimpleWorker;
 }());
-export { BaseEditorSimpleWorker };
-/**
- * @internal
- */
-var EditorSimpleWorkerImpl = /** @class */ (function (_super) {
-    __extends(EditorSimpleWorkerImpl, _super);
-    function EditorSimpleWorkerImpl(foreignModuleFactory) {
-        var _this = _super.call(this, foreignModuleFactory) || this;
-        _this._models = Object.create(null);
-        return _this;
-    }
-    EditorSimpleWorkerImpl.prototype.dispose = function () {
-        this._models = Object.create(null);
-    };
-    EditorSimpleWorkerImpl.prototype._getModel = function (uri) {
-        return this._models[uri];
-    };
-    EditorSimpleWorkerImpl.prototype._getModels = function () {
-        var _this = this;
-        var all = [];
-        Object.keys(this._models).forEach(function (key) { return all.push(_this._models[key]); });
-        return all;
-    };
-    EditorSimpleWorkerImpl.prototype.acceptNewModel = function (data) {
-        this._models[data.url] = new MirrorModel(URI.parse(data.url), data.lines, data.EOL, data.versionId);
-    };
-    EditorSimpleWorkerImpl.prototype.acceptModelChanged = function (strURL, e) {
-        if (!this._models[strURL]) {
-            return;
-        }
-        var model = this._models[strURL];
-        model.onEvents(e);
-    };
-    EditorSimpleWorkerImpl.prototype.acceptRemovedModel = function (strURL) {
-        if (!this._models[strURL]) {
-            return;
-        }
-        delete this._models[strURL];
-    };
-    return EditorSimpleWorkerImpl;
-}(BaseEditorSimpleWorker));
-export { EditorSimpleWorkerImpl };
+export { EditorSimpleWorker };
 /**
  * Called on the worker side
  * @internal
  */
-export function create() {
-    return new EditorSimpleWorkerImpl(null);
+export function create(host) {
+    return new EditorSimpleWorker(host, null);
 }
 if (typeof importScripts === 'function') {
     // Running in a web worker

@@ -18,13 +18,12 @@ var __extends = (this && this.__extends) || (function () {
 import './media/gotoErrorWidget.css';
 import * as nls from '../../../nls.js';
 import * as dom from '../../../base/browser/dom.js';
-import { dispose } from '../../../base/common/lifecycle.js';
+import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
 import { MarkerSeverity } from '../../../platform/markers/common/markers.js';
 import { Range } from '../../common/core/range.js';
-import { registerColor, oneOf, textLinkForeground } from '../../../platform/theme/common/colorRegistry.js';
+import { registerColor, oneOf, textLinkForeground, editorErrorForeground, editorErrorBorder, editorWarningForeground, editorWarningBorder, editorInfoForeground, editorInfoBorder } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import { Color } from '../../../base/common/color.js';
-import { editorErrorForeground, editorErrorBorder, editorWarningForeground, editorWarningBorder, editorInfoForeground, editorInfoBorder } from '../../common/view/editorColorRegistry.js';
 import { ScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';
 import { getBaseLabel, getPathLabel } from '../../../base/common/labels.js';
 import { isNonEmptyArray } from '../../../base/common/arrays.js';
@@ -32,6 +31,7 @@ import { Emitter } from '../../../base/common/event.js';
 import { PeekViewWidget } from '../referenceSearch/peekViewWidget.js';
 import { basename } from '../../../base/common/resources.js';
 import { peekViewTitleForeground, peekViewTitleInfoForeground } from '../referenceSearch/referencesWidget.js';
+import { SeverityIcon } from '../../../platform/severityIcon/common/severityIcon.js';
 var MessageWidget = /** @class */ (function () {
     function MessageWidget(parent, editor, onRelatedInformation) {
         var _this = this;
@@ -63,7 +63,6 @@ var MessageWidget = /** @class */ (function () {
             horizontalScrollbarSize: 3,
             verticalScrollbarSize: 3
         });
-        dom.addClass(this._scrollable.getDomNode(), 'block');
         parent.appendChild(this._scrollable.getDomNode());
         this._disposables.push(this._scrollable.onScroll(function (e) {
             domNode.style.left = "-" + e.scrollLeft + "px";
@@ -141,6 +140,7 @@ var MessageWidget = /** @class */ (function () {
     };
     MessageWidget.prototype.layout = function (height, width) {
         this._scrollable.getDomNode().style.height = height + "px";
+        this._scrollable.getDomNode().style.width = width + "px";
         this._scrollable.setScrollDimensions({ width: width, height: height });
     };
     MessageWidget.prototype.getHeightInLines = function () {
@@ -154,13 +154,13 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
         var _this = _super.call(this, editor, { showArrow: true, showFrame: true, isAccessible: true }) || this;
         _this.actions = actions;
         _this._themeService = _themeService;
-        _this._callOnDispose = [];
+        _this._callOnDispose = new DisposableStore();
         _this._onDidSelectRelatedInformation = new Emitter();
         _this.onDidSelectRelatedInformation = _this._onDidSelectRelatedInformation.event;
         _this._severity = MarkerSeverity.Warning;
         _this._backgroundColor = Color.white;
         _this._applyTheme(_themeService.getTheme());
-        _this._callOnDispose.push(_themeService.onThemeChange(_this._applyTheme.bind(_this)));
+        _this._callOnDispose.add(_themeService.onThemeChange(_this._applyTheme.bind(_this)));
         _this.create();
         return _this;
     }
@@ -189,15 +189,15 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
         _super.prototype._applyStyles.call(this);
     };
     MarkerNavigationWidget.prototype.dispose = function () {
-        this._callOnDispose = dispose(this._callOnDispose);
+        this._callOnDispose.dispose();
         _super.prototype.dispose.call(this);
-    };
-    MarkerNavigationWidget.prototype.focus = function () {
-        this._parentContainer.focus();
     };
     MarkerNavigationWidget.prototype._fillHead = function (container) {
         _super.prototype._fillHead.call(this, container);
         this._actionbarWidget.push(this.actions, { label: false, icon: true });
+    };
+    MarkerNavigationWidget.prototype._fillTitleIcon = function (container) {
+        this._icon = dom.append(container, dom.$(''));
     };
     MarkerNavigationWidget.prototype._getActionBarOptions = function () {
         return {
@@ -213,7 +213,7 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
         this._container = document.createElement('div');
         container.appendChild(this._container);
         this._message = new MessageWidget(this._container, this.editor, function (related) { return _this._onDidSelectRelatedInformation.fire(related); });
-        this._disposables.push(this._message);
+        this._disposables.add(this._message);
     };
     MarkerNavigationWidget.prototype.show = function (where, heightInLines) {
         throw new Error('call showAtMarker');
@@ -239,18 +239,8 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
                 : nls.localize('change', "{0} of {1} problem", markerIdx, markerCount);
             this.setTitle(basename(model.uri), detail);
         }
-        var headingIconClassName = 'error';
-        if (this._severity === MarkerSeverity.Warning) {
-            headingIconClassName = 'warning';
-        }
-        else if (this._severity === MarkerSeverity.Info) {
-            headingIconClassName = 'info';
-        }
-        this.setTitleIcon(headingIconClassName);
+        this._icon.className = SeverityIcon.className(MarkerSeverity.toSeverity(this._severity));
         this.editor.revealPositionInCenter(position, 0 /* Smooth */);
-        if (this.editor.getConfiguration().accessibilitySupport !== 1 /* Disabled */) {
-            this.focus();
-        }
     };
     MarkerNavigationWidget.prototype.updateMarker = function (marker) {
         this._container.classList.remove('stale');
@@ -262,8 +252,12 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
     };
     MarkerNavigationWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
         _super.prototype._doLayoutBody.call(this, heightInPixel, widthInPixel);
+        this._heightInPixel = heightInPixel;
         this._message.layout(heightInPixel, widthInPixel);
         this._container.style.height = heightInPixel + "px";
+    };
+    MarkerNavigationWidget.prototype._onWidth = function (widthInPixel) {
+        this._message.layout(this._heightInPixel, widthInPixel);
     };
     MarkerNavigationWidget.prototype._relayout = function () {
         _super.prototype._relayout.call(this, this.computeRequiredHeight());

@@ -24,7 +24,7 @@ import { IStandaloneThemeService } from '../common/standaloneThemeService.js';
 import { ICommandService } from '../../../platform/commands/common/commands.js';
 import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
 import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
-import { IContextViewService } from '../../../platform/contextview/browser/contextView.js';
+import { IContextViewService, IContextMenuService } from '../../../platform/contextview/browser/contextView.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
@@ -74,7 +74,7 @@ export function onDidCreateEditor(listener) {
  */
 export function createDiffEditor(domElement, options, override) {
     return withAllStandaloneServices(domElement, override || {}, function (services) {
-        return new StandaloneDiffEditor(domElement, options, services, services.get(IInstantiationService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IEditorWorkerService), services.get(ICodeEditorService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService));
+        return new StandaloneDiffEditor(domElement, options, services, services.get(IInstantiationService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IEditorWorkerService), services.get(ICodeEditorService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService), services.get(IContextMenuService), null);
     });
 }
 export function createDiffNavigator(diffEditor, opts) {
@@ -90,13 +90,12 @@ function doCreateModel(value, languageSelection, uri) {
 export function createModel(value, language, uri) {
     value = value || '';
     if (!language) {
-        var path = uri ? uri.path : null;
         var firstLF = value.indexOf('\n');
         var firstLine = value;
         if (firstLF !== -1) {
             firstLine = value.substring(0, firstLF);
         }
-        return doCreateModel(value, StaticServices.modeService.get().createByFilepathOrFirstLine(path, firstLine), uri);
+        return doCreateModel(value, StaticServices.modeService.get().createByFilepathOrFirstLine(uri || null, firstLine), uri);
     }
     return doCreateModel(value, StaticServices.modeService.get().create(language), uri);
 }
@@ -267,6 +266,7 @@ export function createMonacoEditorAPI() {
         ScrollbarVisibility: standaloneEnums.ScrollbarVisibility,
         WrappingIndent: standaloneEnums.WrappingIndent,
         OverviewRulerLane: standaloneEnums.OverviewRulerLane,
+        MinimapPosition: standaloneEnums.MinimapPosition,
         EndOfLinePreference: standaloneEnums.EndOfLinePreference,
         DefaultEndOfLine: standaloneEnums.DefaultEndOfLine,
         EndOfLineSequence: standaloneEnums.EndOfLineSequence,

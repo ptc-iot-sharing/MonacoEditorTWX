@@ -467,4 +467,3 @@ function getWordEnd(s, offset, limit) {
     }
     return offset;
 }
-//# sourceMappingURL=htmlCompletion.js.map

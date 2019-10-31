@@ -1,6 +1,105 @@
 # Monaco Editor Changelog
 
-## [0.16.0] (05.03.2018)
+## [0.18.1] (19.09.2019)
+
+* fixes 2 issues with the ESM distribution - [#1572](https://github.com/microsoft/monaco-editor/issues/1572) and [#1574](https://github.com/microsoft/monaco-editor/issues/1574)
+* fixes very slow scrolling in Firefox - [#1575](https://github.com/microsoft/monaco-editor/issues/1575)
+* new syntax highlighting for: pascaligo, ABAP, Sophia ML, Twig and MIPS.
+
+### Thank you
+
+Contributions to `monaco-editor`:
+
+* [Alessandro Fragnani (@alefragnani)](https://github.com/alefragnani): Add Pascal samples [PR #1358](https://github.com/microsoft/monaco-editor/pull/1358)
+* [Daniel Wang (@datou0412)](https://github.com/datou0412): Add koltin sample for website [PR #1351](https://github.com/microsoft/monaco-editor/pull/1351)
+* [Ehsan (@ehsan-mohammadi)](https://github.com/ehsan-mohammadi): Updated html sample code [PR #1387](https://github.com/microsoft/monaco-editor/pull/1387)
+* [Jonas Fonseca (@jonas)](https://github.com/jonas): CHANGELOG: Fix year for releases made in 2019 [PR #1388](https://github.com/microsoft/monaco-editor/pull/1388)
+* [Milen Radkov (@mradkov)](https://github.com/mradkov): Add Sophia ML example [PR #1543](https://github.com/microsoft/monaco-editor/pull/1543)
+* [Sergey Romanov (@Serhioromano)](https://github.com/Serhioromano): Structured text example [PR #1552](https://github.com/microsoft/monaco-editor/pull/1552)
+* [zhnlviing (@zhanghongnian)](https://github.com/zhanghongnian): fix demo: completion provider example [PR #1537](https://github.com/microsoft/monaco-editor/pull/1537)
+
+Contributions to `monaco-json`:
+
+* [Dominik Moritz (@domoritz)](https://github.com/domoritz)
+  * Upgrade dependencies [PR #11](https://github.com/microsoft/monaco-json/pull/11)
+  * Add config to disable default formatter [PR #10](https://github.com/microsoft/monaco-json/pull/10)
+
+Contributions to `monaco-languages`:
+
+* [Brice Aldrich (@DefinitelyNotAGoat)](https://github.com/DefinitelyNotAGoat): pascaligo: adding pascaligo language support [PR #69](https://github.com/microsoft/monaco-languages/pull/69)
+* [Salam Elbilig (@finalfantasia)](https://github.com/finalfantasia): [clojure] treat comma as whitespace [PR #63](https://github.com/microsoft/monaco-languages/pull/63)
+* [Alf Eaton (@hubgit)](https://github.com/hubgit): [xml] Add OPF and XSL file extensions [PR #64](https://github.com/microsoft/monaco-languages/pull/64)
+* [Lars Hvam (@larshp)](https://github.com/larshp)
+  * [ABAP] Add ABAP language support [PR #72](https://github.com/microsoft/monaco-languages/pull/72)
+  * readme: align "add new language" example [PR #70](https://github.com/microsoft/monaco-languages/pull/70)
+* [Milen Radkov (@mradkov)](https://github.com/mradkov)
+  * Add support for Sophia ML [PR #67](https://github.com/microsoft/monaco-languages/pull/67)
+  * add `None` and `Some` keywords to SophiaML [PR #68](https://github.com/microsoft/monaco-languages/pull/68)
+* [Marco Petersen (@ocrampete16)](https://github.com/ocrampete16): Add support for the Twig template language [PR #71](https://github.com/microsoft/monaco-languages/pull/71)
+* [Progyan Bhattacharya (@Progyan1997)](https://github.com/Progyan1997): [Feat] MIPS: Support for Syntax Highlight and Basic Colorization [PR #65](https://github.com/microsoft/monaco-languages/pull/65)
+* [Sergey Romanov (@Serhioromano)](https://github.com/Serhioromano): [ST] Some updated for Structured Text Language support [PR #66](https://github.com/microsoft/monaco-languages/pull/66)
+* [Sebastian Pahnke (@spahnke)](https://github.com/spahnke): [JS/TS] Add support for BigInt [PR #62](https://github.com/microsoft/monaco-languages/pull/62)
+
+Contributions to `monaco-typescript`:
+
+* [Andre Wachsmuth (@blutorange)](https://github.com/blutorange): Fix microsoft/monaco-editor#1576 update dependency to core [PR #41](https://github.com/microsoft/monaco-typescript/pull/41)
+* [Javey (@Javey)](https://github.com/Javey): Make it can be compressed by uglify-js [PR #34](https://github.com/microsoft/monaco-typescript/pull/34)
+* [Sebastian Pahnke (@spahnke)](https://github.com/spahnke): Add a rename provider [PR #39](https://github.com/microsoft/monaco-typescript/pull/39)
+* [@ulrichb](https://github.com/ulrichb): Expose TypeScript version via `monaco.languages.typescript.typeScriptVersion` [PR #31](https://github.com/microsoft/monaco-typescript/pull/31)
+
+## [0.18.0] (04.09.2019)
+
+### New & Noteworthy
+
+* Minimap enhancement
+  * Selections and find results are now rendered in the minimap.
+  * Model decorations now support `IModelDecorationOptions.minimap`, once set the decoration will be rendered in the minimap
+* New editor options
+  * `autoClosingOvertype`: it controls whether the editor allows [typing over closing quotes or brackets](https://github.com/microsoft/vscode/issues/37315#issuecomment-515200477).
+  * `cursorSurroundingLines`: it controls how many visible lines to display around the cursor while moving the cursor towards beginning or end of a file.
+  * `renderWhitespace: "selection"`: the editor can render whitespaces only in selection.
+
+### API changes
+
+* `DeclarationProvider`: The declaration provider interface defines the contract between extensions and the go to declaration feature.
+* `SelectionRangeProvider` Provide smart selection ranges for the given positions, see VS Code [issue](https://github.com/microsoft/vscode/issues/67872).
+* CodeLensProvider should now return `CodeLensList` instead of `ICodeLensSymbol[]`.
+* `DocumentSymbol` has a new property `tags` to support more types.
+* View Zone id is now `string` instead of `number`.
+
+### Thank you
+
+Contributions to `monaco-json`:
+
+* [Ԝеѕ @wesinator](https://github.com/wesinator): Add .har extension [#9](https://github.com/microsoft/monaco-json/pull/9)
+
+## [0.17.1] (25.06.2019)
+* Update monaco-typescript to TypeScript 3.5.0.
+
+## [0.17.0] (05.05.2019)
+
+### New & Noteworthy
+
+* Localization support is brought back for AMD bundle. We lost the localization support when VS Code moved to the localization system but now AMD bundles ships the same localized strings VS Code localization extensions ship. For more details, please read [Monaco#822](https://github.com/Microsoft/monaco-editor/issues/822) and related [VS Code upstream issue](https://github.com/Microsoft/vscode/issues/71065)
+* `LinkProvider.ProvideLinks` should now return `ILinksList` instead of `ILink[]`.
+* `IEditorOptions.iconsInSuggestions` and `EditorContribOptions.iconsInSuggestions` are now replaced by `EditorContribOptions.suggest.showIcons`.
+* We introduced `EditorContribOptions.suggest.maxVisibleSuggestions` to control maximum suggestions to show in suggestions widget.
+* `EditorContribOptions.suggest.filteredTypes` is now introduced to allow suggestions to be filtered by the user. For more details, please read [vscode#45039](https://github.com/Microsoft/vscode/issues/45039).
+
+### Thank You
+
+Contributions to `monaco-editor`:
+
+* [Jonas Fonseca @jonas](https://github.com/jonas): Fix year for releases made in 2019 [PR #1388](https://github.com/Microsoft/monaco-editor/pull/1388)
+
+
+## [0.16.2] (19.03.2019)
+* Fixes for HTML and JSON (https://github.com/Microsoft/monaco-editor/issues/1367, https://github.com/Microsoft/monaco-editor/issues/1254)
+
+## [0.16.1] (14.03.2019)
+* Fixes issue with context menu (https://github.com/Microsoft/monaco-editor/issues/1357)
+
+## [0.16.0] (05.03.2019)
 
 ### New & Noteworthy
 

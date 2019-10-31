@@ -6,5 +6,7 @@ import { createDecorator } from '../../instantiation/common/instantiation.js';
 export var IOpenerService = createDecorator('openerService');
 export var NullOpenerService = Object.freeze({
     _serviceBrand: undefined,
-    open: function () { return Promise.resolve(false); }
+    registerOpener: function () { return { dispose: function () { } }; },
+    registerValidator: function () { return { dispose: function () { } }; },
+    open: function () { return Promise.resolve(false); },
 });

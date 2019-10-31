@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -19,11 +19,15 @@ import * as Json from '../../jsonc-parser/main.js';
 import { isNumber, equals, isBoolean, isString, isDefined } from '../utils/objects.js';
 import { ErrorCode } from '../jsonLanguageTypes.js';
 import * as nls from '../../../fillers/vscode-nls.js';
-import Uri from '../../vscode-uri/index.js';
-import { Diagnostic, DiagnosticSeverity, Range } from '../../vscode-languageserver-types/main.js';
+import { Diagnostic, DiagnosticSeverity, Range } from '../_deps/vscode-languageserver-types/main.js';
 var localize = nls.loadMessageBundle();
-var colorHexPattern = /^#([0-9A-Fa-f]{3,4}|([0-9A-Fa-f]{2}){3,4})$/;
-var emailPattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+var formats = {
+    'color-hex': { errorMessage: localize('colorHexFormatWarning', 'Invalid color format. Use #RGB, #RGBA, #RRGGBB or #RRGGBBAA.'), pattern: /^#([0-9A-Fa-f]{3,4}|([0-9A-Fa-f]{2}){3,4})$/ },
+    'date-time': { errorMessage: localize('dateTimeFormatWarning', 'String is not a RFC3339 date-time.'), pattern: /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([01][0-9]|2[0-3]):([0-5][0-9]))$/i },
+    'date': { errorMessage: localize('dateFormatWarning', 'String is not a RFC3339 date.'), pattern: /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/i },
+    'time': { errorMessage: localize('timeFormatWarning', 'String is not a RFC3339 time.'), pattern: /^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)([01][0-9]|2[0-3]):([0-5][0-9]))$/i },
+    'email': { errorMessage: localize('emailFormatWarning', 'String is not an e-mail address.'), pattern: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ }
+};
 var ASTNodeImpl = /** @class */ (function () {
     function ASTNodeImpl(parent, offset, length) {
         this.offset = offset;
@@ -612,14 +616,12 @@ function validate(node, schema, validationResult, matchingSchemas) {
                             errorMessage = localize('uriEmpty', 'URI expected.');
                         }
                         else {
-                            try {
-                                var uri = Uri.parse(node.value);
-                                if (!uri.scheme && schema.format === 'uri') {
-                                    errorMessage = localize('uriSchemeMissing', 'URI with a scheme is expected.');
-                                }
+                            var match = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/.exec(node.value);
+                            if (!match) {
+                                errorMessage = localize('uriMissing', 'URI is expected.');
                             }
-                            catch (e) {
-                                errorMessage = e.message;
+                            else if (!match[2] && schema.format === 'uri') {
+                                errorMessage = localize('uriSchemeMissing', 'URI with a scheme is expected.');
                             }
                         }
                         if (errorMessage) {
@@ -631,28 +633,19 @@ function validate(node, schema, validationResult, matchingSchemas) {
                         }
                     }
                     break;
-                case 'email':
-                    {
-                        if (!node.value.match(emailPattern)) {
-                            validationResult.problems.push({
-                                location: { offset: node.offset, length: node.length },
-                                severity: DiagnosticSeverity.Warning,
-                                message: schema.patternErrorMessage || schema.errorMessage || localize('emailFormatWarning', 'String is not an e-mail address.')
-                            });
-                        }
-                    }
-                    break;
                 case 'color-hex':
-                    {
-                        if (!node.value.match(colorHexPattern)) {
-                            validationResult.problems.push({
-                                location: { offset: node.offset, length: node.length },
-                                severity: DiagnosticSeverity.Warning,
-                                message: schema.patternErrorMessage || schema.errorMessage || localize('colorHexFormatWarning', 'Invalid color format. Use #RGB, #RGBA, #RRGGBB or #RRGGBBAA.')
-                            });
-                        }
+                case 'date-time':
+                case 'date':
+                case 'time':
+                case 'email':
+                    var format = formats[schema.format];
+                    if (!node.value || !format.pattern.exec(node.value)) {
+                        validationResult.problems.push({
+                            location: { offset: node.offset, length: node.length },
+                            severity: DiagnosticSeverity.Warning,
+                            message: schema.patternErrorMessage || schema.errorMessage || format.errorMessage
+                        });
                     }
-                    break;
                 default:
             }
         }

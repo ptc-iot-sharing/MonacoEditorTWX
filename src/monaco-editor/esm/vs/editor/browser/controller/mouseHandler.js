@@ -61,6 +61,7 @@ var MouseHandler = /** @class */ (function (_super) {
         _this._register(mouseEvents.onMouseLeave(_this.viewHelper.viewDomNode, function (e) { return _this._onMouseLeave(e); }));
         _this._register(mouseEvents.onMouseDown(_this.viewHelper.viewDomNode, function (e) { return _this._onMouseDown(e); }));
         var onMouseWheel = function (browserEvent) {
+            _this.viewController.emitMouseWheel(browserEvent);
             if (!_this._context.configuration.editor.viewInfo.mouseWheelZoom) {
                 return;
             }
@@ -73,7 +74,7 @@ var MouseHandler = /** @class */ (function (_super) {
                 e.stopPropagation();
             }
         };
-        _this._register(dom.addDisposableListener(_this.viewHelper.viewDomNode, 'mousewheel', onMouseWheel, true));
+        _this._register(dom.addDisposableListener(_this.viewHelper.viewDomNode, browser.isEdgeOrIE ? 'mousewheel' : 'wheel', onMouseWheel, true));
         _this._context.addEventHandler(_this);
         return _this;
     }

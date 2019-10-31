@@ -62,4 +62,3 @@ export var ScannerState;
     ScannerState[ScannerState["AfterAttributeName"] = 9] = "AfterAttributeName";
     ScannerState[ScannerState["BeforeAttributeValue"] = 10] = "BeforeAttributeValue";
 })(ScannerState || (ScannerState = {}));
-//# sourceMappingURL=htmlLanguageTypes.js.map

@@ -25,15 +25,18 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { IntervalTimer } from '../../../base/common/async.js';
-import { Disposable, dispose, toDisposable } from '../../../base/common/lifecycle.js';
+import { Disposable, dispose, toDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { SimpleWorkerClient, logOnceWebWorkerWarning } from '../../../base/common/worker/simpleWorker.js';
 import { DefaultWorkerFactory } from '../../../base/worker/defaultWorkerFactory.js';
 import * as modes from '../modes.js';
 import { LanguageConfigurationRegistry } from '../modes/languageConfigurationRegistry.js';
-import { EditorSimpleWorkerImpl } from './editorSimpleWorker.js';
+import { EditorSimpleWorker } from './editorSimpleWorker.js';
 import { IModelService } from './modelService.js';
 import { ITextResourceConfigurationService } from './resourceConfiguration.js';
 import { regExpFlags } from '../../../base/common/strings.js';
+import { isNonEmptyArray } from '../../../base/common/arrays.js';
+import { ILogService } from '../../../platform/log/common/log.js';
+import { StopWatch } from '../../../base/common/stopwatch.js';
 /**
  * Stop syncing a model to the worker if it was not needed for 1 min.
  */
@@ -54,17 +57,20 @@ function canSyncModel(modelService, resource) {
 }
 var EditorWorkerServiceImpl = /** @class */ (function (_super) {
     __extends(EditorWorkerServiceImpl, _super);
-    function EditorWorkerServiceImpl(modelService, configurationService) {
+    function EditorWorkerServiceImpl(modelService, configurationService, logService) {
         var _this = _super.call(this) || this;
         _this._modelService = modelService;
         _this._workerManager = _this._register(new WorkerManager(_this._modelService));
+        _this._logService = logService;
         // todo@joh make sure this happens only once
         _this._register(modes.LinkProviderRegistry.register('*', {
             provideLinks: function (model, token) {
                 if (!canSyncModel(_this._modelService, model.uri)) {
-                    return Promise.resolve([]); // File too large
+                    return Promise.resolve({ links: [] }); // File too large
                 }
-                return _this._workerManager.withWorker().then(function (client) { return client.computeLinks(model.uri); });
+                return _this._workerManager.withWorker().then(function (client) { return client.computeLinks(model.uri); }).then(function (links) {
+                    return links && { links: links };
+                });
             }
         }));
         _this._register(modes.CompletionProviderRegistry.register('*', new WordBasedCompletionItemProvider(_this._workerManager, configurationService, _this._modelService)));
@@ -80,14 +86,18 @@ var EditorWorkerServiceImpl = /** @class */ (function (_super) {
         return this._workerManager.withWorker().then(function (client) { return client.computeDiff(original, modified, ignoreTrimWhitespace); });
     };
     EditorWorkerServiceImpl.prototype.computeMoreMinimalEdits = function (resource, edits) {
-        if (!Array.isArray(edits) || edits.length === 0) {
-            return Promise.resolve(edits);
-        }
-        else {
+        var _this = this;
+        if (isNonEmptyArray(edits)) {
             if (!canSyncModel(this._modelService, resource)) {
                 return Promise.resolve(edits); // File too large
             }
-            return this._workerManager.withWorker().then(function (client) { return client.computeMoreMinimalEdits(resource, edits); });
+            var sw_1 = StopWatch.create(true);
+            var result = this._workerManager.withWorker().then(function (client) { return client.computeMoreMinimalEdits(resource, edits); });
+            result.finally(function () { return _this._logService.trace('FORMAT#computeMoreMinimalEdits', resource.toString(true), sw_1.elapsed()); });
+            return result;
+        }
+        else {
+            return Promise.resolve(undefined);
         }
     };
     EditorWorkerServiceImpl.prototype.canNavigateValueSet = function (resource) {
@@ -104,13 +114,15 @@ var EditorWorkerServiceImpl = /** @class */ (function (_super) {
     };
     EditorWorkerServiceImpl = __decorate([
         __param(0, IModelService),
-        __param(1, ITextResourceConfigurationService)
+        __param(1, ITextResourceConfigurationService),
+        __param(2, ILogService)
     ], EditorWorkerServiceImpl);
     return EditorWorkerServiceImpl;
 }(Disposable));
 export { EditorWorkerServiceImpl };
 var WordBasedCompletionItemProvider = /** @class */ (function () {
     function WordBasedCompletionItemProvider(workerManager, configurationService, modelService) {
+        this._debugDisplayName = 'wordbasedCompletions';
         this._workerManager = workerManager;
         this._configurationService = configurationService;
         this._modelService = modelService;
@@ -133,6 +145,7 @@ var WorkerManager = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this._modelService = modelService;
         _this._editorWorkerClient = null;
+        _this._lastWorkerUsedTime = (new Date()).getTime();
         var stopWorkerInterval = _this._register(new IntervalTimer());
         stopWorkerInterval.cancelAndSet(function () { return _this._checkStopIdleWorker(); }, Math.round(STOP_WORKER_DELTA_TIME_MS / 2));
         _this._register(_this._modelService.onModelRemoved(function (_) { return _this._checkStopEmptyWorker(); }));
@@ -204,7 +217,7 @@ var EditorModelManager = /** @class */ (function (_super) {
         this._syncedModelsLastUsedTime = Object.create(null);
         _super.prototype.dispose.call(this);
     };
-    EditorModelManager.prototype.esureSyncedResources = function (resources) {
+    EditorModelManager.prototype.ensureSyncedResources = function (resources) {
         for (var _i = 0, resources_1 = resources; _i < resources_1.length; _i++) {
             var resource = resources_1[_i];
             var resourceStr = resource.toString();
@@ -246,14 +259,14 @@ var EditorModelManager = /** @class */ (function (_super) {
             EOL: model.getEOL(),
             versionId: model.getVersionId()
         });
-        var toDispose = [];
-        toDispose.push(model.onDidChangeContent(function (e) {
+        var toDispose = new DisposableStore();
+        toDispose.add(model.onDidChangeContent(function (e) {
             _this._proxy.acceptModelChanged(modelUrl.toString(), e);
         }));
-        toDispose.push(model.onWillDispose(function () {
+        toDispose.add(model.onWillDispose(function () {
             _this._stopModelSync(modelUrl);
         }));
-        toDispose.push(toDisposable(function () {
+        toDispose.add(toDisposable(function () {
             _this._proxy.acceptRemovedModel(modelUrl);
         }));
         this._syncedModels[modelUrl] = toDispose;
@@ -279,6 +292,17 @@ var SynchronousWorkerClient = /** @class */ (function () {
     };
     return SynchronousWorkerClient;
 }());
+var EditorWorkerHost = /** @class */ (function () {
+    function EditorWorkerHost(workerClient) {
+        this._workerClient = workerClient;
+    }
+    // foreign host request
+    EditorWorkerHost.prototype.fhr = function (method, args) {
+        return this._workerClient.fhr(method, args);
+    };
+    return EditorWorkerHost;
+}());
+export { EditorWorkerHost };
 var EditorWorkerClient = /** @class */ (function (_super) {
     __extends(EditorWorkerClient, _super);
     function EditorWorkerClient(modelService, label) {
@@ -289,14 +313,18 @@ var EditorWorkerClient = /** @class */ (function (_super) {
         _this._modelManager = null;
         return _this;
     }
+    // foreign host request
+    EditorWorkerClient.prototype.fhr = function (method, args) {
+        throw new Error("Not implemented!");
+    };
     EditorWorkerClient.prototype._getOrCreateWorker = function () {
         if (!this._worker) {
             try {
-                this._worker = this._register(new SimpleWorkerClient(this._workerFactory, 'vs/editor/common/services/editorSimpleWorker'));
+                this._worker = this._register(new SimpleWorkerClient(this._workerFactory, 'vs/editor/common/services/editorSimpleWorker', new EditorWorkerHost(this)));
             }
             catch (err) {
                 logOnceWebWorkerWarning(err);
-                this._worker = new SynchronousWorkerClient(new EditorSimpleWorkerImpl(null));
+                this._worker = new SynchronousWorkerClient(new EditorSimpleWorker(new EditorWorkerHost(this), null));
             }
         }
         return this._worker;
@@ -305,7 +333,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
         var _this = this;
         return this._getOrCreateWorker().getProxyObject().then(undefined, function (err) {
             logOnceWebWorkerWarning(err);
-            _this._worker = new SynchronousWorkerClient(new EditorSimpleWorkerImpl(null));
+            _this._worker = new SynchronousWorkerClient(new EditorSimpleWorker(new EditorWorkerHost(_this), null));
             return _this._getOrCreateWorker().getProxyObject();
         });
     };
@@ -318,7 +346,7 @@ var EditorWorkerClient = /** @class */ (function (_super) {
     EditorWorkerClient.prototype._withSyncedResources = function (resources) {
         var _this = this;
         return this._getProxy().then(function (proxy) {
-            _this._getOrCreateModelManager(proxy).esureSyncedResources(resources);
+            _this._getOrCreateModelManager(proxy).ensureSyncedResources(resources);
             return proxy;
         });
     };

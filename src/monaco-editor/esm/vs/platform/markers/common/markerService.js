@@ -166,7 +166,7 @@ var MarkerService = /** @class */ (function () {
         return {
             resource: resource,
             owner: owner,
-            code: code || undefined,
+            code: code,
             severity: severity,
             message: message,
             source: source,

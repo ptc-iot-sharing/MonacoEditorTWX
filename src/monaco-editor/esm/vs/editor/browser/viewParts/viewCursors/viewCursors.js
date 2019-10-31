@@ -32,6 +32,7 @@ var ViewCursors = /** @class */ (function (_super) {
         _this._cursorStyle = _this._context.configuration.editor.viewInfo.cursorStyle;
         _this._cursorSmoothCaretAnimation = _this._context.configuration.editor.viewInfo.cursorSmoothCaretAnimation;
         _this._selectionIsEmpty = true;
+        _this._isVisible = false;
         _this._primaryCursor = new ViewCursor(_this._context);
         _this._secondaryCursors = [];
         _this._renderData = [];

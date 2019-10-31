@@ -155,4 +155,3 @@ export function parse(text) {
         findNodeAt: htmlDocument.findNodeAt.bind(htmlDocument)
     };
 }
-//# sourceMappingURL=htmlParser.js.map

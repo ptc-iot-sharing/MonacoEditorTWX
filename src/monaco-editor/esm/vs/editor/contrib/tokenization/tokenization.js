@@ -25,7 +25,7 @@ var ForceRetokenizeAction = /** @class */ (function (_super) {
             id: 'editor.action.forceRetokenize',
             label: nls.localize('forceRetokenize', "Developer: Force Retokenize"),
             alias: 'Developer: Force Retokenize',
-            precondition: null
+            precondition: undefined
         }) || this;
     }
     ForceRetokenizeAction.prototype.run = function (accessor, editor) {
@@ -33,7 +33,7 @@ var ForceRetokenizeAction = /** @class */ (function (_super) {
             return;
         }
         var model = editor.getModel();
-        model.flushTokens();
+        model.resetTokenization();
         var sw = new StopWatch(true);
         model.forceTokenization(model.getLineCount());
         sw.stop();

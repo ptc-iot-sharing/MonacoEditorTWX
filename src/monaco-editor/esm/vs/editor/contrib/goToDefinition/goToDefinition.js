@@ -13,7 +13,7 @@ function getDefinitions(model, position, registry, provide) {
     var promises = provider.map(function (provider) {
         return Promise.resolve(provide(provider, model, position)).then(undefined, function (err) {
             onUnexpectedExternalError(err);
-            return null;
+            return undefined;
         });
     });
     return Promise.all(promises)

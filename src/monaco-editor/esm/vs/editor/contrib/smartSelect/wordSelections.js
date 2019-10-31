@@ -16,7 +16,7 @@ var WordSelectionRangeProvider = /** @class */ (function () {
             this._addInWordRanges(bucket, model, position);
             this._addWordRanges(bucket, model, position);
             this._addWhitespaceLine(bucket, model, position);
-            bucket.push({ range: model.getFullModelRange(), kind: 'statement.all' });
+            bucket.push({ range: model.getFullModelRange() });
         }
         return result;
     };
@@ -58,20 +58,20 @@ var WordSelectionRangeProvider = /** @class */ (function () {
             lastCh = ch;
         }
         if (start < end) {
-            bucket.push({ range: new Range(pos.lineNumber, startColumn + start, pos.lineNumber, startColumn + end), kind: 'statement.word.part' });
+            bucket.push({ range: new Range(pos.lineNumber, startColumn + start, pos.lineNumber, startColumn + end) });
         }
     };
     WordSelectionRangeProvider.prototype._addWordRanges = function (bucket, model, pos) {
         var word = model.getWordAtPosition(pos);
         if (word) {
-            bucket.push({ range: new Range(pos.lineNumber, word.startColumn, pos.lineNumber, word.endColumn), kind: 'statement.word' });
+            bucket.push({ range: new Range(pos.lineNumber, word.startColumn, pos.lineNumber, word.endColumn) });
         }
     };
     WordSelectionRangeProvider.prototype._addWhitespaceLine = function (bucket, model, pos) {
         if (model.getLineLength(pos.lineNumber) > 0
             && model.getLineFirstNonWhitespaceColumn(pos.lineNumber) === 0
             && model.getLineLastNonWhitespaceColumn(pos.lineNumber) === 0) {
-            bucket.push({ range: new Range(pos.lineNumber, 1, pos.lineNumber, model.getLineMaxColumn(pos.lineNumber)), kind: 'statement.line' });
+            bucket.push({ range: new Range(pos.lineNumber, 1, pos.lineNumber, model.getLineMaxColumn(pos.lineNumber)) });
         }
     };
     return WordSelectionRangeProvider;

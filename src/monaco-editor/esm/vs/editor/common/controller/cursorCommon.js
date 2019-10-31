@@ -9,9 +9,17 @@ import { Range } from '../core/range.js';
 import { Selection } from '../core/selection.js';
 import { TextModel } from '../model/textModel.js';
 import { LanguageConfigurationRegistry } from '../modes/languageConfigurationRegistry.js';
-var autoCloseAlways = function (_) { return true; };
-var autoCloseNever = function (_) { return false; };
+var autoCloseAlways = function () { return true; };
+var autoCloseNever = function () { return false; };
 var autoCloseBeforeWhitespace = function (chr) { return (chr === ' ' || chr === '\t'); };
+function appendEntry(target, key, value) {
+    if (target.has(key)) {
+        target.get(key).push(value);
+    }
+    else {
+        target.set(key, [value]);
+    }
+}
 var CursorConfiguration = /** @class */ (function () {
     function CursorConfiguration(languageIdentifier, modelOptions, configuration) {
         this._languageIdentifier = languageIdentifier;
@@ -29,10 +37,11 @@ var CursorConfiguration = /** @class */ (function () {
         this.multiCursorMergeOverlapping = c.multiCursorMergeOverlapping;
         this.autoClosingBrackets = c.autoClosingBrackets;
         this.autoClosingQuotes = c.autoClosingQuotes;
+        this.autoClosingOvertype = c.autoClosingOvertype;
         this.autoSurround = c.autoSurround;
         this.autoIndent = c.autoIndent;
-        this.autoClosingPairsOpen = {};
-        this.autoClosingPairsClose = {};
+        this.autoClosingPairsOpen2 = new Map();
+        this.autoClosingPairsClose2 = new Map();
         this.surroundingPairs = {};
         this._electricChars = null;
         this.shouldAutoCloseBefore = {
@@ -43,8 +52,10 @@ var CursorConfiguration = /** @class */ (function () {
         if (autoClosingPairs) {
             for (var _i = 0, autoClosingPairs_1 = autoClosingPairs; _i < autoClosingPairs_1.length; _i++) {
                 var pair = autoClosingPairs_1[_i];
-                this.autoClosingPairsOpen[pair.open] = pair.close;
-                this.autoClosingPairsClose[pair.close] = pair.open;
+                appendEntry(this.autoClosingPairsOpen2, pair.open.charAt(pair.open.length - 1), pair);
+                if (pair.close.length === 1) {
+                    appendEntry(this.autoClosingPairsClose2, pair.close, pair);
+                }
             }
         }
         var surroundingPairs = CursorConfiguration._getSurroundingPairs(languageIdentifier);
@@ -62,6 +73,7 @@ var CursorConfiguration = /** @class */ (function () {
             || e.multiCursorMergeOverlapping
             || e.autoClosingBrackets
             || e.autoClosingQuotes
+            || e.autoClosingOvertype
             || e.autoSurround
             || e.useTabStops
             || e.lineHeight

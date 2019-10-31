@@ -410,6 +410,7 @@ var DocumentSymbolAdapter = /** @class */ (function () {
                 detail: '',
                 containerName: item.containerName,
                 kind: toSymbolKind(item.kind),
+                tags: [],
                 range: toRange(item.location.range),
                 selectionRange: toRange(item.location.range)
             }); });

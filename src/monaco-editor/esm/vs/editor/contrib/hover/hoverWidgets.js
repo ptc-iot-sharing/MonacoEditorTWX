@@ -18,24 +18,23 @@ var __extends = (this && this.__extends) || (function () {
 import { toggleClass } from '../../../base/browser/dom.js';
 import { DomScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';
 import { Widget } from '../../../base/browser/ui/widget.js';
-import { dispose } from '../../../base/common/lifecycle.js';
 var ContentHoverWidget = /** @class */ (function (_super) {
     __extends(ContentHoverWidget, _super);
     function ContentHoverWidget(id, editor) {
         var _this = _super.call(this) || this;
-        _this.disposables = [];
         // Editor.IContentWidget.allowEditorOverflow
         _this.allowEditorOverflow = true;
         _this._id = id;
         _this._editor = editor;
         _this._isVisible = false;
+        _this._stoleFocus = false;
         _this._containerDomNode = document.createElement('div');
         _this._containerDomNode.className = 'monaco-editor-hover hidden';
         _this._containerDomNode.tabIndex = 0;
         _this._domNode = document.createElement('div');
         _this._domNode.className = 'monaco-editor-hover-content';
         _this.scrollbar = new DomScrollableElement(_this._domNode, {});
-        _this.disposables.push(_this.scrollbar);
+        _this._register(_this.scrollbar);
         _this._containerDomNode.appendChild(_this.scrollbar.getDomNode());
         _this.onkeydown(_this._containerDomNode, function (e) {
             if (e.equals(9 /* Escape */)) {
@@ -52,6 +51,7 @@ var ContentHoverWidget = /** @class */ (function (_super) {
         _this._editor.addContentWidget(_this);
         _this._showAtPosition = null;
         _this._showAtRange = null;
+        _this._stoleFocus = false;
         return _this;
     }
     Object.defineProperty(ContentHoverWidget.prototype, "isVisible", {
@@ -110,7 +110,6 @@ var ContentHoverWidget = /** @class */ (function (_super) {
     };
     ContentHoverWidget.prototype.dispose = function () {
         this._editor.removeContentWidget(this);
-        this.disposables = dispose(this.disposables);
         _super.prototype.dispose.call(this);
     };
     ContentHoverWidget.prototype.updateFont = function () {
