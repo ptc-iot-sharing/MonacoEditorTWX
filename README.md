@@ -25,7 +25,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
    ```html
    <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
    ```
-   
+Since version 8.4.5 it has been found that this method does not work in a consistent fashion. Please refer to option 2 if you are having issues.
    
 ### Option 2
 
