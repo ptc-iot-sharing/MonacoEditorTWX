@@ -8,13 +8,13 @@
     "thingworxPassword": "Administrator12345",
     "author": "Thingworx RoIcenter",
     "minimumThingWorxVersion": "6.0.0",
-    "homepage": "http://roicentersvn/placatus/MonacoScriptEditorWidget",
+    "homepage": "https://github.com/ptc-iot-sharing/MonacoEditorTWX",
     "autoUpdate": {
-        "giteaURL": "http://roicentersvn/api/v1/repos/placatus/MonacoScriptEditorWidget/releases/latest"
+        "giteaURL": "https://api.github.com/repos/ptc-iot-sharing/MonacoEditorTWX/releases/latest"
     },
     "repository": {
         "type": "git",
-        "url": "http://roicentersvn.ptcnet.ptc.com/placatus/MonacoScriptEditorWidget.git"
+        "url": "https://github.com/ptc-iot-sharing/MonacoEditorTWX.git"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
