@@ -28,9 +28,8 @@ import { ScrollableElement } from '../../../base/browser/ui/scrollbar/scrollable
 import { getBaseLabel, getPathLabel } from '../../../base/common/labels.js';
 import { isNonEmptyArray } from '../../../base/common/arrays.js';
 import { Emitter } from '../../../base/common/event.js';
-import { PeekViewWidget } from '../referenceSearch/peekViewWidget.js';
+import { PeekViewWidget, peekViewTitleForeground, peekViewTitleInfoForeground } from '../peekView/peekView.js';
 import { basename } from '../../../base/common/resources.js';
-import { peekViewTitleForeground, peekViewTitleInfoForeground } from '../referenceSearch/referencesWidget.js';
 import { SeverityIcon } from '../../../platform/severityIcon/common/severityIcon.js';
 var MessageWidget = /** @class */ (function () {
     function MessageWidget(parent, editor, onRelatedInformation) {
@@ -38,7 +37,7 @@ var MessageWidget = /** @class */ (function () {
         this._lines = 0;
         this._longestLineLength = 0;
         this._relatedDiagnostics = new WeakMap();
-        this._disposables = [];
+        this._disposables = new DisposableStore();
         this._editor = editor;
         var domNode = document.createElement('div');
         domNode.className = 'descriptioncontainer';
@@ -49,7 +48,7 @@ var MessageWidget = /** @class */ (function () {
         domNode.appendChild(this._messageBlock);
         this._relatedBlock = document.createElement('div');
         domNode.appendChild(this._relatedBlock);
-        this._disposables.push(dom.addStandardDisposableListener(this._relatedBlock, 'click', function (event) {
+        this._disposables.add(dom.addStandardDisposableListener(this._relatedBlock, 'click', function (event) {
             event.preventDefault();
             var related = _this._relatedDiagnostics.get(event.target);
             if (related) {
@@ -64,11 +63,11 @@ var MessageWidget = /** @class */ (function () {
             verticalScrollbarSize: 3
         });
         parent.appendChild(this._scrollable.getDomNode());
-        this._disposables.push(this._scrollable.onScroll(function (e) {
+        this._disposables.add(this._scrollable.onScroll(function (e) {
             domNode.style.left = "-" + e.scrollLeft + "px";
             domNode.style.top = "-" + e.scrollTop + "px";
         }));
-        this._disposables.push(this._scrollable);
+        this._disposables.add(this._scrollable);
     }
     MessageWidget.prototype.dispose = function () {
         dispose(this._disposables);
@@ -115,7 +114,7 @@ var MessageWidget = /** @class */ (function () {
         this._editor.applyFontInfo(this._relatedBlock);
         if (isNonEmptyArray(relatedInformation)) {
             var relatedInformationNode = this._relatedBlock.appendChild(document.createElement('div'));
-            relatedInformationNode.style.paddingTop = Math.floor(this._editor.getConfiguration().lineHeight * 0.66) + "px";
+            relatedInformationNode.style.paddingTop = Math.floor(this._editor.getOption(47 /* lineHeight */) * 0.66) + "px";
             this._lines += 1;
             for (var _c = 0, relatedInformation_1 = relatedInformation; _c < relatedInformation_1.length; _c++) {
                 var related = relatedInformation_1[_c];
@@ -133,7 +132,7 @@ var MessageWidget = /** @class */ (function () {
                 relatedInformationNode.appendChild(container);
             }
         }
-        var fontInfo = this._editor.getConfiguration().fontInfo;
+        var fontInfo = this._editor.getOption(32 /* fontInfo */);
         var scrollWidth = Math.ceil(fontInfo.typicalFullwidthCharacterWidth * this._longestLineLength * 0.75);
         var scrollHeight = fontInfo.lineHeight * this._lines;
         this._scrollable.setScrollDimensions({ scrollWidth: scrollWidth, scrollHeight: scrollHeight });
@@ -239,7 +238,7 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
                 : nls.localize('change', "{0} of {1} problem", markerIdx, markerCount);
             this.setTitle(basename(model.uri), detail);
         }
-        this._icon.className = SeverityIcon.className(MarkerSeverity.toSeverity(this._severity));
+        this._icon.className = "codicon " + SeverityIcon.className(MarkerSeverity.toSeverity(this._severity));
         this.editor.revealPositionInCenter(position, 0 /* Smooth */);
     };
     MarkerNavigationWidget.prototype.updateMarker = function (marker) {

@@ -3,13 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as Parser from '../parser/jsonParser.js';
-import * as Json from '../../jsonc-parser/main.js';
+import * as Json from './../../jsonc-parser/main.js';
 import { stringifyObject } from '../utils/json.js';
 import { endsWith } from '../utils/strings.js';
 import { isDefined } from '../utils/objects.js';
-import { CompletionItem, CompletionItemKind, Range, TextEdit, InsertTextFormat, MarkupKind } from '../_deps/vscode-languageserver-types/main.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import { CompletionItem, CompletionItemKind, Range, TextEdit, InsertTextFormat, MarkupKind } from '../jsonLanguageTypes.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
+var valueCommitCharacters = [',', '}', ']'];
+var propertyCommitCharacters = [':'];
 var JSONCompletion = /** @class */ (function () {
     function JSONCompletion(schemaService, contributions, promiseConstructor, clientCapabilities) {
         if (contributions === void 0) { contributions = []; }
@@ -38,10 +40,18 @@ var JSONCompletion = /** @class */ (function () {
             items: [],
             isIncomplete: false
         };
+        var text = document.getText();
         var offset = document.offsetAt(position);
         var node = doc.getNodeFromOffset(offset, true);
         if (this.isInComment(document, node ? node.offset : 0, offset)) {
             return Promise.resolve(result);
+        }
+        if (node && (offset === node.offset + node.length) && offset > 0) {
+            var ch = text[offset - 1];
+            if (node.type === 'object' && ch === '}' || node.type === 'array' && ch === ']') {
+                // after ] or }
+                node = node.parent;
+            }
         }
         var currentWord = this.getCurrentWord(document, offset);
         var overwriteRange = null;
@@ -50,20 +60,33 @@ var JSONCompletion = /** @class */ (function () {
         }
         else {
             var overwriteStart = offset - currentWord.length;
-            if (overwriteStart > 0 && document.getText()[overwriteStart - 1] === '"') {
+            if (overwriteStart > 0 && text[overwriteStart - 1] === '"') {
                 overwriteStart--;
             }
             overwriteRange = Range.create(document.positionAt(overwriteStart), position);
         }
+        var supportsCommitCharacters = false; //this.doesSupportsCommitCharacters(); disabled for now, waiting for new API: https://github.com/microsoft/vscode/issues/42544
         var proposed = {};
         var collector = {
             add: function (suggestion) {
-                var existing = proposed[suggestion.label];
+                var label = suggestion.label;
+                var existing = proposed[label];
                 if (!existing) {
-                    proposed[suggestion.label] = suggestion;
+                    label = label.replace(/[\n]/g, '↵');
+                    if (label.length > 60) {
+                        var shortendedLabel = label.substr(0, 57).trim() + '...';
+                        if (!proposed[shortendedLabel]) {
+                            label = shortendedLabel;
+                        }
+                    }
                     if (overwriteRange) {
                         suggestion.textEdit = TextEdit.replace(overwriteRange, suggestion.insertText);
                     }
+                    if (supportsCommitCharacters) {
+                        suggestion.commitCharacters = suggestion.kind === CompletionItemKind.Property ? propertyCommitCharacters : valueCommitCharacters;
+                    }
+                    suggestion.label = label;
+                    proposed[label] = suggestion;
                     result.items.push(suggestion);
                 }
                 else if (!existing.documentation) {
@@ -94,7 +117,7 @@ var JSONCompletion = /** @class */ (function () {
                     if (parent && parent.type === 'property' && parent.keyNode === node) {
                         addValue = !parent.valueNode;
                         currentProperty = parent;
-                        currentKey = document.getText().substr(node.offset + 1, node.length - 2);
+                        currentKey = text.substr(node.offset + 1, node.length - 2);
                         if (parent) {
                             node = parent.parent;
                         }
@@ -133,7 +156,7 @@ var JSONCompletion = /** @class */ (function () {
                         collectionPromises.push(collectPromise);
                     }
                 });
-                if ((!schema && currentWord.length > 0 && document.getText().charAt(offset - currentWord.length - 1) !== '"')) {
+                if ((!schema && currentWord.length > 0 && text.charAt(offset - currentWord.length - 1) !== '"')) {
                     collector.add({
                         kind: CompletionItemKind.Property,
                         label: _this.getLabelForValue(currentWord),
@@ -181,7 +204,7 @@ var JSONCompletion = /** @class */ (function () {
                         if (typeof propertySchema === 'object' && !propertySchema.deprecationMessage && !propertySchema.doNotSuggest) {
                             var proposal = {
                                 kind: CompletionItemKind.Property,
-                                label: _this.sanitizeLabel(key),
+                                label: key,
                                 insertText: _this.getInsertTextForProperty(key, propertySchema, addValue, separatorAfter),
                                 insertTextFormat: InsertTextFormat.Snippet,
                                 filterText: _this.getFilterTextForValue(key),
@@ -207,7 +230,7 @@ var JSONCompletion = /** @class */ (function () {
                 var key = p.keyNode.value;
                 collector.add({
                     kind: CompletionItemKind.Property,
-                    label: _this.sanitizeLabel(key),
+                    label: key,
                     insertText: _this.getInsertTextForValue(key, ''),
                     insertTextFormat: InsertTextFormat.Snippet,
                     filterText: _this.getFilterTextForValue(key),
@@ -485,7 +508,7 @@ var JSONCompletion = /** @class */ (function () {
                         type = 'array';
                     }
                     insertText = prefix + indent + s.bodyText.split('\n').join('\n' + indent) + suffix + separatorAfter;
-                    label = label || _this.sanitizeLabel(insertText),
+                    label = label || insertText,
                         filterText = insertText.replace(/[\n]/g, ''); // remove new lines
                 }
                 collector.add({
@@ -596,15 +619,8 @@ var JSONCompletion = /** @class */ (function () {
             insertTextFormat: InsertTextFormat.Snippet, documentation: ''
         }); });
     };
-    JSONCompletion.prototype.sanitizeLabel = function (label) {
-        label = label.replace(/[\n]/g, '↵');
-        if (label.length > 57) {
-            label = label.substr(0, 57).trim() + '...';
-        }
-        return label;
-    };
     JSONCompletion.prototype.getLabelForValue = function (value) {
-        return this.sanitizeLabel(JSON.stringify(value));
+        return JSON.stringify(value);
     };
     JSONCompletion.prototype.getFilterTextForValue = function (value) {
         return JSON.stringify(value);
@@ -614,8 +630,7 @@ var JSONCompletion = /** @class */ (function () {
     };
     JSONCompletion.prototype.getLabelForSnippetValue = function (value) {
         var label = JSON.stringify(value);
-        label = label.replace(/\$\{\d+:([^}]+)\}|\$\d+/g, '$1');
-        return this.sanitizeLabel(label);
+        return label.replace(/\$\{\d+:([^}]+)\}|\$\d+/g, '$1');
     };
     JSONCompletion.prototype.getInsertTextForPlainText = function (text) {
         return text.replace(/[\\\$\}]/g, '\\$&'); // escape $, \ and } 
@@ -726,6 +741,12 @@ var JSONCompletion = /** @class */ (function () {
                 }
                 nValueProposals++;
             }
+            if (Array.isArray(propertySchema.examples) && propertySchema.examples.length) {
+                if (!value) {
+                    value = this.getInsertTextForGuessedValue(propertySchema.examples[0], '');
+                }
+                nValueProposals += propertySchema.examples.length;
+            }
             if (nValueProposals === 0) {
                 var type = Array.isArray(propertySchema.type) ? propertySchema.type[0] : propertySchema.type;
                 if (!type) {
@@ -831,6 +852,13 @@ var JSONCompletion = /** @class */ (function () {
             this.supportsMarkdown = completion && completion.completionItem && Array.isArray(completion.completionItem.documentationFormat) && completion.completionItem.documentationFormat.indexOf(MarkupKind.Markdown) !== -1;
         }
         return this.supportsMarkdown;
+    };
+    JSONCompletion.prototype.doesSupportsCommitCharacters = function () {
+        if (!isDefined(this.supportsCommitCharacters)) {
+            var completion = this.clientCapabilities.textDocument && this.clientCapabilities.textDocument.completion;
+            this.supportsCommitCharacters = completion && completion.completionItem && !!completion.completionItem.commitCharactersSupport;
+        }
+        return this.supportsCommitCharacters;
     };
     return JSONCompletion;
 }());

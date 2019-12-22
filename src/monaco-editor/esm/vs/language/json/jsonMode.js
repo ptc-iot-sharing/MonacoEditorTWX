@@ -48,6 +48,9 @@ export function setupMode(defaults) {
         if (modeConfiguration.diagnostics) {
             providers.push(new languageFeatures.DiagnosticsAdapter(languageId, worker, defaults));
         }
+        if (modeConfiguration.selectionRanges) {
+            providers.push(monaco.languages.registerSelectionRangeProvider(languageId, new languageFeatures.SelectionRangeAdapter(worker)));
+        }
     }
     registerProviders();
     disposables.push(monaco.languages.setLanguageConfiguration(defaults.languageId, richEditConfiguration));

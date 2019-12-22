@@ -22,6 +22,14 @@ import { ViewLine } from '../viewParts/lines/viewLine.js';
 import { Position } from '../../common/core/position.js';
 import { Range as EditorRange } from '../../common/core/range.js';
 import { CursorColumns } from '../../common/controller/cursorCommon.js';
+var PointerHandlerLastRenderData = /** @class */ (function () {
+    function PointerHandlerLastRenderData(lastViewCursorsRenderData, lastTextareaPosition) {
+        this.lastViewCursorsRenderData = lastViewCursorsRenderData;
+        this.lastTextareaPosition = lastTextareaPosition;
+    }
+    return PointerHandlerLastRenderData;
+}());
+export { PointerHandlerLastRenderData };
 var MouseTarget = /** @class */ (function () {
     function MouseTarget(element, type, mouseColumn, position, range, detail) {
         if (mouseColumn === void 0) { mouseColumn = 0; }
@@ -131,13 +139,14 @@ var ElementPath = /** @class */ (function () {
     return ElementPath;
 }());
 var HitTestContext = /** @class */ (function () {
-    function HitTestContext(context, viewHelper, lastViewCursorsRenderData) {
+    function HitTestContext(context, viewHelper, lastRenderData) {
         this.model = context.model;
-        this.layoutInfo = context.configuration.editor.layoutInfo;
+        var options = context.configuration.options;
+        this.layoutInfo = options.get(103 /* layoutInfo */);
         this.viewDomNode = viewHelper.viewDomNode;
-        this.lineHeight = context.configuration.editor.lineHeight;
-        this.typicalHalfwidthCharacterWidth = context.configuration.editor.fontInfo.typicalHalfwidthCharacterWidth;
-        this.lastViewCursorsRenderData = lastViewCursorsRenderData;
+        this.lineHeight = options.get(47 /* lineHeight */);
+        this.typicalHalfwidthCharacterWidth = options.get(32 /* fontInfo */).typicalHalfwidthCharacterWidth;
+        this.lastRenderData = lastRenderData;
         this._context = context;
         this._viewHelper = viewHelper;
     }
@@ -223,8 +232,8 @@ var HitTestContext = /** @class */ (function () {
     HitTestContext.prototype.getLineWidth = function (lineNumber) {
         return this._viewHelper.getLineWidth(lineNumber);
     };
-    HitTestContext.prototype.visibleRangeForPosition2 = function (lineNumber, column) {
-        return this._viewHelper.visibleRangeForPosition2(lineNumber, column);
+    HitTestContext.prototype.visibleRangeForPosition = function (lineNumber, column) {
+        return this._viewHelper.visibleRangeForPosition(lineNumber, column);
     };
     HitTestContext.prototype.getPositionFromDOMInfo = function (spanNode, offset) {
         return this._viewHelper.getPositionFromDOMInfo(spanNode, offset);
@@ -309,8 +318,8 @@ var MouseTargetFactory = /** @class */ (function () {
         }
         return false;
     };
-    MouseTargetFactory.prototype.createMouseTarget = function (lastViewCursorsRenderData, editorPos, pos, target) {
-        var ctx = new HitTestContext(this._context, this._viewHelper, lastViewCursorsRenderData);
+    MouseTargetFactory.prototype.createMouseTarget = function (lastRenderData, editorPos, pos, target) {
+        var ctx = new HitTestContext(this._context, this._viewHelper, lastRenderData);
         var request = new HitTestRequest(ctx, editorPos, pos, target);
         try {
             var r = MouseTargetFactory._createMouseTarget(ctx, request, false);
@@ -380,7 +389,7 @@ var MouseTargetFactory = /** @class */ (function () {
     MouseTargetFactory._hitTestViewCursor = function (ctx, request) {
         if (request.target) {
             // Check if we've hit a painted cursor
-            var lastViewCursorsRenderData = ctx.lastViewCursorsRenderData;
+            var lastViewCursorsRenderData = ctx.lastRenderData.lastViewCursorsRenderData;
             for (var _i = 0, lastViewCursorsRenderData_1 = lastViewCursorsRenderData; _i < lastViewCursorsRenderData_1.length; _i++) {
                 var d = lastViewCursorsRenderData_1[_i];
                 if (request.target === d.domNode) {
@@ -393,7 +402,7 @@ var MouseTargetFactory = /** @class */ (function () {
             // instead of returning the correct dom node, it returns the
             // first or last rendered view line dom node, therefore help it out
             // and first check if we are on top of a cursor
-            var lastViewCursorsRenderData = ctx.lastViewCursorsRenderData;
+            var lastViewCursorsRenderData = ctx.lastRenderData.lastViewCursorsRenderData;
             var mouseContentHorizontalOffset = request.mouseContentHorizontalOffset;
             var mouseVerticalOffset = request.mouseVerticalOffset;
             for (var _a = 0, lastViewCursorsRenderData_2 = lastViewCursorsRenderData; _a < lastViewCursorsRenderData_2.length; _a++) {
@@ -426,7 +435,10 @@ var MouseTargetFactory = /** @class */ (function () {
     MouseTargetFactory._hitTestTextArea = function (ctx, request) {
         // Is it the textarea?
         if (ElementPath.isTextArea(request.targetPath)) {
-            return request.fulfill(1 /* TEXTAREA */);
+            if (ctx.lastRenderData.lastTextareaPosition) {
+                return request.fulfill(6 /* CONTENT_TEXT */, ctx.lastRenderData.lastTextareaPosition);
+            }
+            return request.fulfill(1 /* TEXTAREA */, ctx.lastRenderData.lastTextareaPosition);
         }
         return null;
     };
@@ -475,9 +487,15 @@ var MouseTargetFactory = /** @class */ (function () {
             if (ElementPath.isStrictChildOfViewLines(request.targetPath)) {
                 var lineNumber = ctx.getLineNumberAtVerticalOffset(request.mouseVerticalOffset);
                 if (ctx.model.getLineLength(lineNumber) === 0) {
-                    var lineWidth = ctx.getLineWidth(lineNumber);
-                    var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
+                    var lineWidth_1 = ctx.getLineWidth(lineNumber);
+                    var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth_1);
                     return request.fulfill(7 /* CONTENT_EMPTY */, new Position(lineNumber, 1), undefined, detail);
+                }
+                var lineWidth = ctx.getLineWidth(lineNumber);
+                if (request.mouseContentHorizontalOffset >= lineWidth) {
+                    var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
+                    var pos = new Position(lineNumber, ctx.model.getLineMaxColumn(lineNumber));
+                    return request.fulfill(7 /* CONTENT_EMPTY */, pos, undefined, detail);
                 }
             }
             // We have already executed hit test...
@@ -521,9 +539,10 @@ var MouseTargetFactory = /** @class */ (function () {
         return null;
     };
     MouseTargetFactory.prototype.getMouseColumn = function (editorPos, pos) {
-        var layoutInfo = this._context.configuration.editor.layoutInfo;
+        var options = this._context.configuration.options;
+        var layoutInfo = options.get(103 /* layoutInfo */);
         var mouseContentHorizontalOffset = this._context.viewLayout.getCurrentScrollLeft() + pos.x - editorPos.x - layoutInfo.contentLeft;
-        return MouseTargetFactory._getMouseColumn(mouseContentHorizontalOffset, this._context.configuration.editor.fontInfo.typicalHalfwidthCharacterWidth);
+        return MouseTargetFactory._getMouseColumn(mouseContentHorizontalOffset, options.get(32 /* fontInfo */).typicalHalfwidthCharacterWidth);
     };
     MouseTargetFactory._getMouseColumn = function (mouseContentHorizontalOffset, typicalHalfwidthCharacterWidth) {
         if (mouseContentHorizontalOffset < 0) {
@@ -544,7 +563,7 @@ var MouseTargetFactory = /** @class */ (function () {
             var detail = createEmptyContentDataInLines(request.mouseContentHorizontalOffset - lineWidth);
             return request.fulfill(7 /* CONTENT_EMPTY */, pos, undefined, detail);
         }
-        var visibleRange = ctx.visibleRangeForPosition2(lineNumber, column);
+        var visibleRange = ctx.visibleRangeForPosition(lineNumber, column);
         if (!visibleRange) {
             return request.fulfill(0 /* UNKNOWN */, pos);
         }
@@ -555,14 +574,14 @@ var MouseTargetFactory = /** @class */ (function () {
         var points = [];
         points.push({ offset: visibleRange.left, column: column });
         if (column > 1) {
-            var visibleRange_1 = ctx.visibleRangeForPosition2(lineNumber, column - 1);
+            var visibleRange_1 = ctx.visibleRangeForPosition(lineNumber, column - 1);
             if (visibleRange_1) {
                 points.push({ offset: visibleRange_1.left, column: column - 1 });
             }
         }
         var lineMaxColumn = ctx.model.getLineMaxColumn(lineNumber);
         if (column < lineMaxColumn) {
-            var visibleRange_2 = ctx.visibleRangeForPosition2(lineNumber, column + 1);
+            var visibleRange_2 = ctx.visibleRangeForPosition(lineNumber, column + 1);
             if (visibleRange_2) {
                 points.push({ offset: visibleRange_2.left, column: column + 1 });
             }
@@ -739,7 +758,7 @@ var MouseTargetFactory = /** @class */ (function () {
         //    - it inconsistently hits text nodes or span nodes, while WebKit only hits text nodes
         //    - when toggling render whitespace on, and hit testing in the empty content after a line, it always hits offset 0 of the first span of the line
         // Thank you browsers for making this so 'easy' :)
-        if (document.caretRangeFromPoint) {
+        if (typeof document.caretRangeFromPoint === 'function') {
             return this._doHitTestWithCaretRangeFromPoint(ctx, request);
         }
         else if (document.caretPositionFromPoint) {

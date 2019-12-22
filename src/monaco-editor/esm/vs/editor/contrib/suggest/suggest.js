@@ -3,10 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -37,12 +38,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
 import { first } from '../../../base/common/async.js';
 import { assign } from '../../../base/common/objects.js';
 import { onUnexpectedExternalError, canceled, isPromiseCanceledError } from '../../../base/common/errors.js';
 import { registerDefaultLanguageCommand } from '../../browser/editorExtensions.js';
 import * as modes from '../../common/modes.js';
+import { Position } from '../../common/core/position.js';
 import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { Range } from '../../common/core/range.js';
@@ -67,6 +68,17 @@ var CompletionItem = /** @class */ (function () {
         this.labelLow = completion.label.toLowerCase();
         this.sortTextLow = completion.sortText && completion.sortText.toLowerCase();
         this.filterTextLow = completion.filterText && completion.filterText.toLowerCase();
+        // normalize ranges
+        if (Range.isIRange(completion.range)) {
+            this.editStart = new Position(completion.range.startLineNumber, completion.range.startColumn);
+            this.editInsertEnd = new Position(completion.range.endLineNumber, completion.range.endColumn);
+            this.editReplaceEnd = new Position(completion.range.endLineNumber, completion.range.endColumn);
+        }
+        else {
+            this.editStart = new Position(completion.range.insert.startLineNumber, completion.range.insert.startColumn);
+            this.editInsertEnd = new Position(completion.range.insert.endLineNumber, completion.range.insert.endColumn);
+            this.editReplaceEnd = new Position(completion.range.replace.endLineNumber, completion.range.replace.endColumn);
+        }
         // create the suggestion resolver
         var resolveCompletionItem = provider.resolveCompletionItem;
         if (typeof resolveCompletionItem !== 'function') {
@@ -123,8 +135,11 @@ export function provideSuggestionItems(model, position, options, context, token)
     if (options === void 0) { options = CompletionOptions.default; }
     if (context === void 0) { context = { triggerKind: 0 /* Invoke */ }; }
     if (token === void 0) { token = CancellationToken.None; }
-    var wordUntil = model.getWordUntilPosition(position);
-    var defaultRange = new Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
+    var word = model.getWordAtPosition(position);
+    var defaultReplaceRange = word ? new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn) : Range.fromPositions(position);
+    var defaultInsertRange = defaultReplaceRange.setEndPosition(position.lineNumber, position.column);
+    // const wordUntil = model.getWordUntilPosition(position);
+    // const defaultRange = new Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
     position = position.clone();
     // get provider groups, always add snippet suggestion provider
     var supports = modes.CompletionProviderRegistry.orderedGroups(model);
@@ -151,7 +166,11 @@ export function provideSuggestionItems(model, position, options, context, token)
                         if (!options.kindFilter.has(suggestion.kind)) {
                             // fill in default range when missing
                             if (!suggestion.range) {
-                                suggestion.range = defaultRange;
+                                suggestion.range = { insert: defaultInsertRange, replace: defaultReplaceRange };
+                            }
+                            // fill in default sortText when missing
+                            if (!suggestion.sortText) {
+                                suggestion.sortText = suggestion.label;
                             }
                             allSuggestions.push(new CompletionItem(position, suggestion, container, provider, model));
                         }
@@ -233,7 +252,7 @@ _snippetComparators.set(1 /* Inline */, defaultComparator);
 export function getSuggestionComparator(snippetConfig) {
     return _snippetComparators.get(snippetConfig);
 }
-registerDefaultLanguageCommand('_executeCompletionItemProvider', function (model, position, args) { return __awaiter(_this, void 0, void 0, function () {
+registerDefaultLanguageCommand('_executeCompletionItemProvider', function (model, position, args) { return __awaiter(void 0, void 0, void 0, function () {
     var result, disposables, resolving, maxItemsToResolve, items, _i, items_1, item;
     return __generator(this, function (_a) {
         switch (_a.label) {

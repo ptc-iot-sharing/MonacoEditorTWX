@@ -68,7 +68,8 @@ var modeConfigurationDefault = {
     tokens: true,
     colors: true,
     foldingRanges: true,
-    diagnostics: true
+    diagnostics: true,
+    selectionRanges: true
 };
 var jsonDefaults = new LanguageServiceDefaultsImpl('json', diagnosticDefault, modeConfigurationDefault);
 // Export API

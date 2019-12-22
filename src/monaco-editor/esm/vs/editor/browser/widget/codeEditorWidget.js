@@ -25,7 +25,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import './media/editor.css';
-import './media/tokens.css';
 import * as nls from '../../../nls.js';
 import * as dom from '../../../base/browser/dom.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
@@ -58,7 +57,6 @@ import { IThemeService, registerThemingParticipant } from '../../../platform/the
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 import { withNullAsUndefined } from '../../../base/common/types.js';
 var EDITOR_ID = 0;
-var SHOW_UNUSED_ENABLED_CLASS = 'showUnused';
 var ModelData = /** @class */ (function () {
     function ModelData(model, viewModel, cursor, view, hasRealView, listenersToRemove) {
         this.model = model;
@@ -158,14 +156,10 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         _this._configuration = _this._register(_this._createConfiguration(options, accessibilityService));
         _this._register(_this._configuration.onDidChange(function (e) {
             _this._onDidChangeConfiguration.fire(e);
-            if (e.layoutInfo) {
-                _this._onDidLayoutChange.fire(_this._configuration.editor.layoutInfo);
-            }
-            if (_this._configuration.editor.showUnused) {
-                _this._domElement.classList.add(SHOW_UNUSED_ENABLED_CLASS);
-            }
-            else {
-                _this._domElement.classList.remove(SHOW_UNUSED_ENABLED_CLASS);
+            var options = _this._configuration.options;
+            if (e.hasChanged(103 /* layoutInfo */)) {
+                var layoutInfo = options.get(103 /* layoutInfo */);
+                _this._onDidLayoutChange.fire(layoutInfo);
             }
         }));
         _this._contextKeyService = _this._register(contextKeyService.createScoped(_this._domElement));
@@ -192,11 +186,11 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         else {
             contributions = EditorExtensionsRegistry.getEditorContributions();
         }
-        for (var i = 0, len = contributions.length; i < len; i++) {
-            var ctor = contributions[i];
+        for (var _i = 0, contributions_1 = contributions; _i < contributions_1.length; _i++) {
+            var desc = contributions_1[_i];
             try {
-                var contribution = _this._instantiationService.createInstance(ctor, _this);
-                _this._contributions[contribution.getId()] = contribution;
+                var contribution = _this._instantiationService.createInstance(desc.ctor, _this);
+                _this._contributions[desc.id] = contribution;
             }
             catch (err) {
                 onUnexpectedError(err);
@@ -241,10 +235,13 @@ var CodeEditorWidget = /** @class */ (function (_super) {
     CodeEditorWidget.prototype.updateOptions = function (newOptions) {
         this._configuration.updateOptions(newOptions);
     };
-    CodeEditorWidget.prototype.getConfiguration = function () {
-        return this._configuration.editor;
+    CodeEditorWidget.prototype.getOptions = function () {
+        return this._configuration.options;
     };
-    CodeEditorWidget.prototype.getRawConfiguration = function () {
+    CodeEditorWidget.prototype.getOption = function (id) {
+        return this._configuration.options.get(id);
+    };
+    CodeEditorWidget.prototype.getRawOptions = function () {
         return this._configuration.getRawOptions();
     };
     CodeEditorWidget.prototype.getValue = function (options) {
@@ -285,8 +282,12 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             // Current model is the new model
             return;
         }
+        var hasTextFocus = this.hasTextFocus();
         var detachedModel = this._detachModel();
         this._attachModel(model);
+        if (hasTextFocus && this.hasModel()) {
+            this.focus();
+        }
         var e = {
             oldModelUrl: detachedModel ? detachedModel.uri : null,
             newModelUrl: model ? model.uri : null
@@ -381,7 +382,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
         var validatedModelRange = this._modelData.model.validateRange(modelRange);
         var viewRange = this._modelData.viewModel.coordinatesConverter.convertModelRangeToViewRange(validatedModelRange);
-        this._modelData.cursor.emitCursorRevealRange(viewRange, verticalType, revealHorizontal, scrollType);
+        this._modelData.cursor.emitCursorRevealRange('api', viewRange, verticalType, revealHorizontal, scrollType);
     };
     CodeEditorWidget.prototype.revealLine = function (lineNumber, scrollType) {
         if (scrollType === void 0) { scrollType = 0 /* Smooth */; }
@@ -708,7 +709,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         if (!this._modelData) {
             return false;
         }
-        if (this._configuration.editor.readOnly) {
+        if (this._configuration.options.get(65 /* readOnly */)) {
             // read only editor => sorry!
             return false;
         }
@@ -719,7 +720,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         if (!this._modelData) {
             return false;
         }
-        if (this._configuration.editor.readOnly) {
+        if (this._configuration.options.get(65 /* readOnly */)) {
             // read only editor => sorry!
             return false;
         }
@@ -759,7 +760,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         if (!this._modelData) {
             return null;
         }
-        return this._modelData.model.getLineDecorations(lineNumber, this._id, this._configuration.editor.readOnly);
+        return this._modelData.model.getLineDecorations(lineNumber, this._id, this._configuration.options.get(65 /* readOnly */));
     };
     CodeEditorWidget.prototype.deltaDecorations = function (oldDecorations, newDecorations) {
         if (!this._modelData) {
@@ -784,7 +785,9 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         }
     };
     CodeEditorWidget.prototype.getLayoutInfo = function () {
-        return this._configuration.editor.layoutInfo;
+        var options = this._configuration.options;
+        var layoutInfo = options.get(103 /* layoutInfo */);
+        return layoutInfo;
     };
     CodeEditorWidget.prototype.createOverviewRuler = function (cssClassName) {
         if (!this._modelData || !this._modelData.hasRealView) {
@@ -909,13 +912,14 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             return null;
         }
         var position = this._modelData.model.validatePosition(rawPosition);
-        var layoutInfo = this._configuration.editor.layoutInfo;
+        var options = this._configuration.options;
+        var layoutInfo = options.get(103 /* layoutInfo */);
         var top = CodeEditorWidget._getVerticalOffsetForPosition(this._modelData, position.lineNumber, position.column) - this.getScrollTop();
         var left = this._modelData.view.getOffsetForColumn(position.lineNumber, position.column) + layoutInfo.glyphMarginWidth + layoutInfo.lineNumbersWidth + layoutInfo.decorationsWidth - this.getScrollLeft();
         return {
             top: top,
             left: left,
-            height: this._configuration.editor.lineHeight
+            height: options.get(47 /* lineHeight */)
         };
     };
     CodeEditorWidget.prototype.getOffsetForColumn = function (lineNumber, column) {
@@ -932,7 +936,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         this._modelData.view.render(true, forceRedraw);
     };
     CodeEditorWidget.prototype.applyFontInfo = function (target) {
-        Configuration.applyFontInfoSlow(target, this._configuration.editor.fontInfo);
+        Configuration.applyFontInfoSlow(target, this._configuration.options.get(32 /* fontInfo */));
     };
     CodeEditorWidget.prototype._attachModel = function (model) {
         var _this = this;
@@ -978,6 +982,9 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             var e2 = {
                 selection: e.selections[0],
                 secondarySelections: e.selections.slice(1),
+                modelVersionId: e.modelVersionId,
+                oldSelections: e.oldSelections,
+                oldModelVersionId: e.oldModelVersionId,
                 source: e.source,
                 reason: e.reason
             };
@@ -1064,12 +1071,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             };
         }
         var viewOutgoingEvents = new ViewOutgoingEvents(viewModel);
-        viewOutgoingEvents.onDidGainFocus = function () {
-            _this._editorTextFocus.setValue(true);
-            // In IE, the focus is not synchronous, so we give it a little help
-            _this._editorWidgetFocus.setValue(true);
-        };
         viewOutgoingEvents.onDidScroll = function (e) { return _this._onDidScrollChange.fire(e); };
+        viewOutgoingEvents.onDidGainFocus = function () { return _this._editorTextFocus.setValue(true); };
         viewOutgoingEvents.onDidLoseFocus = function () { return _this._editorTextFocus.setValue(false); };
         viewOutgoingEvents.onContextMenu = function (e) { return _this._onContextMenu.fire(e); };
         viewOutgoingEvents.onMouseDown = function (e) { return _this._onMouseDown.fire(e); };
@@ -1178,9 +1181,9 @@ var EditorContextKeysManager = /** @class */ (function (_super) {
         return _this;
     }
     EditorContextKeysManager.prototype._updateFromConfig = function () {
-        var config = this._editor.getConfiguration();
-        this._editorTabMovesFocus.set(config.tabFocusMode);
-        this._editorReadonly.set(config.readOnly);
+        var options = this._editor.getOptions();
+        this._editorTabMovesFocus.set(options.get(102 /* tabFocusMode */));
+        this._editorReadonly.set(options.get(65 /* readOnly */));
     };
     EditorContextKeysManager.prototype._updateFromSelection = function () {
         var selections = this._editor.getSelections();
@@ -1378,11 +1381,11 @@ registerThemingParticipant(function (theme, collector) {
     }
     var unnecessaryForeground = theme.getColor(editorUnnecessaryCodeOpacity);
     if (unnecessaryForeground) {
-        collector.addRule("." + SHOW_UNUSED_ENABLED_CLASS + " .monaco-editor ." + "squiggly-inline-unnecessary" /* EditorUnnecessaryInlineDecoration */ + " { opacity: " + unnecessaryForeground.rgba.a + "; }");
+        collector.addRule(".monaco-editor.showUnused ." + "squiggly-inline-unnecessary" /* EditorUnnecessaryInlineDecoration */ + " { opacity: " + unnecessaryForeground.rgba.a + "; }");
     }
     var unnecessaryBorder = theme.getColor(editorUnnecessaryCodeBorder);
     if (unnecessaryBorder) {
-        collector.addRule("." + SHOW_UNUSED_ENABLED_CLASS + " .monaco-editor ." + "squiggly-unnecessary" /* EditorUnnecessaryDecoration */ + " { border-bottom: 2px dashed " + unnecessaryBorder + "; }");
+        collector.addRule(".monaco-editor.showUnused ." + "squiggly-unnecessary" /* EditorUnnecessaryDecoration */ + " { border-bottom: 2px dashed " + unnecessaryBorder + "; }");
     }
     var deprecatedForeground = theme.getColor(editorForeground) || 'inherit';
     collector.addRule(".monaco-editor ." + "squiggly-inline-deprecated" /* EditorDeprecatedInlineDecoration */ + " { text-decoration: line-through; text-decoration-color: " + deprecatedForeground + "}");

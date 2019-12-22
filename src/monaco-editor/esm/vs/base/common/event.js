@@ -276,6 +276,11 @@ export var Event;
         ChainableEvent.prototype.latch = function () {
             return new ChainableEvent(latch(this.event));
         };
+        ChainableEvent.prototype.debounce = function (merge, delay, leading, leakWarningThreshold) {
+            if (delay === void 0) { delay = 100; }
+            if (leading === void 0) { leading = false; }
+            return new ChainableEvent(debounce(this.event, merge, delay, leading, leakWarningThreshold));
+        };
         ChainableEvent.prototype.on = function (listener, thisArgs, disposables) {
             return this.event(listener, thisArgs, disposables);
         };
@@ -398,7 +403,7 @@ var LeakageMonitor = /** @class */ (function () {
  * Sample:
     class Document {
 
-        private _onDidChange = new Emitter<(value:string)=>any>();
+        private readonly _onDidChange = new Emitter<(value:string)=>any>();
 
         public onDidChange = this._onDidChange.event;
 

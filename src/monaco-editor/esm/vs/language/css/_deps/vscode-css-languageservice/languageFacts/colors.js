@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as nodes from '../parser/cssNodes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 export var colorFunctions = [
     { func: 'rgb($red, $green, $blue)', desc: localize('css.builtin.rgb', 'Creates a Color from red, green, and blue values.') },
@@ -384,7 +384,7 @@ export function getColorValue(node) {
             return null;
         }
         var term = node.parent;
-        if (term.parent && term.parent.type === nodes.NodeType.BinaryExpression) {
+        if (term && term.parent && term.parent.type === nodes.NodeType.BinaryExpression) {
             var expression = term.parent;
             if (expression.parent && expression.parent.type === nodes.NodeType.ListEntry && expression.parent.key === expression) {
                 return null;

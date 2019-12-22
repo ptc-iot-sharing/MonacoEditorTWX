@@ -2,9 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { getHTML5DataProvider } from './data/html5.js';
+import { HTMLDataProvider } from './dataProvider.js';
+import { htmlData } from './data/webCustomData.js';
 export var builtinDataProviders = [
-    getHTML5DataProvider()
+    new HTMLDataProvider('html5', htmlData)
 ];
 var customDataProviders = [];
 export function getAllDataProviders() {

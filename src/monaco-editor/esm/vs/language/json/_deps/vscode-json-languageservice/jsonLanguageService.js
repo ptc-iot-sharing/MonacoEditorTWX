@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic, TextEdit, FormattingOptions, MarkedString } from './_deps/vscode-languageserver-types/main.js';
 import { JSONCompletion } from './services/jsonCompletion.js';
 import { JSONHover } from './services/jsonHover.js';
 import { JSONValidation } from './services/jsonValidation.js';
@@ -12,9 +11,9 @@ import { schemaContributions } from './services/configuration.js';
 import { JSONSchemaService } from './services/jsonSchemaService.js';
 import { getFoldingRanges } from './services/jsonFolding.js';
 import { getSelectionRanges } from './services/jsonSelectionRanges.js';
-import { format as formatJSON } from '../jsonc-parser/main.js';
+import { format as formatJSON } from './../jsonc-parser/main.js';
+import { Range, TextEdit } from './jsonLanguageTypes.js';
 export * from './jsonLanguageTypes.js';
-export { TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic, TextEdit, FormattingOptions, MarkedString };
 export function getLanguageService(params) {
     var promise = params.promiseConstructor || Promise;
     var jsonSchemaService = new JSONSchemaService(params.schemaRequestService, params.workspaceContext, promise);

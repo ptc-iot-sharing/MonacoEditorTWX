@@ -2,27 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-// #region Proposed types, remove once added to vscode-languageserver-types
-/**
- * Enum of known selection range kinds
- */
-export var SelectionRangeKind;
-(function (SelectionRangeKind) {
-    /**
-     * Empty Kind.
-     */
-    SelectionRangeKind["Empty"] = "";
-    /**
-     * The statment kind, its value is `statement`, possible extensions can be
-     * `statement.if` etc
-     */
-    SelectionRangeKind["Statement"] = "statement";
-    /**
-     * The declaration kind, its value is `declaration`, possible extensions can be
-     * `declaration.function`, `declaration.class` etc.
-     */
-    SelectionRangeKind["Declaration"] = "declaration";
-})(SelectionRangeKind || (SelectionRangeKind = {}));
+import { MarkupKind } from './_deps/vscode-languageserver-types/main.js';
 export var TokenType;
 (function (TokenType) {
     TokenType[TokenType["StartCommentTag"] = 0] = "StartCommentTag";
@@ -62,3 +42,18 @@ export var ScannerState;
     ScannerState[ScannerState["AfterAttributeName"] = 9] = "AfterAttributeName";
     ScannerState[ScannerState["BeforeAttributeValue"] = 10] = "BeforeAttributeValue";
 })(ScannerState || (ScannerState = {}));
+export var ClientCapabilities;
+(function (ClientCapabilities) {
+    ClientCapabilities.LATEST = {
+        textDocument: {
+            completion: {
+                completionItem: {
+                    documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText]
+                }
+            },
+            hover: {
+                contentFormat: [MarkupKind.Markdown, MarkupKind.PlainText]
+            }
+        }
+    };
+})(ClientCapabilities || (ClientCapabilities = {}));

@@ -112,13 +112,10 @@ var ViewOutgoingEvents = /** @class */ (function (_super) {
         return e;
     };
     ViewOutgoingEvents.prototype._convertViewToModelMouseTarget = function (target) {
-        return new ExternalMouseTarget(target.element, target.type, target.mouseColumn, target.position ? this._convertViewToModelPosition(target.position) : null, target.range ? this._convertViewToModelRange(target.range) : null, target.detail);
+        return ViewOutgoingEvents.convertViewToModelMouseTarget(target, this._viewModel.coordinatesConverter);
     };
-    ViewOutgoingEvents.prototype._convertViewToModelPosition = function (viewPosition) {
-        return this._viewModel.coordinatesConverter.convertViewPositionToModelPosition(viewPosition);
-    };
-    ViewOutgoingEvents.prototype._convertViewToModelRange = function (viewRange) {
-        return this._viewModel.coordinatesConverter.convertViewRangeToModelRange(viewRange);
+    ViewOutgoingEvents.convertViewToModelMouseTarget = function (target, coordinatesConverter) {
+        return new ExternalMouseTarget(target.element, target.type, target.mouseColumn, target.position ? coordinatesConverter.convertViewPositionToModelPosition(target.position) : null, target.range ? coordinatesConverter.convertViewRangeToModelRange(target.range) : null, target.detail);
     };
     return ViewOutgoingEvents;
 }(Disposable));

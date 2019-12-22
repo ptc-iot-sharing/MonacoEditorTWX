@@ -24,9 +24,33 @@ import * as platform from '../../../base/common/platform.js';
 import * as strings from '../../../base/common/strings.js';
 import { TextAreaState } from './textAreaState.js';
 import { Selection } from '../../common/core/selection.js';
+import { BrowserFeatures } from '../../../base/browser/canIUse.js';
 export var CopyOptions = {
     forceCopyWithSyntaxHighlighting: false
 };
+/**
+ * Every time we write to the clipboard, we record a bit of extra metadata here.
+ * Every time we read from the cipboard, if the text matches our last written text,
+ * we can fetch the previous metadata.
+ */
+var InMemoryClipboardMetadataManager = /** @class */ (function () {
+    function InMemoryClipboardMetadataManager() {
+        this._lastState = null;
+    }
+    InMemoryClipboardMetadataManager.prototype.set = function (lastCopiedValue, data) {
+        this._lastState = { lastCopiedValue: lastCopiedValue, data: data };
+    };
+    InMemoryClipboardMetadataManager.prototype.get = function (pastedText) {
+        if (this._lastState && this._lastState.lastCopiedValue === pastedText) {
+            // match!
+            return this._lastState.data;
+        }
+        this._lastState = null;
+        return null;
+    };
+    InMemoryClipboardMetadataManager.INSTANCE = new InMemoryClipboardMetadataManager();
+    return InMemoryClipboardMetadataManager;
+}());
 /**
  * Writes screen reader content to the textarea and is able to analyze its input events to generate:
  *  - onCut
@@ -39,6 +63,7 @@ var TextAreaInput = /** @class */ (function (_super) {
     __extends(TextAreaInput, _super);
     function TextAreaInput(host, textArea) {
         var _this = _super.call(this) || this;
+        _this.textArea = textArea;
         _this._onFocus = _this._register(new Emitter());
         _this.onFocus = _this._onFocus.event;
         _this._onBlur = _this._register(new Emitter());
@@ -152,6 +177,11 @@ var TextAreaInput = /** @class */ (function (_super) {
         }));
         _this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {
             _this._lastTextAreaEvent = 3 /* compositionend */;
+            // https://github.com/microsoft/monaco-editor/issues/1663
+            // On iOS 13.2, Chinese system IME randomly trigger an additional compositionend event with empty data
+            if (!_this._isDoingComposition) {
+                return;
+            }
             if (compositionDataInValid(e.locale)) {
                 // https://github.com/Microsoft/monaco-editor/issues/339
                 var _a = deduceInputFromTextAreaValue(/*couldBeEmojiInput*/ false, /*couldBeTypingAtOffset0*/ false), newState = _a[0], typeInput = _a[1];
@@ -197,9 +227,7 @@ var TextAreaInput = /** @class */ (function (_super) {
             }
             else {
                 if (typeInput.text !== '') {
-                    _this._onPaste.fire({
-                        text: typeInput.text
-                    });
+                    _this._firePaste(typeInput.text, null);
                 }
                 _this._nextCommand = 0 /* Type */;
             }
@@ -223,11 +251,9 @@ var TextAreaInput = /** @class */ (function (_super) {
             // result in a `selectionchange` event which we want to ignore
             _this._textArea.setIgnoreSelectionChangeTime('received paste event');
             if (ClipboardEventUtils.canUseTextData(e)) {
-                var pastePlainText = ClipboardEventUtils.getTextData(e);
+                var _a = ClipboardEventUtils.getTextData(e), pastePlainText = _a[0], metadata = _a[1];
                 if (pastePlainText !== '') {
-                    _this._onPaste.fire({
-                        text: pastePlainText
-                    });
+                    _this._firePaste(pastePlainText, metadata);
                 }
             }
             else {
@@ -377,18 +403,33 @@ var TextAreaInput = /** @class */ (function (_super) {
         this._setAndWriteTextAreaState(reason, this._host.getScreenReaderContent(this._textAreaState));
     };
     TextAreaInput.prototype._ensureClipboardGetsEditorSelection = function (e) {
-        var copyPlainText = this._host.getPlainTextToCopy();
+        var dataToCopy = this._host.getDataToCopy(ClipboardEventUtils.canUseTextData(e) && BrowserFeatures.clipboard.richText);
+        var storedMetadata = {
+            version: 1,
+            isFromEmptySelection: dataToCopy.isFromEmptySelection,
+            multicursorText: dataToCopy.multicursorText
+        };
+        InMemoryClipboardMetadataManager.INSTANCE.set(
+        // When writing "LINE\r\n" to the clipboard and then pasting,
+        // Firefox pastes "LINE\n", so let's work around this quirk
+        (browser.isFirefox ? dataToCopy.text.replace(/\r\n/g, '\n') : dataToCopy.text), storedMetadata);
         if (!ClipboardEventUtils.canUseTextData(e)) {
             // Looks like an old browser. The strategy is to place the text
             // we'd like to be copied to the clipboard in the textarea and select it.
-            this._setAndWriteTextAreaState('copy or cut', TextAreaState.selectedText(copyPlainText));
+            this._setAndWriteTextAreaState('copy or cut', TextAreaState.selectedText(dataToCopy.text));
             return;
         }
-        var copyHTML = null;
-        if (browser.hasClipboardSupport() && (copyPlainText.length < 65536 || CopyOptions.forceCopyWithSyntaxHighlighting)) {
-            copyHTML = this._host.getHTMLToCopy();
+        ClipboardEventUtils.setTextData(e, dataToCopy.text, dataToCopy.html, storedMetadata);
+    };
+    TextAreaInput.prototype._firePaste = function (text, metadata) {
+        if (!metadata) {
+            // try the in-memory store
+            metadata = InMemoryClipboardMetadataManager.INSTANCE.get(text);
         }
-        ClipboardEventUtils.setTextData(e, copyPlainText, copyHTML);
+        this._onPaste.fire({
+            text: text,
+            metadata: metadata
+        });
     };
     return TextAreaInput;
 }(Disposable));
@@ -408,7 +449,21 @@ var ClipboardEventUtils = /** @class */ (function () {
     ClipboardEventUtils.getTextData = function (e) {
         if (e.clipboardData) {
             e.preventDefault();
-            return e.clipboardData.getData('text/plain');
+            var text = e.clipboardData.getData('text/plain');
+            var metadata = null;
+            var rawmetadata = e.clipboardData.getData('vscode-editor-data');
+            if (typeof rawmetadata === 'string') {
+                try {
+                    metadata = JSON.parse(rawmetadata);
+                    if (metadata.version !== 1) {
+                        metadata = null;
+                    }
+                }
+                catch (err) {
+                    // no problem!
+                }
+            }
+            return [text, metadata];
         }
         if (window.clipboardData) {
             e.preventDefault();
@@ -416,12 +471,13 @@ var ClipboardEventUtils = /** @class */ (function () {
         }
         throw new Error('ClipboardEventUtils.getTextData: Cannot use text data!');
     };
-    ClipboardEventUtils.setTextData = function (e, text, richText) {
+    ClipboardEventUtils.setTextData = function (e, text, html, metadata) {
         if (e.clipboardData) {
             e.clipboardData.setData('text/plain', text);
-            if (richText !== null) {
-                e.clipboardData.setData('text/html', richText);
+            if (typeof html === 'string') {
+                e.clipboardData.setData('text/html', html);
             }
+            e.clipboardData.setData('vscode-editor-data', JSON.stringify(metadata));
             e.preventDefault();
             return;
         }

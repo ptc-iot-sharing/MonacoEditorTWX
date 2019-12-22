@@ -23,7 +23,7 @@ var RenameInputField = /** @class */ (function () {
         this._editor = editor;
         this._editor.addContentWidget(this);
         this._disposables.add(editor.onDidChangeConfiguration(function (e) {
-            if (e.fontInfo) {
+            if (e.hasChanged(32 /* fontInfo */)) {
                 _this.updateFont();
             }
         }));
@@ -46,7 +46,7 @@ var RenameInputField = /** @class */ (function () {
             this._inputField.type = 'text';
             this._inputField.setAttribute('aria-label', localize('renameAriaLabel', "Rename input. Type new name and press Enter to commit."));
             this._domNode = document.createElement('div');
-            this._domNode.style.height = this._editor.getConfiguration().lineHeight + "px";
+            this._domNode.style.height = this._editor.getOption(47 /* lineHeight */) + "px";
             this._domNode.className = 'monaco-editor rename-box';
             this._domNode.appendChild(this._inputField);
             this.updateFont();
@@ -62,18 +62,18 @@ var RenameInputField = /** @class */ (function () {
         var foreground = theme.getColor(inputForeground);
         var widgetShadowColor = theme.getColor(widgetShadow);
         var border = theme.getColor(inputBorder);
-        this._inputField.style.backgroundColor = background ? background.toString() : null;
+        this._inputField.style.backgroundColor = background ? background.toString() : '';
         this._inputField.style.color = foreground ? foreground.toString() : null;
         this._inputField.style.borderWidth = border ? '1px' : '0px';
         this._inputField.style.borderStyle = border ? 'solid' : 'none';
         this._inputField.style.borderColor = border ? border.toString() : 'none';
-        this._domNode.style.boxShadow = widgetShadowColor ? " 0 2px 8px " + widgetShadowColor : null;
+        this._domNode.style.boxShadow = widgetShadowColor ? " 0 2px 8px " + widgetShadowColor : '';
     };
     RenameInputField.prototype.updateFont = function () {
         if (!this._inputField) {
             return;
         }
-        var fontInfo = this._editor.getConfiguration().fontInfo;
+        var fontInfo = this._editor.getOption(32 /* fontInfo */);
         this._inputField.style.fontFamily = fontInfo.fontFamily;
         this._inputField.style.fontWeight = fontInfo.fontWeight;
         this._inputField.style.fontSize = fontInfo.fontSize + "px";

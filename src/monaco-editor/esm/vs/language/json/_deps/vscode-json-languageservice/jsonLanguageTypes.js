@@ -1,5 +1,6 @@
-import { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, MarkupKind, SelectionRange } from './_deps/vscode-languageserver-types/main.js';
-export { Range, TextEdit, Color, ColorInformation, ColorPresentation, FoldingRange, FoldingRangeKind, SelectionRange };
+import { MarkupKind } from './../vscode-languageserver-types/main.js';
+export { TextDocument } from './../vscode-languageserver-textdocument/lib/esm/main.js';
+export * from './../vscode-languageserver-types/main.js';
 /**
  * Error codes used by diagnostics
  */
@@ -30,7 +31,8 @@ export var ClientCapabilities;
         textDocument: {
             completion: {
                 completionItem: {
-                    documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText]
+                    documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
+                    commitCharactersSupport: true
                 }
             }
         }

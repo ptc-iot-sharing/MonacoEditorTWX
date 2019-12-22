@@ -293,6 +293,27 @@ export var DiagnosticSeverity;
     DiagnosticSeverity.Hint = 4;
 })(DiagnosticSeverity || (DiagnosticSeverity = {}));
 /**
+ * The diagnostic tags.
+ *
+ * @since 3.15.0
+ */
+export var DiagnosticTag;
+(function (DiagnosticTag) {
+    /**
+     * Unused or unnecessary code.
+     *
+     * Clients are allowed to render diagnostics with this tag faded out instead of having
+     * an error squiggle.
+     */
+    DiagnosticTag.Unnecessary = 1;
+    /**
+     * Deprecated or obsolete code.
+     *
+     * Clients are allowed to rendered diagnostics with this tag strike through.
+     */
+    DiagnosticTag.Deprecated = 2;
+})(DiagnosticTag || (DiagnosticTag = {}));
+/**
  * The Diagnostic namespace provides helper functions to work with
  * [Diagnostic](#Diagnostic) literals.
  */
@@ -794,6 +815,19 @@ export var InsertTextFormat;
     InsertTextFormat.Snippet = 2;
 })(InsertTextFormat || (InsertTextFormat = {}));
 /**
+ * Completion item tags are extra annotations that tweak the rendering of a completion
+ * item.
+ *
+ * @since 3.15.0
+ */
+export var CompletionItemTag;
+(function (CompletionItemTag) {
+    /**
+     * Render a completion as obsolete, usually using a strike-out.
+     */
+    CompletionItemTag.Deprecated = 1;
+})(CompletionItemTag || (CompletionItemTag = {}));
+/**
  * The CompletionItem namespace provides functions to deal with
  * completion items.
  */
@@ -833,7 +867,7 @@ export var MarkedString;
      * @param plainText The plain text.
      */
     function fromPlainText(plainText) {
-        return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, "\\$&"); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
+        return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&'); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
     }
     MarkedString.fromPlainText = fromPlainText;
     /**
@@ -874,7 +908,6 @@ export var ParameterInformation;
         return documentation ? { label: label, documentation: documentation } : { label: label };
     }
     ParameterInformation.create = create;
-    ;
 })(ParameterInformation || (ParameterInformation = {}));
 /**
  * The SignatureInformation namespace provides helper functions to work with
@@ -970,6 +1003,17 @@ export var SymbolKind;
     SymbolKind.Operator = 25;
     SymbolKind.TypeParameter = 26;
 })(SymbolKind || (SymbolKind = {}));
+/**
+ * Symbol tags are extra annotations that tweak the rendering of a symbol.
+ * @since 3.15
+ */
+export var SymbolTag;
+(function (SymbolTag) {
+    /**
+     * Render a symbol as obsolete, usually using a strike-out.
+     */
+    SymbolTag.Deprecated = 1;
+})(SymbolTag || (SymbolTag = {}));
 export var SymbolInformation;
 (function (SymbolInformation) {
     /**
@@ -994,18 +1038,7 @@ export var SymbolInformation;
     }
     SymbolInformation.create = create;
 })(SymbolInformation || (SymbolInformation = {}));
-/**
- * Represents programming constructs like variables, classes, interfaces etc.
- * that appear in a document. Document symbols can be hierarchical and they
- * have two ranges: one that encloses its definition and one that points to
- * its most interesting range, e.g. the range of an identifier.
- */
-var DocumentSymbol = /** @class */ (function () {
-    function DocumentSymbol() {
-    }
-    return DocumentSymbol;
-}());
-export { DocumentSymbol };
+export var DocumentSymbol;
 (function (DocumentSymbol) {
     /**
      * Creates a new symbol information literal.
@@ -1050,6 +1083,10 @@ export { DocumentSymbol };
  */
 export var CodeActionKind;
 (function (CodeActionKind) {
+    /**
+     * Empty kind.
+     */
+    CodeActionKind.Empty = '';
     /**
      * Base kind for quickfix actions: 'quickfix'
      */
@@ -1104,6 +1141,15 @@ export var CodeActionKind;
      * Base kind for an organize imports source action: `source.organizeImports`
      */
     CodeActionKind.SourceOrganizeImports = 'source.organizeImports';
+    /**
+     * Base kind for auto-fix source actions: `source.fixAll`.
+     *
+     * Fix all actions automatically fix errors that have a clear fix that do not require user input.
+     * They should not suppress errors or perform unsafe fixes such as generating new types or classes.
+     *
+     * @since 3.15.0
+     */
+    CodeActionKind.SourceFixAll = 'source.fixAll';
 })(CodeActionKind || (CodeActionKind = {}));
 /**
  * The CodeActionContext namespace provides helper functions to work with
@@ -1141,7 +1187,7 @@ export var CodeAction;
         else {
             result.edit = commandOrEdit;
         }
-        if (kind !== void null) {
+        if (kind !== void 0) {
             result.kind = kind;
         }
         return result;
@@ -1154,6 +1200,7 @@ export var CodeAction;
             (candidate.kind === void 0 || Is.string(candidate.kind)) &&
             (candidate.edit !== void 0 || candidate.command !== void 0) &&
             (candidate.command === void 0 || Command.is(candidate.command)) &&
+            (candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) &&
             (candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
     }
     CodeAction.is = is;
@@ -1169,8 +1216,9 @@ export var CodeLens;
      */
     function create(range, data) {
         var result = { range: range };
-        if (Is.defined(data))
+        if (Is.defined(data)) {
             result.data = data;
+        }
         return result;
     }
     CodeLens.create = create;
@@ -1206,19 +1254,10 @@ export var FormattingOptions;
     FormattingOptions.is = is;
 })(FormattingOptions || (FormattingOptions = {}));
 /**
- * A document link is a range in a text document that links to an internal or external resource, like another
- * text document or a web site.
- */
-var DocumentLink = /** @class */ (function () {
-    function DocumentLink() {
-    }
-    return DocumentLink;
-}());
-export { DocumentLink };
-/**
  * The DocumentLink namespace provides helper functions to work with
  * [DocumentLink](#DocumentLink) literals.
  */
+export var DocumentLink;
 (function (DocumentLink) {
     /**
      * Creates a new DocumentLink literal.
@@ -1236,7 +1275,31 @@ export { DocumentLink };
     }
     DocumentLink.is = is;
 })(DocumentLink || (DocumentLink = {}));
+/**
+ * The SelectionRange namespace provides helper function to work with
+ * SelectionRange literals.
+ */
+export var SelectionRange;
+(function (SelectionRange) {
+    /**
+     * Creates a new SelectionRange
+     * @param range the range.
+     * @param parent an optional parent.
+     */
+    function create(range, parent) {
+        return { range: range, parent: parent };
+    }
+    SelectionRange.create = create;
+    function is(value) {
+        var candidate = value;
+        return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+    }
+    SelectionRange.is = is;
+})(SelectionRange || (SelectionRange = {}));
 export var EOL = ['\n', '\r\n', '\r'];
+/**
+ * @deprecated Use the text document from the new vscode-languageserver-textdocument package.
+ */
 export var TextDocument;
 (function (TextDocument) {
     /**
@@ -1316,32 +1379,13 @@ export var TextDocument;
         return data;
     }
 })(TextDocument || (TextDocument = {}));
-/**
- * Represents reasons why a text document is saved.
- */
-export var TextDocumentSaveReason;
-(function (TextDocumentSaveReason) {
-    /**
-     * Manually triggered, e.g. by the user pressing save, by starting debugging,
-     * or by an API call.
-     */
-    TextDocumentSaveReason.Manual = 1;
-    /**
-     * Automatic after a delay.
-     */
-    TextDocumentSaveReason.AfterDelay = 2;
-    /**
-     * When the editor lost focus.
-     */
-    TextDocumentSaveReason.FocusOut = 3;
-})(TextDocumentSaveReason || (TextDocumentSaveReason = {}));
 var FullTextDocument = /** @class */ (function () {
     function FullTextDocument(uri, languageId, version, content) {
         this._uri = uri;
         this._languageId = languageId;
         this._version = version;
         this._content = content;
-        this._lineOffsets = null;
+        this._lineOffsets = undefined;
     }
     Object.defineProperty(FullTextDocument.prototype, "uri", {
         get: function () {
@@ -1375,10 +1419,10 @@ var FullTextDocument = /** @class */ (function () {
     FullTextDocument.prototype.update = function (event, version) {
         this._content = event.text;
         this._version = version;
-        this._lineOffsets = null;
+        this._lineOffsets = undefined;
     };
     FullTextDocument.prototype.getLineOffsets = function () {
-        if (this._lineOffsets === null) {
+        if (this._lineOffsets === undefined) {
             var lineOffsets = [];
             var text = this._content;
             var isLineStart = true;

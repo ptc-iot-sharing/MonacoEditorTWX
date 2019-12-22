@@ -23,9 +23,26 @@ function getEntryStatus(status) {
             return '';
     }
 }
-export function getEntryDescription(entry) {
+export function getEntryDescription(entry, doesSupportMarkdown) {
+    if (doesSupportMarkdown) {
+        return {
+            kind: 'markdown',
+            value: getEntryMarkdownDescription(entry)
+        };
+    }
+    else {
+        return {
+            kind: 'plaintext',
+            value: getEntryStringDescription(entry)
+        };
+    }
+}
+function getEntryStringDescription(entry) {
     if (!entry.description || entry.description === '') {
-        return null;
+        return '';
+    }
+    if (typeof entry.description !== 'string') {
+        return entry.description.value;
     }
     var result = '';
     if (entry.status) {
@@ -39,6 +56,41 @@ export function getEntryDescription(entry) {
     if ('syntax' in entry) {
         result += "\n\nSyntax: " + entry.syntax;
     }
+    if (entry.references && entry.references.length > 0) {
+        result += '\n\n';
+        result += entry.references.map(function (r) {
+            return r.name + ": " + r.url;
+        }).join(' | ');
+    }
+    return result;
+}
+function getEntryMarkdownDescription(entry) {
+    if (!entry.description || entry.description === '') {
+        return '';
+    }
+    var result = '';
+    if (entry.status) {
+        result += getEntryStatus(entry.status);
+    }
+    if (typeof entry.description === 'string') {
+        result += entry.description;
+    }
+    else {
+        result = entry.description.value;
+    }
+    var browserLabel = getBrowserLabel(entry.browsers);
+    if (browserLabel) {
+        result += '\n\n(' + browserLabel + ')';
+    }
+    if ('syntax' in entry) {
+        result += "\n\nSyntax: " + entry.syntax;
+    }
+    if (entry.references && entry.references.length > 0) {
+        result += '\n\n';
+        result += entry.references.map(function (r) {
+            return "[" + r.name + "](" + r.url + ")";
+        }).join(' | ');
+    }
     return result;
 }
 /**
@@ -46,7 +98,8 @@ export function getEntryDescription(entry) {
  * Output is like `Edge 12, Firefox 49, Chrome 47, IE, Opera`
  */
 export function getBrowserLabel(browsers) {
-    if (!browsers || browsers.length === 0) {
+    if (browsers === void 0) { browsers = []; }
+    if (browsers.length === 0) {
         return null;
     }
     return browsers

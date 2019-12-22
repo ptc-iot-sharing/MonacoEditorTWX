@@ -21,11 +21,11 @@ import { onUnexpectedError } from '../../../base/common/errors.js';
 import { PointerHandler } from '../controller/pointerHandler.js';
 import { TextAreaHandler } from '../controller/textAreaHandler.js';
 import { ViewController } from './viewController.js';
+import { ViewOutgoingEvents } from './viewOutgoingEvents.js';
 import { ContentViewOverlays, MarginViewOverlays } from './viewOverlays.js';
 import { PartFingerprints } from './viewPart.js';
 import { ViewContentWidgets } from '../viewParts/contentWidgets/contentWidgets.js';
-import { CurrentLineHighlightOverlay } from '../viewParts/currentLineHighlight/currentLineHighlight.js';
-import { CurrentLineMarginHighlightOverlay } from '../viewParts/currentLineMarginHighlight/currentLineMarginHighlight.js';
+import { CurrentLineHighlightOverlay, CurrentLineMarginHighlightOverlay } from '../viewParts/currentLineHighlight/currentLineHighlight.js';
 import { DecorationsOverlay } from '../viewParts/decorations/decorations.js';
 import { EditorScrollbar } from '../viewParts/editorScrollbar/editorScrollbar.js';
 import { GlyphMarginOverlay } from '../viewParts/glyphMargin/glyphMargin.js';
@@ -52,7 +52,7 @@ import * as viewEvents from '../../common/view/viewEvents.js';
 import { ViewportData } from '../../common/viewLayout/viewLinesViewportData.js';
 import { ViewEventHandler } from '../../common/viewModel/viewEventHandler.js';
 import { getThemeTypeSelector } from '../../../platform/theme/common/themeService.js';
-var invalidFunc = function () { throw new Error("Invalid change accessor"); };
+import { PointerHandlerLastRenderData } from '../controller/mouseTarget.js';
 var View = /** @class */ (function (_super) {
     __extends(View, _super);
     function View(commandDelegate, configuration, themeService, model, cursor, outgoingEvents) {
@@ -146,7 +146,7 @@ var View = /** @class */ (function (_super) {
         _this.overflowGuardContainer.appendChild(minimap.getDomNode());
         _this.domNode.appendChild(_this.overflowGuardContainer);
         _this.domNode.appendChild(_this.contentWidgets.overflowingContentWidgetsDomNode);
-        _this._setLayout();
+        _this._applyLayout();
         // Pointer handler
         _this.pointerHandler = _this._register(new PointerHandler(_this._context, viewController, _this.createPointerHandlerHelper()));
         _this._register(model.addEventListener(function (events) {
@@ -168,8 +168,10 @@ var View = /** @class */ (function (_super) {
             focusTextArea: function () {
                 _this.focus();
             },
-            getLastViewCursorsRenderData: function () {
-                return _this.viewCursors.getLastRenderData() || [];
+            getLastRenderData: function () {
+                var lastViewCursorsRenderData = _this.viewCursors.getLastRenderData() || [];
+                var lastTextareaPosition = _this._textAreaHandler.getLastRenderData();
+                return new PointerHandlerLastRenderData(lastViewCursorsRenderData, lastTextareaPosition);
             },
             shouldSuppressMouseDownOnViewZone: function (viewZoneId) {
                 return _this.viewZones.shouldSuppressMouseDownOnViewZone(viewZoneId);
@@ -181,7 +183,7 @@ var View = /** @class */ (function (_super) {
                 _this._flushAccumulatedAndRenderNow();
                 return _this.viewLines.getPositionFromDOMInfo(spanNode, offset);
             },
-            visibleRangeForPosition2: function (lineNumber, column) {
+            visibleRangeForPosition: function (lineNumber, column) {
                 _this._flushAccumulatedAndRenderNow();
                 return _this.viewLines.visibleRangeForPosition(new Position(lineNumber, column));
             },
@@ -200,8 +202,9 @@ var View = /** @class */ (function (_super) {
             }
         };
     };
-    View.prototype._setLayout = function () {
-        var layoutInfo = this._context.configuration.editor.layoutInfo;
+    View.prototype._applyLayout = function () {
+        var options = this._context.configuration.options;
+        var layoutInfo = options.get(103 /* layoutInfo */);
         this.domNode.setWidth(layoutInfo.width);
         this.domNode.setHeight(layoutInfo.height);
         this.overflowGuardContainer.setWidth(layoutInfo.width);
@@ -211,16 +214,12 @@ var View = /** @class */ (function (_super) {
     };
     View.prototype.getEditorClassName = function () {
         var focused = this._textAreaHandler.isFocused() ? ' focused' : '';
-        return this._context.configuration.editor.editorClassName + ' ' + getThemeTypeSelector(this._context.theme.type) + focused;
+        return this._context.configuration.options.get(100 /* editorClassName */) + ' ' + getThemeTypeSelector(this._context.theme.type) + focused;
     };
     // --- begin event handlers
     View.prototype.onConfigurationChanged = function (e) {
-        if (e.editorClassName) {
-            this.domNode.setClassName(this.getEditorClassName());
-        }
-        if (e.layoutInfo) {
-            this._setLayout();
-        }
+        this.domNode.setClassName(this.getEditorClassName());
+        this._applyLayout();
         return false;
     };
     View.prototype.onFocusChanged = function (e) {
@@ -345,44 +344,25 @@ var View = /** @class */ (function (_super) {
         return visibleRange.left;
     };
     View.prototype.getTargetAtClientPoint = function (clientX, clientY) {
-        return this.pointerHandler.getTargetAtClientPoint(clientX, clientY);
+        var mouseTarget = this.pointerHandler.getTargetAtClientPoint(clientX, clientY);
+        if (!mouseTarget) {
+            return null;
+        }
+        return ViewOutgoingEvents.convertViewToModelMouseTarget(mouseTarget, this._context.model.coordinatesConverter);
     };
     View.prototype.createOverviewRuler = function (cssClassName) {
         return new OverviewRuler(this._context, cssClassName);
     };
     View.prototype.change = function (callback) {
         var _this = this;
-        var zonesHaveChanged = false;
-        this._renderOnce(function () {
-            var changeAccessor = {
-                addZone: function (zone) {
-                    zonesHaveChanged = true;
-                    return _this.viewZones.addZone(zone);
-                },
-                removeZone: function (id) {
-                    if (!id) {
-                        return;
-                    }
-                    zonesHaveChanged = _this.viewZones.removeZone(id) || zonesHaveChanged;
-                },
-                layoutZone: function (id) {
-                    if (!id) {
-                        return;
-                    }
-                    zonesHaveChanged = _this.viewZones.layoutZone(id) || zonesHaveChanged;
-                }
-            };
-            safeInvoke1Arg(callback, changeAccessor);
-            // Invalidate changeAccessor
-            changeAccessor.addZone = invalidFunc;
-            changeAccessor.removeZone = invalidFunc;
-            changeAccessor.layoutZone = invalidFunc;
+        return this._renderOnce(function () {
+            var zonesHaveChanged = _this.viewZones.changeViewZones(callback);
             if (zonesHaveChanged) {
                 _this._context.viewLayout.onHeightMaybeChanged();
                 _this._context.privateViewEventBus.emit(new viewEvents.ViewZonesChangedEvent());
             }
+            return zonesHaveChanged;
         });
-        return zonesHaveChanged;
     };
     View.prototype.render = function (now, everything) {
         if (everything) {
@@ -444,14 +424,6 @@ export { View };
 function safeInvokeNoArg(func) {
     try {
         return func();
-    }
-    catch (e) {
-        onUnexpectedError(e);
-    }
-}
-function safeInvoke1Arg(func, arg1) {
-    try {
-        return func(arg1);
     }
     catch (e) {
         onUnexpectedError(e);

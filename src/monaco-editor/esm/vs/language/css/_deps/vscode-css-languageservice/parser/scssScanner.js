@@ -29,6 +29,7 @@ var _BNG = '!'.charCodeAt(0);
 var _LAN = '<'.charCodeAt(0);
 var _RAN = '>'.charCodeAt(0);
 var _DOT = '.'.charCodeAt(0);
+var _ATS = '@'.charCodeAt(0);
 var customTokenValue = TokenType.CustomToken;
 export var VariableName = customTokenValue++;
 export var InterpolationFunction = customTokenValue++;
@@ -38,6 +39,9 @@ export var NotEqualsOperator = customTokenValue++;
 export var GreaterEqualsOperator = customTokenValue++;
 export var SmallerEqualsOperator = customTokenValue++;
 export var Ellipsis = customTokenValue++;
+export var Module = customTokenValue++;
+export var Forward = customTokenValue++;
+export var Use = customTokenValue++;
 var SCSSScanner = /** @class */ (function (_super) {
     __extends(SCSSScanner, _super);
     function SCSSScanner() {
@@ -83,6 +87,20 @@ var SCSSScanner = /** @class */ (function (_super) {
         // ellipis
         if (this.stream.advanceIfChars([_DOT, _DOT, _DOT])) {
             return this.finishToken(offset, Ellipsis);
+        }
+        // module loaders, @forward and @use
+        if (this.stream.advanceIfChar(_ATS)) {
+            var content = ['@'];
+            if (this.ident(content)) {
+                var keywordText = content.join('');
+                if (keywordText === '@forward') {
+                    return this.finishToken(offset, Forward, keywordText);
+                }
+                else if (keywordText === '@use') {
+                    return this.finishToken(offset, Use, keywordText);
+                }
+            }
+            this.stream.goBackTo(offset);
         }
         return _super.prototype.scanNext.call(this, offset);
     };

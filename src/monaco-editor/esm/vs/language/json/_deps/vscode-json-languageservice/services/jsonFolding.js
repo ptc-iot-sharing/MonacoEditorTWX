@@ -2,9 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Position } from '../_deps/vscode-languageserver-types/main.js';
-import { createScanner } from '../../jsonc-parser/main.js';
-import { FoldingRangeKind } from '../jsonLanguageTypes.js';
+import { createScanner } from './../../jsonc-parser/main.js';
+import { FoldingRangeKind, Position } from '../jsonLanguageTypes.js';
 export function getFoldingRanges(document, context) {
     var ranges = [];
     var nestingLevels = [];
@@ -86,6 +85,9 @@ export function getFoldingRanges(document, context) {
     var rangeLimit = context && context.rangeLimit;
     if (typeof rangeLimit !== 'number' || ranges.length <= rangeLimit) {
         return ranges;
+    }
+    if (context && context.onRangeLimitExceeded) {
+        context.onRangeLimitExceeded(document.uri);
     }
     var counts = [];
     for (var _i = 0, nestingLevels_1 = nestingLevels; _i < nestingLevels_1.length; _i++) {

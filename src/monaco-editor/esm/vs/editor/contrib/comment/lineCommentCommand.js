@@ -281,7 +281,7 @@ var LineCommentCommand = /** @class */ (function () {
      * Adjust insertion points to have them vertically aligned in the add line comment case
      */
     LineCommentCommand._normalizeInsertionPoint = function (model, lines, startLineNumber, tabSize) {
-        var minVisibleColumn = Number.MAX_VALUE;
+        var minVisibleColumn = 1073741824 /* MAX_SAFE_SMALL_INTEGER */;
         var j;
         var lenJ;
         for (var i = 0, len = lines.length; i < len; i++) {

@@ -66,7 +66,7 @@ var ViewModelDecorations = /** @class */ (function () {
         return this._cachedModelDecorationsResolver;
     };
     ViewModelDecorations.prototype._getDecorationsViewportData = function (viewportRange) {
-        var modelDecorations = this._linesCollection.getDecorationsInRange(viewportRange, this.editorId, this.configuration.editor.readOnly);
+        var modelDecorations = this._linesCollection.getDecorationsInRange(viewportRange, this.editorId, this.configuration.options.get(65 /* readOnly */));
         var startLineNumber = viewportRange.startLineNumber;
         var endLineNumber = viewportRange.endLineNumber;
         var decorationsInViewport = [], decorationsInViewportLen = 0;

@@ -6,7 +6,7 @@ import './standalone-tokens.css';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { OpenerService } from '../../browser/services/openerService.js';
 import { DiffNavigator } from '../../browser/widget/diffNavigator.js';
-import * as editorOptions from '../../common/config/editorOptions.js';
+import { ConfigurationChangedEvent } from '../../common/config/editorOptions.js';
 import { BareFontInfo, FontInfo } from '../../common/config/fontInfo.js';
 import * as editorCommon from '../../common/editorCommon.js';
 import { FindMatch, TextModelResolvedOptions } from '../../common/model.js';
@@ -31,11 +31,12 @@ import { INotificationService } from '../../../platform/notification/common/noti
 import { IOpenerService } from '../../../platform/opener/common/opener.js';
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 import { clearAllFontInfos } from '../../browser/config/configuration.js';
+import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
 function withAllStandaloneServices(domElement, override, callback) {
     var services = new DynamicStandaloneServices(domElement, override);
     var simpleEditorModelResolverService = null;
     if (!services.has(ITextModelService)) {
-        simpleEditorModelResolverService = new SimpleEditorModelResolverService();
+        simpleEditorModelResolverService = new SimpleEditorModelResolverService(StaticServices.modelService.get());
         services.set(ITextModelService, simpleEditorModelResolverService);
     }
     if (!services.has(IOpenerService)) {
@@ -74,7 +75,7 @@ export function onDidCreateEditor(listener) {
  */
 export function createDiffEditor(domElement, options, override) {
     return withAllStandaloneServices(domElement, override || {}, function (services) {
-        return new StandaloneDiffEditor(domElement, options, services, services.get(IInstantiationService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IEditorWorkerService), services.get(ICodeEditorService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService), services.get(IContextMenuService), null);
+        return new StandaloneDiffEditor(domElement, options, services, services.get(IInstantiationService), services.get(IContextKeyService), services.get(IKeybindingService), services.get(IContextViewService), services.get(IEditorWorkerService), services.get(ICodeEditorService), services.get(IStandaloneThemeService), services.get(INotificationService), services.get(IConfigurationService), services.get(IContextMenuService), services.get(IEditorProgressService), null);
     });
 }
 export function createDiffNavigator(diffEditor, opts) {
@@ -264,7 +265,6 @@ export function createMonacoEditorAPI() {
         remeasureFonts: remeasureFonts,
         // enums
         ScrollbarVisibility: standaloneEnums.ScrollbarVisibility,
-        WrappingIndent: standaloneEnums.WrappingIndent,
         OverviewRulerLane: standaloneEnums.OverviewRulerLane,
         MinimapPosition: standaloneEnums.MinimapPosition,
         EndOfLinePreference: standaloneEnums.EndOfLinePreference,
@@ -273,20 +273,17 @@ export function createMonacoEditorAPI() {
         TrackedRangeStickiness: standaloneEnums.TrackedRangeStickiness,
         CursorChangeReason: standaloneEnums.CursorChangeReason,
         MouseTargetType: standaloneEnums.MouseTargetType,
-        TextEditorCursorStyle: standaloneEnums.TextEditorCursorStyle,
-        TextEditorCursorBlinkingStyle: standaloneEnums.TextEditorCursorBlinkingStyle,
         ContentWidgetPositionPreference: standaloneEnums.ContentWidgetPositionPreference,
         OverlayWidgetPositionPreference: standaloneEnums.OverlayWidgetPositionPreference,
         RenderMinimap: standaloneEnums.RenderMinimap,
         ScrollType: standaloneEnums.ScrollType,
-        RenderLineNumbersType: standaloneEnums.RenderLineNumbersType,
         // classes
-        InternalEditorOptions: editorOptions.InternalEditorOptions,
+        ConfigurationChangedEvent: ConfigurationChangedEvent,
         BareFontInfo: BareFontInfo,
         FontInfo: FontInfo,
         TextModelResolvedOptions: TextModelResolvedOptions,
         FindMatch: FindMatch,
         // vars
-        EditorType: editorCommon.EditorType
+        EditorType: editorCommon.EditorType,
     };
 }

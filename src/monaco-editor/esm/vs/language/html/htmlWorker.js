@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 import * as htmlService from './_deps/vscode-html-languageservice/htmlLanguageService.js';
-import * as ls from './_deps/vscode-languageserver-types/main.js';
 import * as poli from './fillers/polyfills.js';
 poli.polyfill();
 var HTMLWorker = /** @class */ (function () {
@@ -51,17 +50,28 @@ var HTMLWorker = /** @class */ (function () {
         var symbols = this._languageService.findDocumentSymbols(document, htmlDocument);
         return Promise.resolve(symbols);
     };
-    HTMLWorker.prototype.provideFoldingRanges = function (uri, context) {
+    HTMLWorker.prototype.getFoldingRanges = function (uri, context) {
         var document = this._getTextDocument(uri);
         var ranges = this._languageService.getFoldingRanges(document, context);
         return Promise.resolve(ranges);
+    };
+    HTMLWorker.prototype.getSelectionRanges = function (uri, positions) {
+        var document = this._getTextDocument(uri);
+        var ranges = this._languageService.getSelectionRanges(document, positions);
+        return Promise.resolve(ranges);
+    };
+    HTMLWorker.prototype.doRename = function (uri, position, newName) {
+        var document = this._getTextDocument(uri);
+        var htmlDocument = this._languageService.parseHTMLDocument(document);
+        var renames = this._languageService.doRename(document, position, newName, htmlDocument);
+        return Promise.resolve(renames);
     };
     HTMLWorker.prototype._getTextDocument = function (uri) {
         var models = this._ctx.getMirrorModels();
         for (var _i = 0, models_1 = models; _i < models_1.length; _i++) {
             var model = models_1[_i];
             if (model.uri.toString() === uri) {
-                return ls.TextDocument.create(uri, this._languageId, model.version, model.getValue());
+                return htmlService.TextDocument.create(uri, this._languageId, model.version, model.getValue());
             }
         }
         return null;

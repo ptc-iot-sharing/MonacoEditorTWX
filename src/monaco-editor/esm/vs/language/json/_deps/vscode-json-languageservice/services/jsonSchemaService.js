@@ -2,11 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as Json from '../../jsonc-parser/main.js';
-import { URI } from '../../vscode-uri/index.js';
+import * as Json from './../../jsonc-parser/main.js';
+import { URI } from './../../vscode-uri/index.js';
 import * as Strings from '../utils/strings.js';
 import * as Parser from '../parser/jsonParser.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var FilePatternAssociation = /** @class */ (function () {
     function FilePatternAssociation(pattern) {
@@ -276,13 +276,25 @@ var JSONSchemaService = /** @class */ (function () {
                 // more concise error message, URL and context are attached by caller anyways
                 errorMessage = errorSplit[1];
             }
-            return new UnresolvedSchema({}, [errorMessage]);
+            if (Strings.endsWith(errorMessage, '.')) {
+                errorMessage = errorMessage.substr(0, errorMessage.length - 1);
+            }
+            return new UnresolvedSchema({}, [localize('json.schema.nocontent', 'Unable to load schema from \'{0}\': {1}.', toDisplayString(url), errorMessage)]);
         });
     };
     JSONSchemaService.prototype.resolveSchemaContent = function (schemaToResolve, schemaURL, dependencies) {
         var _this = this;
         var resolveErrors = schemaToResolve.errors.slice(0);
         var schema = schemaToResolve.schema;
+        if (schema.$schema) {
+            var id = this.normalizeId(schema.$schema);
+            if (id === 'http://json-schema.org/draft-03/schema') {
+                return this.promise.resolve(new ResolvedSchema({}, [localize('json.schema.draft03.notsupported', "Draft-03 schemas are not supported.")]));
+            }
+            else if (id === 'https://json-schema.org/draft/2019-09/schema') {
+                schemaToResolve.errors.push(localize('json.schema.draft201909.notsupported', "Draft 2019-09 schemas are not yet fully supported."));
+            }
+        }
         var contextService = this.contextService;
         var findSection = function (schema, path) {
             if (!path) {

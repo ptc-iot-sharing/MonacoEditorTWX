@@ -26,6 +26,13 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 import * as browser from './browser.js';
 import { domEvent } from './event.js';
 import { StandardKeyboardEvent } from './keyboardEvent.js';
@@ -37,6 +44,7 @@ import { Disposable, toDisposable } from '../common/lifecycle.js';
 import * as platform from '../common/platform.js';
 import { coalesce } from '../common/arrays.js';
 import { Schemas, RemoteAuthorities } from '../common/network.js';
+import { BrowserFeatures } from './canIUse.js';
 export function clearNode(node) {
     while (node.firstChild) {
         node.removeChild(node.firstChild);
@@ -206,27 +214,27 @@ export var removeClass = _classList.removeClass.bind(_classList);
 export var removeClasses = _classList.removeClasses.bind(_classList);
 export var toggleClass = _classList.toggleClass.bind(_classList);
 var DomListener = /** @class */ (function () {
-    function DomListener(node, type, handler, useCapture) {
+    function DomListener(node, type, handler, options) {
         this._node = node;
         this._type = type;
         this._handler = handler;
-        this._useCapture = (useCapture || false);
-        this._node.addEventListener(this._type, this._handler, this._useCapture);
+        this._options = (options || false);
+        this._node.addEventListener(this._type, this._handler, this._options);
     }
     DomListener.prototype.dispose = function () {
         if (!this._handler) {
             // Already disposed
             return;
         }
-        this._node.removeEventListener(this._type, this._handler, this._useCapture);
+        this._node.removeEventListener(this._type, this._handler, this._options);
         // Prevent leakers from holding on to the dom or handler func
         this._node = null;
         this._handler = null;
     };
     return DomListener;
 }());
-export function addDisposableListener(node, type, handler, useCapture) {
-    return new DomListener(node, type, handler, useCapture);
+export function addDisposableListener(node, type, handler, useCaptureOrOptions) {
+    return new DomListener(node, type, handler, useCaptureOrOptions);
 }
 function _wrapAsStandardMouseEvent(handler) {
     return function (e) {
@@ -248,8 +256,31 @@ export var addStandardDisposableListener = function addStandardDisposableListene
     }
     return addDisposableListener(node, type, wrapHandler, useCapture);
 };
+export var addStandardDisposableGenericMouseDownListner = function addStandardDisposableListener(node, handler, useCapture) {
+    var wrapHandler = _wrapAsStandardMouseEvent(handler);
+    return addDisposableGenericMouseDownListner(node, wrapHandler, useCapture);
+};
+export function addDisposableGenericMouseDownListner(node, handler, useCapture) {
+    return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_DOWN : EventType.MOUSE_DOWN, handler, useCapture);
+}
+export function addDisposableGenericMouseUpListner(node, handler, useCapture) {
+    return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_UP : EventType.MOUSE_UP, handler, useCapture);
+}
 export function addDisposableNonBubblingMouseOutListener(node, handler) {
     return addDisposableListener(node, 'mouseout', function (e) {
+        // Mouse out bubbles, so this is an attempt to ignore faux mouse outs coming from children elements
+        var toElement = (e.relatedTarget || e.target);
+        while (toElement && toElement !== node) {
+            toElement = toElement.parentNode;
+        }
+        if (toElement === node) {
+            return;
+        }
+        handler(e);
+    });
+}
+export function addDisposableNonBubblingPointerOutListener(node, handler) {
+    return addDisposableListener(node, 'pointerout', function (e) {
         // Mouse out bubbles, so this is an attempt to ignore faux mouse outs coming from children elements
         var toElement = (e.relatedTarget || e.target);
         while (toElement && toElement !== node) {
@@ -664,6 +695,9 @@ export var EventType = {
     MOUSE_OUT: 'mouseout',
     MOUSE_ENTER: 'mouseenter',
     MOUSE_LEAVE: 'mouseleave',
+    POINTER_UP: 'pointerup',
+    POINTER_DOWN: 'pointerdown',
+    POINTER_MOVE: 'pointermove',
     CONTEXT_MENU: 'contextmenu',
     WHEEL: 'wheel',
     // Keyboard
@@ -770,6 +804,17 @@ var FocusTracker = /** @class */ (function (_super) {
                 }, 0);
             }
         };
+        _this._refreshStateHandler = function () {
+            var currentNodeHasFocus = isAncestor(document.activeElement, element);
+            if (currentNodeHasFocus !== hasFocus) {
+                if (hasFocus) {
+                    onBlur();
+                }
+                else {
+                    onFocus();
+                }
+            }
+        };
         _this._register(domEvent(element, EventType.FOCUS, true)(onFocus));
         _this._register(domEvent(element, EventType.BLUR, true)(onBlur));
         return _this;
@@ -819,6 +864,9 @@ function _$(namespace, description, attrs) {
     }
     Object.keys(attrs).forEach(function (name) {
         var value = attrs[name];
+        if (typeof value === 'undefined') {
+            return;
+        }
         if (/^on\w+$/.test(name)) {
             result[name] = value;
         }
@@ -847,14 +895,14 @@ export function $(description, attrs) {
     for (var _i = 2; _i < arguments.length; _i++) {
         children[_i - 2] = arguments[_i];
     }
-    return _$.apply(void 0, [Namespace.HTML, description, attrs].concat(children));
+    return _$.apply(void 0, __spreadArrays([Namespace.HTML, description, attrs], children));
 }
 $.SVG = function (description, attrs) {
     var children = [];
     for (var _i = 2; _i < arguments.length; _i++) {
         children[_i - 2] = arguments[_i];
     }
-    return _$.apply(void 0, [Namespace.SVG, description, attrs].concat(children));
+    return _$.apply(void 0, __spreadArrays([Namespace.SVG, description, attrs], children));
 };
 export function show() {
     var elements = [];
@@ -953,7 +1001,7 @@ export function asDomUri(uri) {
         return uri;
     }
     if (Schemas.vscodeRemote === uri.scheme) {
-        return RemoteAuthorities.rewrite(uri.authority, uri.path);
+        return RemoteAuthorities.rewrite(uri);
     }
     return uri;
 }

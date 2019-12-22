@@ -2,6 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { normalizeMarkupContent } from '../utils/markup.js';
 var HTMLDataProvider = /** @class */ (function () {
     /**
      * Currently, unversioned data uses the V1 implementation
@@ -46,11 +47,7 @@ var HTMLDataProvider = /** @class */ (function () {
     HTMLDataProvider.prototype.provideAttributes = function (tag) {
         var attributes = [];
         var processAttribute = function (a) {
-            attributes.push({
-                name: a.name,
-                description: a.description,
-                valueSet: a.valueSet
-            });
+            attributes.push(a);
         };
         if (this._tagMap[tag]) {
             this._tagMap[tag].attributes.forEach(function (a) {
@@ -93,3 +90,33 @@ var HTMLDataProvider = /** @class */ (function () {
     return HTMLDataProvider;
 }());
 export { HTMLDataProvider };
+/**
+ * Generate Documentation used in hover/complete
+ * From `documentation` and `references`
+ */
+export function generateDocumentation(item, doesSupportMarkdown) {
+    var result = {
+        kind: doesSupportMarkdown ? 'markdown' : 'plaintext',
+        value: ''
+    };
+    if (item.description) {
+        var normalizedDescription = normalizeMarkupContent(item.description);
+        if (normalizedDescription) {
+            result.value += normalizedDescription.value;
+        }
+    }
+    if (item.references && item.references.length > 0) {
+        result.value += "\n\n";
+        if (doesSupportMarkdown) {
+            result.value += item.references.map(function (r) {
+                return "[" + r.name + "](" + r.url + ")";
+            }).join(' | ');
+        }
+        else {
+            result.value += item.references.map(function (r) {
+                return r.name + ": " + r.url;
+            }).join('\n');
+        }
+    }
+    return result;
+}

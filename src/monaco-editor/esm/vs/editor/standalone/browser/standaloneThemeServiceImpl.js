@@ -119,6 +119,9 @@ var StandaloneTheme = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    StandaloneTheme.prototype.getTokenStyleMetadata = function (type, modifiers) {
+        return undefined;
+    };
     return StandaloneTheme;
 }());
 function isBuiltinTheme(themeName) {

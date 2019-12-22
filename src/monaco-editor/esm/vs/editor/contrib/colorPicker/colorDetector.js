@@ -87,10 +87,7 @@ var ColorDetector = /** @class */ (function (_super) {
                 return colorDecorators['enable'];
             }
         }
-        return this._editor.getConfiguration().contribInfo.colorDecorators;
-    };
-    ColorDetector.prototype.getId = function () {
-        return ColorDetector.ID;
+        return this._editor.getOption(12 /* colorDecorators */);
     };
     ColorDetector.get = function (editor) {
         return editor.getContribution(this.ID);
@@ -238,4 +235,4 @@ var ColorDetector = /** @class */ (function (_super) {
     return ColorDetector;
 }(Disposable));
 export { ColorDetector };
-registerEditorContribution(ColorDetector);
+registerEditorContribution(ColorDetector.ID, ColorDetector);

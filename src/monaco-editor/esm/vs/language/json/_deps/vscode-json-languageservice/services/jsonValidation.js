@@ -3,9 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { UnresolvedSchema } from './jsonSchemaService.js';
-import { Diagnostic, DiagnosticSeverity, Range } from '../_deps/vscode-languageserver-types/main.js';
-import { ErrorCode } from '../jsonLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import { ErrorCode, Diagnostic, DiagnosticSeverity, Range } from '../jsonLanguageTypes.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 import { isBoolean } from '../utils/objects.js';
 var localize = nls.loadMessageBundle();
 var JSONValidation = /** @class */ (function () {
@@ -116,8 +115,11 @@ function schemaAllowsComments(schemaRef) {
 }
 function schemaAllowsTrailingCommas(schemaRef) {
     if (schemaRef && typeof schemaRef === 'object') {
-        if (isBoolean(schemaRef.allowsTrailingCommas)) {
-            return schemaRef.allowsTrailingCommas;
+        if (isBoolean(schemaRef.allowTrailingCommas)) {
+            return schemaRef.allowTrailingCommas;
+        }
+        if (isBoolean(schemaRef['allowsTrailingCommas'])) { // deprecated
+            return schemaRef['allowsTrailingCommas'];
         }
         if (schemaRef.allOf) {
             for (var _i = 0, _a = schemaRef.allOf; _i < _a.length; _i++) {

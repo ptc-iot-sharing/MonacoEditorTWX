@@ -7,20 +7,34 @@ import * as nodes from '../parser/cssNodes.js';
 import { Symbols } from '../parser/cssSymbolScope.js';
 import * as languageFacts from '../languageFacts/facts.js';
 import * as strings from '../utils/strings.js';
-import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from '../../vscode-languageserver-types/main.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat, MarkupKind, CompletionItemTag } from '../cssLanguageTypes.js';
+import * as nls from './../../../fillers/vscode-nls.js';
+import { isDefined } from '../utils/objects.js';
 var localize = nls.loadMessageBundle();
 var SnippetFormat = InsertTextFormat.Snippet;
+var SortTexts;
+(function (SortTexts) {
+    // char code 32, comes before everything
+    SortTexts["Enums"] = " ";
+    SortTexts["Normal"] = "d";
+    SortTexts["VendorPrefixed"] = "x";
+    SortTexts["Term"] = "y";
+    SortTexts["Variable"] = "z";
+})(SortTexts || (SortTexts = {}));
 var CSSCompletion = /** @class */ (function () {
-    function CSSCompletion(variablePrefix) {
+    function CSSCompletion(variablePrefix, clientCapabilities) {
         if (variablePrefix === void 0) { variablePrefix = null; }
+        this.variablePrefix = variablePrefix;
+        this.clientCapabilities = clientCapabilities;
         this.completionParticipants = [];
         this.valueTypes = [
             nodes.NodeType.Identifier, nodes.NodeType.Value, nodes.NodeType.StringLiteral, nodes.NodeType.URILiteral, nodes.NodeType.NumericValue,
             nodes.NodeType.HexColorValue, nodes.NodeType.VariableName, nodes.NodeType.Prio
         ];
-        this.variablePrefix = variablePrefix;
     }
+    CSSCompletion.prototype.configure = function (settings) {
+        this.settings = settings;
+    };
     CSSCompletion.prototype.getSymbolContext = function () {
         if (!this.symbolContext) {
             this.symbolContext = new Symbols(this.styleSheet);
@@ -101,11 +115,11 @@ var CSSCompletion = /** @class */ (function () {
                 else if (node.type === nodes.NodeType.URILiteral) {
                     this.getCompletionForUriLiteralValue(node, result);
                 }
-                else if (node.type === nodes.NodeType.StringLiteral && node.parent.type === nodes.NodeType.Import) {
-                    this.getCompletionForImportPath(node, result);
-                }
                 else if (node.parent === null) {
                     this.getCompletionForTopLevel(result);
+                }
+                else if (node.type === nodes.NodeType.StringLiteral && this.isImportPathParent(node.parent.type)) {
+                    this.getCompletionForImportPath(node, result);
                     // } else if (node instanceof nodes.Variable) {
                     // this.getCompletionsForVariableDeclaration()
                 }
@@ -135,15 +149,30 @@ var CSSCompletion = /** @class */ (function () {
             this.nodePath = null;
         }
     };
+    CSSCompletion.prototype.isImportPathParent = function (type) {
+        return type === nodes.NodeType.Import;
+    };
     CSSCompletion.prototype.finalize = function (result) {
-        var needsSortText = result.items.some(function (i) { return !!i.sortText; });
+        var needsSortText = result.items.some(function (i) { return !!i.sortText || i.label[0] === '-'; });
         if (needsSortText) {
-            for (var _i = 0, _a = result.items; _i < _a.length; _i++) {
-                var i = _a[_i];
-                if (!i.sortText) {
-                    i.sortText = 'd';
+            result.items.forEach(function (item, index) {
+                if (!item.sortText) {
+                    if (item.label[0] === '-') {
+                        item.sortText = SortTexts.VendorPrefixed + '_' + computeRankNumber(index);
+                    }
+                    else {
+                        item.sortText = SortTexts.Normal + '_' + computeRankNumber(index);
+                    }
                 }
-            }
+                else {
+                    if (item.label[0] === '-') {
+                        item.sortText += SortTexts.VendorPrefixed + '_' + computeRankNumber(index);
+                    }
+                    else {
+                        item.sortText += SortTexts.Normal + '_' + computeRankNumber(index);
+                    }
+                }
+            });
         }
         return result;
     };
@@ -165,6 +194,8 @@ var CSSCompletion = /** @class */ (function () {
     };
     CSSCompletion.prototype.getPropertyProposals = function (declaration, result) {
         var _this = this;
+        var triggerPropertyValueCompletion = this.isTriggerPropertyValueCompletionEnabled;
+        var completePropertyWithSemicolon = this.isCompletePropertyWithSemicolonEnabled;
         var properties = languageFacts.cssDataManager.getProperties();
         properties.forEach(function (entry) {
             var range;
@@ -183,23 +214,35 @@ var CSSCompletion = /** @class */ (function () {
                 insertText = entry.name + ': ';
                 retrigger = true;
             }
+            // Empty .selector { | } case
+            if (!declaration && completePropertyWithSemicolon) {
+                insertText += '$0;';
+            }
+            // Cases such as .selector { p; } or .selector { p:; }
+            if (declaration && !declaration.semicolonPosition) {
+                if (completePropertyWithSemicolon && _this.offset >= _this.textDocument.offsetAt(range.end)) {
+                    insertText += '$0;';
+                }
+            }
             var item = {
                 label: entry.name,
-                documentation: languageFacts.getEntryDescription(entry),
+                documentation: languageFacts.getEntryDescription(entry, _this.doesSupportMarkdown()),
+                tags: isDeprecated(entry) ? [CompletionItemTag.Deprecated] : [],
                 textEdit: TextEdit.replace(range, insertText),
+                insertTextFormat: InsertTextFormat.Snippet,
                 kind: CompletionItemKind.Property
             };
             if (!entry.restrictions) {
                 retrigger = false;
             }
-            if (retrigger) {
+            if (triggerPropertyValueCompletion && retrigger) {
                 item.command = {
                     title: 'Suggest',
                     command: 'editor.action.triggerSuggest'
                 };
             }
             if (strings.startsWith(entry.name, '-')) {
-                item.sortText = 'x';
+                item.sortText = SortTexts.VendorPrefixed;
             }
             result.items.push(item);
         });
@@ -213,11 +256,35 @@ var CSSCompletion = /** @class */ (function () {
         });
         return result;
     };
+    Object.defineProperty(CSSCompletion.prototype, "isTriggerPropertyValueCompletionEnabled", {
+        get: function () {
+            if (!this.settings ||
+                !this.settings.completion ||
+                this.settings.completion.triggerPropertyValueCompletion === undefined) {
+                return true;
+            }
+            return this.settings.completion.triggerPropertyValueCompletion;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(CSSCompletion.prototype, "isCompletePropertyWithSemicolonEnabled", {
+        get: function () {
+            if (!this.settings ||
+                !this.settings.completion ||
+                this.settings.completion.completePropertyWithSemicolon === undefined) {
+                return true;
+            }
+            return this.settings.completion.completePropertyWithSemicolon;
+        },
+        enumerable: true,
+        configurable: true
+    });
     CSSCompletion.prototype.getCompletionsForDeclarationValue = function (node, result) {
         var _this = this;
         var propertyName = node.getFullPropertyName();
         var entry = languageFacts.cssDataManager.getProperty(propertyName);
-        var existingNode = node.getValue();
+        var existingNode = node.getValue() || null;
         while (existingNode && existingNode.hasChildren()) {
             existingNode = existingNode.findChildAtOffset(this.offset, false);
         }
@@ -291,25 +358,25 @@ var CSSCompletion = /** @class */ (function () {
         if (entry.values) {
             for (var _i = 0, _a = entry.values; _i < _a.length; _i++) {
                 var value = _a[_i];
-                if (languageFacts.supportedInMoreThanOneBrowser(value)) {
-                    var insertString = value.name;
-                    var insertTextFormat = void 0;
-                    if (strings.endsWith(insertString, ')')) {
-                        var from = insertString.lastIndexOf('(');
-                        if (from !== -1) {
-                            insertString = insertString.substr(0, from) + '($1)';
-                            insertTextFormat = SnippetFormat;
-                        }
+                var insertString = value.name;
+                var insertTextFormat = void 0;
+                if (strings.endsWith(insertString, ')')) {
+                    var from = insertString.lastIndexOf('(');
+                    if (from !== -1) {
+                        insertString = insertString.substr(0, from) + '($1)';
+                        insertTextFormat = SnippetFormat;
                     }
-                    var item = {
-                        label: value.name,
-                        documentation: languageFacts.getEntryDescription(value),
-                        textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertString),
-                        kind: CompletionItemKind.Value,
-                        insertTextFormat: insertTextFormat
-                    };
-                    result.items.push(item);
                 }
+                var item = {
+                    label: value.name,
+                    documentation: languageFacts.getEntryDescription(value, this.doesSupportMarkdown()),
+                    tags: isDeprecated(entry) ? [CompletionItemTag.Deprecated] : [],
+                    textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertString),
+                    sortText: SortTexts.Enums,
+                    kind: CompletionItemKind.Value,
+                    insertTextFormat: insertTextFormat
+                };
+                result.items.push(item);
             }
         }
         return result;
@@ -336,20 +403,23 @@ var CSSCompletion = /** @class */ (function () {
         for (var _i = 0, symbols_1 = symbols; _i < symbols_1.length; _i++) {
             var symbol = symbols_1[_i];
             var insertText = strings.startsWith(symbol.name, '--') ? "var(" + symbol.name + ")" : symbol.name;
-            var suggest = {
+            var completionItem = {
                 label: symbol.name,
                 documentation: symbol.value ? strings.getLimitedString(symbol.value) : symbol.value,
                 textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
                 kind: CompletionItemKind.Variable,
-                sortText: 'z'
+                sortText: SortTexts.Variable
             };
+            if (typeof completionItem.documentation === 'string' && isColorString(completionItem.documentation)) {
+                completionItem.kind = CompletionItemKind.Color;
+            }
             if (symbol.node.type === nodes.NodeType.FunctionParameter) {
                 var mixinNode = (symbol.node.getParent());
                 if (mixinNode.type === nodes.NodeType.MixinDeclaration) {
-                    suggest.detail = localize('completion.argument', 'argument from \'{0}\'', mixinNode.getName());
+                    completionItem.detail = localize('completion.argument', 'argument from \'{0}\'', mixinNode.getName());
                 }
             }
-            result.items.push(suggest);
+            result.items.push(completionItem);
         }
         return result;
     };
@@ -360,12 +430,16 @@ var CSSCompletion = /** @class */ (function () {
         });
         for (var _i = 0, symbols_2 = symbols; _i < symbols_2.length; _i++) {
             var symbol = symbols_2[_i];
-            result.items.push({
+            var completionItem = {
                 label: symbol.name,
                 documentation: symbol.value ? strings.getLimitedString(symbol.value) : symbol.value,
                 textEdit: TextEdit.replace(this.getCompletionRange(null), symbol.name),
                 kind: CompletionItemKind.Variable
-            });
+            };
+            if (typeof completionItem.documentation === 'string' && isColorString(completionItem.documentation)) {
+                completionItem.kind = CompletionItemKind.Color;
+            }
+            result.items.push(completionItem);
         }
         return result;
     };
@@ -404,9 +478,12 @@ var CSSCompletion = /** @class */ (function () {
         return result;
     };
     CSSCompletion.prototype.getCompletionRange = function (existingNode) {
-        if (existingNode && existingNode.offset <= this.offset) {
+        if (existingNode && existingNode.offset <= this.offset && this.offset <= existingNode.end) {
             var end = existingNode.end !== -1 ? this.textDocument.positionAt(existingNode.end) : this.position;
-            return Range.create(this.textDocument.positionAt(existingNode.offset), end);
+            var start = this.textDocument.positionAt(existingNode.offset);
+            if (start.line === end.line) {
+                return Range.create(start, end); // multi line edits are not allowed
+            }
         }
         return this.defaultReplaceRange;
     };
@@ -439,7 +516,7 @@ var CSSCompletion = /** @class */ (function () {
         }
         var _loop_1 = function (p) {
             var tabStop = 1;
-            var replaceFunction = function (match, p1) { return '${' + tabStop++ + ':' + p1 + '}'; };
+            var replaceFunction = function (_match, p1) { return '${' + tabStop++ + ':' + p1 + '}'; };
             var insertText = p.func.replace(/\[?\$(\w+)\]?/g, replaceFunction);
             result.items.push({
                 label: p.func.substr(0, p.func.indexOf('(')),
@@ -581,7 +658,8 @@ var CSSCompletion = /** @class */ (function () {
             result.items.push({
                 label: entry.name,
                 textEdit: TextEdit.replace(_this.getCompletionRange(null), entry.name),
-                documentation: languageFacts.getEntryDescription(entry),
+                documentation: languageFacts.getEntryDescription(entry, _this.doesSupportMarkdown()),
+                tags: isDeprecated(entry) ? [CompletionItemTag.Deprecated] : [],
                 kind: CompletionItemKind.Keyword
             });
         });
@@ -614,12 +692,13 @@ var CSSCompletion = /** @class */ (function () {
             var item = {
                 label: entry.name,
                 textEdit: TextEdit.replace(_this.getCompletionRange(existingNode), insertText),
-                documentation: languageFacts.getEntryDescription(entry),
+                documentation: languageFacts.getEntryDescription(entry, _this.doesSupportMarkdown()),
+                tags: isDeprecated(entry) ? [CompletionItemTag.Deprecated] : [],
                 kind: CompletionItemKind.Function,
                 insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
             };
             if (strings.startsWith(entry.name, ':-')) {
-                item.sortText = 'x';
+                item.sortText = SortTexts.VendorPrefixed;
             }
             result.items.push(item);
         });
@@ -629,12 +708,13 @@ var CSSCompletion = /** @class */ (function () {
             var item = {
                 label: entry.name,
                 textEdit: TextEdit.replace(_this.getCompletionRange(existingNode), insertText),
-                documentation: languageFacts.getEntryDescription(entry),
+                documentation: languageFacts.getEntryDescription(entry, _this.doesSupportMarkdown()),
+                tags: isDeprecated(entry) ? [CompletionItemTag.Deprecated] : [],
                 kind: CompletionItemKind.Function,
                 insertTextFormat: entry.name !== insertText ? SnippetFormat : void 0
             };
             if (strings.startsWith(entry.name, '::-')) {
-                item.sortText = 'x';
+                item.sortText = SortTexts.VendorPrefixed;
             }
             result.items.push(item);
         });
@@ -658,10 +738,10 @@ var CSSCompletion = /** @class */ (function () {
         }
         var visited = {};
         visited[this.currentWord] = true;
-        var textProvider = this.styleSheet.getTextProvider();
+        var docText = this.textDocument.getText();
         this.styleSheet.accept(function (n) {
             if (n.type === nodes.NodeType.SimpleSelector && n.length > 0) {
-                var selector = textProvider(n.offset, n.length);
+                var selector = docText.substr(n.offset, n.length);
                 if (selector.charAt(0) === '.' && !visited[selector]) {
                     visited[selector] = true;
                     result.items.push({
@@ -717,14 +797,15 @@ var CSSCompletion = /** @class */ (function () {
         return result;
     };
     CSSCompletion.prototype.getCompletionsForVariableDeclaration = function (declaration, result) {
-        if (this.offset > declaration.colonPosition) {
+        if (this.offset && isDefined(declaration.colonPosition) && this.offset > declaration.colonPosition) {
             this.getVariableProposals(declaration.getValue(), result);
         }
         return result;
     };
     CSSCompletion.prototype.getCompletionsForExpression = function (expression, result) {
-        if (expression.getParent() instanceof nodes.FunctionArgument) {
-            this.getCompletionsForFunctionArgument(expression.getParent(), expression.getParent().getParent(), result);
+        var parent = expression.getParent();
+        if (parent instanceof nodes.FunctionArgument) {
+            this.getCompletionsForFunctionArgument(parent, parent.getParent(), result);
             return result;
         }
         var declaration = expression.findParent(nodes.NodeType.Declaration);
@@ -742,7 +823,8 @@ var CSSCompletion = /** @class */ (function () {
         return result;
     };
     CSSCompletion.prototype.getCompletionsForFunctionArgument = function (arg, func, result) {
-        if (func.getIdentifier().getText() === 'var') {
+        var identifier = func.getIdentifier();
+        if (identifier && identifier.matches('var')) {
             if (!func.getArguments().hasChildren() || func.getArguments().getChild(0) === arg) {
                 this.getVariableProposalsForCSSVarFunction(result);
             }
@@ -788,14 +870,14 @@ var CSSCompletion = /** @class */ (function () {
             textEdit: TextEdit.replace(this.getCompletionRange(existingNode), insertText),
             insertTextFormat: SnippetFormat,
             kind: CompletionItemKind.Function,
-            sortText: 'z'
+            sortText: SortTexts.Term
         };
     };
     CSSCompletion.prototype.getCompletionsForSupportsCondition = function (supportsCondition, result) {
         var child = supportsCondition.findFirstChildBeforeOffset(this.offset);
         if (child) {
             if (child instanceof nodes.Declaration) {
-                if (!isDefined(child.colonPosition || this.offset <= child.colonPosition)) {
+                if (!isDefined(child.colonPosition) || this.offset <= child.colonPosition) {
                     return this.getCompletionsForDeclarationProperty(child, result);
                 }
                 else {
@@ -831,7 +913,7 @@ var CSSCompletion = /** @class */ (function () {
         var position;
         var range;
         // No children, empty value
-        if (uriLiteralNode.getChildren().length === 0) {
+        if (!uriLiteralNode.hasChildren()) {
             uriValue = '';
             position = this.position;
             var emptyURIValuePosition = this.textDocument.positionAt(uriLiteralNode.offset + 'url('.length);
@@ -867,9 +949,44 @@ var CSSCompletion = /** @class */ (function () {
         });
         return result;
     };
+    CSSCompletion.prototype.doesSupportMarkdown = function () {
+        if (!isDefined(this.supportsMarkdown)) {
+            if (!isDefined(this.clientCapabilities)) {
+                this.supportsMarkdown = true;
+                return this.supportsMarkdown;
+            }
+            var completion = this.clientCapabilities.textDocument && this.clientCapabilities.textDocument.completion;
+            this.supportsMarkdown = completion && completion.completionItem && Array.isArray(completion.completionItem.documentationFormat) && completion.completionItem.documentationFormat.indexOf(MarkupKind.Markdown) !== -1;
+        }
+        return this.supportsMarkdown;
+    };
     return CSSCompletion;
 }());
 export { CSSCompletion };
+function isDeprecated(entry) {
+    if (entry.status && (entry.status === 'nonstandard' || entry.status === 'obsolete')) {
+        return true;
+    }
+    return false;
+}
+/**
+ * Rank number should all be same length strings
+ */
+function computeRankNumber(n) {
+    var nstr = n.toString();
+    switch (nstr.length) {
+        case 4:
+            return nstr;
+        case 3:
+            return '0' + nstr;
+        case 2:
+            return '00' + nstr;
+        case 1:
+            return '000' + nstr;
+        default:
+            return '0000';
+    }
+}
 var Set = /** @class */ (function () {
     function Set() {
         this.entries = {};
@@ -928,9 +1045,6 @@ var ColorValueCollector = /** @class */ (function () {
     };
     return ColorValueCollector;
 }());
-function isDefined(obj) {
-    return typeof obj !== 'undefined';
-}
 function getCurrentWord(document, offset) {
     var i = offset - 1;
     var text = document.getText();
@@ -938,4 +1052,8 @@ function getCurrentWord(document, offset) {
         i--;
     }
     return text.substring(i + 1, offset);
+}
+function isColorString(s) {
+    // From https://stackoverflow.com/questions/8027423/how-to-check-if-a-string-is-a-valid-hex-color-representation/8027444
+    return (s.toLowerCase() in languageFacts.colors) || /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(s);
 }

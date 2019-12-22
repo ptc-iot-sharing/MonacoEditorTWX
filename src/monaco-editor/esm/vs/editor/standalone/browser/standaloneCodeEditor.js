@@ -46,6 +46,7 @@ import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 import { StandaloneCodeEditorNLS } from '../../common/standaloneStrings.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
+import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
 var LAST_GENERATED_COMMAND_ID = 0;
 var ariaDomNodeCreated = false;
 function createAriaDomNode() {
@@ -229,14 +230,14 @@ var StandaloneEditor = /** @class */ (function (_super) {
 export { StandaloneEditor };
 var StandaloneDiffEditor = /** @class */ (function (_super) {
     __extends(StandaloneDiffEditor, _super);
-    function StandaloneDiffEditor(domElement, options, toDispose, instantiationService, contextKeyService, keybindingService, contextViewService, editorWorkerService, codeEditorService, themeService, notificationService, configurationService, contextMenuService, clipboardService) {
+    function StandaloneDiffEditor(domElement, options, toDispose, instantiationService, contextKeyService, keybindingService, contextViewService, editorWorkerService, codeEditorService, themeService, notificationService, configurationService, contextMenuService, editorProgressService, clipboardService) {
         var _this = this;
         applyConfigurationValues(configurationService, options, true);
         options = options || {};
         if (typeof options.theme === 'string') {
             options.theme = themeService.setTheme(options.theme);
         }
-        _this = _super.call(this, domElement, options, clipboardService, editorWorkerService, contextKeyService, instantiationService, codeEditorService, themeService, notificationService, contextMenuService) || this;
+        _this = _super.call(this, domElement, options, clipboardService, editorWorkerService, contextKeyService, instantiationService, codeEditorService, themeService, notificationService, contextMenuService, editorProgressService) || this;
         _this._contextViewService = contextViewService;
         _this._configurationService = configurationService;
         _this._register(toDispose);
@@ -279,7 +280,8 @@ var StandaloneDiffEditor = /** @class */ (function (_super) {
         __param(10, INotificationService),
         __param(11, IConfigurationService),
         __param(12, IContextMenuService),
-        __param(13, optional(IClipboardService))
+        __param(13, IEditorProgressService),
+        __param(14, optional(IClipboardService))
     ], StandaloneDiffEditor);
     return StandaloneDiffEditor;
 }(DiffEditorWidget));

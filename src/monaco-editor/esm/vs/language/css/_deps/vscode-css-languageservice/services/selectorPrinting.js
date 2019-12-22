@@ -18,10 +18,14 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as nodes from '../parser/cssNodes.js';
 import { Scanner } from '../parser/cssScanner.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as languageFacts from "../languageFacts/facts.js";
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var Element = /** @class */ (function () {
     function Element() {
+        this.parent = null;
+        this.children = null;
+        this.attributes = null;
     }
     Element.prototype.findAttribute = function (name) {
         if (this.attributes) {
@@ -135,12 +139,15 @@ export { LabelElement };
 var MarkedStringPrinter = /** @class */ (function () {
     function MarkedStringPrinter(quote) {
         this.quote = quote;
+        this.result = [];
         // empty
     }
     MarkedStringPrinter.prototype.print = function (element) {
         this.result = [];
         if (element instanceof RootElement) {
-            this.doPrint(element.children, 0);
+            if (element.children) {
+                this.doPrint(element.children, 0);
+            }
         }
         else {
             this.doPrint([element], 0);
@@ -212,6 +219,17 @@ var quotes;
     }
     quotes.remove = remove;
 })(quotes || (quotes = {}));
+var Specificity = /** @class */ (function () {
+    function Specificity() {
+        /** Count of identifiers (e.g., `#app`) */
+        this.id = 0;
+        /** Count of attributes (`[type="number"]`), classes (`.container-fluid`), and pseudo-classes (`:hover`) */
+        this.attr = 0;
+        /** Count of tag names (`div`), and pseudo-elements (`::before`) */
+        this.tag = 0;
+    }
+    return Specificity;
+}());
 export function toElement(node, parentElement) {
     var result = new Element();
     for (var _i = 0, _a = node.getChildren(); _i < _a.length; _i++) {
@@ -241,7 +259,7 @@ export function toElement(node, parentElement) {
                 }
                 break;
             case nodes.NodeType.SelectorPlaceholder:
-                if (child.getText() === '@at-root') {
+                if (child.matches('@at-root')) {
                     return result;
                 }
             // fall through
@@ -263,12 +281,12 @@ export function toElement(node, parentElement) {
                 break;
             case nodes.NodeType.AttributeSelector:
                 var selector = child;
-                var identifuer = selector.getIdentifier();
-                if (identifuer) {
+                var identifier = selector.getIdentifier();
+                if (identifier) {
                     var expression = selector.getValue();
                     var operator = selector.getOperator();
                     var value = void 0;
-                    if (expression) {
+                    if (expression && operator) {
                         switch (unescape(operator.getText())) {
                             case '|=':
                                 // excatly or followed by -words
@@ -295,7 +313,7 @@ export function toElement(node, parentElement) {
                                 break;
                         }
                     }
-                    result.addAttr(unescape(identifuer.getText()), value);
+                    result.addAttr(unescape(identifier.getText()), value);
                 }
                 break;
         }
@@ -311,35 +329,43 @@ function unescape(content) {
     }
     return content;
 }
+function isPseudoElementIdentifier(text) {
+    var match = text.match(/^::?([\w-]+)/);
+    if (!match) {
+        return false;
+    }
+    return !!languageFacts.cssDataManager.getPseudoElement("::" + match[1]);
+}
 function selectorToSpecificityMarkedString(node) {
     //https://www.w3.org/TR/selectors-3/#specificity
     function calculateScore(node) {
         node.getChildren().forEach(function (element) {
             switch (element.type) {
                 case nodes.NodeType.IdentifierSelector:
-                    specificity[0] += 1; //a
+                    specificity.id++;
                     break;
                 case nodes.NodeType.ClassSelector:
                 case nodes.NodeType.AttributeSelector:
-                    specificity[1] += 1; //b
+                    specificity.attr++;
                     break;
                 case nodes.NodeType.ElementNameSelector:
                     //ignore universal selector
-                    if (element.getText() === "*") {
+                    if (element.matches("*")) {
                         break;
                     }
-                    specificity[2] += 1; //c
+                    specificity.tag++;
                     break;
                 case nodes.NodeType.PseudoSelector:
-                    if (element.getText().match(/^::/)) {
-                        specificity[2] += 1; //c (pseudo element)
+                    var text = element.getText();
+                    if (isPseudoElementIdentifier(text)) {
+                        specificity.tag++; // pseudo element
                     }
                     else {
                         //ignore psuedo class NOT
-                        if (element.getText().match(/^:not/i)) {
+                        if (text.match(/^:not/i)) {
                             break;
                         }
-                        specificity[1] += 1; //b (pseudo class)
+                        specificity.attr++; //pseudo class
                     }
                     break;
             }
@@ -348,15 +374,20 @@ function selectorToSpecificityMarkedString(node) {
             }
         });
     }
-    var specificity = [0, 0, 0]; //a,b,c
+    var specificity = new Specificity();
     calculateScore(node);
-    return localize.apply(void 0, ['specificity', "[Selector Specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity): ({0}, {1}, {2})"].concat(specificity));
+    return localize('specificity', "[Selector Specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity): ({0}, {1}, {2})", specificity.id, specificity.attr, specificity.tag);
 }
 export function selectorToMarkedString(node) {
     var root = selectorToElement(node);
-    var markedStrings = new MarkedStringPrinter('"').print(root);
-    markedStrings.push(selectorToSpecificityMarkedString(node));
-    return markedStrings;
+    if (root) {
+        var markedStrings = new MarkedStringPrinter('"').print(root);
+        markedStrings.push(selectorToSpecificityMarkedString(node));
+        return markedStrings;
+    }
+    else {
+        return [];
+    }
 }
 export function simpleSelectorToMarkedString(node) {
     var element = toElement(node);
@@ -427,8 +458,9 @@ export function selectorToElement(node) {
     }
     var root = new RootElement();
     var parentRuleSets = [];
-    if (node.getParent() instanceof nodes.RuleSet) {
-        var parent = node.getParent().getParent(); // parent of the selector's ruleset
+    var ruleSet = node.getParent();
+    if (ruleSet instanceof nodes.RuleSet) {
+        var parent = ruleSet.getParent(); // parent of the selector's ruleset
         while (parent && !isNewSelectorContext(parent)) {
             if (parent instanceof nodes.RuleSet) {
                 if (parent.getSelectors().matches('@at-root')) {

@@ -4,5 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 export function values(obj) {
-    return Object.keys(obj).map(function (k) { return obj[k]; });
+    return Object.keys(obj).map(function (key) { return obj[key]; });
+}
+export function isDefined(obj) {
+    return typeof obj !== 'undefined';
 }

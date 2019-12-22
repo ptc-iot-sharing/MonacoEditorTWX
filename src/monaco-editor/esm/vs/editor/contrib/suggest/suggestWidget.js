@@ -23,10 +23,11 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -58,13 +59,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import './media/suggest.css';
+import '../../../base/browser/ui/codiconLabel/codiconLabel.js'; // The codicon symbol styles are defined here and must be loaded
+import '../documentSymbols/outlineTree.js'; // The codicon symbol colors are defined here and must be loaded
 import * as nls from '../../../nls.js';
 import { createMatches } from '../../../base/common/filters.js';
 import * as strings from '../../../base/common/strings.js';
 import { Event, Emitter } from '../../../base/common/event.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { dispose, toDisposable, DisposableStore, Disposable } from '../../../base/common/lifecycle.js';
-import { addClass, append, $, hide, removeClass, show, toggleClass, getDomNodePagePosition, hasClass, addDisposableListener } from '../../../base/browser/dom.js';
+import { addClass, append, $, hide, removeClass, show, toggleClass, getDomNodePagePosition, hasClass, addDisposableListener, addStandardDisposableListener, addClasses } from '../../../base/browser/dom.js';
 import { List } from '../../../base/browser/ui/list/listWidget.js';
 import { DomScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
@@ -146,17 +149,19 @@ var Renderer = /** @class */ (function () {
         data.colorspan = append(data.icon, $('span.colorspan'));
         var text = append(container, $('.contents'));
         var main = append(text, $('.main'));
-        data.iconLabel = new IconLabel(main, { supportHighlights: true, supportOcticons: true });
+        data.iconContainer = append(main, $('.icon-label.codicon'));
+        data.iconLabel = new IconLabel(main, { supportHighlights: true, supportCodicons: true });
         data.disposables.add(data.iconLabel);
         data.typeLabel = append(main, $('span.type-label'));
-        data.readMore = append(main, $('span.readMore'));
+        data.readMore = append(main, $('span.readMore.codicon.codicon-info'));
         data.readMore.title = nls.localize('readMore', "Read More...{0}", this.triggerKeybindingLabel);
         var configureFont = function () {
-            var configuration = _this.editor.getConfiguration();
-            var fontFamily = configuration.fontInfo.fontFamily;
-            var fontSize = configuration.contribInfo.suggestFontSize || configuration.fontInfo.fontSize;
-            var lineHeight = configuration.contribInfo.suggestLineHeight || configuration.fontInfo.lineHeight;
-            var fontWeight = configuration.fontInfo.fontWeight;
+            var options = _this.editor.getOptions();
+            var fontInfo = options.get(32 /* fontInfo */);
+            var fontFamily = fontInfo.fontFamily;
+            var fontSize = options.get(86 /* suggestFontSize */) || fontInfo.fontSize;
+            var lineHeight = options.get(87 /* suggestLineHeight */) || fontInfo.lineHeight;
+            var fontWeight = fontInfo.fontWeight;
             var fontSizePx = fontSize + "px";
             var lineHeightPx = lineHeight + "px";
             data.root.style.fontSize = fontSizePx;
@@ -170,7 +175,7 @@ var Renderer = /** @class */ (function () {
         };
         configureFont();
         data.disposables.add(Event.chain(this.editor.onDidChangeConfiguration.bind(this.editor))
-            .filter(function (e) { return e.fontInfo || e.contribInfo; })
+            .filter(function (e) { return e.hasChanged(32 /* fontInfo */) || e.hasChanged(86 /* suggestFontSize */) || e.hasChanged(87 /* suggestLineHeight */); })
             .on(configureFont, null));
         return data;
     };
@@ -188,19 +193,21 @@ var Renderer = /** @class */ (function () {
         if (suggestion.kind === 19 /* Color */ && extractColor(element, color)) {
             // special logic for 'color' completion items
             data.icon.className = 'icon customcolor';
+            data.iconContainer.className = 'icon hide';
             data.colorspan.style.backgroundColor = color[0];
         }
         else if (suggestion.kind === 20 /* File */ && this._themeService.getIconTheme().hasFileIcons) {
             // special logic for 'file' completion items
             data.icon.className = 'icon hide';
-            labelOptions.extraClasses = flatten([
-                getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.label }), FileKind.FILE),
-                getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.detail }), FileKind.FILE)
-            ]);
+            data.iconContainer.className = 'icon hide';
+            var labelClasses = getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.label }), FileKind.FILE);
+            var detailClasses = getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.detail }), FileKind.FILE);
+            labelOptions.extraClasses = labelClasses.length > detailClasses.length ? labelClasses : detailClasses;
         }
         else if (suggestion.kind === 23 /* Folder */ && this._themeService.getIconTheme().hasFolderIcons) {
             // special logic for 'folder' completion items
             data.icon.className = 'icon hide';
+            data.iconContainer.className = 'icon hide';
             labelOptions.extraClasses = flatten([
                 getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.label }), FileKind.FOLDER),
                 getIconClasses(this._modelService, this._modeService, URI.from({ scheme: 'fake', path: suggestion.detail }), FileKind.FOLDER)
@@ -209,9 +216,8 @@ var Renderer = /** @class */ (function () {
         else {
             // normal icon
             data.icon.className = 'icon hide';
-            labelOptions.extraClasses = [
-                "suggest-icon " + completionKindToCssClass(suggestion.kind)
-            ];
+            data.iconContainer.className = '';
+            addClasses(data.iconContainer, "suggest-icon codicon codicon-symbol-" + completionKindToCssClass(suggestion.kind));
         }
         if (suggestion.tags && suggestion.tags.indexOf(1 /* Deprecated */) >= 0) {
             labelOptions.extraClasses = (labelOptions.extraClasses || []).concat(['deprecated']);
@@ -263,14 +269,14 @@ var SuggestionDetails = /** @class */ (function () {
         append(this.el, this.scrollbar.getDomNode());
         this.disposables.add(this.scrollbar);
         this.header = append(this.body, $('.header'));
-        this.close = append(this.header, $('span.close'));
+        this.close = append(this.header, $('span.codicon.codicon-close'));
         this.close.title = nls.localize('readLess', "Read less...{0}", this.triggerKeybindingLabel);
         this.type = append(this.header, $('p.type'));
         this.docs = append(this.body, $('p.docs'));
         this.ariaLabel = null;
         this.configureFont();
         Event.chain(this.editor.onDidChangeConfiguration.bind(this.editor))
-            .filter(function (e) { return e.fontInfo; })
+            .filter(function (e) { return e.hasChanged(32 /* fontInfo */); })
             .on(this.configureFont, this, this.disposables);
         markdownRenderer.onDidRenderCodeBlock(function () { return _this.scrollbar.scanDomNode(); }, this, this.disposables);
     }
@@ -327,6 +333,8 @@ var SuggestionDetails = /** @class */ (function () {
             hide(this.type);
         }
         this.el.style.height = this.header.offsetHeight + this.docs.offsetHeight + (this.borderWidth * 2) + 'px';
+        this.el.style.userSelect = 'text';
+        this.el.tabIndex = -1;
         this.close.onmousedown = function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -367,11 +375,12 @@ var SuggestionDetails = /** @class */ (function () {
         this.borderWidth = width;
     };
     SuggestionDetails.prototype.configureFont = function () {
-        var configuration = this.editor.getConfiguration();
-        var fontFamily = configuration.fontInfo.fontFamily;
-        var fontSize = configuration.contribInfo.suggestFontSize || configuration.fontInfo.fontSize;
-        var lineHeight = configuration.contribInfo.suggestLineHeight || configuration.fontInfo.lineHeight;
-        var fontWeight = configuration.fontInfo.fontWeight;
+        var options = this.editor.getOptions();
+        var fontInfo = options.get(32 /* fontInfo */);
+        var fontFamily = fontInfo.fontFamily;
+        var fontSize = options.get(86 /* suggestFontSize */) || fontInfo.fontSize;
+        var lineHeight = options.get(87 /* suggestLineHeight */) || fontInfo.lineHeight;
+        var fontWeight = fontInfo.fontWeight;
         var fontSizePx = fontSize + "px";
         var lineHeightPx = lineHeight + "px";
         this.el.style.fontSize = fontSizePx;
@@ -393,7 +402,7 @@ var SuggestWidget = /** @class */ (function () {
         this.telemetryService = telemetryService;
         // Editor.IContentWidget.allowEditorOverflow
         this.allowEditorOverflow = true;
-        this.suppressMouseDown = true;
+        this.suppressMouseDown = false;
         this.state = null;
         this.isAuto = false;
         this.loadingTimeout = Disposable.None;
@@ -416,6 +425,8 @@ var SuggestWidget = /** @class */ (function () {
         this.preferDocPositionTop = false;
         this.docsPositionPreviousWidgetY = null;
         this.explainMode = false;
+        this._onDetailsKeydown = new Emitter();
+        this.onDetailsKeyDown = this._onDetailsKeydown.event;
         this._lastAriaAlertLabel = null;
         var kb = keybindingService.lookupKeybinding('editor.action.triggerSuggest');
         var triggerKeybindingLabel = !kb ? '' : " (" + kb.getLabel() + ")";
@@ -432,10 +443,10 @@ var SuggestWidget = /** @class */ (function () {
         this.messageElement = append(this.element, $('.message'));
         this.listElement = append(this.element, $('.tree'));
         this.details = instantiationService.createInstance(SuggestionDetails, this.element, this, this.editor, markdownRenderer, triggerKeybindingLabel);
-        var applyIconStyle = function () { return toggleClass(_this.element, 'no-icons', !_this.editor.getConfiguration().contribInfo.suggest.showIcons); };
+        var applyIconStyle = function () { return toggleClass(_this.element, 'no-icons', !_this.editor.getOption(85 /* suggest */).showIcons); };
         applyIconStyle();
         var renderer = instantiationService.createInstance(Renderer, this, this.editor, triggerKeybindingLabel);
-        this.list = new List(this.listElement, this, [renderer], {
+        this.list = new List('SuggestWidget', this.listElement, this, [renderer], {
             useShadows: false,
             openController: { shouldOpen: function () { return false; } },
             mouseSupport: false
@@ -446,17 +457,34 @@ var SuggestWidget = /** @class */ (function () {
         }));
         this.toDispose.add(themeService.onThemeChange(function (t) { return _this.onThemeChange(t); }));
         this.toDispose.add(editor.onDidLayoutChange(function () { return _this.onEditorLayoutChange(); }));
-        this.toDispose.add(this.list.onMouseDown(function (e) { return _this.onListMouseDown(e); }));
+        this.toDispose.add(this.list.onMouseDown(function (e) { return _this.onListMouseDownOrTap(e); }));
+        this.toDispose.add(this.list.onTap(function (e) { return _this.onListMouseDownOrTap(e); }));
         this.toDispose.add(this.list.onSelectionChange(function (e) { return _this.onListSelection(e); }));
         this.toDispose.add(this.list.onFocusChange(function (e) { return _this.onListFocus(e); }));
         this.toDispose.add(this.editor.onDidChangeCursorSelection(function () { return _this.onCursorSelectionChanged(); }));
-        this.toDispose.add(this.editor.onDidChangeConfiguration(function (e) { return e.contribInfo && applyIconStyle(); }));
+        this.toDispose.add(this.editor.onDidChangeConfiguration(function (e) { return e.hasChanged(85 /* suggest */) && applyIconStyle(); }));
         this.suggestWidgetVisible = SuggestContext.Visible.bindTo(contextKeyService);
         this.suggestWidgetMultipleSuggestions = SuggestContext.MultipleSuggestions.bindTo(contextKeyService);
         this.editor.addContentWidget(this);
         this.setState(0 /* Hidden */);
         this.onThemeChange(themeService.getTheme());
+        this.toDispose.add(addStandardDisposableListener(this.details.element, 'keydown', function (e) {
+            _this._onDetailsKeydown.fire(e);
+        }));
+        this.toDispose.add(this.editor.onMouseDown(function (e) { return _this.onEditorMouseDown(e); }));
     }
+    SuggestWidget.prototype.onEditorMouseDown = function (mouseEvent) {
+        // Clicking inside details
+        if (this.details.element.contains(mouseEvent.target.element)) {
+            this.details.element.focus();
+        }
+        // Clicking outside details and inside suggest
+        else {
+            if (this.element.contains(mouseEvent.target.element)) {
+                this.editor.focus();
+            }
+        }
+    };
     SuggestWidget.prototype.onCursorSelectionChanged = function () {
         if (this.state === 0 /* Hidden */) {
             return;
@@ -468,7 +496,7 @@ var SuggestWidget = /** @class */ (function () {
             this.expandSideOrBelow();
         }
     };
-    SuggestWidget.prototype.onListMouseDown = function (e) {
+    SuggestWidget.prototype.onListMouseDownOrTap = function (e) {
         if (typeof e.element === 'undefined' || typeof e.index === 'undefined') {
             return;
         }
@@ -903,6 +931,9 @@ var SuggestWidget = /** @class */ (function () {
     SuggestWidget.prototype.getId = function () {
         return SuggestWidget.ID;
     };
+    SuggestWidget.prototype.isFrozen = function () {
+        return this.state === 4 /* Frozen */;
+    };
     SuggestWidget.prototype.updateListHeight = function () {
         var height = 0;
         if (this.state === 2 /* Empty */ || this.state === 1 /* Loading */) {
@@ -910,7 +941,7 @@ var SuggestWidget = /** @class */ (function () {
         }
         else {
             var suggestionCount = this.list.contentHeight / this.unfocusedHeight;
-            var maxVisibleSuggestions = this.editor.getConfiguration().contribInfo.suggest.maxVisibleSuggestions;
+            var maxVisibleSuggestions = this.editor.getOption(85 /* suggest */).maxVisibleSuggestions;
             height = Math.min(suggestionCount, maxVisibleSuggestions) * this.unfocusedHeight;
         }
         this.element.style.lineHeight = this.unfocusedHeight + "px";
@@ -925,7 +956,7 @@ var SuggestWidget = /** @class */ (function () {
         if (!this.editor.hasModel()) {
             return;
         }
-        var lineHeight = this.editor.getConfiguration().fontInfo.lineHeight;
+        var lineHeight = this.editor.getOption(47 /* lineHeight */);
         var cursorCoords = this.editor.getScrolledVisiblePosition(this.editor.getPosition());
         var editorCoords = getDomNodePagePosition(this.editor.getDomNode());
         var cursorX = editorCoords.left + cursorCoords.left;
@@ -983,15 +1014,15 @@ var SuggestWidget = /** @class */ (function () {
     Object.defineProperty(SuggestWidget.prototype, "maxWidgetHeight", {
         // Heights
         get: function () {
-            return this.unfocusedHeight * this.editor.getConfiguration().contribInfo.suggest.maxVisibleSuggestions;
+            return this.unfocusedHeight * this.editor.getOption(85 /* suggest */).maxVisibleSuggestions;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(SuggestWidget.prototype, "unfocusedHeight", {
         get: function () {
-            var configuration = this.editor.getConfiguration();
-            return configuration.contribInfo.suggestLineHeight || configuration.fontInfo.lineHeight;
+            var options = this.editor.getOptions();
+            return options.get(87 /* suggestLineHeight */) || options.get(32 /* fontInfo */).lineHeight;
         },
         enumerable: true,
         configurable: true

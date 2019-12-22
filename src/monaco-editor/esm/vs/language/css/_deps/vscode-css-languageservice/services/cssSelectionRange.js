@@ -3,19 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import { Range } from '../../vscode-languageserver-types/main.js';
+import { Range, SelectionRange } from '../cssLanguageTypes.js';
 import { NodeType } from '../parser/cssNodes.js';
-import { SelectionRangeKind } from '../cssLanguageTypes.js';
 export function getSelectionRanges(document, positions, stylesheet) {
     function getSelectionRange(position) {
         var applicableRanges = getApplicableRanges(position);
-        var ranges = applicableRanges.map(function (pair) {
-            return {
-                range: Range.create(document.positionAt(pair[0]), document.positionAt(pair[1])),
-                kind: SelectionRangeKind.Statement
-            };
-        });
-        return ranges;
+        var current = undefined;
+        for (var index = applicableRanges.length - 1; index >= 0; index--) {
+            current = SelectionRange.create(Range.create(document.positionAt(applicableRanges[index][0]), document.positionAt(applicableRanges[index][1])), current);
+        }
+        if (!current) {
+            current = SelectionRange.create(Range.create(position, position));
+        }
+        return current;
     }
     return positions.map(getSelectionRange);
     function getApplicableRanges(position) {

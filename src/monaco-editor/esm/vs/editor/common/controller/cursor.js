@@ -36,8 +36,11 @@ function containsLineMappingChanged(events) {
     return false;
 }
 var CursorStateChangedEvent = /** @class */ (function () {
-    function CursorStateChangedEvent(selections, source, reason) {
+    function CursorStateChangedEvent(selections, modelVersionId, oldSelections, oldModelVersionId, source, reason) {
         this.selections = selections;
+        this.modelVersionId = modelVersionId;
+        this.oldSelections = oldSelections;
+        this.oldModelVersionId = oldModelVersionId;
         this.source = source;
         this.reason = reason;
     }
@@ -144,6 +147,7 @@ var Cursor = /** @class */ (function (_super) {
         _this._cursors = new CursorCollection(_this.context);
         _this._isHandling = false;
         _this._isDoingComposition = false;
+        _this._selectionsWhenCompositionStarted = null;
         _this._columnSelectData = null;
         _this._autoClosedActions = [];
         _this._prevEditOperationType = 0 /* Other */;
@@ -235,11 +239,11 @@ var Cursor = /** @class */ (function (_super) {
     Cursor.prototype.setColumnSelectData = function (columnSelectData) {
         this._columnSelectData = columnSelectData;
     };
-    Cursor.prototype.reveal = function (horizontal, target, scrollType) {
-        this._revealRange(target, 0 /* Simple */, horizontal, scrollType);
+    Cursor.prototype.reveal = function (source, horizontal, target, scrollType) {
+        this._revealRange(source, target, 0 /* Simple */, horizontal, scrollType);
     };
-    Cursor.prototype.revealRange = function (revealHorizontal, viewRange, verticalType, scrollType) {
-        this.emitCursorRevealRange(viewRange, verticalType, revealHorizontal, scrollType);
+    Cursor.prototype.revealRange = function (source, revealHorizontal, viewRange, verticalType, scrollType) {
+        this.emitCursorRevealRange(source, viewRange, verticalType, revealHorizontal, scrollType);
     };
     Cursor.prototype.scrollTo = function (desiredScrollTop) {
         this._viewModel.viewLayout.setScrollPositionSmooth({
@@ -295,7 +299,7 @@ var Cursor = /** @class */ (function (_super) {
             });
         }
         this.setStates('restoreState', 0 /* NotSet */, CursorState.fromModelSelections(desiredSelections));
-        this.reveal(true, 0 /* Primary */, 1 /* Immediate */);
+        this.reveal('restoreState', true, 0 /* Primary */, 1 /* Immediate */);
     };
     Cursor.prototype._onModelContentChanged = function (hadFlushEvent) {
         this._prevEditOperationType = 0 /* Other */;
@@ -319,7 +323,7 @@ var Cursor = /** @class */ (function (_super) {
             return this._columnSelectData;
         }
         var primaryCursor = this._cursors.getPrimaryCursor();
-        var primaryPos = primaryCursor.viewState.position;
+        var primaryPos = primaryCursor.viewState.selectionStart.getStartPosition();
         var viewLineNumber = primaryPos.lineNumber;
         var viewVisualColumn = CursorColumns.visibleColumnFromColumn2(this.context.config, this.context.viewModel, primaryPos);
         return {
@@ -431,11 +435,13 @@ var Cursor = /** @class */ (function (_super) {
         if (!oldState
             || oldState.cursorState.length !== newState.cursorState.length
             || newState.cursorState.some(function (newCursorState, i) { return !newCursorState.modelState.equals(oldState.cursorState[i].modelState); })) {
-            this._onDidChange.fire(new CursorStateChangedEvent(selections, source || 'keyboard', reason));
+            var oldSelections = oldState ? oldState.cursorState.map(function (s) { return s.modelState.selection; }) : null;
+            var oldModelVersionId = oldState ? oldState.modelVersionId : 0;
+            this._onDidChange.fire(new CursorStateChangedEvent(selections, newState.modelVersionId, oldSelections, oldModelVersionId, source || 'keyboard', reason));
         }
         return true;
     };
-    Cursor.prototype._revealRange = function (revealTarget, verticalType, revealHorizontal, scrollType) {
+    Cursor.prototype._revealRange = function (source, revealTarget, verticalType, revealHorizontal, scrollType) {
         var viewPositions = this._cursors.getViewPositions();
         var viewPosition = viewPositions[0];
         if (revealTarget === 1 /* TopMost */) {
@@ -459,12 +465,12 @@ var Cursor = /** @class */ (function (_super) {
             }
         }
         var viewRange = new Range(viewPosition.lineNumber, viewPosition.column, viewPosition.lineNumber, viewPosition.column);
-        this.emitCursorRevealRange(viewRange, verticalType, revealHorizontal, scrollType);
+        this.emitCursorRevealRange(source, viewRange, verticalType, revealHorizontal, scrollType);
     };
-    Cursor.prototype.emitCursorRevealRange = function (viewRange, verticalType, revealHorizontal, scrollType) {
+    Cursor.prototype.emitCursorRevealRange = function (source, viewRange, verticalType, revealHorizontal, scrollType) {
         try {
             var eventsCollector = this._beginEmit();
-            eventsCollector.emit(new viewEvents.ViewRevealRangeRequestEvent(viewRange, verticalType, revealHorizontal, scrollType));
+            eventsCollector.emit(new viewEvents.ViewRevealRangeRequestEvent(source, viewRange, verticalType, revealHorizontal, scrollType));
         }
         finally {
             this._endEmit();
@@ -544,12 +550,13 @@ var Cursor = /** @class */ (function (_super) {
         var H = editorCommon.Handler;
         if (handlerId === H.CompositionStart) {
             this._isDoingComposition = true;
+            this._selectionsWhenCompositionStarted = this.getSelections().slice(0);
             return;
         }
         if (handlerId === H.CompositionEnd) {
             this._isDoingComposition = false;
         }
-        if (this._configuration.editor.readOnly) {
+        if (this._configuration.options.get(65 /* readOnly */)) {
             // All the remaining handlers will try to edit the model,
             // but we cannot edit when read only...
             this._onDidAttemptReadOnlyEdit.fire(undefined);
@@ -608,32 +615,29 @@ var Cursor = /** @class */ (function (_super) {
         }
         this._validateAutoClosedActions();
         if (this._emitStateChangedIfNecessary(source, cursorChangeReason, oldState)) {
-            this._revealRange(0 /* Primary */, 0 /* Simple */, true, 0 /* Smooth */);
+            this._revealRange(source, 0 /* Primary */, 0 /* Simple */, true, 0 /* Smooth */);
         }
     };
     Cursor.prototype._interpretCompositionEnd = function (source) {
         if (!this._isDoingComposition && source === 'keyboard') {
             // composition finishes, let's check if we need to auto complete if necessary.
             var autoClosedCharacters = AutoClosedAction.getAllAutoClosedCharacters(this._autoClosedActions);
-            this._executeEditOperation(TypeOperations.compositionEndWithInterceptors(this._prevEditOperationType, this.context.config, this.context.model, this.getSelections(), autoClosedCharacters));
+            this._executeEditOperation(TypeOperations.compositionEndWithInterceptors(this._prevEditOperationType, this.context.config, this.context.model, this._selectionsWhenCompositionStarted, this.getSelections(), autoClosedCharacters));
+            this._selectionsWhenCompositionStarted = null;
         }
     };
     Cursor.prototype._type = function (source, text) {
         if (!this._isDoingComposition && source === 'keyboard') {
             // If this event is coming straight from the keyboard, look for electric characters and enter
-            for (var i = 0, len = text.length; i < len; i++) {
-                var charCode = text.charCodeAt(i);
-                var chr = void 0;
-                if (strings.isHighSurrogate(charCode) && i + 1 < len) {
-                    chr = text.charAt(i) + text.charAt(i + 1);
-                    i++;
-                }
-                else {
-                    chr = text.charAt(i);
-                }
+            var len = text.length;
+            var offset = 0;
+            while (offset < len) {
+                var charLength = strings.nextCharLength(text, offset);
+                var chr = text.substr(offset, charLength);
                 // Here we must interpret each typed character individually
                 var autoClosedCharacters = AutoClosedAction.getAllAutoClosedCharacters(this._autoClosedActions);
                 this._executeEditOperation(TypeOperations.typeWithInterceptors(this._prevEditOperationType, this.context.config, this.context.model, this.getSelections(), autoClosedCharacters, chr));
+                offset += charLength;
             }
         }
         else {

@@ -4,15 +4,19 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var _a;
 var isWindows;
 if (typeof process === 'object') {
     isWindows = process.platform === 'win32';
@@ -21,28 +25,32 @@ else if (typeof navigator === 'object') {
     var userAgent = navigator.userAgent;
     isWindows = userAgent.indexOf('Windows') >= 0;
 }
+function isHighSurrogate(charCode) {
+    return (0xD800 <= charCode && charCode <= 0xDBFF);
+}
+function isLowSurrogate(charCode) {
+    return (0xDC00 <= charCode && charCode <= 0xDFFF);
+}
+function isLowerAsciiHex(code) {
+    return code >= 97 /* a */ && code <= 102 /* f */;
+}
+function isLowerAsciiLetter(code) {
+    return code >= 97 /* a */ && code <= 122 /* z */;
+}
+function isUpperAsciiLetter(code) {
+    return code >= 65 /* A */ && code <= 90 /* Z */;
+}
+function isAsciiLetter(code) {
+    return isLowerAsciiLetter(code) || isUpperAsciiLetter(code);
+}
 //#endregion
 var _schemePattern = /^\w[\w\d+.-]*$/;
 var _singleSlashStart = /^\//;
 var _doubleSlashStart = /^\/\//;
-var _throwOnMissingSchema = true;
-/**
- * @internal
- */
-export function setUriThrowOnMissingScheme(value) {
-    var old = _throwOnMissingSchema;
-    _throwOnMissingSchema = value;
-    return old;
-}
 function _validateUri(ret, _strict) {
     // scheme, must be set
-    if (!ret.scheme) {
-        if (_strict || _throwOnMissingSchema) {
-            throw new Error("[UriError]: Scheme is missing: {scheme: \"\", authority: \"" + ret.authority + "\", path: \"" + ret.path + "\", query: \"" + ret.query + "\", fragment: \"" + ret.fragment + "\"}");
-        }
-        else {
-            // console.warn(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
-        }
+    if (!ret.scheme && _strict) {
+        throw new Error("[UriError]: Scheme is missing: {scheme: \"\", authority: \"" + ret.authority + "\", path: \"" + ret.path + "\", query: \"" + ret.query + "\", fragment: \"" + ret.fragment + "\"}");
     }
     // scheme, https://tools.ietf.org/html/rfc3986#section-3.1
     // ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
@@ -72,12 +80,8 @@ function _validateUri(ret, _strict) {
 // back to the file-scheme. that should cause the least carnage and still be a
 // clear warning
 function _schemeFix(scheme, _strict) {
-    if (_strict || _throwOnMissingSchema) {
-        return scheme || _empty;
-    }
-    if (!scheme) {
-        // console.trace('BAD uri lacks scheme, falling back to file-scheme.');
-        scheme = 'file';
+    if (!scheme && !_strict) {
+        return 'file';
     }
     return scheme;
 }
@@ -118,7 +122,7 @@ var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
  *       / \ /                        \
  *       urn:example:animal:ferret:nose
  */
-var URI = (function () {
+var URI = /** @class */ (function () {
     /**
      * @internal
      */
@@ -339,7 +343,7 @@ var URI = (function () {
 export { URI };
 var _pathSepMarker = isWindows ? 1 : undefined;
 // tslint:disable-next-line:class-name
-var _URI = (function (_super) {
+var _URI = /** @class */ (function (_super) {
     __extends(_URI, _super);
     function _URI() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
@@ -590,4 +594,3 @@ function _asFormatted(uri, skipEncoding) {
     }
     return res;
 }
-var _a;

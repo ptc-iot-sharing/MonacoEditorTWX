@@ -42,9 +42,7 @@ var CoordinatesConverter = /** @class */ (function () {
         return this._lines.convertModelPositionToViewPosition(modelPosition.lineNumber, modelPosition.column);
     };
     CoordinatesConverter.prototype.convertModelRangeToViewRange = function (modelRange) {
-        var start = this._lines.convertModelPositionToViewPosition(modelRange.startLineNumber, modelRange.startColumn);
-        var end = this._lines.convertModelPositionToViewPosition(modelRange.endLineNumber, modelRange.endColumn);
-        return new Range(start.lineNumber, start.column, end.lineNumber, end.column);
+        return this._lines.convertModelRangeToViewRange(modelRange);
     };
     CoordinatesConverter.prototype.modelPositionIsVisible = function (modelPosition) {
         return this._lines.modelPositionIsVisible(modelPosition.lineNumber, modelPosition.column);
@@ -559,6 +557,18 @@ var SplitLinesCollection = /** @class */ (function () {
         }
         // console.log('in -> out ' + inputLineNumber + ',' + inputColumn + ' ===> ' + r.lineNumber + ',' + r);
         return r;
+    };
+    SplitLinesCollection.prototype.convertModelRangeToViewRange = function (modelRange) {
+        var start = this.convertModelPositionToViewPosition(modelRange.startLineNumber, modelRange.startColumn);
+        var end = this.convertModelPositionToViewPosition(modelRange.endLineNumber, modelRange.endColumn);
+        if (modelRange.startLineNumber === modelRange.endLineNumber && start.lineNumber !== end.lineNumber) {
+            // This is a single line range that ends up taking more lines due to wrapping
+            if (end.column === this.getViewLineMinColumn(end.lineNumber)) {
+                // the end column lands on the first column of the next line
+                return new Range(start.lineNumber, start.column, end.lineNumber - 1, this.getViewLineMaxColumn(end.lineNumber - 1));
+            }
+        }
+        return new Range(start.lineNumber, start.column, end.lineNumber, end.column);
     };
     SplitLinesCollection.prototype._getViewLineNumberForModelPosition = function (inputLineNumber, inputColumn) {
         var lineIndex = inputLineNumber - 1;

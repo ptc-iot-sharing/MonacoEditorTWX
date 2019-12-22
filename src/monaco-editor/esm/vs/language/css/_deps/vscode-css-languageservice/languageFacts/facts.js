@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as browsers from '../data/browsers.js';
+import * as webCustomData from '../data/webCustomData.js';
 import { CSSDataManager } from './dataManager.js';
 import { CSSDataProvider } from './dataProvider.js';
 export * from './entry.js';
@@ -12,5 +12,5 @@ export * from './builtinData.js';
 export * from './dataProvider.js';
 export * from './dataManager.js';
 export var cssDataManager = new CSSDataManager([
-    new CSSDataProvider(browsers.cssData)
+    new CSSDataProvider(webCustomData.cssData)
 ]);

@@ -26,7 +26,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 import { IMarkerService, MarkerSeverity } from '../../../platform/markers/common/markers.js';
 import { Disposable, toDisposable } from '../../../base/common/lifecycle.js';
-import { OverviewRulerLane } from '../model.js';
+import { OverviewRulerLane, MinimapPosition } from '../model.js';
 import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 import { overviewRulerWarning, overviewRulerInfo, overviewRulerError } from '../view/editorColorRegistry.js';
 import { IModelService } from './modelService.js';
@@ -35,6 +35,7 @@ import { keys } from '../../../base/common/map.js';
 import { Schemas } from '../../../base/common/network.js';
 import { Emitter } from '../../../base/common/event.js';
 import { withUndefinedAsNull } from '../../../base/common/types.js';
+import { minimapWarning, minimapError } from '../../../platform/theme/common/colorRegistry.js';
 function MODEL_ID(resource) {
     return resource.toString();
 }
@@ -172,6 +173,7 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
         var color = undefined;
         var zIndex;
         var inlineClassName = undefined;
+        var minimap;
         switch (marker.severity) {
             case MarkerSeverity.Hint:
                 if (marker.tags && marker.tags.indexOf(1 /* Unnecessary */) >= 0) {
@@ -186,6 +188,10 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
                 className = "squiggly-warning" /* EditorWarningDecoration */;
                 color = themeColorFromId(overviewRulerWarning);
                 zIndex = 20;
+                minimap = {
+                    color: themeColorFromId(minimapWarning),
+                    position: MinimapPosition.Inline
+                };
                 break;
             case MarkerSeverity.Info:
                 className = "squiggly-info" /* EditorInfoDecoration */;
@@ -197,6 +203,10 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
                 className = "squiggly-error" /* EditorErrorDecoration */;
                 color = themeColorFromId(overviewRulerError);
                 zIndex = 30;
+                minimap = {
+                    color: themeColorFromId(minimapError),
+                    position: MinimapPosition.Inline
+                };
                 break;
         }
         if (marker.tags) {
@@ -215,6 +225,7 @@ var MarkerDecorationsService = /** @class */ (function (_super) {
                 color: color,
                 position: OverviewRulerLane.Right
             },
+            minimap: minimap,
             zIndex: zIndex,
             inlineClassName: inlineClassName,
         };

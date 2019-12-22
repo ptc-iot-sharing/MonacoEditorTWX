@@ -7,15 +7,16 @@ import * as nodes from '../parser/cssNodes.js';
 import * as languageFacts from '../languageFacts/facts.js';
 import { difference } from '../utils/strings.js';
 import { Rules } from '../services/lintRules.js';
-import { Command, TextEdit, CodeAction, CodeActionKind, TextDocumentEdit, VersionedTextDocumentIdentifier } from '../../vscode-languageserver-types/main.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import { Command, TextEdit, CodeAction, CodeActionKind, TextDocumentEdit, VersionedTextDocumentIdentifier } from '../cssLanguageTypes.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var CSSCodeActions = /** @class */ (function () {
     function CSSCodeActions() {
     }
     CSSCodeActions.prototype.doCodeActions = function (document, range, context, stylesheet) {
         return this.doCodeActions2(document, range, context, stylesheet).map(function (ca) {
-            return Command.create(ca.title, '_css.applyCodeAction', document.uri, document.version, ca.edit.documentChanges[0].edits);
+            var textDocumentEdit = ca.edit && ca.edit.documentChanges && ca.edit.documentChanges[0];
+            return Command.create(ca.title, '_css.applyCodeAction', document.uri, document.version, textDocumentEdit && textDocumentEdit.edits);
         });
     };
     CSSCodeActions.prototype.doCodeActions2 = function (document, range, context, stylesheet) {

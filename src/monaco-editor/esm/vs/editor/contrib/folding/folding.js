@@ -32,7 +32,7 @@ import { RunOnceScheduler, Delayer, createCancelablePromise } from '../../../bas
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { registerEditorAction, registerEditorContribution, EditorAction, registerInstantiatedEditorAction } from '../../browser/editorExtensions.js';
-import { FoldingModel, setCollapseStateAtLevel, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateForType } from './foldingModel.js';
+import { FoldingModel, setCollapseStateAtLevel, setCollapseStateLevelsDown, setCollapseStateLevelsUp, setCollapseStateForMatchingLines, setCollapseStateForType, toggleCollapseState } from './foldingModel.js';
 import { FoldingDecorationProvider } from './foldingDecorations.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { HiddenRangeModel } from './hiddenRangeModel.js';
@@ -44,7 +44,6 @@ import { InitializingRangeProvider, ID_INIT_PROVIDER } from './intializingRangeP
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 var CONTEXT_FOLDING_ENABLED = new RawContextKey('foldingEnabled', false);
-export var ID = 'editor.contrib.folding';
 var FoldingController = /** @class */ (function (_super) {
     __extends(FoldingController, _super);
     function FoldingController(editor, contextKeyService) {
@@ -52,9 +51,10 @@ var FoldingController = /** @class */ (function (_super) {
         _this.contextKeyService = contextKeyService;
         _this.localToDispose = _this._register(new DisposableStore());
         _this.editor = editor;
-        _this._isEnabled = _this.editor.getConfiguration().contribInfo.folding;
-        _this._autoHideFoldingControls = _this.editor.getConfiguration().contribInfo.showFoldingControls === 'mouseover';
-        _this._useFoldingProviders = _this.editor.getConfiguration().contribInfo.foldingStrategy !== 'indentation';
+        var options = _this.editor.getOptions();
+        _this._isEnabled = options.get(29 /* folding */);
+        _this._autoHideFoldingControls = options.get(80 /* showFoldingControls */) === 'mouseover';
+        _this._useFoldingProviders = options.get(30 /* foldingStrategy */) !== 'indentation';
         _this.foldingModel = null;
         _this.hiddenRangeModel = null;
         _this.rangeProvider = null;
@@ -70,21 +70,22 @@ var FoldingController = /** @class */ (function (_super) {
         _this.foldingEnabled.set(_this._isEnabled);
         _this._register(_this.editor.onDidChangeModel(function () { return _this.onModelChanged(); }));
         _this._register(_this.editor.onDidChangeConfiguration(function (e) {
-            if (e.contribInfo) {
+            if (e.hasChanged(29 /* folding */) || e.hasChanged(80 /* showFoldingControls */) || e.hasChanged(30 /* foldingStrategy */)) {
                 var oldIsEnabled = _this._isEnabled;
-                _this._isEnabled = _this.editor.getConfiguration().contribInfo.folding;
+                var options_1 = _this.editor.getOptions();
+                _this._isEnabled = options_1.get(29 /* folding */);
                 _this.foldingEnabled.set(_this._isEnabled);
                 if (oldIsEnabled !== _this._isEnabled) {
                     _this.onModelChanged();
                 }
                 var oldShowFoldingControls = _this._autoHideFoldingControls;
-                _this._autoHideFoldingControls = _this.editor.getConfiguration().contribInfo.showFoldingControls === 'mouseover';
+                _this._autoHideFoldingControls = options_1.get(80 /* showFoldingControls */) === 'mouseover';
                 if (oldShowFoldingControls !== _this._autoHideFoldingControls) {
                     _this.foldingDecorationProvider.autoHideFoldingControls = _this._autoHideFoldingControls;
                     _this.onModelContentChanged();
                 }
                 var oldUseFoldingProviders = _this._useFoldingProviders;
-                _this._useFoldingProviders = _this.editor.getConfiguration().contribInfo.foldingStrategy !== 'indentation';
+                _this._useFoldingProviders = options_1.get(30 /* foldingStrategy */) !== 'indentation';
                 if (oldUseFoldingProviders !== _this._useFoldingProviders) {
                     _this.onFoldingStrategyChanged();
                 }
@@ -94,10 +95,7 @@ var FoldingController = /** @class */ (function (_super) {
         return _this;
     }
     FoldingController.get = function (editor) {
-        return editor.getContribution(ID);
-    };
-    FoldingController.prototype.getId = function () {
-        return ID;
+        return editor.getContribution(FoldingController.ID);
     };
     /**
      * Store view state.
@@ -380,6 +378,7 @@ var FoldingController = /** @class */ (function (_super) {
     FoldingController.prototype.reveal = function (position) {
         this.editor.revealPositionInCenterIfOutsideViewport(position, 0 /* Smooth */);
     };
+    FoldingController.ID = 'editor.contrib.folding';
     FoldingController = __decorate([
         __param(1, IContextKeyService)
     ], FoldingController);
@@ -583,6 +582,27 @@ var FoldAction = /** @class */ (function (_super) {
     };
     return FoldAction;
 }(FoldingAction));
+var ToggleFoldAction = /** @class */ (function (_super) {
+    __extends(ToggleFoldAction, _super);
+    function ToggleFoldAction() {
+        return _super.call(this, {
+            id: 'editor.toggleFold',
+            label: nls.localize('toggleFoldAction.label', "Toggle Fold"),
+            alias: 'Toggle Fold',
+            precondition: CONTEXT_FOLDING_ENABLED,
+            kbOpts: {
+                kbExpr: EditorContextKeys.editorTextFocus,
+                primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KEY_K */, 2048 /* CtrlCmd */ | 42 /* KEY_L */),
+                weight: 100 /* EditorContrib */
+            }
+        }) || this;
+    }
+    ToggleFoldAction.prototype.invoke = function (_foldingController, foldingModel, editor) {
+        var selectedLines = this.getSelectedLines(editor);
+        toggleCollapseState(foldingModel, 1, selectedLines);
+    };
+    return ToggleFoldAction;
+}(FoldingAction));
 var FoldRecursivelyAction = /** @class */ (function (_super) {
     __extends(FoldRecursivelyAction, _super);
     function FoldRecursivelyAction() {
@@ -758,7 +778,7 @@ var FoldLevelAction = /** @class */ (function (_super) {
     FoldLevelAction.ID = function (level) { return FoldLevelAction.ID_PREFIX + level; };
     return FoldLevelAction;
 }(FoldingAction));
-registerEditorContribution(FoldingController);
+registerEditorContribution(FoldingController.ID, FoldingController);
 registerEditorAction(UnfoldAction);
 registerEditorAction(UnFoldRecursivelyAction);
 registerEditorAction(FoldAction);
@@ -768,6 +788,7 @@ registerEditorAction(UnfoldAllAction);
 registerEditorAction(FoldAllBlockCommentsAction);
 registerEditorAction(FoldAllRegionsAction);
 registerEditorAction(UnfoldAllRegionsAction);
+registerEditorAction(ToggleFoldAction);
 for (var i = 1; i <= 7; i++) {
     registerInstantiatedEditorAction(new FoldLevelAction({
         id: FoldLevelAction.ID(i),

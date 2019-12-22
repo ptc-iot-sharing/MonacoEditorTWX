@@ -30,10 +30,10 @@ var ConfigurationRegistry = /** @class */ (function () {
             properties: {}
         };
         this.configurationContributors = [this.defaultOverridesConfigurationNode];
-        this.editorConfigurationSchema = { properties: {}, patternProperties: {}, additionalProperties: false, errorMessage: 'Unknown editor configuration setting', allowsTrailingCommas: true, allowComments: true };
+        this.editorConfigurationSchema = { properties: {}, patternProperties: {}, additionalProperties: false, errorMessage: 'Unknown editor configuration setting', allowTrailingCommas: true, allowComments: true };
         this.configurationProperties = {};
         this.excludedConfigurationProperties = {};
-        this.computeOverridePropertyPattern();
+        this.overridePropertyPattern = this.computeOverridePropertyPattern();
         contributionRegistry.registerSchema(editorConfigurationSchemaId, this.editorConfigurationSchema);
     }
     ConfigurationRegistry.prototype.registerConfiguration = function (configuration, validate) {
@@ -169,7 +169,7 @@ var ConfigurationRegistry = /** @class */ (function () {
         delete machineOverridableSettings.patternProperties[this.overridePropertyPattern];
         delete windowSettings.patternProperties[this.overridePropertyPattern];
         delete resourceSettings.patternProperties[this.overridePropertyPattern];
-        this.computeOverridePropertyPattern();
+        this.overridePropertyPattern = this.computeOverridePropertyPattern();
         allSettings.patternProperties[this.overridePropertyPattern] = patternProperties;
         applicationSettings.patternProperties[this.overridePropertyPattern] = patternProperties;
         machineSettings.patternProperties[this.overridePropertyPattern] = patternProperties;
@@ -194,7 +194,7 @@ var ConfigurationRegistry = /** @class */ (function () {
         }
     };
     ConfigurationRegistry.prototype.computeOverridePropertyPattern = function () {
-        this.overridePropertyPattern = this.overrideIdentifiers.length ? OVERRIDE_PATTERN_WITH_SUBSTITUTION.replace('${0}', this.overrideIdentifiers.map(function (identifier) { return strings.createRegExp(identifier, false).source; }).join('|')) : OVERRIDE_PROPERTY;
+        return this.overrideIdentifiers.length ? OVERRIDE_PATTERN_WITH_SUBSTITUTION.replace('${0}', this.overrideIdentifiers.map(function (identifier) { return strings.createRegExp(identifier, false).source; }).join('|')) : OVERRIDE_PROPERTY;
     };
     return ConfigurationRegistry;
 }());

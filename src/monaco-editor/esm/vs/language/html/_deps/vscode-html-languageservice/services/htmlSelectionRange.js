@@ -2,34 +2,26 @@
  * Until SelectionRange lands in LSP, we'll return Range from server and convert it to
  * SelectionRange on client side
  */
-import { Range } from '../../vscode-languageserver-types/main.js';
+import { Range, SelectionRange } from './../_deps/vscode-languageserver-types/main.js';
 import { createScanner } from '../parser/htmlScanner.js';
 import { parse } from '../parser/htmlParser.js';
-import { TokenType, SelectionRangeKind } from '../htmlLanguageTypes.js';
+import { TokenType } from '../htmlLanguageTypes.js';
 export function getSelectionRanges(document, positions) {
     function getSelectionRange(position) {
         var applicableRanges = getApplicableRanges(document, position);
-        var ranges = applicableRanges
-            /**
-             * Filter duplicated ranges
-             */
-            .filter(function (pair, i) {
-            if (i === 0) {
-                return true;
+        var prev = undefined;
+        var current = undefined;
+        for (var index = applicableRanges.length - 1; index >= 0; index--) {
+            var range = applicableRanges[index];
+            if (!prev || range[0] !== prev[0] || range[1] !== prev[1]) {
+                current = SelectionRange.create(Range.create(document.positionAt(applicableRanges[index][0]), document.positionAt(applicableRanges[index][1])), current);
             }
-            var prev = applicableRanges[i - 1];
-            if (pair[0] === prev[0] && pair[1] === prev[1]) {
-                return false;
-            }
-            return true;
-        })
-            .map(function (pair) {
-            return {
-                range: Range.create(document.positionAt(pair[0]), document.positionAt(pair[1])),
-                kind: SelectionRangeKind.Declaration
-            };
-        });
-        return ranges;
+            prev = range;
+        }
+        if (!current) {
+            current = SelectionRange.create(Range.create(position, position));
+        }
+        return current;
     }
     return positions.map(getSelectionRange);
 }
@@ -40,6 +32,10 @@ function getApplicableRanges(document, position) {
     var result = getAllParentTagRanges(currNode);
     // Self-closing or void elements
     if (currNode.startTagEnd && !currNode.endTagStart) {
+        // THe rare case of unmatching tag pairs like <div></div1>
+        if (currNode.startTagEnd !== currNode.end) {
+            return [[currNode.start, currNode.end]];
+        }
         var closeRange = Range.create(document.positionAt(currNode.startTagEnd - 2), document.positionAt(currNode.startTagEnd));
         var closeText = document.getText(closeRange);
         // Self-closing element

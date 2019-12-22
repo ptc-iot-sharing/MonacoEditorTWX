@@ -232,6 +232,7 @@ export var OverviewRulerLane;
 export var MinimapPosition;
 (function (MinimapPosition) {
     MinimapPosition[MinimapPosition["Inline"] = 1] = "Inline";
+    MinimapPosition[MinimapPosition["Gutter"] = 2] = "Gutter";
 })(MinimapPosition || (MinimapPosition = {}));
 /**
  * End of line character preference.
@@ -332,101 +333,9 @@ export var CursorChangeReason;
 export var RenderMinimap;
 (function (RenderMinimap) {
     RenderMinimap[RenderMinimap["None"] = 0] = "None";
-    RenderMinimap[RenderMinimap["Small"] = 1] = "Small";
-    RenderMinimap[RenderMinimap["Large"] = 2] = "Large";
-    RenderMinimap[RenderMinimap["SmallBlocks"] = 3] = "SmallBlocks";
-    RenderMinimap[RenderMinimap["LargeBlocks"] = 4] = "LargeBlocks";
+    RenderMinimap[RenderMinimap["Text"] = 1] = "Text";
+    RenderMinimap[RenderMinimap["Blocks"] = 2] = "Blocks";
 })(RenderMinimap || (RenderMinimap = {}));
-/**
- * Describes how to indent wrapped lines.
- */
-export var WrappingIndent;
-(function (WrappingIndent) {
-    /**
-     * No indentation => wrapped lines begin at column 1.
-     */
-    WrappingIndent[WrappingIndent["None"] = 0] = "None";
-    /**
-     * Same => wrapped lines get the same indentation as the parent.
-     */
-    WrappingIndent[WrappingIndent["Same"] = 1] = "Same";
-    /**
-     * Indent => wrapped lines get +1 indentation toward the parent.
-     */
-    WrappingIndent[WrappingIndent["Indent"] = 2] = "Indent";
-    /**
-     * DeepIndent => wrapped lines get +2 indentation toward the parent.
-     */
-    WrappingIndent[WrappingIndent["DeepIndent"] = 3] = "DeepIndent";
-})(WrappingIndent || (WrappingIndent = {}));
-/**
- * The kind of animation in which the editor's cursor should be rendered.
- */
-export var TextEditorCursorBlinkingStyle;
-(function (TextEditorCursorBlinkingStyle) {
-    /**
-     * Hidden
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Hidden"] = 0] = "Hidden";
-    /**
-     * Blinking
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Blink"] = 1] = "Blink";
-    /**
-     * Blinking with smooth fading
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Smooth"] = 2] = "Smooth";
-    /**
-     * Blinking with prolonged filled state and smooth fading
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Phase"] = 3] = "Phase";
-    /**
-     * Expand collapse animation on the y axis
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Expand"] = 4] = "Expand";
-    /**
-     * No-Blinking
-     */
-    TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Solid"] = 5] = "Solid";
-})(TextEditorCursorBlinkingStyle || (TextEditorCursorBlinkingStyle = {}));
-/**
- * The style in which the editor's cursor should be rendered.
- */
-export var TextEditorCursorStyle;
-(function (TextEditorCursorStyle) {
-    /**
-     * As a vertical line (sitting between two characters).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["Line"] = 1] = "Line";
-    /**
-     * As a block (sitting on top of a character).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["Block"] = 2] = "Block";
-    /**
-     * As a horizontal line (sitting under a character).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["Underline"] = 3] = "Underline";
-    /**
-     * As a thin vertical line (sitting between two characters).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["LineThin"] = 4] = "LineThin";
-    /**
-     * As an outlined block (sitting on top of a character).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["BlockOutline"] = 5] = "BlockOutline";
-    /**
-     * As a thin horizontal line (sitting under a character).
-     */
-    TextEditorCursorStyle[TextEditorCursorStyle["UnderlineThin"] = 6] = "UnderlineThin";
-})(TextEditorCursorStyle || (TextEditorCursorStyle = {}));
-export var RenderLineNumbersType;
-(function (RenderLineNumbersType) {
-    RenderLineNumbersType[RenderLineNumbersType["Off"] = 0] = "Off";
-    RenderLineNumbersType[RenderLineNumbersType["On"] = 1] = "On";
-    RenderLineNumbersType[RenderLineNumbersType["Relative"] = 2] = "Relative";
-    RenderLineNumbersType[RenderLineNumbersType["Interval"] = 3] = "Interval";
-    RenderLineNumbersType[RenderLineNumbersType["Custom"] = 4] = "Custom";
-})(RenderLineNumbersType || (RenderLineNumbersType = {}));
 /**
  * A positioning preference for rendering content widgets.
  */

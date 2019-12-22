@@ -3,9 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as dom from './dom.js';
+import * as platform from '../common/platform.js';
 import { IframeUtils } from './iframe.js';
 import { StandardMouseEvent } from './mouseEvent.js';
 import { DisposableStore } from '../common/lifecycle.js';
+import { BrowserFeatures } from './canIUse.js';
 export function standardMouseMoveMerger(lastEvent, currentEvent) {
     var ev = new StandardMouseEvent(currentEvent);
     ev.preventDefault();
@@ -54,10 +56,12 @@ var GlobalMouseMoveMonitor = /** @class */ (function () {
         this.mouseMoveCallback = mouseMoveCallback;
         this.onStopCallback = onStopCallback;
         var windowChain = IframeUtils.getSameOriginWindowChain();
+        var mouseMove = platform.isIOS && BrowserFeatures.pointerEvents ? 'pointermove' : 'mousemove';
+        var mouseUp = platform.isIOS && BrowserFeatures.pointerEvents ? 'pointerup' : 'mouseup';
         for (var _i = 0, windowChain_1 = windowChain; _i < windowChain_1.length; _i++) {
             var element = windowChain_1[_i];
-            this.hooks.add(dom.addDisposableThrottledListener(element.window.document, 'mousemove', function (data) { return _this.mouseMoveCallback(data); }, function (lastEvent, currentEvent) { return _this.mouseMoveEventMerger(lastEvent, currentEvent); }));
-            this.hooks.add(dom.addDisposableListener(element.window.document, 'mouseup', function (e) { return _this.stopMonitoring(true); }));
+            this.hooks.add(dom.addDisposableThrottledListener(element.window.document, mouseMove, function (data) { return _this.mouseMoveCallback(data); }, function (lastEvent, currentEvent) { return _this.mouseMoveEventMerger(lastEvent, currentEvent); }));
+            this.hooks.add(dom.addDisposableListener(element.window.document, mouseUp, function (e) { return _this.stopMonitoring(true); }));
         }
         if (IframeUtils.hasDifferentOriginAncestor()) {
             var lastSameOriginAncestor = windowChain[windowChain.length - 1];

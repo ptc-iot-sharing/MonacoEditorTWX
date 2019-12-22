@@ -17,7 +17,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as strings from '../../../base/common/strings.js';
 import { CharacterClassifier } from '../core/characterClassifier.js';
-import { toUint32Array } from '../core/uint.js';
+import { toUint32Array } from '../../../base/common/uint.js';
 import { PrefixSumComputer } from './prefixSumComputer.js';
 import { OutputPosition } from './splitLinesCollection.js';
 var WrappingCharacterClassifier = /** @class */ (function (_super) {

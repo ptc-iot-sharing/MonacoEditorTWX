@@ -29,7 +29,6 @@ var InMemoryStorageService = /** @class */ (function (_super) {
     __extends(InMemoryStorageService, _super);
     function InMemoryStorageService() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._serviceBrand = null;
         _this._onDidChangeStorage = _this._register(new Emitter());
         _this.onDidChangeStorage = _this._onDidChangeStorage.event;
         _this.onWillSaveState = Event.None;

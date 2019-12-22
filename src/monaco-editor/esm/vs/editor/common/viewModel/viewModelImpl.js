@@ -22,7 +22,7 @@ import { Position } from '../core/position.js';
 import { Range } from '../core/range.js';
 import { TokenizationRegistry } from '../modes.js';
 import { tokenizeLineToHTML } from '../modes/textToHtmlTokenizer.js';
-import { MinimapTokensColorTracker } from '../view/minimapCharRenderer.js';
+import { MinimapTokensColorTracker } from './minimapTokensColorTracker.js';
 import * as viewEvents from '../view/viewEvents.js';
 import { ViewLayout } from '../viewLayout/viewLayout.js';
 import { CharacterHardWrappingLineMapperFactory } from './characterHardWrappingLineMapper.js';
@@ -30,6 +30,7 @@ import { IdentityLinesCollection, SplitLinesCollection } from './splitLinesColle
 import { MinimapLinesRenderingData, ViewLineRenderingData } from './viewModel.js';
 import { ViewModelDecorations } from './viewModelDecorations.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
+import * as platform from '../../../base/common/platform.js';
 var USE_IDENTITY_LINES_COLLECTION = true;
 var ViewModel = /** @class */ (function (_super) {
     __extends(ViewModel, _super);
@@ -47,9 +48,15 @@ var ViewModel = /** @class */ (function (_super) {
             _this.lines = new IdentityLinesCollection(_this.model);
         }
         else {
-            var conf = _this.configuration.editor;
-            var hardWrappingLineMapperFactory = new CharacterHardWrappingLineMapperFactory(conf.wrappingInfo.wordWrapBreakBeforeCharacters, conf.wrappingInfo.wordWrapBreakAfterCharacters, conf.wrappingInfo.wordWrapBreakObtrusiveCharacters);
-            _this.lines = new SplitLinesCollection(_this.model, hardWrappingLineMapperFactory, _this.model.getOptions().tabSize, conf.wrappingInfo.wrappingColumn, conf.fontInfo.typicalFullwidthCharacterWidth / conf.fontInfo.typicalHalfwidthCharacterWidth, conf.wrappingInfo.wrappingIndent);
+            var options = _this.configuration.options;
+            var wrappingInfo = options.get(104 /* wrappingInfo */);
+            var fontInfo = options.get(32 /* fontInfo */);
+            var wordWrapBreakAfterCharacters = options.get(94 /* wordWrapBreakAfterCharacters */);
+            var wordWrapBreakBeforeCharacters = options.get(95 /* wordWrapBreakBeforeCharacters */);
+            var wordWrapBreakObtrusiveCharacters = options.get(96 /* wordWrapBreakObtrusiveCharacters */);
+            var wrappingIndent = options.get(99 /* wrappingIndent */);
+            var hardWrappingLineMapperFactory = new CharacterHardWrappingLineMapperFactory(wordWrapBreakBeforeCharacters, wordWrapBreakAfterCharacters, wordWrapBreakObtrusiveCharacters);
+            _this.lines = new SplitLinesCollection(_this.model, hardWrappingLineMapperFactory, _this.model.getOptions().tabSize, wrappingInfo.wrappingColumn, fontInfo.typicalFullwidthCharacterWidth / fontInfo.typicalHalfwidthCharacterWidth, wrappingIndent);
         }
         _this.coordinatesConverter = _this.lines.createCoordinatesConverter();
         _this.viewLayout = _this._register(new ViewLayout(_this.configuration, _this.getLineCount(), scheduleAtNextAnimationFrame));
@@ -93,6 +100,7 @@ var ViewModel = /** @class */ (function (_super) {
         _super.prototype.dispose.call(this);
         this.decorations.dispose();
         this.lines.dispose();
+        this.invalidateMinimapColorCache();
         this.viewportStartLineTrackedRange = this.model._setTrackedRange(this.viewportStartLineTrackedRange, null, 1 /* NeverGrowsWhenTypingAtEdges */);
     };
     ViewModel.prototype.tokenizeViewport = function () {
@@ -112,8 +120,11 @@ var ViewModel = /** @class */ (function (_super) {
             previousViewportStartModelPosition = this.coordinatesConverter.convertViewPositionToModelPosition(previousViewportStartViewPosition);
         }
         var restorePreviousViewportStart = false;
-        var conf = this.configuration.editor;
-        if (this.lines.setWrappingSettings(conf.wrappingInfo.wrappingIndent, conf.wrappingInfo.wrappingColumn, conf.fontInfo.typicalFullwidthCharacterWidth / conf.fontInfo.typicalHalfwidthCharacterWidth)) {
+        var options = this.configuration.options;
+        var wrappingInfo = options.get(104 /* wrappingInfo */);
+        var fontInfo = options.get(32 /* fontInfo */);
+        var wrappingIndent = options.get(99 /* wrappingIndent */);
+        if (this.lines.setWrappingSettings(wrappingIndent, wrappingInfo.wrappingColumn, fontInfo.typicalFullwidthCharacterWidth / fontInfo.typicalHalfwidthCharacterWidth)) {
             eventsCollector.emit(new viewEvents.ViewFlushedEvent());
             eventsCollector.emit(new viewEvents.ViewLineMappingChangedEvent());
             eventsCollector.emit(new viewEvents.ViewDecorationsChangedEvent());
@@ -124,7 +135,7 @@ var ViewModel = /** @class */ (function (_super) {
                 restorePreviousViewportStart = true;
             }
         }
-        if (e.readOnly) {
+        if (e.hasChanged(65 /* readOnly */)) {
             // Must read again all decorations due to readOnly filtering
             this.decorations.reset();
             eventsCollector.emit(new viewEvents.ViewDecorationsChangedEvent());
@@ -444,7 +455,7 @@ var ViewModel = /** @class */ (function (_super) {
         return new MinimapLinesRenderingData(this.getTabSize(), result);
     };
     ViewModel.prototype.getAllOverviewRulerDecorations = function (theme) {
-        return this.lines.getAllOverviewRulerDecorations(this.editorId, this.configuration.editor.readOnly, theme);
+        return this.lines.getAllOverviewRulerDecorations(this.editorId, this.configuration.options.get(65 /* readOnly */), theme);
     };
     ViewModel.prototype.invalidateOverviewRulerColorCache = function () {
         var decorations = this.model.getOverviewRulerDecorations();
@@ -502,8 +513,19 @@ var ViewModel = /** @class */ (function (_super) {
         var newLineCharacter = forceCRLF ? '\r\n' : this.model.getEOL();
         ranges = ranges.slice(0);
         ranges.sort(Range.compareRangesUsingStarts);
-        var nonEmptyRanges = ranges.filter(function (r) { return !r.isEmpty(); });
-        if (nonEmptyRanges.length === 0) {
+        var hasEmptyRange = false;
+        var hasNonEmptyRange = false;
+        for (var _i = 0, ranges_1 = ranges; _i < ranges_1.length; _i++) {
+            var range = ranges_1[_i];
+            if (range.isEmpty()) {
+                hasEmptyRange = true;
+            }
+            else {
+                hasNonEmptyRange = true;
+            }
+        }
+        if (!hasNonEmptyRange) {
+            // all ranges are empty
             if (!emptySelectionClipboard) {
                 return '';
             }
@@ -520,10 +542,31 @@ var ViewModel = /** @class */ (function (_super) {
             }
             return result_1;
         }
+        if (hasEmptyRange && emptySelectionClipboard) {
+            // mixed empty selections and non-empty selections
+            var result_2 = [];
+            var prevModelLineNumber = 0;
+            for (var _a = 0, ranges_2 = ranges; _a < ranges_2.length; _a++) {
+                var range = ranges_2[_a];
+                var modelLineNumber = this.coordinatesConverter.convertViewPositionToModelPosition(new Position(range.startLineNumber, 1)).lineNumber;
+                if (range.isEmpty()) {
+                    if (modelLineNumber !== prevModelLineNumber) {
+                        result_2.push(this.model.getLineContent(modelLineNumber));
+                    }
+                }
+                else {
+                    result_2.push(this.getValueInRange(range, forceCRLF ? 2 /* CRLF */ : 0 /* TextDefined */));
+                }
+                prevModelLineNumber = modelLineNumber;
+            }
+            return result_2.length === 1 ? result_2[0] : result_2;
+        }
         var result = [];
-        for (var _i = 0, nonEmptyRanges_1 = nonEmptyRanges; _i < nonEmptyRanges_1.length; _i++) {
-            var nonEmptyRange = nonEmptyRanges_1[_i];
-            result.push(this.getValueInRange(nonEmptyRange, forceCRLF ? 2 /* CRLF */ : 0 /* TextDefined */));
+        for (var _b = 0, ranges_3 = ranges; _b < ranges_3.length; _b++) {
+            var range = ranges_3[_b];
+            if (!range.isEmpty()) {
+                result.push(this.getValueInRange(range, forceCRLF ? 2 /* CRLF */ : 0 /* TextDefined */));
+            }
         }
         return result.length === 1 ? result[0] : result;
     };
@@ -544,7 +587,7 @@ var ViewModel = /** @class */ (function (_super) {
             var lineNumber = range.startLineNumber;
             range = new Range(lineNumber, this.model.getLineMinColumn(lineNumber), lineNumber, this.model.getLineMaxColumn(lineNumber));
         }
-        var fontInfo = this.configuration.editor.fontInfo;
+        var fontInfo = this.configuration.options.get(32 /* fontInfo */);
         var colorMap = this._getColorMap();
         var fontFamily = fontInfo.fontFamily === EDITOR_FONT_DEFAULTS.fontFamily ? fontInfo.fontFamily : "'" + fontInfo.fontFamily + "', " + EDITOR_FONT_DEFAULTS.fontFamily;
         return ("<div style=\""
@@ -575,7 +618,7 @@ var ViewModel = /** @class */ (function (_super) {
                 result += '<br>';
             }
             else {
-                result += tokenizeLineToHTML(lineContent, lineTokens.inflate(), colorMap, startOffset, endOffset, tabSize);
+                result += tokenizeLineToHTML(lineContent, lineTokens.inflate(), colorMap, startOffset, endOffset, tabSize, platform.isWindows);
             }
         }
         return result;

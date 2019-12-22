@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Range, Position } from '../../vscode-languageserver-types/main.js';
+import { Range, Position } from './../_deps/vscode-languageserver-types/main.js';
 import { html_beautify } from '../beautify/beautify-html.js';
 import { repeat } from '../utils/strings.js';
 export function format(document, range, options) {
@@ -60,6 +60,7 @@ export function format(document, range, options) {
     var htmlOptions = {
         indent_size: tabSize,
         indent_char: options.insertSpaces ? ' ' : '\t',
+        indent_empty_lines: getFormatOption(options, 'indentEmptyLines', false),
         wrap_line_length: getFormatOption(options, 'wrapLineLength', 120),
         unformatted: getTagsFormatOption(options, 'unformatted', void 0),
         content_unformatted: getTagsFormatOption(options, 'contentUnformatted', void 0),

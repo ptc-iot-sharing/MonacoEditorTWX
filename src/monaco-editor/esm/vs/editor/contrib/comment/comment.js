@@ -59,8 +59,8 @@ var ToggleCommentLineAction = /** @class */ (function (_super) {
                 primary: 2048 /* CtrlCmd */ | 85 /* US_SLASH */,
                 weight: 100 /* EditorContrib */
             },
-            menubarOpts: {
-                menuId: 14 /* MenubarEditMenu */,
+            menuOpts: {
+                menuId: 15 /* MenubarEditMenu */,
                 group: '5_insert',
                 title: nls.localize({ key: 'miToggleLineComment', comment: ['&& denotes a mnemonic'] }, "&&Toggle Line Comment"),
                 order: 1
@@ -117,8 +117,8 @@ var BlockCommentAction = /** @class */ (function (_super) {
                 linux: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 31 /* KEY_A */ },
                 weight: 100 /* EditorContrib */
             },
-            menubarOpts: {
-                menuId: 14 /* MenubarEditMenu */,
+            menuOpts: {
+                menuId: 15 /* MenubarEditMenu */,
                 group: '5_insert',
                 title: nls.localize({ key: 'miToggleBlockComment', comment: ['&& denotes a mnemonic'] }, "Toggle &&Block Comment"),
                 order: 2

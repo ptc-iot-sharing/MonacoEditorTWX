@@ -149,7 +149,7 @@ var ScopeBuilder = /** @class */ (function () {
             case nodes.NodeType.For:
                 var forNode = node;
                 var scopeNode = forNode.getDeclarations();
-                if (scopeNode) {
+                if (scopeNode && forNode.variable) {
                     this.addSymbolToChildScope(scopeNode, forNode.variable, forNode.variable.getName(), void 0, nodes.ReferenceType.Variable);
                 }
                 return true;
@@ -313,7 +313,7 @@ var Symbols = /** @class */ (function () {
         while (node.type === nodes.NodeType.Interpolation) {
             node = node.getParent();
         }
-        if (symbol.name.length !== node.length || symbol.name !== node.getText()) {
+        if (!node.matches(symbol.name)) {
             return false;
         }
         var referenceTypes = this.evaluateReferenceTypes(node);

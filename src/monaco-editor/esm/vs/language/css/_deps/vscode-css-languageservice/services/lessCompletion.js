@@ -17,13 +17,13 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import { CSSCompletion } from './cssCompletion.js';
-import { CompletionItemKind, InsertTextFormat, TextEdit } from '../../vscode-languageserver-types/main.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import { CompletionItemKind, InsertTextFormat, TextEdit } from '../cssLanguageTypes.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var LESSCompletion = /** @class */ (function (_super) {
     __extends(LESSCompletion, _super);
-    function LESSCompletion() {
-        return _super.call(this, '@') || this;
+    function LESSCompletion(clientCapabilities) {
+        return _super.call(this, '@', clientCapabilities) || this;
     }
     LESSCompletion.prototype.createFunctionProposals = function (proposals, existingNode, sortToEnd, result) {
         for (var _i = 0, proposals_1 = proposals; _i < proposals_1.length; _i++) {
@@ -46,7 +46,7 @@ var LESSCompletion = /** @class */ (function (_super) {
     LESSCompletion.prototype.getTermProposals = function (entry, existingNode, result) {
         var functions = LESSCompletion.builtInProposals;
         if (entry) {
-            functions = functions.filter(function (f) { return !f.type || entry.restrictions.indexOf(f.type) !== -1; });
+            functions = functions.filter(function (f) { return !f.type || !entry.restrictions || entry.restrictions.indexOf(f.type) !== -1; });
         }
         this.createFunctionProposals(functions, existingNode, true, result);
         return _super.prototype.getTermProposals.call(this, entry, existingNode, result);

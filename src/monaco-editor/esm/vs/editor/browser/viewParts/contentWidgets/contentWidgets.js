@@ -151,10 +151,12 @@ var Widget = /** @class */ (function () {
         this.id = this._actual.getId();
         this.allowEditorOverflow = this._actual.allowEditorOverflow || false;
         this.suppressMouseDown = this._actual.suppressMouseDown || false;
-        this._fixedOverflowWidgets = this._context.configuration.editor.viewInfo.fixedOverflowWidgets;
-        this._contentWidth = this._context.configuration.editor.layoutInfo.contentWidth;
-        this._contentLeft = this._context.configuration.editor.layoutInfo.contentLeft;
-        this._lineHeight = this._context.configuration.editor.lineHeight;
+        var options = this._context.configuration.options;
+        var layoutInfo = options.get(103 /* layoutInfo */);
+        this._fixedOverflowWidgets = options.get(28 /* fixedOverflowWidgets */);
+        this._contentWidth = layoutInfo.contentWidth;
+        this._contentLeft = layoutInfo.contentLeft;
+        this._lineHeight = options.get(47 /* lineHeight */);
         this._position = null;
         this._range = null;
         this._viewPosition = null;
@@ -171,12 +173,12 @@ var Widget = /** @class */ (function () {
         this.domNode.setMaxWidth(this._maxWidth);
     }
     Widget.prototype.onConfigurationChanged = function (e) {
-        if (e.lineHeight) {
-            this._lineHeight = this._context.configuration.editor.lineHeight;
-        }
-        if (e.layoutInfo) {
-            this._contentLeft = this._context.configuration.editor.layoutInfo.contentLeft;
-            this._contentWidth = this._context.configuration.editor.layoutInfo.contentWidth;
+        var options = this._context.configuration.options;
+        this._lineHeight = options.get(47 /* lineHeight */);
+        if (e.hasChanged(103 /* layoutInfo */)) {
+            var layoutInfo = options.get(103 /* layoutInfo */);
+            this._contentLeft = layoutInfo.contentLeft;
+            this._contentWidth = layoutInfo.contentWidth;
             this._maxWidth = this._getMaxWidth();
         }
     };
@@ -292,7 +294,7 @@ var Widget = /** @class */ (function () {
             aboveLeft = absoluteAboveLeft;
             belowLeft = absoluteBelowLeft;
         }
-        return { fitsAbove: fitsAbove, aboveTop: aboveTop, aboveLeft: aboveLeft, fitsBelow: fitsBelow, belowTop: belowTop, belowLeft: belowLeft };
+        return { fitsAbove: fitsAbove, aboveTop: Math.max(aboveTop, TOP_PADDING), aboveLeft: aboveLeft, fitsBelow: fitsBelow, belowTop: belowTop, belowLeft: belowLeft };
     };
     Widget.prototype._prepareRenderWidgetAtExactPositionOverflowing = function (topLeft) {
         return new Coordinate(topLeft.top, topLeft.left + this._contentLeft);

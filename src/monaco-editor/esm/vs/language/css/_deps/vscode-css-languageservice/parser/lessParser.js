@@ -111,11 +111,13 @@ var LESSParser = /** @class */ (function (_super) {
         if (panic === void 0) { panic = []; }
         var node = this.create(nodes.VariableDeclaration);
         var mark = this.mark();
-        if (!this.peekDelim('@') && !this.peek(TokenType.AtKeyword) || !node.setVariable(this._parseVariable())) {
+        if (!node.setVariable(this._parseVariable(true))) {
             return null;
         }
         if (this.accept(TokenType.Colon)) {
-            node.colonPosition = this.prevToken.offset;
+            if (this.prevToken) {
+                node.colonPosition = this.prevToken.offset;
+            }
             if (node.setValue(this._parseDetachedRuleSet())) {
                 node.needsSemicolon = false;
             }
@@ -134,6 +136,32 @@ var LESSParser = /** @class */ (function (_super) {
         return this.finish(node);
     };
     LESSParser.prototype._parseDetachedRuleSet = function () {
+        var mark = this.mark();
+        // "Anonymous mixin" used in each() and possibly a generic type in the future
+        if (this.peekDelim('#') || this.peekDelim('.')) {
+            this.consumeToken();
+            if (!this.hasWhitespace() && this.accept(TokenType.ParenthesisL)) {
+                var node = this.create(nodes.MixinDeclaration);
+                if (node.getParameters().addChild(this._parseMixinParameter())) {
+                    while (this.accept(TokenType.Comma) || this.accept(TokenType.SemiColon)) {
+                        if (this.peek(TokenType.ParenthesisR)) {
+                            break;
+                        }
+                        if (!node.getParameters().addChild(this._parseMixinParameter())) {
+                            this.markError(node, ParseError.IdentifierExpected, [], [TokenType.ParenthesisR]);
+                        }
+                    }
+                }
+                if (!this.accept(TokenType.ParenthesisR)) {
+                    this.restoreAtMark(mark);
+                    return null;
+                }
+            }
+            else {
+                this.restoreAtMark(mark);
+                return null;
+            }
+        }
         if (!this.peek(TokenType.CurlyL)) {
             return null;
         }
@@ -144,13 +172,47 @@ var LESSParser = /** @class */ (function (_super) {
     LESSParser.prototype._parseDetachedRuleSetBody = function () {
         return this._tryParseKeyframeSelector() || this._parseRuleSetDeclaration();
     };
-    LESSParser.prototype._parseVariable = function () {
-        if (!this.peekDelim('@') && !this.peekDelim('$') && !this.peek(TokenType.AtKeyword)) {
+    LESSParser.prototype._addLookupChildren = function (node) {
+        if (!node.addChild(this._parseLookupValue())) {
+            return false;
+        }
+        var expectsValue = false;
+        while (true) {
+            if (this.peek(TokenType.BracketL)) {
+                expectsValue = true;
+            }
+            if (!node.addChild(this._parseLookupValue())) {
+                break;
+            }
+            expectsValue = false;
+        }
+        return !expectsValue;
+    };
+    LESSParser.prototype._parseLookupValue = function () {
+        var node = this.create(nodes.Node);
+        var mark = this.mark();
+        if (!this.accept(TokenType.BracketL)) {
+            this.restoreAtMark(mark);
+            return null;
+        }
+        if (((node.addChild(this._parseVariable(false, true)) ||
+            node.addChild(this._parsePropertyIdentifier())) &&
+            this.accept(TokenType.BracketR)) || this.accept(TokenType.BracketR)) {
+            return node;
+        }
+        this.restoreAtMark(mark);
+        return null;
+    };
+    LESSParser.prototype._parseVariable = function (declaration, insideLookup) {
+        if (declaration === void 0) { declaration = false; }
+        if (insideLookup === void 0) { insideLookup = false; }
+        var isPropertyReference = !declaration && this.peekDelim('$');
+        if (!this.peekDelim('@') && !isPropertyReference && !this.peek(TokenType.AtKeyword)) {
             return null;
         }
         var node = this.create(nodes.Variable);
         var mark = this.mark();
-        while (this.acceptDelim('@') || this.acceptDelim('$')) {
+        while (this.acceptDelim('@') || (!declaration && this.acceptDelim('$'))) {
             if (this.hasWhitespace()) {
                 this.restoreAtMark(mark);
                 return null;
@@ -159,6 +221,12 @@ var LESSParser = /** @class */ (function (_super) {
         if (!this.accept(TokenType.AtKeyword) && !this.accept(TokenType.Ident)) {
             this.restoreAtMark(mark);
             return null;
+        }
+        if (!insideLookup && this.peek(TokenType.BracketL)) {
+            if (!this._addLookupChildren(node)) {
+                this.restoreAtMark(mark);
+                return null;
+            }
         }
         return node;
     };
@@ -170,7 +238,7 @@ var LESSParser = /** @class */ (function (_super) {
         term = this.create(nodes.Term);
         if (term.setExpression(this._parseVariable()) ||
             term.setExpression(this._parseEscaped()) ||
-            term.setExpression(this._tryParseMixinReference())) {
+            term.setExpression(this._tryParseMixinReference(false))) {
             return this.finish(term);
         }
         return null;
@@ -289,20 +357,43 @@ var LESSParser = /** @class */ (function (_super) {
         var hasContent = this._acceptInterpolatedIdent(node);
         return hasContent ? this.finish(node) : null;
     };
-    LESSParser.prototype._parsePropertyIdentifier = function () {
-        if (!this.peekInterpolatedIdent()) {
+    LESSParser.prototype._parsePropertyIdentifier = function (inLookup) {
+        if (inLookup === void 0) { inLookup = false; }
+        var propertyRegex = /^[\w-]+/;
+        if (!this.peekInterpolatedIdent() && !this.peekRegExp(this.token.type, propertyRegex)) {
             return null;
         }
+        var mark = this.mark();
         var node = this.create(nodes.Identifier);
-        node.isCustomProperty = this.peekRegExp(TokenType.Ident, /^--/);
-        var hasContent = this._acceptInterpolatedIdent(node);
-        if (hasContent && !this.hasWhitespace()) {
+        node.isCustomProperty = this.acceptDelim('-') && this.acceptDelim('-');
+        var childAdded = false;
+        if (!inLookup) {
+            if (node.isCustomProperty) {
+                childAdded = this._acceptInterpolatedIdent(node);
+            }
+            else {
+                childAdded = this._acceptInterpolatedIdent(node, propertyRegex);
+            }
+        }
+        else {
+            if (node.isCustomProperty) {
+                childAdded = node.addChild(this._parseIdent());
+            }
+            else {
+                childAdded = node.addChild(this._parseRegexp(propertyRegex));
+            }
+        }
+        if (!childAdded) {
+            this.restoreAtMark(mark);
+            return null;
+        }
+        if (!inLookup && !this.hasWhitespace()) {
             this.acceptDelim('+');
             if (!this.hasWhitespace()) {
                 this.acceptIdent('_');
             }
         }
-        return hasContent ? this.finish(node) : null;
+        return this.finish(node);
     };
     LESSParser.prototype.peekInterpolatedIdent = function () {
         return this.peek(TokenType.Ident) ||
@@ -310,7 +401,7 @@ var LESSParser = /** @class */ (function (_super) {
             this.peekDelim('$') ||
             this.peekDelim('-');
     };
-    LESSParser.prototype._acceptInterpolatedIdent = function (node) {
+    LESSParser.prototype._acceptInterpolatedIdent = function (node, identRegex) {
         var _this = this;
         var hasContent = false;
         var indentInterpolation = function () {
@@ -326,7 +417,12 @@ var LESSParser = /** @class */ (function (_super) {
             }
             return _this._parseInterpolation();
         };
-        while (this.accept(TokenType.Ident) || node.addChild(indentInterpolation()) || (hasContent && (this.acceptDelim('-') || this.accept(TokenType.Num)))) {
+        var accept = identRegex ?
+            function () { return _this.acceptRegexp(identRegex); } :
+            function () { return _this.accept(TokenType.Ident); };
+        while (accept() ||
+            node.addChild(this._parseInterpolation() ||
+                this.try(indentInterpolation))) {
             hasContent = true;
             if (this.hasWhitespace()) {
                 break;
@@ -335,7 +431,7 @@ var LESSParser = /** @class */ (function (_super) {
         return hasContent;
     };
     LESSParser.prototype._parseInterpolation = function () {
-        // @{name} Variable or 
+        // @{name} Variable or
         // ${name} Property
         var mark = this.mark();
         if (this.peekDelim('@') || this.peekDelim('$')) {
@@ -455,7 +551,7 @@ var LESSParser = /** @class */ (function (_super) {
         }
         var mark = this.mark();
         var node = this.create(nodes.MixinReference);
-        if (node.addChild(this._parseVariable()) && (this.hasWhitespace() || !this.accept(TokenType.ParenthesisL))) {
+        if (node.addChild(this._parseVariable(true)) && (this.hasWhitespace() || !this.accept(TokenType.ParenthesisL))) {
             this.restoreAtMark(mark);
             return null;
         }
@@ -464,7 +560,8 @@ var LESSParser = /** @class */ (function (_super) {
         }
         return this.finish(node);
     };
-    LESSParser.prototype._tryParseMixinReference = function () {
+    LESSParser.prototype._tryParseMixinReference = function (atRoot) {
+        if (atRoot === void 0) { atRoot = true; }
         var mark = this.mark();
         var node = this.create(nodes.MixinReference);
         var identifier = this._parseMixinDeclarationIdentifier();
@@ -504,7 +601,14 @@ var LESSParser = /** @class */ (function (_super) {
         else {
             identifier.referenceTypes = [nodes.ReferenceType.Mixin, nodes.ReferenceType.Rule];
         }
-        node.addChild(this._parsePrio());
+        if (this.peek(TokenType.BracketL)) {
+            if (!atRoot) {
+                this._addLookupChildren(node);
+            }
+        }
+        else {
+            node.addChild(this._parsePrio());
+        }
         if (!hasArguments && !this.peek(TokenType.SemiColon) && !this.peek(TokenType.CurlyR) && !this.peek(TokenType.EOF)) {
             this.restoreAtMark(mark);
             return null;

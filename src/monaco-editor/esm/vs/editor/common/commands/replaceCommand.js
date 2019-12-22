@@ -21,6 +21,22 @@ var ReplaceCommand = /** @class */ (function () {
     return ReplaceCommand;
 }());
 export { ReplaceCommand };
+var ReplaceCommandThatSelectsText = /** @class */ (function () {
+    function ReplaceCommandThatSelectsText(range, text) {
+        this._range = range;
+        this._text = text;
+    }
+    ReplaceCommandThatSelectsText.prototype.getEditOperations = function (model, builder) {
+        builder.addTrackedEditOperation(this._range, this._text);
+    };
+    ReplaceCommandThatSelectsText.prototype.computeCursorState = function (model, helper) {
+        var inverseEditOperations = helper.getInverseEditOperations();
+        var srcRange = inverseEditOperations[0].range;
+        return new Selection(srcRange.startLineNumber, srcRange.startColumn, srcRange.endLineNumber, srcRange.endColumn);
+    };
+    return ReplaceCommandThatSelectsText;
+}());
+export { ReplaceCommandThatSelectsText };
 var ReplaceCommandWithoutChangingPosition = /** @class */ (function () {
     function ReplaceCommandWithoutChangingPosition(range, text, insertsAutoWhitespace) {
         if (insertsAutoWhitespace === void 0) { insertsAutoWhitespace = false; }

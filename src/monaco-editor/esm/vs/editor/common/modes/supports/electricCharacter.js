@@ -11,10 +11,13 @@ var BracketElectricCharacterSupport = /** @class */ (function () {
     BracketElectricCharacterSupport.prototype.getElectricCharacters = function () {
         var result = [];
         if (this._richEditBrackets) {
-            for (var i = 0, len = this._richEditBrackets.brackets.length; i < len; i++) {
-                var bracketPair = this._richEditBrackets.brackets[i];
-                var lastChar = bracketPair.close.charAt(bracketPair.close.length - 1);
-                result.push(lastChar);
+            for (var _i = 0, _a = this._richEditBrackets.brackets; _i < _a.length; _i++) {
+                var bracket = _a[_i];
+                for (var _b = 0, _c = bracket.close; _b < _c.length; _b++) {
+                    var close_1 = _c[_b];
+                    var lastChar = close_1.charAt(close_1.length - 1);
+                    result.push(lastChar);
+                }
             }
         }
         // Filter duplicate entries
@@ -33,7 +36,7 @@ var BracketElectricCharacterSupport = /** @class */ (function () {
         }
         var reversedBracketRegex = this._richEditBrackets.reversedRegex;
         var text = context.getLineContent().substring(0, column - 1) + character;
-        var r = BracketsUtils.findPrevBracketInToken(reversedBracketRegex, 1, text, 0, text.length);
+        var r = BracketsUtils.findPrevBracketInRange(reversedBracketRegex, 1, text, 0, text.length);
         if (!r) {
             return null;
         }

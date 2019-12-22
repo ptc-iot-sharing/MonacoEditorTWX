@@ -2,29 +2,37 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat } from '../../vscode-languageserver-types/main.js';
+import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat, MarkupKind } from './../_deps/vscode-languageserver-types/main.js';
 import { createScanner } from '../parser/htmlScanner.js';
 import { ScannerState, TokenType } from '../htmlLanguageTypes.js';
 import { entities } from '../parser/htmlEntities.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 import { isLetterOrDigit, endsWith, startsWith } from '../utils/strings.js';
 import { getAllDataProviders } from '../languageFacts/builtinDataProviders.js';
 import { isVoidElement } from '../languageFacts/fact.js';
+import { isDefined } from '../utils/object.js';
+import { generateDocumentation } from '../languageFacts/dataProvider.js';
 var localize = nls.loadMessageBundle();
 var HTMLCompletion = /** @class */ (function () {
-    function HTMLCompletion() {
+    function HTMLCompletion(clientCapabilities) {
+        this.clientCapabilities = clientCapabilities;
         this.completionParticipants = [];
     }
     HTMLCompletion.prototype.setCompletionParticipants = function (registeredCompletionParticipants) {
         this.completionParticipants = registeredCompletionParticipants || [];
     };
     HTMLCompletion.prototype.doComplete = function (document, position, htmlDocument, settings) {
+        var result = this._doComplete(document, position, htmlDocument, settings);
+        return this.convertCompletionList(result);
+    };
+    HTMLCompletion.prototype._doComplete = function (document, position, htmlDocument, settings) {
         var result = {
             isIncomplete: false,
             items: []
         };
         var completionParticipants = this.completionParticipants;
         var dataProviders = getAllDataProviders().filter(function (p) { return p.isApplicable(document.languageId) && (!settings || settings[p.getId()] !== false); });
+        var doesSupportMarkdown = this.doesSupportMarkdown();
         var text = document.getText();
         var offset = document.offsetAt(position);
         var node = htmlDocument.findNodeBefore(offset);
@@ -48,7 +56,7 @@ var HTMLCompletion = /** @class */ (function () {
                     result.items.push({
                         label: tag.name,
                         kind: CompletionItemKind.Property,
-                        documentation: tag.description,
+                        documentation: generateDocumentation(tag, doesSupportMarkdown),
                         textEdit: TextEdit.replace(range, tag.name),
                         insertTextFormat: InsertTextFormat.PlainText
                     });
@@ -84,7 +92,7 @@ var HTMLCompletion = /** @class */ (function () {
                     var item = {
                         label: '/' + tag,
                         kind: CompletionItemKind.Property,
-                        filterText: '/' + tag + closeTag,
+                        filterText: '/' + tag,
                         textEdit: TextEdit.replace(range, '/' + tag + closeTag),
                         insertTextFormat: InsertTextFormat.PlainText
                     };
@@ -93,7 +101,7 @@ var HTMLCompletion = /** @class */ (function () {
                     if (startIndent !== null && endIndent !== null && startIndent !== endIndent) {
                         var insertText = startIndent + '</' + tag + closeTag;
                         item.textEdit = TextEdit.replace(getReplaceRange(afterOpenBracket - 1 - endIndent.length), insertText);
-                        item.filterText = endIndent + '</' + tag + closeTag;
+                        item.filterText = endIndent + '</' + tag;
                     }
                     result.items.push(item);
                     return result;
@@ -108,7 +116,7 @@ var HTMLCompletion = /** @class */ (function () {
                     result.items.push({
                         label: '/' + tag.name,
                         kind: CompletionItemKind.Property,
-                        documentation: tag.description,
+                        documentation: generateDocumentation(tag, doesSupportMarkdown),
                         filterText: '/' + tag + closeTag,
                         textEdit: TextEdit.replace(range, '/' + tag + closeTag),
                         insertTextFormat: InsertTextFormat.PlainText
@@ -158,7 +166,7 @@ var HTMLCompletion = /** @class */ (function () {
                     var command;
                     if (attr.valueSet !== 'v' && value.length) {
                         codeSnippet = codeSnippet + value;
-                        if (attr.valueSet) {
+                        if (attr.valueSet || attr.name === 'style') {
                             command = {
                                 title: 'Suggest',
                                 command: 'editor.action.triggerSuggest'
@@ -168,7 +176,7 @@ var HTMLCompletion = /** @class */ (function () {
                     result.items.push({
                         label: attr.name,
                         kind: attr.valueSet === 'handler' ? CompletionItemKind.Function : CompletionItemKind.Value,
-                        documentation: attr.description,
+                        documentation: generateDocumentation(attr, doesSupportMarkdown),
                         textEdit: TextEdit.replace(range, codeSnippet),
                         insertTextFormat: InsertTextFormat.Snippet,
                         command: command
@@ -242,6 +250,7 @@ var HTMLCompletion = /** @class */ (function () {
                         label: value.name,
                         filterText: insertText,
                         kind: CompletionItemKind.Unit,
+                        documentation: generateDocumentation(value, doesSupportMarkdown),
                         textEdit: TextEdit.replace(range, insertText),
                         insertTextFormat: InsertTextFormat.PlainText
                     });
@@ -437,6 +446,30 @@ var HTMLCompletion = /** @class */ (function () {
             }
         }
         return null;
+    };
+    HTMLCompletion.prototype.convertCompletionList = function (list) {
+        if (!this.doesSupportMarkdown()) {
+            list.items.forEach(function (item) {
+                if (item.documentation && typeof item.documentation !== 'string') {
+                    item.documentation = {
+                        kind: 'plaintext',
+                        value: item.documentation.value
+                    };
+                }
+            });
+        }
+        return list;
+    };
+    HTMLCompletion.prototype.doesSupportMarkdown = function () {
+        if (!isDefined(this.supportsMarkdown)) {
+            if (!isDefined(this.clientCapabilities)) {
+                this.supportsMarkdown = true;
+                return this.supportsMarkdown;
+            }
+            var hover = this.clientCapabilities && this.clientCapabilities.textDocument && this.clientCapabilities.textDocument.hover;
+            this.supportsMarkdown = hover && hover.contentFormat && Array.isArray(hover.contentFormat) && hover.contentFormat.indexOf(MarkupKind.Markdown) !== -1;
+        }
+        return this.supportsMarkdown;
     };
     return HTMLCompletion;
 }());

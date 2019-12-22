@@ -8,7 +8,7 @@ import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
 import { dispose, DisposableStore, isDisposable } from '../../../base/common/lifecycle.js';
 import { Selection } from '../../common/core/selection.js';
-import { CompletionProviderRegistry, completionKindFromString } from '../../common/modes.js';
+import { CompletionProviderRegistry } from '../../common/modes.js';
 import { CompletionModel } from './completionModel.js';
 import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport, CompletionOptions } from './suggest.js';
 import { SnippetController2 } from '../snippet/snippetController2.js';
@@ -111,7 +111,7 @@ var SuggestModel = /** @class */ (function () {
     };
     // --- handle configuration & precondition changes
     SuggestModel.prototype._updateQuickSuggest = function () {
-        this._quickSuggestDelay = this._editor.getConfiguration().contribInfo.quickSuggestionsDelay;
+        this._quickSuggestDelay = this._editor.getOption(64 /* quickSuggestionsDelay */);
         if (isNaN(this._quickSuggestDelay) || (!this._quickSuggestDelay && this._quickSuggestDelay !== 0) || this._quickSuggestDelay < 0) {
             this._quickSuggestDelay = 10;
         }
@@ -119,9 +119,9 @@ var SuggestModel = /** @class */ (function () {
     SuggestModel.prototype._updateTriggerCharacters = function () {
         var _this = this;
         dispose(this._triggerCharacterListener);
-        if (this._editor.getConfiguration().readOnly
+        if (this._editor.getOption(65 /* readOnly */)
             || !this._editor.hasModel()
-            || !this._editor.getConfiguration().contribInfo.suggestOnTriggerCharacters) {
+            || !this._editor.getOption(88 /* suggestOnTriggerCharacters */)) {
             return;
         }
         var supportsByTriggerCharacter = Object.create(null);
@@ -205,7 +205,7 @@ var SuggestModel = /** @class */ (function () {
             return;
         }
         if (this._state === 0 /* Idle */) {
-            if (this._editor.getConfiguration().contribInfo.quickSuggestions === false) {
+            if (this._editor.getOption(63 /* quickSuggestions */) === false) {
                 // not enabled
                 return;
             }
@@ -213,7 +213,7 @@ var SuggestModel = /** @class */ (function () {
                 // cursor didn't move RIGHT
                 return;
             }
-            if (this._editor.getConfiguration().contribInfo.suggest.snippetsPreventQuickSuggestions && SnippetController2.get(this._editor).isInSnippet()) {
+            if (this._editor.getOption(85 /* suggest */).snippetsPreventQuickSuggestions && SnippetController2.get(this._editor).isInSnippet()) {
                 // no quick suggestion when in snippet mode
                 return;
             }
@@ -231,7 +231,7 @@ var SuggestModel = /** @class */ (function () {
                 var model = _this._editor.getModel();
                 var pos = _this._editor.getPosition();
                 // validate enabled now
-                var quickSuggestions = _this._editor.getConfiguration().contribInfo.quickSuggestions;
+                var quickSuggestions = _this._editor.getOption(63 /* quickSuggestions */);
                 if (quickSuggestions === false) {
                     return;
                 }
@@ -306,10 +306,9 @@ var SuggestModel = /** @class */ (function () {
         }
         this._requestToken = new CancellationTokenSource();
         // kind filter and snippet sort rules
-        var contribInfo = this._editor.getConfiguration().contribInfo;
-        var itemKindFilter = new Set();
+        var snippetSuggestions = this._editor.getOption(82 /* snippetSuggestions */);
         var snippetSortOrder = 1 /* Inline */;
-        switch (contribInfo.suggest.snippets) {
+        switch (snippetSuggestions) {
             case 'top':
                 snippetSortOrder = 0 /* Top */;
                 break;
@@ -320,17 +319,8 @@ var SuggestModel = /** @class */ (function () {
             case 'bottom':
                 snippetSortOrder = 2 /* Bottom */;
                 break;
-            case 'none':
-                itemKindFilter.add(25 /* Snippet */);
-                break;
         }
-        // kind filter
-        for (var key in contribInfo.suggest.filteredTypes) {
-            var kind = completionKindFromString(key, true);
-            if (typeof kind !== 'undefined' && contribInfo.suggest.filteredTypes[key] === false) {
-                itemKindFilter.add(kind);
-            }
-        }
+        var itemKindFilter = SuggestModel._createItemKindFilter(this._editor);
         var wordDistance = WordDistance.create(this._editorWorker, this._editor);
         var items = provideSuggestionItems(model, this._editor.getPosition(), new CompletionOptions(snippetSortOrder, itemKindFilter, onlyFrom), suggestCtx, this._requestToken.token);
         Promise.all([items, wordDistance]).then(function (_a) {
@@ -351,7 +341,7 @@ var SuggestModel = /** @class */ (function () {
             _this._completionModel = new CompletionModel(items, _this._context.column, {
                 leadingLineContent: ctx.leadingLineContent,
                 characterCountDelta: ctx.column - _this._context.column
-            }, wordDistance, _this._editor.getConfiguration().contribInfo.suggest);
+            }, wordDistance, _this._editor.getOption(85 /* suggest */), _this._editor.getOption(82 /* snippetSuggestions */));
             // store containers so that they can be disposed later
             for (var _i = 0, items_1 = items; _i < items_1.length; _i++) {
                 var item = items_1[_i];
@@ -361,6 +351,96 @@ var SuggestModel = /** @class */ (function () {
             }
             _this._onNewContext(ctx);
         }).catch(onUnexpectedError);
+    };
+    SuggestModel._createItemKindFilter = function (editor) {
+        // kind filter and snippet sort rules
+        var result = new Set();
+        // snippet setting
+        var snippetSuggestions = editor.getOption(82 /* snippetSuggestions */);
+        if (snippetSuggestions === 'none') {
+            result.add(25 /* Snippet */);
+        }
+        // type setting
+        var suggestOptions = editor.getOption(85 /* suggest */);
+        if (!suggestOptions.showMethods) {
+            result.add(0 /* Method */);
+        }
+        if (!suggestOptions.showFunctions) {
+            result.add(1 /* Function */);
+        }
+        if (!suggestOptions.showConstructors) {
+            result.add(2 /* Constructor */);
+        }
+        if (!suggestOptions.showFields) {
+            result.add(3 /* Field */);
+        }
+        if (!suggestOptions.showVariables) {
+            result.add(4 /* Variable */);
+        }
+        if (!suggestOptions.showClasses) {
+            result.add(5 /* Class */);
+        }
+        if (!suggestOptions.showStructs) {
+            result.add(6 /* Struct */);
+        }
+        if (!suggestOptions.showInterfaces) {
+            result.add(7 /* Interface */);
+        }
+        if (!suggestOptions.showModules) {
+            result.add(8 /* Module */);
+        }
+        if (!suggestOptions.showProperties) {
+            result.add(9 /* Property */);
+        }
+        if (!suggestOptions.showEvents) {
+            result.add(10 /* Event */);
+        }
+        if (!suggestOptions.showOperators) {
+            result.add(11 /* Operator */);
+        }
+        if (!suggestOptions.showUnits) {
+            result.add(12 /* Unit */);
+        }
+        if (!suggestOptions.showValues) {
+            result.add(13 /* Value */);
+        }
+        if (!suggestOptions.showConstants) {
+            result.add(14 /* Constant */);
+        }
+        if (!suggestOptions.showEnums) {
+            result.add(15 /* Enum */);
+        }
+        if (!suggestOptions.showEnumMembers) {
+            result.add(16 /* EnumMember */);
+        }
+        if (!suggestOptions.showKeywords) {
+            result.add(17 /* Keyword */);
+        }
+        if (!suggestOptions.showWords) {
+            result.add(18 /* Text */);
+        }
+        if (!suggestOptions.showColors) {
+            result.add(19 /* Color */);
+        }
+        if (!suggestOptions.showFiles) {
+            result.add(20 /* File */);
+        }
+        if (!suggestOptions.showReferences) {
+            result.add(21 /* Reference */);
+        }
+        if (!suggestOptions.showColors) {
+            result.add(22 /* Customcolor */);
+        }
+        if (!suggestOptions.showFolders) {
+            result.add(23 /* Folder */);
+        }
+        if (!suggestOptions.showTypeParameters) {
+            result.add(24 /* TypeParameter */);
+        }
+        if (!suggestOptions.showSnippets) {
+            result.add(25 /* Snippet */);
+        }
+        return result;
     };
     SuggestModel.prototype._onNewContext = function (ctx) {
         if (!this._context) {

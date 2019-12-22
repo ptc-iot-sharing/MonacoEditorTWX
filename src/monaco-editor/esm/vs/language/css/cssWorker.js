@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 import * as cssService from './_deps/vscode-css-languageservice/cssLanguageService.js';
-import * as ls from './_deps/vscode-languageserver-types/main.js';
 var CSSWorker = /** @class */ (function () {
     function CSSWorker(ctx, createData) {
         this._ctx = ctx;
@@ -89,9 +88,15 @@ var CSSWorker = /** @class */ (function () {
         var colorPresentations = this._languageService.getColorPresentations(document, stylesheet, color, range);
         return Promise.resolve(colorPresentations);
     };
-    CSSWorker.prototype.provideFoldingRanges = function (uri, context) {
+    CSSWorker.prototype.getFoldingRanges = function (uri, context) {
         var document = this._getTextDocument(uri);
         var ranges = this._languageService.getFoldingRanges(document, context);
+        return Promise.resolve(ranges);
+    };
+    CSSWorker.prototype.getSelectionRanges = function (uri, positions) {
+        var document = this._getTextDocument(uri);
+        var stylesheet = this._languageService.parseStylesheet(document);
+        var ranges = this._languageService.getSelectionRanges(document, positions, stylesheet);
         return Promise.resolve(ranges);
     };
     CSSWorker.prototype.doRename = function (uri, position, newName) {
@@ -105,7 +110,7 @@ var CSSWorker = /** @class */ (function () {
         for (var _i = 0, models_1 = models; _i < models_1.length; _i++) {
             var model = models_1[_i];
             if (model.uri.toString() === uri) {
-                return ls.TextDocument.create(uri, this._languageId, model.version, model.getValue());
+                return cssService.TextDocument.create(uri, this._languageId, model.version, model.getValue());
             }
         }
         return null;

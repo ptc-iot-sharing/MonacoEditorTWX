@@ -57,41 +57,17 @@ var CSSDataManager = /** @class */ (function () {
     CSSDataManager.prototype.getAtDirective = function (name) { return this._atDirectiveSet[name]; };
     CSSDataManager.prototype.getPseudoClass = function (name) { return this._pseudoClassSet[name]; };
     CSSDataManager.prototype.getPseudoElement = function (name) { return this._pseudoElementSet[name]; };
-    CSSDataManager.prototype.getProperties = function (majorBrowserSupport) {
-        if (majorBrowserSupport === void 0) { majorBrowserSupport = true; }
-        if (!majorBrowserSupport) {
-            return this._properties;
-        }
-        else {
-            return this._properties.filter(supportedInMoreThanOneBrowser);
-        }
+    CSSDataManager.prototype.getProperties = function () {
+        return this._properties;
     };
-    CSSDataManager.prototype.getAtDirectives = function (majorBrowserSupport) {
-        if (majorBrowserSupport === void 0) { majorBrowserSupport = true; }
-        if (!majorBrowserSupport) {
-            return this._atDirectives;
-        }
-        else {
-            return this._atDirectives.filter(supportedInMoreThanOneBrowser);
-        }
+    CSSDataManager.prototype.getAtDirectives = function () {
+        return this._atDirectives;
     };
-    CSSDataManager.prototype.getPseudoClasses = function (majorBrowserSupport) {
-        if (majorBrowserSupport === void 0) { majorBrowserSupport = true; }
-        if (!majorBrowserSupport) {
-            return this._pseudoClasses;
-        }
-        else {
-            return this._pseudoClasses.filter(supportedInMoreThanOneBrowser);
-        }
+    CSSDataManager.prototype.getPseudoClasses = function () {
+        return this._pseudoClasses;
     };
-    CSSDataManager.prototype.getPseudoElements = function (majorBrowserSupport) {
-        if (majorBrowserSupport === void 0) { majorBrowserSupport = true; }
-        if (!majorBrowserSupport) {
-            return this._pseudoElements;
-        }
-        else {
-            return this._pseudoElements.filter(supportedInMoreThanOneBrowser);
-        }
+    CSSDataManager.prototype.getPseudoElements = function () {
+        return this._pseudoElements;
     };
     CSSDataManager.prototype.isKnownProperty = function (name) {
         return name.toLowerCase() in this._propertySet;
@@ -103,9 +79,3 @@ var CSSDataManager = /** @class */ (function () {
     return CSSDataManager;
 }());
 export { CSSDataManager };
-export function supportedInMoreThanOneBrowser(entry) {
-    if (!entry.browsers) {
-        return true;
-    }
-    return entry.browsers.length > 1;
-}

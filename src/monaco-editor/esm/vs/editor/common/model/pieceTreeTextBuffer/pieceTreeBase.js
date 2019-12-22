@@ -396,20 +396,31 @@ var PieceTreeBase = /** @class */ (function () {
         var end = this.offsetInBuffer(node.piece.bufferIndex, endCursor);
         var m;
         // Reset regex to search from the beginning
-        searcher.reset(start);
         var ret = { line: 0, column: 0 };
+        var searchText;
+        var offsetInBuffer;
+        if (searcher._wordSeparators) {
+            searchText = buffer.buffer.substring(start, end);
+            offsetInBuffer = function (offset) { return offset + start; };
+            searcher.reset(-1);
+        }
+        else {
+            searchText = buffer.buffer;
+            offsetInBuffer = function (offset) { return offset; };
+            searcher.reset(start);
+        }
         do {
-            m = searcher.next(buffer.buffer);
+            m = searcher.next(searchText);
             if (m) {
-                if (m.index >= end) {
+                if (offsetInBuffer(m.index) >= end) {
                     return resultLen;
                 }
-                this.positionInBuffer(node, m.index - startOffsetInBuffer, ret);
+                this.positionInBuffer(node, offsetInBuffer(m.index) - startOffsetInBuffer, ret);
                 var lineFeedCnt = this.getLineFeedCnt(node.piece.bufferIndex, startCursor, ret);
                 var retStartColumn = ret.line === startCursor.line ? ret.column - startCursor.column + startColumn : ret.column + 1;
                 var retEndColumn = retStartColumn + m[0].length;
                 result[resultLen++] = createFindMatch(new Range(startLineNumber + lineFeedCnt, retStartColumn, startLineNumber + lineFeedCnt, retEndColumn), m, captureMatches);
-                if (m.index + m[0].length >= end) {
+                if (offsetInBuffer(m.index) + m[0].length >= end) {
                     return resultLen;
                 }
                 if (resultLen >= limitResultCount) {

@@ -18,14 +18,14 @@ var __extends = (this && this.__extends) || (function () {
 import { Disposable } from '../../../base/common/lifecycle.js';
 var ElementSizeObserver = /** @class */ (function (_super) {
     __extends(ElementSizeObserver, _super);
-    function ElementSizeObserver(referenceDomElement, changeCallback) {
+    function ElementSizeObserver(referenceDomElement, dimension, changeCallback) {
         var _this = _super.call(this) || this;
         _this.referenceDomElement = referenceDomElement;
         _this.changeCallback = changeCallback;
         _this.measureReferenceDomElementToken = -1;
         _this.width = -1;
         _this.height = -1;
-        _this.measureReferenceDomElement(false);
+        _this.measureReferenceDomElement(false, dimension);
         return _this;
     }
     ElementSizeObserver.prototype.dispose = function () {

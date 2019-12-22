@@ -31,6 +31,11 @@ var SCSSParser = /** @class */ (function (_super) {
     function SCSSParser() {
         return _super.call(this, new scssScanner.SCSSScanner()) || this;
     }
+    SCSSParser.prototype._parseStylesheetStart = function () {
+        return this._parseForward()
+            || this._parseUse()
+            || _super.prototype._parseStylesheetStart.call(this);
+    };
     SCSSParser.prototype._parseStylesheetStatement = function () {
         if (this.peek(TokenType.AtKeyword)) {
             return this._parseWarnAndDebug()
@@ -75,7 +80,9 @@ var SCSSParser = /** @class */ (function (_super) {
         if (!this.accept(TokenType.Colon)) {
             return this.finish(node, ParseError.ColonExpected);
         }
-        node.colonPosition = this.prevToken.offset;
+        if (this.prevToken) {
+            node.colonPosition = this.prevToken.offset;
+        }
         if (!node.setValue(this._parseExpr())) {
             return this.finish(node, ParseError.VariableValueExpected, [], panic);
         }
@@ -90,8 +97,14 @@ var SCSSParser = /** @class */ (function (_super) {
         }
         return this.finish(node);
     };
+    SCSSParser.prototype._parseMediaContentStart = function () {
+        return this._parseInterpolation();
+    };
     SCSSParser.prototype._parseMediaFeatureName = function () {
-        return this._parseFunction() || this._parseIdent() || this._parseVariable(); // first function, the indent
+        return this._parseModuleMember()
+            || this._parseFunction() // function before ident
+            || this._parseIdent()
+            || this._parseVariable();
     };
     SCSSParser.prototype._parseKeyframeSelector = function () {
         return this._tryParseKeyframeSelector()
@@ -105,6 +118,23 @@ var SCSSParser = /** @class */ (function (_super) {
         }
         var node = this.create(nodes.Variable);
         this.consumeToken();
+        return node;
+    };
+    SCSSParser.prototype._parseModuleMember = function () {
+        var pos = this.mark();
+        var node = this.create(nodes.Module);
+        if (!node.setIdentifier(this._parseIdent([nodes.ReferenceType.Module]))) {
+            return null;
+        }
+        if (this.hasWhitespace()
+            || !this.acceptDelim('.')
+            || this.hasWhitespace()) {
+            this.restoreAtMark(pos);
+            return null;
+        }
+        if (!node.addChild(this._parseVariable() || this._parseFunction())) {
+            return this.finish(node, ParseError.IdentifierOrVariableExpected);
+        }
         return node;
     };
     SCSSParser.prototype._parseIdent = function (referenceTypes) {
@@ -138,11 +168,14 @@ var SCSSParser = /** @class */ (function (_super) {
         return hasContent ? this.finish(node) : null;
     };
     SCSSParser.prototype._parseTerm = function () {
-        var term = _super.prototype._parseTerm.call(this);
-        if (term) {
-            return term;
+        var term = this.create(nodes.Term);
+        if (term.setExpression(this._parseModuleMember())) {
+            return this.finish(term);
         }
-        term = this.create(nodes.Term);
+        var superTerm = _super.prototype._parseTerm.call(this);
+        if (superTerm) {
+            return superTerm;
+        }
         if (term.setExpression(this._parseVariable())
             || term.setExpression(this._parseSelectorCombinator())
             || term.setExpression(this._tryParsePrio())) {
@@ -215,7 +248,9 @@ var SCSSParser = /** @class */ (function (_super) {
         if (!this.accept(TokenType.Colon)) {
             return this.finish(node, ParseError.ColonExpected, [TokenType.Colon], resyncStopTokens);
         }
-        node.colonPosition = this.prevToken.offset;
+        if (this.prevToken) {
+            node.colonPosition = this.prevToken.offset;
+        }
         var hasContent = false;
         if (node.setValue(this._parseExpr())) {
             hasContent = true;
@@ -496,8 +531,24 @@ var SCSSParser = /** @class */ (function (_super) {
         }
         var node = this.create(nodes.MixinReference);
         this.consumeToken();
-        if (!node.setIdentifier(this._parseIdent([nodes.ReferenceType.Mixin]))) {
+        // Could be module or mixin identifier, set as mixin as default.
+        var firstIdent = this._parseIdent([nodes.ReferenceType.Mixin]);
+        if (!node.setIdentifier(firstIdent)) {
             return this.finish(node, ParseError.IdentifierExpected, [TokenType.CurlyR]);
+        }
+        // Is a module accessor.
+        if (!this.hasWhitespace() && this.acceptDelim('.') && !this.hasWhitespace()) {
+            var secondIdent = this._parseIdent([nodes.ReferenceType.Mixin]);
+            if (!secondIdent) {
+                return this.finish(node, ParseError.IdentifierExpected, [TokenType.CurlyR]);
+            }
+            var moduleToken = this.create(nodes.Module);
+            // Re-purpose first matched ident as identifier for module token.
+            firstIdent.referenceTypes = [nodes.ReferenceType.Module];
+            moduleToken.setIdentifier(firstIdent);
+            // Override identifier with second ident.
+            node.setIdentifier(secondIdent);
+            node.addChild(moduleToken);
         }
         if (this.accept(TokenType.ParenthesisL)) {
             if (node.getArguments().addChild(this._parseFunctionArgument())) {
@@ -591,6 +642,103 @@ var SCSSParser = /** @class */ (function (_super) {
             node.setValue(child);
         }
         return this.finish(node);
+    };
+    SCSSParser.prototype._parseUse = function () {
+        if (!this.peek(scssScanner.Use)) {
+            return null;
+        }
+        var node = this.create(nodes.Use);
+        this.consumeToken();
+        if (!node.addChild(this._parseStringLiteral())) {
+            return this.finish(node, ParseError.StringLiteralExpected);
+        }
+        if (!this.peek(TokenType.SemiColon) && !this.peek(TokenType.EOF)) {
+            if (!this.peekRegExp(TokenType.Ident, /as|with/)) {
+                return this.finish(node, ParseError.UnknownKeyword);
+            }
+            if (this.acceptIdent('as') &&
+                (!node.setIdentifier(this._parseIdent([nodes.ReferenceType.Module])) && !this.acceptDelim('*'))) {
+                return this.finish(node, ParseError.IdentifierOrWildcardExpected);
+            }
+            if (this.acceptIdent('with')) {
+                if (!this.accept(TokenType.ParenthesisL)) {
+                    return this.finish(node, ParseError.LeftParenthesisExpected, [TokenType.ParenthesisR]);
+                }
+                // First variable statement, no comma.
+                if (!node.getParameters().addChild(this._parseModuleConfigDeclaration())) {
+                    return this.finish(node, ParseError.VariableNameExpected);
+                }
+                while (this.accept(TokenType.Comma)) {
+                    if (this.peek(TokenType.ParenthesisR)) {
+                        break;
+                    }
+                    if (!node.getParameters().addChild(this._parseModuleConfigDeclaration())) {
+                        return this.finish(node, ParseError.VariableNameExpected);
+                    }
+                }
+                if (!this.accept(TokenType.ParenthesisR)) {
+                    return this.finish(node, ParseError.RightParenthesisExpected);
+                }
+            }
+        }
+        if (!this.accept(TokenType.SemiColon) && !this.accept(TokenType.EOF)) {
+            return this.finish(node, ParseError.SemiColonExpected);
+        }
+        return this.finish(node);
+    };
+    SCSSParser.prototype._parseModuleConfigDeclaration = function () {
+        var node = this.create(nodes.ModuleConfiguration);
+        if (!node.setIdentifier(this._parseVariable())) {
+            return null;
+        }
+        if (!this.accept(TokenType.Colon) || !node.setValue(this._parseExpr(true))) {
+            return this.finish(node, ParseError.VariableValueExpected, [], [TokenType.Comma, TokenType.ParenthesisR]);
+        }
+        return this.finish(node);
+    };
+    SCSSParser.prototype._parseForward = function () {
+        if (!this.peek(scssScanner.Forward)) {
+            return null;
+        }
+        var node = this.create(nodes.Forward);
+        this.consumeToken();
+        if (!node.addChild(this._parseStringLiteral())) {
+            return this.finish(node, ParseError.StringLiteralExpected);
+        }
+        if (!this.peek(TokenType.SemiColon) && !this.peek(TokenType.EOF)) {
+            if (!this.peekRegExp(TokenType.Ident, /as|hide|show/)) {
+                return this.finish(node, ParseError.UnknownKeyword);
+            }
+            if (this.acceptIdent('as')) {
+                var identifier = this._parseIdent([nodes.ReferenceType.Forward]);
+                if (!node.setIdentifier(identifier)) {
+                    return this.finish(node, ParseError.IdentifierExpected);
+                }
+                // Wildcard must be the next character after the identifier string.
+                if (this.hasWhitespace() || !this.acceptDelim('*')) {
+                    return this.finish(node, ParseError.WildcardExpected);
+                }
+            }
+            if (this.peekIdent('hide') || this.peekIdent('show')) {
+                if (!node.addChild(this._parseForwardVisibility())) {
+                    return this.finish(node, ParseError.IdentifierOrVariableExpected);
+                }
+            }
+        }
+        if (!this.accept(TokenType.SemiColon) && !this.accept(TokenType.EOF)) {
+            return this.finish(node, ParseError.SemiColonExpected);
+        }
+        return this.finish(node);
+    };
+    SCSSParser.prototype._parseForwardVisibility = function () {
+        var node = this.create(nodes.ForwardVisibility);
+        // Assume to be "hide" or "show".
+        node.setIdentifier(this._parseIdent());
+        while (node.addChild(this._parseVariable() || this._parseIdent())) {
+            // Consume all variables and idents ahead.
+        }
+        // More than just identifier 
+        return node.getChildren().length > 1 ? node : null;
     };
     return SCSSParser;
 }(cssParser.Parser));

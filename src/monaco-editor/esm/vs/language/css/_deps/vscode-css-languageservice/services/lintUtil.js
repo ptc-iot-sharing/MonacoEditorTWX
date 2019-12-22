@@ -5,9 +5,9 @@
 'use strict';
 import { includes } from '../utils/arrays.js';
 var Element = /** @class */ (function () {
-    function Element(text, data) {
-        this.name = text;
-        this.node = data;
+    function Element(decl) {
+        this.fullPropertyName = decl.getFullPropertyName().toLowerCase();
+        this.node = decl;
     }
     return Element;
 }());
@@ -61,54 +61,63 @@ function updateModelWithList(model, values, property) {
             break;
     }
 }
+function matches(value, candidates) {
+    for (var _i = 0, candidates_1 = candidates; _i < candidates_1.length; _i++) {
+        var candidate = candidates_1[_i];
+        if (value.matches(candidate)) {
+            return true;
+        }
+    }
+    return false;
+}
 /**
  * @param allowsKeywords whether the initial value of property is zero, so keywords `initial` and `unset` count as zero
  * @return `true` if this node represents a non-zero border; otherwise, `false`
  */
 function checkLineWidth(value, allowsKeywords) {
     if (allowsKeywords === void 0) { allowsKeywords = true; }
-    if (allowsKeywords && includes(['initial', 'unset'], value)) {
+    if (allowsKeywords && matches(value, ['initial', 'unset'])) {
         return false;
     }
     // a <length> is a value and a unit
     // so use `parseFloat` to strip the unit
-    return parseFloat(value) !== 0;
+    return parseFloat(value.getText()) !== 0;
 }
 function checkLineWidthList(nodes, allowsKeywords) {
     if (allowsKeywords === void 0) { allowsKeywords = true; }
-    return nodes.map(function (node) { return checkLineWidth(node.getText(), allowsKeywords); });
+    return nodes.map(function (node) { return checkLineWidth(node, allowsKeywords); });
 }
 /**
  * @param allowsKeywords whether keywords `initial` and `unset` count as zero
  * @return `true` if this node represents a non-zero border; otherwise, `false`
  */
-function checkLineStyle(value, allowsKeywords) {
+function checkLineStyle(valueNode, allowsKeywords) {
     if (allowsKeywords === void 0) { allowsKeywords = true; }
-    if (includes(['none', 'hidden'], value)) {
+    if (matches(valueNode, ['none', 'hidden'])) {
         return false;
     }
-    if (allowsKeywords && includes(['initial', 'unset'], value)) {
+    if (allowsKeywords && matches(valueNode, ['initial', 'unset'])) {
         return false;
     }
     return true;
 }
 function checkLineStyleList(nodes, allowsKeywords) {
     if (allowsKeywords === void 0) { allowsKeywords = true; }
-    return nodes.map(function (node) { return checkLineStyle(node.getText(), allowsKeywords); });
+    return nodes.map(function (node) { return checkLineStyle(node, allowsKeywords); });
 }
 function checkBorderShorthand(node) {
     var children = node.getChildren();
     // the only child can be a keyword, a <line-width>, or a <line-style>
     // if either check returns false, the result is no border
     if (children.length === 1) {
-        var value = children[0].getText();
+        var value = children[0];
         return checkLineWidth(value) && checkLineStyle(value);
     }
     // multiple children can't contain keywords
     // if any child means no border, the result is no border
     for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
         var child = children_1[_i];
-        var value = child.getText();
+        var value = child;
         if (!checkLineWidth(value, /* allowsKeywords: */ false) ||
             !checkLineStyle(value, /* allowsKeywords: */ false)) {
             return false;
@@ -129,7 +138,7 @@ export default function calculateBoxModel(propertyTable) {
         if (typeof value === 'undefined') {
             continue;
         }
-        switch (property.name) {
+        switch (property.fullPropertyName) {
             case 'box-sizing':
                 // has `box-sizing`, bail out
                 return {
@@ -145,7 +154,7 @@ export default function calculateBoxModel(propertyTable) {
                 model.height = property;
                 break;
             default:
-                var segments = property.name.split('-');
+                var segments = property.fullPropertyName.split('-');
                 switch (segments[0]) {
                     case 'border':
                         switch (segments[1]) {
@@ -160,11 +169,11 @@ export default function calculateBoxModel(propertyTable) {
                                         break;
                                     case 'width':
                                         // the initial value of `border-width` is `medium`, not zero
-                                        updateModelWithValue(model, segments[1], checkLineWidth(value.getText(), false), property);
+                                        updateModelWithValue(model, segments[1], checkLineWidth(value, false), property);
                                         break;
                                     case 'style':
                                         // the initial value of `border-style` is `none`
-                                        updateModelWithValue(model, segments[1], checkLineStyle(value.getText(), true), property);
+                                        updateModelWithValue(model, segments[1], checkLineStyle(value, true), property);
                                         break;
                                 }
                                 break;
@@ -185,7 +194,7 @@ export default function calculateBoxModel(propertyTable) {
                         }
                         else {
                             // the initial value of `padding` is zero
-                            updateModelWithValue(model, segments[1], checkLineWidth(value.getText(), true), property);
+                            updateModelWithValue(model, segments[1], checkLineWidth(value, true), property);
                         }
                         break;
                 }

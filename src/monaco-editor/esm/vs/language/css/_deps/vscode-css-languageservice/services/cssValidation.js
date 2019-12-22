@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 import * as nodes from '../parser/cssNodes.js';
-import { Range, DiagnosticSeverity } from '../../vscode-languageserver-types/main.js';
 import { LintConfigurationSettings, Rules } from './lintRules.js';
 import { LintVisitor } from './lint.js';
+import { Range, DiagnosticSeverity } from '../cssLanguageTypes.js';
 var CSSValidation = /** @class */ (function () {
     function CSSValidation() {
     }

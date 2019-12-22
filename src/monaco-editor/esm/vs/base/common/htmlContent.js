@@ -4,25 +4,39 @@
  *--------------------------------------------------------------------------------------------*/
 import { equals } from './arrays.js';
 var MarkdownString = /** @class */ (function () {
-    function MarkdownString(value) {
+    function MarkdownString(value, isTrusted) {
         if (value === void 0) { value = ''; }
-        this.value = value;
+        if (isTrusted === void 0) { isTrusted = false; }
+        this._value = value;
+        this._isTrusted = isTrusted;
     }
+    Object.defineProperty(MarkdownString.prototype, "value", {
+        get: function () { return this._value; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(MarkdownString.prototype, "isTrusted", {
+        get: function () { return this._isTrusted; },
+        enumerable: true,
+        configurable: true
+    });
     MarkdownString.prototype.appendText = function (value) {
         // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
-        this.value += value.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
+        this._value += value
+            .replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&')
+            .replace('\n', '\n\n');
         return this;
     };
     MarkdownString.prototype.appendMarkdown = function (value) {
-        this.value += value;
+        this._value += value;
         return this;
     };
     MarkdownString.prototype.appendCodeblock = function (langId, code) {
-        this.value += '\n```';
-        this.value += langId;
-        this.value += '\n';
-        this.value += code;
-        this.value += '\n```\n';
+        this._value += '\n```';
+        this._value += langId;
+        this._value += '\n';
+        this._value += code;
+        this._value += '\n```\n';
         return this;
     };
     return MarkdownString;

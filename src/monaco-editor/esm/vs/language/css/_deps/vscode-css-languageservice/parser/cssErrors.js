@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var CSSIssueType = /** @class */ (function () {
     function CSSIssueType(id, message) {
@@ -43,5 +43,8 @@ export var ParseError = {
     SelectorExpected: new CSSIssueType('css-selectorexpected', localize('expected.selector', "selector expected")),
     StringLiteralExpected: new CSSIssueType('css-stringliteralexpected', localize('expected.stringliteral', "string literal expected")),
     WhitespaceExpected: new CSSIssueType('css-whitespaceexpected', localize('expected.whitespace', "whitespace expected")),
-    MediaQueryExpected: new CSSIssueType('css-mediaqueryexpected', localize('expected.mediaquery', "media query expected"))
+    MediaQueryExpected: new CSSIssueType('css-mediaqueryexpected', localize('expected.mediaquery', "media query expected")),
+    IdentifierOrWildcardExpected: new CSSIssueType('css-idorwildcardexpected', localize('expected.idorwildcard', "identifier or wildcard expected")),
+    WildcardExpected: new CSSIssueType('css-wildcardexpected', localize('expected.wildcard', "wildcard expected")),
+    IdentifierOrVariableExpected: new CSSIssueType('css-idorvarexpected', localize('expected.idorvar', "identifier or variable expected")),
 };
