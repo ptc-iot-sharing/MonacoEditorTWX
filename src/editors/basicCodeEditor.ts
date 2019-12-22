@@ -11,7 +11,7 @@ export interface ActionCallbacks {
 }
 
 export interface MonacoEditorSettings {
-    editor: monaco.editor.IEditorConstructionOptions,
+    editor: monaco.editor.IStandaloneEditorConstructionOptions,
     diffEditor: monaco.editor.IDiffEditorConstructionOptions,
     thingworx: any
 }
