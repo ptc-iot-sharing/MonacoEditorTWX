@@ -4,7 +4,7 @@
     "version": "1.14.0",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "thingworxServer": "http://localhost:8015",
-    "thingworxUser": "placatus@iqnox.com",
+    "thingworxUser": "Administrator",
     "thingworxPassword": "Administrator12345",
     "author": "Thingworx RoIcenter",
     "minimumThingWorxVersion": "6.0.0",
