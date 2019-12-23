@@ -21,7 +21,7 @@ export const ENTITY_TYPES = ["ApplicationKeys", "Authenticators", "Bindings", "B
  * The full reference is available here: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
  */
 export const DEFAULT_EDITOR_SETTINGS: {
-    editor: monaco.editor.IEditorConstructionOptions,
+    editor: monaco.editor.IStandaloneEditorConstructionOptions,
     diffEditor: monaco.editor.IDiffEditorConstructionOptions,
     thingworx: any
 } = {
