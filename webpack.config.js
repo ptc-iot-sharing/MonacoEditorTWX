@@ -11,7 +11,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin').default;
 const ZipPlugin = require('zip-webpack-plugin');
 // enable reading master data from the package.json file
 let packageJson = require('./package.json');
-const MonacoWebpackPlugin = require('./loader/monaco-editor-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 // look if we are in initialization mode based on the --init argument
 const isInitialization = process.argv.indexOf('--env.init') !== -1;
 // look if we are in initialization mode based on the --init argument
@@ -118,7 +118,7 @@ module.exports = function (env, argv) {
                     ]
                 },
                 {
-                    test: /\.(png|jp(e*)g|svg|xml|d\.ts)$/,
+                    test: /\.(png|jp(e*)g|svg|xml|d\.ts|ttf)$/,
                     loader: 'url-loader?limit=30000&name=images/[name].[ext]'
                 },
                 {
