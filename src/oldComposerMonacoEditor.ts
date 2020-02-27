@@ -1,11 +1,11 @@
 declare const ThingworxInvoker: any;
-
-window.addEventListener('load', async function () {
+async function initializeMonaco() {
+    // this will also add monaco on the window object
     const constants = await import("./constants");
     const { DEFAULT_EDITOR_SETTINGS, Languages, MONACO_EDITOR_SETTINGS_KEY } = constants;
     const ServiceEditor = await (await import("./editors/serviceEditor/serviceEditor")).ServiceEditor;
     const TypescriptCodeEditor = await (await import("./editors/typescript/typescriptCodeEditor")).TypescriptCodeEditor;
-
+    // load the editor in the old composer
     if (TW && TW.jqPlugins && TW.jqPlugins.twCodeEditor) {
         // automatically import the css file
         require('./styles/oldComposerMonacoEditor.css');
@@ -413,4 +413,5 @@ window.addEventListener('load', async function () {
     
         };
     }
-});
+};
+initializeMonaco();
