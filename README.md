@@ -38,7 +38,7 @@ Install the following script:
 // @version      0.1
 // @description  Loads the monaco editor in the new composer
 // @author       You
-// @match        */Thingworx/Composer/index.html
+// @match        */Thingworx/Composer/*
 // @grant        none
 // ==/UserScript==
 
