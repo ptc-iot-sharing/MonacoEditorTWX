@@ -1,5 +1,5 @@
 import { ServiceEditor } from "../serviceEditor/serviceEditor";
-import * as monaco from '../../monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/release/esm/vs/editor/editor.api';
 import { WorkerScriptManager } from "../workerScriptManager";
 import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../../utilities';
 import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES, Languages } from "../../constants";
@@ -153,7 +153,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         // for example Things.test
         let entityPropertyAccessRegex = new RegExp("(" + ENTITY_TYPES.join("|") + ")\\.([^\\.]*)$");
         // this handles on demand code completion for Thingworx entity names
-        monaco.languages.registerCompletionItemProvider([Languages.TwxJavascript, Languages.TwxTypescript], {
+        const completionProvider = {
             triggerCharacters: ["[", "[\"", "."],
             provideCompletionItems: (model, position) => {
                 const wordUntil = model.getWordUntilPosition(position);
@@ -202,7 +202,9 @@ export class TypescriptCodeEditor extends ServiceEditor {
                 }
                 return { suggestions: [] };
             }
-        });
+        };
+        monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, completionProvider);
+        monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, completionProvider);
         // register the rhino es5 library
         TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
         // register the thingworx base types and the logger class

@@ -1,4 +1,4 @@
-import * as monaco from './monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/release/esm/vs/editor/editor.api';
 import { DISALLOWED_ENTITY_CHARS } from './constants';
 
 declare const ThingworxInvoker: any;
