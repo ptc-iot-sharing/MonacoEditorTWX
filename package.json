@@ -23,13 +23,18 @@
         "watch": "webpack --watch --mode development",
         "server": "webpack-dev-server --open",
         "upload": "webpack --mode development --env.upload",
-        "init": "webpack --env.init"
+        "init": "webpack --env.init",
+        "prepublishOnly": "rm -rf dist && mkdir dist && yarn run build && mv zip/* dist && yarn run buildDev && mv zip/* dist"
     },
     "license": "ISC",
     "devDependencies": {
         "@babel/core": "^7.6.4",
         "@babel/plugin-syntax-dynamic-import": "^7.2.0",
         "@babel/preset-env": "^7.6.3",
+        "@semantic-release/changelog": "^5.0.0",
+        "@semantic-release/exec": "^5.0.0",
+        "@semantic-release/git": "^9.0.0",
+        "@semantic-release/github": "^7.0.5",
         "@types/jquery": "^3.3.31",
         "@types/node": "^8.10.58",
         "@types/webpack-env": "^1.14.1",
@@ -37,6 +42,7 @@
         "clean-webpack-plugin": "^2.0.2",
         "copy-webpack-plugin": "^5.0.4",
         "css-loader": "^2.1.1",
+        "cz-conventional-changelog": "^3.1.0",
         "extract-text-webpack-plugin": "^3.0.2",
         "file-loader": "^3.0.1",
         "monaco-editor-webpack-plugin": "npm:@placatus/monaco-editor-webpack-plugin@^1.10.0",
@@ -61,5 +67,10 @@
         "monaco-editor": "npm:@placatus/monaco-editor@^0.20.2",
         "tingle.js": "^0.15.2",
         "typescriptwebpacksupport": "1.1.0"
+    },
+    "config": {
+        "commitizen": {
+            "path": "./node_modules/cz-conventional-changelog"
+        }
     }
 }
