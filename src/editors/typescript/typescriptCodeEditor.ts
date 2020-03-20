@@ -1,5 +1,5 @@
 import { ServiceEditor } from "../serviceEditor/serviceEditor";
-import * as monaco from 'monaco-editor/release/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { WorkerScriptManager } from "../workerScriptManager";
 import { loadSnippets, spotlightSearch, sanitizeEntityName, getEntityMetadata, getThingPropertyValues } from '../../utilities';
 import { DISALLOWED_ENTITY_CHARS, ENTITY_TYPES, Languages } from "../../constants";

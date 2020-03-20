@@ -3,9 +3,9 @@
     "packageName": "MonacoScriptEditor",
     "version": "1.14.2",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
-    "thingworxServer": "https://pp-1912120801ve.portal.ptc.io",
-    "thingworxUser": "placatus",
-    "thingworxPassword": "changeme123456",
+    "thingworxServer": "http://localhost:8015",
+    "thingworxUser": "Administrator",
+    "thingworxPassword": "Administrator12345",
     "author": "Thingworx RoIcenter",
     "minimumThingWorxVersion": "6.0.0",
     "homepage": "https://github.com/ptc-iot-sharing/MonacoEditorTWX",
@@ -39,7 +39,7 @@
         "css-loader": "^2.1.1",
         "extract-text-webpack-plugin": "^3.0.2",
         "file-loader": "^3.0.1",
-        "monaco-editor-webpack-plugin": "git+https://github.com/stefan-lacatus/monaco-editor-webpack-plugin.git",
+        "monaco-editor-webpack-plugin": "npm:@placatus/monaco-editor-webpack-plugin@^1.10.0",
         "raw-loader": "^1.0.0",
         "request": "^2.88.0",
         "source-map-loader": "^0.2.4",
@@ -58,7 +58,7 @@
     "dependencies": {
         "common-tags": "^1.8.0",
         "emmet-monaco-es": "^4.4.1",
-        "monaco-editor": "git+https://github.com/stefan-lacatus/monaco-editor.git",
+        "monaco-editor": "npm:@placatus/monaco-editor@^0.20.2",
         "tingle.js": "^0.15.2",
         "typescriptwebpacksupport": "1.1.0"
     }

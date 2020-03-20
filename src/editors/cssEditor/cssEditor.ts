@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor/release/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { MonacoCodeEditor, ActionCallbacks } from "../basicCodeEditor";
 import { emmetCSS } from "emmet-monaco-es";
 
