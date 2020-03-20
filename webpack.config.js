@@ -4,7 +4,6 @@ const fs = require('fs');
 const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const EncodingPlugin = require('webpack-encoding-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // enable cleaning of the build and zip directories
 const CleanWebpackPlugin = require('clean-webpack-plugin').default;
 // enable building of the widget
@@ -88,7 +87,6 @@ module.exports = function (env, argv) {
             new EncodingPlugin({
                 encoding: 'utf8'
             }),
-            new ForkTsCheckerWebpackPlugin()
         ],
         // if we are in development mode, then use "eval-source-map".
         // See https://webpack.js.org/configuration/devtool/ for all available options
