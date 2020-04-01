@@ -197,7 +197,7 @@ export class MonacoCodeEditor {
      * Instructs the editor to remeasure its container. This method should
      * be called when the container of the editor gets resized.
      */
-    public continerWasResized() {
+    public containerWasResized() {
         this.monacoEditor.layout();
     }
 

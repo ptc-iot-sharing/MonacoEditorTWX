@@ -147,7 +147,7 @@ async function initializeMonaco() {
          */
         TW.jqPlugins.twCodeEditor.prototype.updateContainerSize = function () {
             if (this.monacoEditor) {
-                this.monacoEditor.continerWasResized();
+                this.monacoEditor.containerWasResized();
             }
         };
     
