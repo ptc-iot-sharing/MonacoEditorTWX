@@ -1,3 +1,11 @@
+## [1.14.4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.14.3...v1.14.4) (2020-04-01)
+
+
+### Bug Fixes
+
+* Editor being very small in new composer. ([2790345](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/2790345ac895dd0a4d93a1822225e326de7a2942))
+* **docs:** added publishing info ([77f4ff2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/77f4ff259c23a8eb1e94700ddcfa4189be172754))
+
 ## [1.14.3](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.14.2...v1.14.3) (2020-03-20)
 
 
