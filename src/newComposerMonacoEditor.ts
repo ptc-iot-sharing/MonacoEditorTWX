@@ -153,6 +153,8 @@ function load() {
             attached() {
                 $(this.element).find('.form-group').append($('<div class="editor-loading"></div>'));
                 this.eventHelper.subscribe(ChannelNames.CODE_SYNTAX_CHECK, this.checkSyntax.bind(this));
+                // when the JS_SYNTAX_CHECKED event is fired, it means we are close to saving
+                this.eventHelper.subscribe(ChannelNames.JS_SYNTAX_CHECKED, this._saveEditorViewState.bind(this));
                 this.eventHelper.subscribe(ChannelNames.PREFERENCE_CHANGED, this._preferenceChanged.bind(this));
                 this._initCodeMirrorDebounced();
             }
@@ -598,6 +600,14 @@ function load() {
                 });
                 this._lintIfConfigured();
                 this.codeMirror.focus();
+                // restore view state on startup
+                if(this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                    let editorSettings = currentEditedModel.serviceImplementation.configurationTables.Script.rows[0].editorSettings;
+                    if(editorSettings && editorSettings.viewState) {
+                        this.codeMirror.setViewState(editorSettings.viewState);
+                    }
+                }
+
                 this.initialized();
                 $(this.element).find('.editor-loading').css('display', 'none');
                 // fixes broken automatic layout in monaco 0.20.
@@ -645,6 +655,36 @@ function load() {
                     this.codeMirror.unfoldAll();
                 }
             }
+
+            _saveEditorViewState = (()  => {
+                // wrapped in a try catch because if anything fails, the editor still needs to proceed
+                try {
+                    let currentEditedModel;
+                    if (this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                        currentEditedModel = this.entityModel.subscriptionsModel.edit;
+                    }
+                    else if (this.editorType == EditorType.SERVICE_EDITOR) {
+                        currentEditedModel = this.entityModel.servicesModel.editModel
+                    }
+                    if (currentEditedModel) {
+                        // add the location of the cursor and the rest of the view state
+                        let scriptConfTable = currentEditedModel.serviceImplementation.configurationTables.Script;
+                        // check to see if the field definition was added already
+                        if (!scriptConfTable.dataShape.fieldDefinitions.editorSettings) {
+                            scriptConfTable.dataShape.fieldDefinitions.editorSettings = {
+                                name: "editorSettings",
+                                baseType: "JSON"
+                            }
+                        }
+                        scriptConfTable.rows[0].editorSettings = {
+                            viewState: this.codeMirror.getViewState()
+                        };
+                    }
+
+                } catch (ex) {
+                    console.error("Error occurred while cleaning up monaco.", ex)
+                }
+            });
     
             /**
              * Retrieve user preferences.

@@ -204,11 +204,24 @@ export class MonacoCodeEditor {
     /**
      * Scroll vertically or horizontally as necessary and reveal a position centered vertically.
      */
-    public scrollCodeTo(x: number, y: number) {
-        this.monacoEditor.revealPositionInCenter({
-            lineNumber: (x || 0),
-            column: (y || 0)
-        });
+    public scrollCodeTo(lineNumber: number, column: number) {
+        const position = {
+            lineNumber: (lineNumber || 0),
+            column: (column || 0)
+        };
+        this.monacoEditor.revealPositionInCenter(position);
+        this.monacoEditor.setPosition(position);
+    }
+
+    public setViewState(viewState: monaco.editor.ICodeEditorViewState) {
+        this.monacoEditor.restoreViewState(viewState);
+    }
+
+    /**
+     * Get the monaco editor view state as a serialized JSON
+     */
+    public getViewState() {
+        return this.monacoEditor.saveViewState();
     }
 
     /**
