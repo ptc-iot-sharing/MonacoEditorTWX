@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.14.4...v1.15.0) (2020-04-05)
+
+
+### Features
+
+* Save view state and restore on load ([ae7c8f1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/ae7c8f10388d7992979627d6680256e21cba6426)), closes [#8](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/8)
+
 ## [1.14.4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.14.3...v1.14.4) (2020-04-01)
 
 
