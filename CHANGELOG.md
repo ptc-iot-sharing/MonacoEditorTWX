@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.15.0...v1.15.1) (2020-09-05)
+
+
+### Bug Fixes
+
+* **compatibility:** Resolve compatiblity issues with Thingworx 9. Fix [#12](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/12). Updated deps ([6fdd873](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/6fdd873ce309857fea398f7c9e9a9346637a7d30))
+
 # [1.15.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.14.4...v1.15.0) (2020-04-05)
 
 
