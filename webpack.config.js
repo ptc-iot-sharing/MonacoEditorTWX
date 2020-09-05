@@ -5,7 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const EncodingPlugin = require('webpack-encoding-plugin');
 // enable cleaning of the build and zip directories
-const CleanWebpackPlugin = require('clean-webpack-plugin').default;
+const CleanWebpackPlugin = require('clean-webpack-plugin').CleanWebpackPlugin;
 // enable building of the widget
 const ZipPlugin = require('zip-webpack-plugin');
 // enable reading master data from the package.json file
@@ -58,13 +58,21 @@ module.exports = function (env, argv) {
         },
         plugins: [
             // delete build and zip folders
+            // delete build and zip folders
             new CleanWebpackPlugin({
                 cleanOnceBeforeBuildPatterns: [path.resolve('build/**'), path.resolve('zip/**')]
             }),
-            new MonacoWebpackPlugin(),
             // in case we just want to copy some resources directly to the widget package, then do it here
             // in case the extension contains entities, copy them as well
-            new CopyWebpackPlugin([{ from: 'Entities', to: '../../Entities' }]),
+            new CopyWebpackPlugin({
+                patterns: [
+                    // in case we just want to copy some resources directly to the widget package, then do it here
+                    { from: 'src/static', to: 'static', noErrorOnMissing: true },
+                    // in case the extension contains entities, copy them as well
+                    { from: 'Entities/**/*.xml', to: '../../', noErrorOnMissing: true },
+                ],
+            }),
+            new MonacoWebpackPlugin(),
             // generates the metadata xml file and adds it to the archive
             new WidgetMetadataGenerator(),
             // create the extension zip

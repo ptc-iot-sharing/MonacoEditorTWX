@@ -206,13 +206,13 @@ export class TypescriptCodeEditor extends ServiceEditor {
         monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, completionProvider);
         monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, completionProvider);
         // register the rhino es5 library
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/lib.rhino.es5.d.ts"), "lib.rhino.es5.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/lib.rhino.es5.d.ts").default, "lib.rhino.es5.d.ts");
         // register the thingworx base types and the logger class
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxBaseTypes.d.ts"), "ThingworxBaseTypes.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxBaseTypes.d.ts").default, "ThingworxBaseTypes.d.ts");
         // register the thingworx datashape library
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxDataShape.d.ts"), "ThingworxDataShape.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxDataShape.d.ts").default, "ThingworxDataShape.d.ts");
         // register the thingworx generic thing
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxGenericThing.d.ts"), "ThingworxGenericThing.d.ts");
+        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxGenericThing.d.ts").default, "ThingworxGenericThing.d.ts");
 
         this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // we regenerate all the datashape definitions when a new editor loads

@@ -1,4 +1,4 @@
-import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport';
+import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport/widgetRuntimeSupport';
 
 @ThingworxRuntimeWidget
 class MonacoCodeEditorWidget extends TWRuntimeWidget {

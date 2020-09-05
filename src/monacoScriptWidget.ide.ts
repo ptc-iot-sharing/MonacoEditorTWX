@@ -1,5 +1,5 @@
 // automatically import the css file
-import {TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, service, event, bindingSource} from 'typescriptwebpacksupport';
+import {TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, service, event, bindingSource} from 'typescriptwebpacksupport/widgetIDESupport';;
 
 @description('A widget for displaying and editing code')
 @TWWidgetDefinition('Monaco Code Editor', autoResizable)
