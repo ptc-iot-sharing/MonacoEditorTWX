@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.15.1...v1.16.0) (2020-09-26)
+
+
+### Features
+
+* Adopt the latest monaco 0.21.1. Fixes [#7](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/7). Take a look at https://github.com/microsoft/monaco-editor/blob/master/CHANGELOG.md[#0211](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/0211)-24092020 for more details ([0d4481a](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/0d4481a71c8a97c2ffff6fccf0ad0f9eb235e1b7)), closes [/github.com/microsoft/monaco-editor/blob/master/CHANGELOG.md#0211-24092020](https://github.com//github.com/microsoft/monaco-editor/blob/master/CHANGELOG.md/issues/0211-24092020)
+
 ## [1.15.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.15.0...v1.15.1) (2020-09-05)
 
 
