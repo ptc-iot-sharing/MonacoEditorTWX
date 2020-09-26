@@ -4938,17 +4938,17 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-"monaco-editor-webpack-plugin@npm:@placatus/monaco-editor-webpack-plugin@^1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-1.10.0.tgz#0c4a1ff806177e7b4ac7d43bba25f43766cdbe05"
-  integrity sha512-MFjM2zlmRJuKXq3ZQsu48pbJVpT9LOlw1QTlDDVSkd6JBiPd4ngSIEXJ5kZsy1nGqh7jn9N3N6d7Aopk/NDl8g==
+"monaco-editor-webpack-plugin@npm:@placatus/monaco-editor-webpack-plugin@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-2.0.0.tgz#4e5cc5c76ffe56c2b15bb89731cc97afd2098352"
+  integrity sha512-RwecOSllG2acPFMp1QUPoL5OGzSkDdeiy8a1riN7tpbYytt/rBMh8pLGHCctNi1AJX+lkiEvKlWAqmHGQCs9SA==
   dependencies:
-    loader-utils "^1.2.3"
+    loader-utils "^2.0.0"
 
-"monaco-editor@npm:@placatus/monaco-editor@^0.20.2":
-  version "0.20.2"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor/-/monaco-editor-0.20.2.tgz#8b6ee169d8d4b02906e9dd3ed5902c2d61aa83c9"
-  integrity sha512-1fGp5s4nEFDgwf7H4XvF0xC59F0nC/2nK9g0n1EhIgG5rRjUM6valB90fa/C526QsnlRPg9V4cJ/Nxk83g3gTQ==
+"monaco-editor@npm:@placatus/monaco-editor@^0.21.3":
+  version "0.21.3"
+  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor/-/monaco-editor-0.21.3.tgz#618c52b9c400478c5080a24ed27e19b95293c778"
+  integrity sha512-CNOjnMi2qfG7+Aasd3ui8zvs6+xoT0G+0ShyVugVL1o6EOEEcOzwgthjGO/onP5mY+hh40XoM9cOtmjeH5Yvaw==
 
 move-concurrently@^1.0.1:
   version "1.0.1"

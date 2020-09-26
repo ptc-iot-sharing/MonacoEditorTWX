@@ -312,7 +312,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         if (this.monacoEditor.getModel()) {
             let worker = await monaco.languages.typescript.getLanguageWorker(mode);
             let client = await worker(this.monacoEditor.getModel().uri);
-            return await client.getPropertiesOrAttributesOf(this.monacoEditor.getModel().uri.toString(), ENTITY_TYPES);
+            return await (client as any).getPropertiesOrAttributesOf(this.monacoEditor.getModel().uri.toString(), ENTITY_TYPES);
         } else {
             return {};
         }
