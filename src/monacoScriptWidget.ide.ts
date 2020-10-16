@@ -6,7 +6,7 @@ import {TWWidgetDefinition, description, autoResizable, property, defaultValue, 
 class MonacoCodeEditorWidget extends TWComposerWidget {
 
     widgetIconUrl(): string {
-        return require('./images/icon.png');
+        return require('./images/icon.png').default;
     }
 
     /**
