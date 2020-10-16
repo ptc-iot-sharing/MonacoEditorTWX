@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.16.0...v1.16.1) (2020-10-16)
+
+
+### Bug Fixes
+
+* Fix widget loading on TWX 9 ([8ddae49](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/8ddae49979a9f0fc473add00bb815ddc6f528e74))
+
 # [1.16.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.15.1...v1.16.0) (2020-09-26)
 
 
