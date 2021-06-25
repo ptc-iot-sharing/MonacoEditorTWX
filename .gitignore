@@ -11,3 +11,4 @@ zip
 *.DS_Store
 README.pdf
 README.html
+.env
