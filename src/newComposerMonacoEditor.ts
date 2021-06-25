@@ -610,11 +610,6 @@ function load() {
 
                 this.initialized();
                 $(this.element).find('.editor-loading').css('display', 'none');
-                // fixes broken automatic layout in monaco 0.20.
-                // waiting for https://github.com/microsoft/vscode/pull/93630 to be released
-                setTimeout(() => {
-                    this.codeMirror.containerWasResized();
-                }, 500);
             }
     
             _getValue() {

@@ -14,3 +14,8 @@
 .monaco-findInput .wrapper > textarea {
     opacity: 1;
 }
+
+/** Workaround for compatibly issue between CodeMirror and monaco */
+.AdvancedPropertyEditor property-panel form .panel .twx-collapsible-expanded-true .panel-body > div .panel-col twx-compose code-input > div json-editor .script-control .monaco-editor {
+    height: 30rem !important;
+  }
