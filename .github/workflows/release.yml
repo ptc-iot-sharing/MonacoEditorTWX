@@ -2,20 +2,20 @@ name: Release
 on:
   push:
     branches:
-      - release
+      - master
     repository_dispatch:
       types: [semantic-release]
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 14.x
       - name: Install dependencies
         run: yarn install
       - name: Release
