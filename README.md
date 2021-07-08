@@ -26,6 +26,7 @@ This project offers compatibility with both the **Old Composer** and the **New C
   // @description  Loads monaco editor on all ThingWorx Composer enviromnments, if available
   // @author       You
   // @match        *://*/Thingworx/Composer/*
+  // @match        *://*/Thingworx/Builder/*
   // @grant        none
   // ==/UserScript==
 
