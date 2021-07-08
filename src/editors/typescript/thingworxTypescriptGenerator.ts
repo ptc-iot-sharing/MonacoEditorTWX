@@ -142,7 +142,7 @@ export class ThingworxToTypescriptGenerator {
                         jsonDocInfoElements.push(parameterDef.description);
                     }
                     if (parameterDef.aspects.dataShape) {
-                        jsonDocInfoElements.push(`Datashape: ${parameterDef.aspects.dataShape}`);
+                        jsonDocInfoElements.push(`DataShape: ${parameterDef.aspects.dataShape}`);
                     }
                     namespaceDefinition += this.generateJDocWithContent(jsonDocInfoElements.join(" - "));
                     namespaceDefinition += `${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(parameterDef)};\n`;
@@ -165,7 +165,14 @@ export class ThingworxToTypescriptGenerator {
             }
             // now generate the service definition, as well as jsdocs
             classDefinition += this.generateJDocWithContent(serviceJsDocElements.join("\n"))
-            classDefinition += `${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            if(serviceParamList.length > 0) {
+                // Service has params, reference the interface generated above
+                classDefinition += `${service.name}(params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            } else {
+                // If the service has no parameters, declare to overloads for the method, one with no params, and one with an empty object
+                classDefinition += `${service.name}(): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+                classDefinition += `${service.name}(params: Record<any, never>): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            }
         }
 
         // we handle property definitions here
