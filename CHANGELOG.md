@@ -1,3 +1,17 @@
+# [1.17.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.16.0...v1.17.0) (2021-06-25)
+
+
+### Bug Fixes
+
+* Fix widget loading on TWX 9 ([8ddae49](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/8ddae49979a9f0fc473add00bb815ddc6f528e74))
+* Resolve issue dispalying json widget property editors. Fix [#24](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/24) ([08d395d](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/08d395dbdf4e0c497a1370d1bca2f1c83318ed78))
+
+
+### Features
+
+* Adopt external webpack config and update to webpack 5.0 from https://github.com/ptc-iot-sharing/ThingworxDemoWebpackWidget ([76b5395](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/76b5395e8ea40c40ddfbca6e984c773137486cf9))
+* Update to upstream monaco-editor v0.25.x ([6edd661](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/6edd6615b72937f36daf571d0b4d06e66260093c))
+
 # [1.16.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.15.1...v1.16.0) (2020-09-26)
 
 

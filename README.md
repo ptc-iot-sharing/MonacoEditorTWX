@@ -1,64 +1,52 @@
 # Thingworx Monaco Code Editor
 
-The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one.
-The new code editor is based on [Monaco Editor](https://microsoft.github.io/monaco-editor/index.html), the same editor used in [Visual Studio Code](https://code.visualstudio.com/). 
+The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one, oferring a similar editing experience to [Visual Studio Code](https://code.visualstudio.com/) offering modern developer friendly tools like multiple cursors, autocompletion for ThingWorx entities, as well as the possiblity to write ThingWorx services in TypeScript.
 
-This project offers compatibility with both the **Old Composer** and the **New Composer** (8.4 release only). Please refer to the installation guide for more information. A mashup builder widget is also available to display code in a mashup runtime.
+This project offers compatibility with both the **Old Composer** and the **New Composer** (starting with 8.4). Please refer to the installation guide for more information. A mashup builder widget is also available to display code in a mashup runtime.
 
 ## Installation
 
 
 1. Download the zip package listed under the downloads section under [**Releases**](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
 
-2. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
+2. Import the zip package into Thingworx as an extension.
 
-   * In the old composer, the Monaco Script Editor is being used when editing services and subscriptions.
-   * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
+3. Create a browser user script that will enable the Monaco Editor as the default code editor for all ThingWorx environments that have the extension installed. If you have multiple ThingWorx environments, you don't need to repeat this step for the same browser.
 
-3. If you are using **ThingWorx 8.4.X** and want to use Monaco Script Editor within the New Composer, also do the following steps.
+  1. Install a browser userscript extension. Depending on your browser of choice, you can use:
+      1.  Chrome  [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
+      2.  Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+      3.  Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
+  2. Install the following script:
+  ```
+  // ==UserScript==
+  // @name         Load Monaco Remote
+  // @namespace    http://tampermonkey.net/
+  // @version      0.2
+  // @description  Loads monaco editor on all ThingWorx Composer enviromnments, if available
+  // @author       You
+  // @match        *://*/Thingworx/Composer/*
+  // @match        *://*/Thingworx/Builder/*
+  // @grant        none
+  // ==/UserScript==
 
-### Option 1
-   1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
-   2. Edit the file `index.html`.
-   3. After _line 9_, after the existing `<script>` tag, add the following: 
+  var script = document.createElement("script");
+  script.src = "/Thingworx/Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js";
+  script.charset = "UTF-8";
+  document.getElementsByTagName("head")[0].appendChild(script);
+  ```
 
-   ```html
-   <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
-   ```
-Since version 8.4.5 it has been found that this method does not work in a consistent fashion. Please refer to option 2 if you are having issues.
-   
-### Option 2
-
-Install a browser userscript extension. One popular one is TamperMonkey [Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) [firefox](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
-Install the following script:
-```
-// ==UserScript==
-// @name         Load Monaco Remote
-// @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Loads the monaco editor in the new composer
-// @author       You
-// @match        */Thingworx/Composer/*
-// @grant        none
-// ==/UserScript==
-
-var script = document.createElement("script");
-script.src = "/Thingworx/Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js";
-script.charset = "UTF-8";
-document.getElementsByTagName("head")[0].appendChild(script);
-```
-Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
+Notes:
+* In the New Composer (Thingworx 8.4 and later), all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
+* The last Monaco Editor extension that is compatible with the Old Composer (8.3 or earlier) is version [v1.16.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases/tag/v1.16.1)
 
 ### Removing
 
-To remove the extension, just delete it using the Extension Management in Thingworx. Optionally, you can also undo the changes in step 3. above.
+To remove the extension, just delete it using the Extension Management in Thingworx.
 
 ### Upgrading
 
 After installing a new version of the widget, make sure you clear the browser cache. [Here](https://en.wikipedia.org/wiki/Wikipedia:Bypass_your_cache#Cache_clearing_and_disabling) is an example of how to do that.
-
-When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs to be redone.
-
 
 ## Features
 ### Basic code editor features
@@ -66,7 +54,7 @@ When updating to a new version of Thingworx of the 8.4.x line, step _3.3_ needs 
 As it's based on the Visual Studio Code, most basic code editor features are inherited from there. See the [official page](https://code.visualstudio.com/docs/editor/codebasics) for a list of keyboard shortcuts, as well as detailed explanations of other features like:
 #### Multiple selections (multi-cursor)
 
-The editor supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down` or `Ctrl+Alt+Up` that insert cursors below or above.
+The editor supports multiple cursors for fast simultaneous edits. You can add secondary cursors (rendered thinner) with `Alt+Click`. Each cursor operates independently based on the context it sits in. A common way to add more cursors is with `Ctrl+Alt+Down`/`⌥⌘↓` or `Ctrl+Alt+Up`/`⌥⌘↑` that insert cursors below or above.
 
 ![Multi-cursor](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor.gif)
 
@@ -74,7 +62,7 @@ The editor supports multiple cursors for fast simultaneous edits. You can add se
 
 ![Multi-cursor-next-word](https://code.visualstudio.com/assets/docs/editor/codebasics/multicursor-word.gif)
 
-> **Tip:** You can also add more cursors with `kb(editor.action.selectHighlights)`, which will add a selection at each occurrence of the current selected text.
+> **Tip:** You can also add more cursors with `⇧⌘L`, which will add a selection at each occurrence of the current selected text.
 #### Column (box) selection
 
 Hold `Shift` and `Alt` while dragging to do column selection:
@@ -83,34 +71,38 @@ Hold `Shift` and `Alt` while dragging to do column selection:
 #### Folding
 
 You can fold regions of source code using the folding icons on the gutter between line numbers and line start. Move the mouse over the gutter to fold and unfold regions. The folding regions are evaluated based on the indentation of lines. A folding region starts when a line has a smaller indent than one or more following lines, and ends when there is a line with the same or smaller indent.
+
 ### Code intelligence
 
 The code editor offers a lot of features related to code intelligence: code completion, parameter info, quick info, and member lists. 
 
-You can trigger completions in any editor by typing `Ctrl+Space` or by typing a trigger character (such as the dot character (.) in JavaScript).
+You can trigger completions in any editor by typing <kbd>ctrl</kbd> + <kbd>space</kbd> or by typing a trigger character (such as the dot character (.) in JavaScript).
 
 #### Thingworx Completions
 
-The editor offers optimized completions for all of the JavaScript functions, as well as the ones that ThingWorx has:
+The editor offers optimized completions for all of the JavaScript functions, as well as the ThingWorx specific ones:
 
 ![img](https://i.imgur.com/59jpwpZ.gif)
 
-The script editor is fully aware of the context and all of the entities in the platform, allowing search and on demand generation of completions based on what the user has written
+The script editor is fully aware of the context and all of the entities in the platform, allowing search and on demand generation of completions based on what the user has written.
 
 ![Function Completion](https://i.imgur.com/oU0m2pc.gif)
 
-In the case of services that return infotables, or infotable properties with known datashapes, it offers advanced intellisense for the datashape fields, including completion of methods on the value collection, as well as snippets to ease the work
+In the case of services that return infotables, or infotable properties with known datashapes, it offers advanced completion for the datashape fields, including completion of methods on the value collection, as well as snippets to ease the work.
 
 ![Infotable Completion](https://i.imgur.com/TJfJ5sx.gif)
 
 
 ### Keyboard Shortcuts
-* Quick actions: Save (`CTRL+S`), Cancel (`CTRL+Q`), Test (`CTRL+Y`), Save and Close (`CTRL+ENTER`)
 
-* Diff editor: view changes since you started editing (`CTRL+K`)
+The following document showcases just some of keyboard shortcuts. Many more shortcuts exist, and can be viewed and accessed by pressing <kbd>F1</kbd> to view the *Command Pallette*. You can also view the alternative shortcuts to use for MacOS or Linux.
+
+* Quick actions: Save ( <kbd>ctrl</kbd> + <kbd>S</kbd>), Cancel ( <kbd>ctrl</kbd> + <kbd>Q</kbd>), Test ( <kbd>ctrl</kbd> + <kbd>Y</kbd>), Save and Close ( <kbd>ctrl</kbd> + <kbd>enter</kbd>).
+
+* Diff editor: view changes since you started editing ( <kbd>ctrl</kbd> + <kbd>K</kbd>)
   ![DiffEditor](http://i.imgur.com/1DywhM7.png)
 
-* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime (``CTRL+```)
+* Config editor: Configure themes and all aspects of the editor, and viewing the changes in realtime ( <kbd>ctrl</kbd> + <kbd>\\</kbd>). Changes are then saved in the user profile.
 
   ![Config Editor](https://i.imgur.com/sBCAPP0.png)
 
@@ -120,7 +112,9 @@ The developer can also write ThingWorx services using [typescript](https://www.t
 
 In the old composer, you can trigger this change similarly to how you would switch from JavaScript to SQL.
 
-In the new composer, press F1, select _Switch to Typescript_. The reverse action is also available.
+In the new composer, press <kbd>F1</kbd>, select _Switch to Typescript_. The reverse action is also available.
+
+> :warning: When opening a service written in Typescript in a ThingWorx composer where the MonacoEditor extension is not installed, the developer will see the transpiled JavaScript code. If changes are done to this code, the Typescript code is NOT updated.
 
 ![Typescript](https://i.imgur.com/O8SmVih.gif)
 
@@ -130,7 +124,7 @@ In the new composer, press F1, select _Switch to Typescript_. The reverse action
 
 ## Reporting issues
 
-Issues and suggestions can be reported at [**Issues**](/placatus/MonacoScriptEditorWidget/issues). They will be resolved if there is time available.
+Issues and suggestions can be reported at [**Issues**](/ptc-iot-sharing/MonacoEditorTWX/issues). They will be resolved if there is time available.
 
 ## Disclaimer
 
