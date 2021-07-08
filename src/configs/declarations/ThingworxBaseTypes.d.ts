@@ -113,13 +113,93 @@ declare namespace twx {
          * An array of all the rows in the infotable
          */
         rows: T[];
-        datashape: DataShape;
+        dataShape: DataShape;
     }
-    export type INFOTABLE<T extends {} = {}> = InfotableJson<T> & {
+    export interface ValueCollectionList<T = {}> {
+        /**
+         * Transforms the infotable rows into an javascript array
+         */
+        toArray(): T[];
+        length: number;
+        rowCount: number;
+        /**
+         * Gets the first row (row with index 0)
+         * @returns ValueCollection at the first row. If the infotable is empty this method returns `null`
+         */
+        getFirstRow(): T;
+        /**
+         * Gets the last row in the infotable
+         *
+         * @returns ValueCollection at the last row. If the infotable is empty this method returns `null`
+         */
+        getLastRow(): T;
+
+        /**
+         * Retrieves a specific row from the infotable
+         * @param index Index of the row to get
+         * @returns Value collection at that row. If the requested index is not found, the method returns `null`
+         */
+        getRow(index: number): T;
+
+        /**
+         * Gets a Java based iterator for the infotable rows.
+         * **WARNING: This method is not part of the ThingWorx javascript API and should be used with care.**
+         *
+         * A common use-case for using this is when you want to iterate through a infotable and also remove elements.
+         *
+         * For example, the script below remove all rows where the infotable `name` field is equal to `test`.
+         * ```typescript
+         *   var iterator = me.myTable.rows.iterator();
+         *   while(iterator.hasNext()) {
+         *       var row = iterator.next();
+         *       if(row.name == "test") {
+         *           iterator.remove();
+         *       }
+         *   }
+         * ```
+         */
+        iterator(): ListIterator<T>;
+
+        /**
+         * Retrieves a specific row from the infotable
+         * @param index Index of the row to get
+         * @returns Value collection at that row. If the requested index is not found, the method returns `null`
+         */
+        [index: number]: T;
+    }
+    interface ListIterator<T> {
+        /**
+         * Returns `true` if the iteration has more elements.
+         * (In other words, returns `true` if `next()` would
+         * return an element rather than throwing an exception.)
+         *
+         * @return `true` if the iteration has more elements
+         */
+        hasNext(): boolean;
+
+        /**
+         * Returns the next element in the iteration.
+         *
+         * @return the next element in the iteration
+         */
+        next(): T;
+
+        /**
+         * Removes from the underlying collection the last element returned
+         * by this iterator (optional operation).  This method can be called
+         * only once per call to `next`.
+         */
+        remove(): void;
+    }
+    export type INFOTABLE<T extends {} = {}> = {
         /**
          * An array of all the  rows in the infotable as ValueCollection
          */
-        rows: ValueCollection<T>[];
+        rows: ValueCollectionList<T>;
+        /**
+         * Reference to the datashape used for this infotable
+         */
+        dataShape: DataShape;
         /**
          * Adds a field to this InfoTable datashape
          */
@@ -236,6 +316,6 @@ declare namespace twx {
         /**
          * Gets a specific row in the infotable
          */
-        [key: number]: T;
+        [index: number]: T;
     } & T;
 }
