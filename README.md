@@ -9,40 +9,23 @@ This project offers compatibility with both the **Old Composer** and the **New C
 
 1. Download the zip package listed under the downloads section under [**Releases**](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
 
-2. Import the zip package into Thingworx as an extension. After importing the following changes should occur:
+2. Import the zip package into Thingworx as an extension.
 
-   * In the old composer (ThingWorx versions prior to 8.4), the Monaco Script Editor is being used when editing services and subscriptions.
-   * In the Mashup Builder, a widget called _Monaco Code Editor_ appears.
+3. Create a browser user script that will enable the Monaco Editor as the default code editor for all ThingWorx environments that have the extension installed. If you have multiple ThingWorx environments, you don't need to repeat this step for the same browser.
 
-3. If you are using **ThingWorx 8.4 or newer** and want to use Monaco Script Editor within the New Composer, also do the following steps.
-
-### Option 1
-
-This option requires access to the install of ThingWorx, and will enable MonacoEditor for all developers. If this is not wanted, please refer to option 2. Additionally, when updating ThingWorx this change needs to be redone
-
-   1. Navigate to the tomcat where thingworx is deployed, under `apache-tomcat/webapps/Thingworx/Composer`. 
-   2. Edit the file `index.html`.
-   3. After _line 9_, after the existing `<script>` tag, add the following: 
-
-   ```html
-   <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
-   ```
-Since version 8.4.5 it has been found that this method does not work in a consistent fashion. Please refer to option 2 if you are having issues.
-   
-### Option 2
-
-This option does not require access to the ThingWorx install and can be easily enabled or disabled for each separate developer.
-
-  1. Install a browser userscript extension. One popular one is TamperMonkey [Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) [firefox](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+  1. Install a browser userscript extension. Depending on your browser of choice, you can use:
+      1.  Chrome  [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
+      2.  Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+      3.  Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
   2. Install the following script:
   ```
   // ==UserScript==
   // @name         Load Monaco Remote
   // @namespace    http://tampermonkey.net/
-  // @version      0.1
-  // @description  Loads the monaco editor in the new composer
+  // @version      0.2
+  // @description  Loads monaco editor on all ThingWorx Composer enviromnments, if available
   // @author       You
-  // @match        */Thingworx/Composer/*
+  // @match        *://*/Thingworx/Composer/*
   // @grant        none
   // ==/UserScript==
 
@@ -51,11 +34,14 @@ This option does not require access to the ThingWorx install and can be easily e
   script.charset = "UTF-8";
   document.getElementsByTagName("head")[0].appendChild(script);
   ```
-  Please note that in the New Composer, all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
+
+Notes:
+* In the New Composer (Thingworx 8.4 and later), all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
+* The last Monaco Editor extension that is compatible with the Old Composer (8.3 or earlier) is version [v1.16.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases/tag/v1.16.1)
 
 ### Removing
 
-To remove the extension, just delete it using the Extension Management in Thingworx. Optionally, you can also undo the changes in step 3. above.
+To remove the extension, just delete it using the Extension Management in Thingworx.
 
 ### Upgrading
 
