@@ -211,14 +211,14 @@ export class TypescriptCodeEditor extends ServiceEditor {
         TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxBaseTypes.d.ts").default, "ThingworxBaseTypes.d.ts");
         // register the thingworx datashape library
         TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxDataShape.d.ts").default, "ThingworxDataShape.d.ts");
-        // register the thingworx generic thing
-        TypescriptCodeEditor.workerManager.addExtraLib(require("!raw-loader!../../configs/declarations/ThingworxGenericThing.d.ts").default, "ThingworxGenericThing.d.ts");
 
         this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
+        // register the thingworx generic thing
+        this.codeTranslator.generateGenericThingDefinition();
         // we regenerate all the datashape definitions when a new editor loads
         this.codeTranslator.generateDataShapeCode();
         this.codeTranslator.generateScriptFunctionLibraries();
-        this.codeTranslator.registeEntityCollectionDefs();
+        this.codeTranslator.registerEntityCollectionDefs();
         this.codeTranslator.generateResourceFunctions();
     }
 

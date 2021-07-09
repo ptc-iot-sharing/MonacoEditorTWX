@@ -1,10 +1,13 @@
-export interface EntityMetadataInformtion {
+export interface EntityMetadataInformation {
     propertyDefinitions: PropertyDefinitions;
     subscriptions: Subscriptions;
     eventDefinitions: EventDefinitions;
     serviceImplementations: ServiceImplementations;
     serviceMappings: ServiceMappings;
     serviceDefinitions: ServiceDefinitions;
+    name: string;
+    type: string;
+    description: string;
 }
 interface PropertyDefinitions {
     [name: string]: PropertyDefinition
