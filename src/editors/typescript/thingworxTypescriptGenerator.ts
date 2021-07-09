@@ -1,8 +1,8 @@
 import { stripIndents, oneLine } from 'common-tags'
 import { WorkerScriptManager } from "../workerScriptManager";
-import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata } from "../../utilities";
+import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata, getEntityInstancesMetadata } from "../../utilities";
 import { ENTITY_TYPES } from "../../constants";
-import { EntityMetadataInformtion } from "../../types";
+import { EntityMetadataInformation } from "../../types";
 
 export class ThingworxToTypescriptGenerator {
     private scriptManager: WorkerScriptManager;
@@ -100,7 +100,7 @@ export class ThingworxToTypescriptGenerator {
         this.scriptManager.addExtraLib(datashapesDef, "thingworx/DataShapes.d.ts");
     }
 
-    public registeEntityCollectionDefs() {
+    public registerEntityCollectionDefs() {
         let entityCollectionsDefs = "";
         // now add all the entity collections
         for (const entityType of ENTITY_TYPES) {
@@ -117,20 +117,28 @@ export class ThingworxToTypescriptGenerator {
     * @param  {String} entityName The name of the entity that has this metadata
     * @param  {Boolean} isGenericMetadata Specifies where to take the services definitions for. This differs if we are on the "me" metadata, or on a generic metadata
     * @param  {Boolean} showGenericServices Include the generic services in the results
+    * @param  {Boolean} forceShowGenericServices Force the inclusion of generic services
     * @return The typescript definitions generated using this metadata
     */
-    public generateTypeScriptDefinitions(effectiveShapeMetadata: EntityMetadataInformtion, propertyData: { [name: string]: any }, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean): string {
+    public generateTypeScriptDefinitions(effectiveShapeMetadata: EntityMetadataInformation, propertyData: { [name: string]: any }, entityName: string, isGenericMetadata: boolean, showGenericServices: boolean, forceShowGenericServices = false): string {
+        const extendsThing = effectiveShapeMetadata.type == "Thing";
         let namespaceDefinition = "declare namespace twx." + entityName + " {\n";
+        
         let classDefinition = `declare namespace twx {
-                                export class ${entityName} ${showGenericServices ? "extends twx.GenericThing" : ""} {
+                                /**
+                                 * ${effectiveShapeMetadata.description}
+                                 */
+                                export class ${entityName} ${showGenericServices && extendsThing ? "extends twx.GenericThing" : ""} {
                                     constructor();
                                 `;
 
         // generate definitions for the services. This includes parameter definitions and service definitions
         for (const service of Object.values(effectiveShapeMetadata.serviceDefinitions)) {
-            if (isGenericService(service)) continue; // skip over generic services
+            if (!forceShowGenericServices && (!showGenericServices && isGenericService(service))) continue; // skip over generic services
             // generate the metadata for the service parameters
             let serviceParamList = [];
+            // tracks number of parameters that are required for this service
+            let requiredParamCount = 0;
             // input definitions can come from one of two places
             const serviceParameterMetadata = isGenericMetadata ? service.Inputs.fieldDefinitions : service.parameterDefinitions;
             // iterate over inputs
@@ -142,13 +150,17 @@ export class ThingworxToTypescriptGenerator {
                         jsonDocInfoElements.push(parameterDef.description);
                     }
                     if (parameterDef.aspects.dataShape) {
-                        jsonDocInfoElements.push(`Datashape: ${parameterDef.aspects.dataShape}`);
+                        jsonDocInfoElements.push(`DataShape: ${parameterDef.aspects.dataShape}`);
                     }
                     namespaceDefinition += this.generateJDocWithContent(jsonDocInfoElements.join(" - "));
                     namespaceDefinition += `${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(parameterDef)};\n`;
-                    // generate a nice description of the service params
-                    serviceParamList.push(oneLine`  * _${parameterDef.name}_: ${this.getTypescriptBaseType(parameterDef)}
+                    // generate a nice description of the service params. This includes the name, if it's required, basetype and description
+                    serviceParamList.push(oneLine`  * _${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}_: ${this.getTypescriptBaseType(parameterDef)}
                                                         ${parameterDef.description ? " - " + parameterDef.description : ""}`);
+
+                    if(parameterDef.aspects.isRequired) {
+                        requiredParamCount++;
+                    }
                 }
                 namespaceDefinition += "}\n";
             }
@@ -165,7 +177,15 @@ export class ThingworxToTypescriptGenerator {
             }
             // now generate the service definition, as well as jsdocs
             classDefinition += this.generateJDocWithContent(serviceJsDocElements.join("\n"))
-            classDefinition += `${service.name} (params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            if(serviceParamList.length > 0) {
+                // if the service is defined as having parameters, but no of them are required than it can be called without providing an object
+                const paramDefinition = `params${requiredParamCount == 0 ? '?' : ''} : ${entityName}.${service.name}Params`
+                // build out the service definition with the function name, params, and return basetype
+                classDefinition += `${service.name}(${paramDefinition}): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            } else {
+                // If the service has no parameters, it can either be called by providing no parameters, or an empty object
+                classDefinition += `${service.name}(params?: Record<any, never>): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+            }
         }
 
         // we handle property definitions here
@@ -202,6 +222,13 @@ export class ThingworxToTypescriptGenerator {
         }
         resourcesDef += "}\n}\n let Resources: twx.ResourcesInterface;";
         this.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
+    }
+
+    public async generateGenericThingDefinition() {
+        let genericThingMetadata = await getEntityInstancesMetadata("ThingTemplates", "GenericThing");
+        
+        let genericThingDefinition = this.generateTypeScriptDefinitions(genericThingMetadata, {}, 'GenericThing', true, true, true);
+        this.scriptManager.addExtraLib(genericThingDefinition, "ThingworxGenericThing.d.ts");
     }
 
     /**

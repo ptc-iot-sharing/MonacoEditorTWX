@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { DISALLOWED_ENTITY_CHARS } from './constants';
 
-declare const ThingworxInvoker: any;
+const APPLICATION_JSON_TYPE = "application/json";
 
 /**
  *  Converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
@@ -56,10 +56,11 @@ export function unflattenJson(data) {
  * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
  */
 export async function getDataShapeDefinitions(): Promise<any> {
-    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetAllDataShapes?Accept=application%2Fjson`, {
+    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetAllDataShapes`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': APPLICATION_JSON_TYPE,
+            'Accept': APPLICATION_JSON_TYPE
         }
     });
     return response.json();
@@ -71,7 +72,7 @@ export async function getDataShapeDefinitions(): Promise<any> {
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
 export async function spotlightSearch(entityType, searchTerm): Promise<any> {
-    const response = await fetch(`/Thingworx/Resources/SearchFunctions/Services/SpotlightSearch?Accept=application%2Fjson`, {
+    const response = await fetch(`/Thingworx/Resources/SearchFunctions/Services/SpotlightSearch`, {
         method: 'POST',
         body: JSON.stringify({
             searchExpression: searchTerm + "*",
@@ -86,7 +87,8 @@ export async function spotlightSearch(entityType, searchTerm): Promise<any> {
             searchDescriptions: true
         }),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': APPLICATION_JSON_TYPE,
+            'Accept': APPLICATION_JSON_TYPE
         }
     });
     return response.json();
@@ -124,23 +126,32 @@ export function sanitizeEntityName(entityName: string): string {
 }
 
 export async function getScriptFunctionLibraries(): Promise<any[]> {
-    const response = await fetch(`/Thingworx/ScriptFunctionLibraries?Accept=application/json`);
+    const response = await fetch(`/Thingworx/ScriptFunctionLibraries`, {
+        headers: {
+            'Accept': APPLICATION_JSON_TYPE
+        }
+    });
     const libraries = await response.json();
     const result = [];
     for (const scriptFunction of libraries.rows) {
-        const scriptResponse = await fetch(`/Thingworx/ScriptFunctionLibraries/${scriptFunction.name}/FunctionDefinitions?Accept=application/json`);
+        const scriptResponse = await fetch(`/Thingworx/ScriptFunctionLibraries/${scriptFunction.name}/FunctionDefinitions`, {
+            headers: {
+                'Accept': APPLICATION_JSON_TYPE
+            }
+        });
         result.push(await scriptResponse.json());
     }
     return result;
 }
 export async function getResourcesMetadata(): Promise<any> {
-    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetMetadataOfEntities?Accept=application%2Fjson`, {
+    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetMetadataOfEntities`, {
         method: 'POST',
         body: JSON.stringify({
             entityType: 'Resource'
         }),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': APPLICATION_JSON_TYPE,
+            'Accept': APPLICATION_JSON_TYPE
         }
     });
     return response.json();
@@ -151,12 +162,29 @@ export function isGenericService(serviceDefinition: { sourceName: string, source
 }
 
 export async function getEntityMetadata(entityType: string, entityName: string): Promise<any> {
-    const response = await fetch(`/Thingworx/${entityType}/${encodeURIComponent(entityName)}/Metadata?Accept=application%2Fjson`);
+    const response = await fetch(`/Thingworx/${entityType}/${encodeURIComponent(entityName)}/Metadata`, {
+        headers: {
+            'Accept': APPLICATION_JSON_TYPE
+        }
+    });
+    return response.json();
+}
+
+export async function getEntityInstancesMetadata(entityType: string, entityName: string): Promise<any> {
+    const response = await fetch(`/Thingworx/${entityType}/${encodeURIComponent(entityName)}/InstanceMetadata`, {
+        headers: {
+            'Accept': APPLICATION_JSON_TYPE
+        }
+    });
     return response.json();
 }
 
 export async function getThingPropertyValues(entityName: string): Promise<any> {
-    const response = await fetch(`/Thingworx/Things/${encodeURIComponent(entityName)}/Properties?Accept=application%2Fjson`);
+    const response = await fetch(`/Thingworx/Things/${encodeURIComponent(entityName)}/Properties`, {
+        headers: {
+            'Accept': APPLICATION_JSON_TYPE
+        }
+    });
     const data = await response.json();
     return data.rows[0];
 }

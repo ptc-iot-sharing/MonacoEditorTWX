@@ -16,8 +16,6 @@ module.exports = (env, argv) =>
     }),
   })(common(env, argv), {
     entry: {
-      // the entry point for the old composer code
-      oldComposer: `./src/oldComposerMonacoEditor.ts`,
       // the entry point for the new composer code
       newComposer: `./src/newComposerMonacoEditor.ts`,
       // the entry point for the runtime widget
