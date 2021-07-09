@@ -131,6 +131,8 @@ export class ThingworxToTypescriptGenerator {
             if (isGenericService(service)) continue; // skip over generic services
             // generate the metadata for the service parameters
             let serviceParamList = [];
+            // tracks number of parameters that are required for this service
+            let requiredParamCount = 0;
             // input definitions can come from one of two places
             const serviceParameterMetadata = isGenericMetadata ? service.Inputs.fieldDefinitions : service.parameterDefinitions;
             // iterate over inputs
@@ -146,9 +148,13 @@ export class ThingworxToTypescriptGenerator {
                     }
                     namespaceDefinition += this.generateJDocWithContent(jsonDocInfoElements.join(" - "));
                     namespaceDefinition += `${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}:${this.getTypescriptBaseType(parameterDef)};\n`;
-                    // generate a nice description of the service params
-                    serviceParamList.push(oneLine`  * _${parameterDef.name}_: ${this.getTypescriptBaseType(parameterDef)}
+                    // generate a nice description of the service params. This includes the name, if it's required, basetype and description
+                    serviceParamList.push(oneLine`  * _${parameterDef.name}${(parameterDef.aspects.isRequired ? "" : "?")}_: ${this.getTypescriptBaseType(parameterDef)}
                                                         ${parameterDef.description ? " - " + parameterDef.description : ""}`);
+
+                    if(parameterDef.aspects.isRequired) {
+                        requiredParamCount++;
+                    }
                 }
                 namespaceDefinition += "}\n";
             }
@@ -166,12 +172,13 @@ export class ThingworxToTypescriptGenerator {
             // now generate the service definition, as well as jsdocs
             classDefinition += this.generateJDocWithContent(serviceJsDocElements.join("\n"))
             if(serviceParamList.length > 0) {
-                // Service has params, reference the interface generated above
-                classDefinition += `${service.name}(params: ${entityName}.${service.name}Params): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+                // if the service is defined as having parameters, but no of them are required than it can be called without providing an object
+                const paramDefinition = `params${requiredParamCount == 0 ? '?' : ''} : ${entityName}.${service.name}Params`
+                // build out the service definition with the function name, params, and return basetype
+                classDefinition += `${service.name}(${paramDefinition}): ${this.getTypescriptBaseType(outputMetadata)};\n`;
             } else {
-                // If the service has no parameters, declare to overloads for the method, one with no params, and one with an empty object
-                classDefinition += `${service.name}(): ${this.getTypescriptBaseType(outputMetadata)};\n`;
-                classDefinition += `${service.name}(params: Record<any, never>): ${this.getTypescriptBaseType(outputMetadata)};\n`;
+                // If the service has no parameters, it can either be called by providing no parameters, or an empty object
+                classDefinition += `${service.name}(params?: Record<any, never>): ${this.getTypescriptBaseType(outputMetadata)};\n`;
             }
         }
 
