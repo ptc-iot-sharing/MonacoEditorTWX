@@ -1,3 +1,18 @@
+# [1.18.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.17.0...v1.18.0) (2021-07-09)
+
+
+### Bug Fixes
+
+* **types:** Services with no parameters should be callable without providing an empty object. ([0ca5574](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/0ca557408001ca8980efcbd7d48eab98d2dbb654))
+* **types:** Services with no required inputs can be called without providing any object as parameter ([592a5aa](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/592a5aad3720a7fed914dd5b0b9407a14dd05655))
+* Remove all deprecated code for supporting the old composer ([a2d4c26](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a2d4c26665168fb4415fa8f0fe6430ea41247ad4))
+
+
+### Features
+
+* **types:** Generate GenericThing template definition on startup, rather than bundling it in. Fix issue where GenericThing services would appear on templates, shapes or other entity types ([a36d0ce](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a36d0ceebe3887aabc89862ca901345a96e884ce))
+* **types:** Improve types of the `rows` property of infotables. ([cdc76f1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/cdc76f138dc25079a785717b60fbefa61999b89a))
+
 # [1.17.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.16.0...v1.17.0) (2021-06-25)
 
 
