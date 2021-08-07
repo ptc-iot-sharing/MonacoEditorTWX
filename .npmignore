@@ -1,7 +1,6 @@
 node_modules
 dist
 ui
-.gradle
 package
 zip
 !loader/
