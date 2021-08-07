@@ -1,3 +1,12 @@
+# [1.19.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.18.0...v1.19.0) (2021-08-07)
+
+
+### Features
+
+* Enable publishing to npm, and include the build folder in the published result ([4bd687e](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/4bd687ee7ca8e065ba87a4eabd33f2d6ed9c87ef))
+* Reduce the number of imported entities into ThingWorx to only one Thing, no datashapes ([a7da156](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a7da156b2cccd1eb4e2ffc2bf854ef9100f4b4fa))
+* Support loading the new composer bundle from cross-origin sources by setting the webpack public path to auto ([e8242b1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/e8242b10b5caf12300db15c5f17203b7bdff5bc0))
+
 # [1.18.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.17.0...v1.18.0) (2021-07-09)
 
 
