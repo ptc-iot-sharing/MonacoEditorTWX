@@ -1,5 +1,5 @@
 {
-    "name": "MonacoScriptEditor",
+    "name": "@placatus/twx-monaco-editor",
     "packageName": "MonacoScriptEditor",
     "version": "1.18.0",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
@@ -20,7 +20,7 @@
         "watch": "webpack --watch --mode development",
         "server": "webpack serve",
         "upload": "webpack --mode development --env upload",
-        "prepublishOnly": "rm -rf dist && mkdir dist && yarn run build && mv zip/* dist && yarn run buildDev && mv zip/* dist"
+        "prepublishOnly": "rm -rf dist && mkdir dist && yarn run buildDev && mv zip/* dist && yarn run build && mv zip/* dist"
     },
     "license": "ISC",
     "devDependencies": {

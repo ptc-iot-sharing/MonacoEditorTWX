@@ -39,8 +39,7 @@ module.exports = (env, argv) => {
             filename: '[name].bundle.js',
             chunkFilename: '[id].chunk.js',
             chunkLoadingGlobal: `webpackJsonp${packageName}`,
-            // this is the path when viewing the widget in thingworx
-            publicPath: `../Common/extensions/${packageName}/ui/${packageName}/`,
+            publicPath: 'auto',
             libraryTarget: 'window',
             devtoolNamespace: packageName,
         },
