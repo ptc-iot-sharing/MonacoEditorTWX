@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.0...v1.19.1) (2021-08-07)
+
+
+### Bug Fixes
+
+* Force re-release of npm package ([a19c417](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a19c417c5980434c8c8fcc4b56dc9ddcd2cb9fc9))
+
 # [1.19.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.18.0...v1.19.0) (2021-08-07)
 
 
