@@ -14,12 +14,6 @@
         ],
         "@semantic-release/npm",
         [
-            "@semantic-release/exec",
-            {
-                "publishCmd": "yarn prepublishOnly"
-            }
-        ],
-        [
             "@semantic-release/git",
             {
                 "assets": [
