@@ -20,7 +20,7 @@
         "watch": "webpack --watch --mode development",
         "server": "webpack serve",
         "upload": "webpack --mode development --env upload",
-        "prepublishOnly": "rm -rf dist && mkdir dist && yarn run build && mv zip/* dist && yarn run buildDev && mv zip/* dist"
+        "prepublishOnly": "rm -rf dist && mkdir dist && yarn run buildDev && mv zip/* dist && yarn run build && mv zip/* dist"
     },
     "license": "ISC",
     "devDependencies": {
