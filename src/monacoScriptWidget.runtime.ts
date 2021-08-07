@@ -1,6 +1,7 @@
-import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport/widgetRuntimeSupport';
-
-@ThingworxRuntimeWidget
+import { TWService, TWProperty, TWWidgetDefinition } from 'typescriptwebpacksupport/widgetRuntimeSupport';
+// when using monaco as a widget, make sure all scripts are loaded from the correct path
+__webpack_public_path__ = '../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/';
+@TWWidgetDefinition
 class MonacoCodeEditorWidget extends TWRuntimeWidget {
     monacoEditor: import("./editors/basicCodeEditor").MonacoCodeEditor;
 
