@@ -1,3 +1,10 @@
+## [1.19.3](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.2...v1.19.3) (2021-08-07)
+
+
+### Bug Fixes
+
+* Try again a publish that hopefully includes build dir ([417925c](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/417925c51350e8095ef3b7b052c6372ebaf2eaf7))
+
 ## [1.19.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.1...v1.19.2) (2021-08-07)
 
 

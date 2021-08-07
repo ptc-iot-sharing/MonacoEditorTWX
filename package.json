@@ -1,7 +1,7 @@
 {
     "name": "@placatus/twx-monaco-editor",
     "packageName": "MonacoScriptEditor",
-    "version": "1.19.2",
+    "version": "1.19.3",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "author": "placatus@iqnox.com",
     "minimumThingWorxVersion": "6.0.0",
@@ -17,7 +17,9 @@
         "access": "public"
     },
     "files": [
-        "/src", "/build", "/Entities"
+        "/src",
+        "/build",
+        "/Entities"
     ],
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
