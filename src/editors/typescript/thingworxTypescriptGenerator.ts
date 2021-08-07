@@ -2,7 +2,7 @@ import { stripIndents, oneLine } from 'common-tags'
 import { WorkerScriptManager } from "../workerScriptManager";
 import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata, getEntityInstancesMetadata } from "../../utilities";
 import { ENTITY_TYPES } from "../../constants";
-import { EntityMetadataInformation } from "../../types";
+import { DataShape, EntityMetadataInformation } from "../../types";
 
 export class ThingworxToTypescriptGenerator {
     private scriptManager: WorkerScriptManager;
@@ -14,8 +14,8 @@ export class ThingworxToTypescriptGenerator {
     public async generateDataShapeCode() {
         try {
             let dataShapes = await getDataShapeDefinitions();
-            this.addDataShapesAsInterfaces(dataShapes.rows);
-            this.addDataShapesCollection(dataShapes.rows);
+            this.addDataShapesAsInterfaces(dataShapes);
+            this.addDataShapesCollection(dataShapes);
         } catch (reason) {
             console.error("Monaco: Failed to generate typescript definitions from dataShapes " + reason);
         }
@@ -56,7 +56,7 @@ export class ThingworxToTypescriptGenerator {
     /**
     * Generate a typescript lib with all the datashapes as interfaces
     */
-    private addDataShapesAsInterfaces(dataShapes) {
+    private addDataShapesAsInterfaces(dataShapes: DataShape[]) {
         // declare the namespace
         let dataShapeTs = "export as namespace twx.ds;\n";
         dataShapeTs += "declare namespace twx.ds { \n";
@@ -64,7 +64,7 @@ export class ThingworxToTypescriptGenerator {
             // description as jsdoc
             dataShapeTs += `\t/**\n\t *${datashape.description}\n\t*/\n`;
             dataShapeTs += `export interface ${sanitizeEntityName(datashape.name)} {\n`;
-            for (const fieldDef of datashape.fieldDefinitions.rows) {
+            for (const fieldDef of datashape.fieldDefinitions) {
                 if (fieldDef.description) {
                     // description as jsdoc
                     dataShapeTs += `\t/**\n\t *${fieldDef.description}\n\t*/`;
@@ -84,7 +84,7 @@ export class ThingworxToTypescriptGenerator {
         this.scriptManager.addExtraLib(dataShapeTs, "thingworx/DataShapeDefinitions.d.ts");
     }
 
-    private addDataShapesCollection(dataShapes) {
+    private addDataShapesCollection(dataShapes: DataShape[]) {
         let datashapesDef = "declare namespace twx {\n";
         datashapesDef += "interface DataShapes {\n";
         // iterate through all the datashapes

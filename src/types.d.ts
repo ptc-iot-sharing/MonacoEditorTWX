@@ -95,20 +95,18 @@ interface RowsItem {
     code: string;
 }
 interface DataShape {
-    fieldDefinitions?: FieldDefinitions;
-    name?: string;
+    fieldDefinitions: FieldDefinition[];
+    name: string;
     aspects?: Aspects;
     description?: string;
     baseType?: string;
     ordinal?: number;
 }
-interface FieldDefinitions {
-    code: Code;
-}
-interface Code {
+interface FieldDefinition {
     name: string;
-    aspects: Aspects;
-    description: string;
+    aspects?: Aspects;
+    dataShape?: string;
+    description?: string;
     baseType: string;
     ordinal: number;
 }
