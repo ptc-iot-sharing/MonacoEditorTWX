@@ -1,44 +1,26 @@
-# Thingworx Monaco Code Editor
+# ThingWorx Monaco Code Editor
 
-The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one, oferring a similar editing experience to [Visual Studio Code](https://code.visualstudio.com/) offering modern developer friendly tools like multiple cursors, autocompletion for ThingWorx entities, as well as the possiblity to write ThingWorx services in TypeScript.
+The purpose of this project is to globally replace the script editor in ThingWorx Composer with a better one, offering a similar editing experience to [Visual Studio Code](https://code.visualstudio.com/) offering modern developer friendly tools like multiple cursors, autocompletion for ThingWorx entities, as well as the possibility to write ThingWorx services in TypeScript.
 
 This project offers compatibility with both the **Old Composer** and the **New Composer** (starting with 8.4). Please refer to the installation guide for more information. A mashup builder widget is also available to display code in a mashup runtime.
 
 ## Installation
 
+Setting up Monaco Editor for ThingWorx requires creating a browser user script that will "inject" the editor into all ThingWorx Composer environments. This installation option requires no extension import into the ThingWorx server, and will always use the latest version of the editor.
 
-1. Download the zip package listed under the downloads section under [**Releases**](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_
+1. Install a browser addon for creating userscripts. Depending on your browser of choice, you can use:
+   *  For Chrome  [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
+   *  For Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+   *  For Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
 
-2. Import the zip package into Thingworx as an extension.
-
-3. Create a browser user script that will enable the Monaco Editor as the default code editor for all ThingWorx environments that have the extension installed. If you have multiple ThingWorx environments, you don't need to repeat this step for the same browser.
-
-  1. Install a browser userscript extension. Depending on your browser of choice, you can use:
-      1.  Chrome  [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
-      2.  Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
-      3.  Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
-  2. Install the following script:
-  ```
-  // ==UserScript==
-  // @name         Load Monaco Remote
-  // @namespace    http://tampermonkey.net/
-  // @version      0.2
-  // @description  Loads monaco editor on all ThingWorx Composer enviromnments, if available
-  // @author       You
-  // @match        *://*/Thingworx/Composer/*
-  // @match        *://*/Thingworx/Builder/*
-  // @grant        none
-  // ==/UserScript==
-
-  var script = document.createElement("script");
-  script.src = "/Thingworx/Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js";
-  script.charset = "UTF-8";
-  document.getElementsByTagName("head")[0].appendChild(script);
-  ```
+2. Navigate to https://greasyfork.org/en/scripts/389994-thingworx-load-monaco-editor and click the Install button. Then confirm the installation.
+3. For **every** ThingWorx environment you intend to use the MonacoEditor in, you also need to import this [Thing](https://cdn.jsdelivr.net/npm/@placatus/twx-monaco-editor@latest/Entities/Things/Things_MonacoEditorHelper.xml). 
 
 Notes:
+* The userscript above will always reference the latest released version of Monaco Editor.
 * In the New Composer (Thingworx 8.4 and later), all editors will be replaced with the Monaco editor, including the script editor, subscription editor, CSS editor, expression editor and other JSON/XML editors.
-* The last Monaco Editor extension that is compatible with the Old Composer (8.3 or earlier) is version [v1.16.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases/tag/v1.16.1)
+* The last Monaco Editor extension that is compatible with the Old Composer (8.3 or earlier) is version [v1.16.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases/tag/v1.16.1). Import of the zip package is needed for this version.
+* If you want to also use the MonacoEditor widget, to display code during mashup runtime, you will need to import the ThingWorx extension listed under [**Releases**](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_.
 
 ### Removing
 
