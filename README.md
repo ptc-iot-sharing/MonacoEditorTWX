@@ -24,6 +24,7 @@ Notes:
 
 ### Removing
 
+To disable the editor, just disable the user script in the addon settings.
 To remove the extension, just delete it using the Extension Management in Thingworx.
 
 ### Upgrading
