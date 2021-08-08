@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.3...v1.20.0) (2021-08-08)
+
+
+### Features
+
+* Added description about how to use monaco editor without importing the extension, but rather loading it from a CDN ([8580d2e](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/8580d2e9bbfd6a75a0485668ede57ccd25affa31))
+
 ## [1.19.3](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.2...v1.19.3) (2021-08-07)
 
 
