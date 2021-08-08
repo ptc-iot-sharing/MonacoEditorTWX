@@ -14,7 +14,8 @@
         "url": "https://github.com/ptc-iot-sharing/MonacoEditorTWX.git"
     },
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "tag": "latest"
     },
     "files": [
         "/src",
