@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.20.0...v1.20.1) (2021-08-08)
+
+
+### Bug Fixes
+
+* Make sure the npm publish is done on the latest tag ([2cb0704](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/2cb0704f88ab3db2174d8e5f42c54b3f1cd2beda))
+
 # [1.20.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.19.3...v1.20.0) (2021-08-08)
 
 

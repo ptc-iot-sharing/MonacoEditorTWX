@@ -14,7 +14,7 @@ Setting up Monaco Editor for ThingWorx requires creating a browser user script t
    *  For Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
 
 2. Navigate to https://greasyfork.org/en/scripts/389994-thingworx-load-monaco-editor and click the Install button. Then confirm the installation.
-3. For **every** ThingWorx environment you intend to use the MonacoEditor in, you also need to import this [Thing](https://cdn.jsdelivr.net/npm/@placatus/twx-monaco-editor@latest/Entities/Things/Things_MonacoEditorHelper.xml). 
+3. Monaco editor is now enabled for **ALL** ThingWorx environments you navigate to. To disable it, just disable the userscript from the addon dashboard.
 
 Notes:
 * The userscript above will always reference the latest released version of Monaco Editor.
@@ -24,6 +24,7 @@ Notes:
 
 ### Removing
 
+To disable the editor, just disable the user script in the addon settings.
 To remove the extension, just delete it using the Extension Management in Thingworx.
 
 ### Upgrading
