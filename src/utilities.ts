@@ -1,8 +1,9 @@
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { DISALLOWED_ENTITY_CHARS } from './constants';
-import { DataShape } from './types';
+import { DataShape, FieldDefinition } from './types';
 
 const MIME_APPLICATION_JSON = "application/json";
+const MIME_TEXT_XML = "text/xml";
 
 /**
  *  Converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
@@ -54,25 +55,33 @@ export function unflattenJson(data) {
 };
 
 /**
- * Gets the metadata of all the datashapes in the system. Uses an imported service on the MonacoEditorHelper thing
+ * Gets the metadata of all the datashapes in the system. Uses the export of all datashapes
  */
 export async function getDataShapeDefinitions(): Promise<DataShape[]> {
-    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetAllDataShapes`, {
-        method: 'POST',
+    const response = await fetch(`/Thingworx/Exporter/DataShapes?universal=true`, {
+        method: 'GET',
         headers: {
-            'Content-Type': MIME_APPLICATION_JSON,
-            'Accept': MIME_APPLICATION_JSON
+            'Accept': MIME_TEXT_XML
         }
     });
-    const data = await response.json();
+    const xmlText = await response.text();
+    const document = new DOMParser().parseFromString(xmlText, MIME_TEXT_XML);
 
-    return data.rows.map(e => {
+    return Array.from(document.getElementsByTagName('DataShape')).map(dsXml => {
         return {
-            name: e.name,
-            description: e.description,
-            fieldDefinitions: e.fieldDefinitions.rows
+            name: dsXml.getAttribute('name'),
+            description: dsXml.getAttribute('description'),
+            fieldDefinitions: Array.from(dsXml.getElementsByTagName('FieldDefinition')).map(f => {
+                return {
+                    name: f.getAttribute('name'),
+                    baseType: f.getAttribute('baseType'),
+                    description: f.getAttribute('description'),
+                    dataShape: f.getAttribute('aspect.dataShape'),
+                    ordinal: parseInt(f.getAttribute('ordinal') || '0')
+                }
+            })
         }
-    })
+    });
 };
 
 /**
