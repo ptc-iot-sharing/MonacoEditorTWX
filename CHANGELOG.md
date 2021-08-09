@@ -1,3 +1,12 @@
+# [1.21.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.20.1...v1.21.0) (2021-08-09)
+
+
+### Features
+
+* Generate the Resource definitions on demand, rather than preloading them ([1182162](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/118216285eeaf6a126314827cbda512172bdba55))
+* Remove the need for any imported entity used to make the editor function. Only native thingworx endpoints are used now ([3dacb2c](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/3dacb2c963a362df6366fd35a8ddc84228906a67))
+* use the native ThingWorx export endpoint to get information about all datashapes ([3d14462](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/3d14462cbb6344f977a2a533f12cefa4c25afff3))
+
 ## [1.20.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.20.0...v1.20.1) (2021-08-08)
 
 
