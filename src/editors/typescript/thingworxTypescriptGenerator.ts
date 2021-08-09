@@ -1,6 +1,6 @@
 import { stripIndents, oneLine } from 'common-tags'
 import { WorkerScriptManager } from "../workerScriptManager";
-import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getResourcesMetadata, getEntityInstancesMetadata } from "../../utilities";
+import { sanitizeEntityName, getDataShapeDefinitions, getScriptFunctionLibraries, isGenericService, getEntityInstancesMetadata } from "../../utilities";
 import { ENTITY_TYPES } from "../../constants";
 import { DataShape, EntityMetadataInformation } from "../../types";
 
@@ -203,25 +203,6 @@ export class ThingworxToTypescriptGenerator {
         classDefinition += `}\n}\n`;
 
         return stripIndents(namespaceDefinition + "\n" + classDefinition);
-    }
-
-    public async generateResourceFunctions() {
-        let resourceLibraries = await getResourcesMetadata()
-        let resourcesDef = "declare namespace twx {\n";
-        resourcesDef += "export interface ResourcesInterface {\n";
-        // iterate through all the resources
-        for (let resource of resourceLibraries.rows) {
-            // generate the metadata for this resource
-            let resourceLibrary = resource.metadata;
-            let validEntityName = sanitizeEntityName(resource.name);
-            let libraryName = "Resource" + validEntityName;
-            let resourceDefinition = this.generateTypeScriptDefinitions(resourceLibrary, {}, libraryName, true, false);
-            this.scriptManager.addExtraLib(resourceDefinition, "thingworx/" + libraryName + ".d.ts");
-            resourcesDef += `/**\n * ${resource.description}\n**/\n`;
-            resourcesDef += `\t'${resource.name}': twx.${libraryName};\n`;
-        }
-        resourcesDef += "}\n}\n let Resources: twx.ResourcesInterface;";
-        this.scriptManager.addExtraLib(resourcesDef, "thingworx/Resources.d.ts");
     }
 
     public async generateGenericThingDefinition() {

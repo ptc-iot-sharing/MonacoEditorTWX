@@ -219,7 +219,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
         this.codeTranslator.generateDataShapeCode();
         this.codeTranslator.generateScriptFunctionLibraries();
         this.codeTranslator.registerEntityCollectionDefs();
-        this.codeTranslator.generateResourceFunctions();
     }
 
     /**

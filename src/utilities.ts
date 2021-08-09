@@ -161,19 +161,6 @@ export async function getScriptFunctionLibraries(): Promise<any[]> {
     }
     return result;
 }
-export async function getResourcesMetadata(): Promise<any> {
-    const response = await fetch(`/Thingworx/Things/MonacoEditorHelper/Services/GetMetadataOfEntities`, {
-        method: 'POST',
-        body: JSON.stringify({
-            entityType: 'Resource'
-        }),
-        headers: {
-            'Content-Type': MIME_APPLICATION_JSON,
-            'Accept': MIME_APPLICATION_JSON
-        }
-    });
-    return response.json();
-}
 
 export function isGenericService(serviceDefinition: { sourceName: string, sourceType: string }): boolean {
     return serviceDefinition.sourceName == "ConfiguredThing" && serviceDefinition.sourceType == "ThingPackage";
