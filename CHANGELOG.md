@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.21.0...v1.21.1) (2021-08-12)
+
+
+### Bug Fixes
+
+* Resolve issue where the text in the find widget of the service editor was hidden ([00bec2e](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/00bec2e801f329180edd246d3020f77ed8b3924b))
+
 # [1.21.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.20.1...v1.21.0) (2021-08-09)
 
 
