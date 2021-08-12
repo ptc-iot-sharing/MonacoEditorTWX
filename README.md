@@ -13,6 +13,8 @@ Setting up Monaco Editor for ThingWorx requires creating a browser user script t
    *  For Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
    *  For Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
 
+If your company policy disallows the use of browser extensions, please the refer to the [Alternative installation options](#alternative-installation-options).
+
 2. Navigate to https://greasyfork.org/en/scripts/389994-thingworx-load-monaco-editor and click the Install button. Then confirm the installation.
 3. Monaco editor is now enabled for **ALL** ThingWorx environments you navigate to. To disable it, just disable the userscript from the addon dashboard.
 
@@ -104,6 +106,21 @@ In the new composer, press <kbd>F1</kbd>, select _Switch to Typescript_. The rev
 ### Other Features
 * Thingworx snippets (iterate infotable, create infotable, iterate infotable fields)
 * In the new composer, the expression editor is also replaced with a proper editor
+
+## Alternative installation options
+
+### Local installation
+
+This option requires access to the install of ThingWorx, and will enable MonacoEditor for all developers using a thingworx environment. However, when updating ThingWorx this change needs to be reapplied.
+
+   0. Import the ThingWorx extension listed under [**Releases**](https://github.com/ptc-iot-sharing/MonacoEditorTWX/releases). It should be the one named _MonacoScriptEditor-VERSION.zip_.
+   1. On the server hosting Thingworx, navigate to the tomcat folder, then to `apache-tomcat/webapps/Thingworx/Composer`. 
+   2. Edit the file `index.html`.
+   3. After _line 9_, after the existing `<script>` tag, add the following: 
+
+   ```html
+   <script type="text/javascript" src="../Common/extensions/MonacoScriptEditor/ui/MonacoScriptEditor/newComposer.bundle.js" charset="UTF-8"></script>
+   ```
 
 ## Reporting issues
 
