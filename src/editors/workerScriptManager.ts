@@ -34,7 +34,6 @@ export class WorkerScriptManager {
     }
 
     async addRemoteExtraLib(location, name) {
-        // TODO: do we need a polyfill?
         const response = await fetch(location);
         const data = await response.text();
         this.addExtraLib(data, name);

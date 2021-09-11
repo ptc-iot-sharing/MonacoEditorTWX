@@ -46,6 +46,6 @@ export const DEFAULT_EDITOR_SETTINGS: {
 }
 
 export enum Languages {
-    TwxTypescript = 'twxTypescript',
-    TwxJavascript = 'twxJavascript'
+    TwxTypescript = 'typescript',
+    TwxJavascript = 'javascript'
 }

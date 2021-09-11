@@ -1226,6 +1226,11 @@
   dependencies:
     "@octokit/openapi-types" "^7.3.4"
 
+"@placatus/monaco-typescript@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@placatus/monaco-typescript/-/monaco-typescript-4.5.1.tgz#ee515cd8ebc0bd0e48f885ff59ec98aed8391278"
+  integrity sha512-9LPVJisy9MxcVgl6UEl/uxMOD955vm1pErTFezb790lxYhNO9YObtzyhicw5Ni0xOs2b1+UPfJVZ2JeqiQ+MmQ==
+
 "@semantic-release/changelog@^5.0.1":
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/@semantic-release/changelog/-/changelog-5.0.1.tgz#50a84b63e5d391b7debfe021421589fa2bcdafe4"
@@ -5836,17 +5841,10 @@ mkdirp@^0.5.5:
   dependencies:
     minimist "^1.2.5"
 
-"monaco-editor-webpack-plugin@npm:@placatus/monaco-editor-webpack-plugin@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-4.0.0.tgz#577bcfae2745b72a3aa81d0c6c0a80361d59a2c1"
-  integrity sha512-u1E2R6ii5BuN68T5w1WDVSw8bJwb9ADgBARKqjA0glFVu5Rd/QojUISE0+pJlNy1qPKx7naOmWsyEhjLAsesSQ==
-  dependencies:
-    loader-utils "^2.0.0"
-
-"monaco-editor@npm:@placatus/monaco-editor@^0.25.5":
-  version "0.25.5"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-editor/-/monaco-editor-0.25.5.tgz#a220d24aaaabe2c65247f5cf6488373127c94ced"
-  integrity sha512-jB1nAA7mNljHESEU0FXH7RRKvFoqz9Hd2HTEbXtgt9GfJpJrKzE1BLNajQgc7vtL3zngs3+e6Yau18kUa8d3Gw==
+monaco-editor@^0.27.0:
+  version "0.27.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.27.0.tgz#4b69108bb1dc1f60174c5dcdf51bc5306ab5ba26"
+  integrity sha512-UhwP78Wb8w0ZSYoKXQNTV/0CHObp6NS3nCt51QfKE6sKyBo5PBsvuDOHoI2ooBakc6uIwByRLHVeT7+yXQe2fQ==
 
 move-concurrently@^1.0.1:
   version "1.0.1"

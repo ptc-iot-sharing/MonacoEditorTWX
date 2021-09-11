@@ -71,7 +71,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
     private async transpileTypeScript() {
         if (this.monacoEditor.getModel() == undefined) return;
         this.oldTypescriptCode = this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF);
-        const worker = await monaco.languages.typescript.getLanguageWorker(Languages.TwxTypescript)
+        const worker = await monaco.languages.typescript.getTypeScriptWorker();
         // if there is an uri available
         if(!this.monacoEditor.getModel().uri) {
             return;
@@ -96,17 +96,9 @@ export class TypescriptCodeEditor extends ServiceEditor {
     }
 
     public static performGlobalInitialization() {
-        try {
-            // create a new language called twxJavascript
-            monaco.languages.typescript.setupNamedLanguage({ id: Languages.TwxJavascript }, false, true);
-            // create a new language called twxTypescript
-            monaco.languages.typescript.setupNamedLanguage({ id: Languages.TwxTypescript }, true, true);
-        } catch (e) {
-            alert("There was an error initializing monaco. Please clean the browser cache.");
-            throw e;
-        }
-        TypescriptCodeEditor.workerManager = new WorkerScriptManager(monaco.languages.typescript.getLanguageDefaults(Languages.TwxTypescript),
-            monaco.languages.typescript.getLanguageDefaults(Languages.TwxJavascript));
+ 
+        TypescriptCodeEditor.workerManager = new WorkerScriptManager(monaco.languages.typescript.typescriptDefaults,
+            monaco.languages.typescript.javascriptDefaults);
         // set the compiler options
         TypescriptCodeEditor.workerManager.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.ES5,
@@ -309,7 +301,9 @@ export class TypescriptCodeEditor extends ServiceEditor {
      */
     private async getEntitiesInCode(mode) {
         if (this.monacoEditor.getModel()) {
-            let worker = await monaco.languages.typescript.getLanguageWorker(mode);
+            let worker = mode == Languages.TwxJavascript ?
+                await monaco.languages.typescript.getJavaScriptWorker() : 
+                await monaco.languages.typescript.getTypeScriptWorker();
             let client = await worker(this.monacoEditor.getModel().uri);
             return await (client as any).getPropertiesOrAttributesOf(this.monacoEditor.getModel().uri.toString(), ENTITY_TYPES);
         } else {
