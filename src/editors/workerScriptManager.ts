@@ -25,7 +25,7 @@ export class WorkerScriptManager {
     disposeLib(name: string) {
         if(this.libNames[name]) {
             this.libNames[name][0].dispose();
-            this.libNames[name][0].dispose();
+            this.libNames[name][1].dispose();
         }
     }
 
@@ -42,5 +42,11 @@ export class WorkerScriptManager {
     setCompilerOptions(options) {
         this.typescriptDefaults.setCompilerOptions(options);
         this.javascriptDefaults.setCompilerOptions(options);
+    }
+
+    disposeAllLibs() {
+        for (const lib in this.libNames) {
+            this.disposeLib(lib);
+        }
     }
 }
