@@ -1226,10 +1226,10 @@
   dependencies:
     "@octokit/openapi-types" "^7.3.4"
 
-"@placatus/monaco-typescript@^4.5.1":
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-typescript/-/monaco-typescript-4.5.1.tgz#ee515cd8ebc0bd0e48f885ff59ec98aed8391278"
-  integrity sha512-9LPVJisy9MxcVgl6UEl/uxMOD955vm1pErTFezb790lxYhNO9YObtzyhicw5Ni0xOs2b1+UPfJVZ2JeqiQ+MmQ==
+"@placatus/monaco-typescript@^4.7.0":
+  version "4.7.0"
+  resolved "https://registry.yarnpkg.com/@placatus/monaco-typescript/-/monaco-typescript-4.7.0.tgz#0741987862d45cbe3392b9cc073c04fdc7f0adaf"
+  integrity sha512-3l4VZOmNpvz+VOK+gJrMSqRrjV5gmYaMDave8QpyS7elserN3WBw9PeZGar3XUWiX2jD8soxcw/WUDJ27my4LA==
 
 "@semantic-release/changelog@^5.0.1":
   version "5.0.1"
@@ -7812,10 +7812,10 @@ typescript@^4.3.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.4.tgz#3f85b986945bcf31071decdd96cf8bfa65f9dcbc"
   integrity sha512-uauPG7XZn9F/mo+7MrsRjyvbxFpzemRjKEZXS4AK83oP2KKOJPvb+9cO/gmnv8arWZvhnjVOXz7B49m1l0e9Ew==
 
-typescriptwebpacksupport@2.0.9:
-  version "2.0.9"
-  resolved "https://registry.yarnpkg.com/typescriptwebpacksupport/-/typescriptwebpacksupport-2.0.9.tgz#d94342b1187758698245615d774c408a35e947af"
-  integrity sha512-jdX4gMlL11wQEGVrhGplwMfj9PsvjvbFmxHqbDR5zIRPtx7bVVfIjekBQJSHwKYMZuYQXZPKhKmEeuX9Xd1TwQ==
+typescriptwebpacksupport@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/typescriptwebpacksupport/-/typescriptwebpacksupport-2.1.0.tgz#093583d245fd79e01869a7d93be74fecf35db0aa"
+  integrity sha512-Nir3gx2FnZJnn2nXyaRSaa08gXx7NzGDWXK6yIEVJDsPUwMwj5uhYy8JbAQoGabZDkofSGcvyNzQERzJFxIv2Q==
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"

@@ -32,6 +32,11 @@ module.exports = (env, argv) =>
     output: {
       globalObject: 'self'
     },
+    resolve: {
+      alias: {
+        'monaco-editor-core': path.resolve(__dirname, 'node_modules/monaco-editor')
+      }
+    },
     plugins: [
       new EncodingPlugin({
         encoding: "utf8",
