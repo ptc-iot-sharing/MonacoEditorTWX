@@ -1,3 +1,16 @@
+# [1.22.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.21.1...v1.22.0) (2021-09-21)
+
+
+### Bug Fixes
+
+* **Internal Change:** Adopt the usage of the new monaco-typescript, without and alias `monaco-editor-core` to `monaco-editor` ([979f93b](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/979f93b99eb655ce58509db38bd04a824b4cc6e7))
+* Properly dispose of all global monaco listeners and configurations when the editor is disposed ([0ab50a1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/0ab50a19f67f57c59561b5e359f832e052b6648f))
+
+
+### Features
+
+* Replace usage of a forked `monaco-editor` with the upstream one. Import only a custom version of `monaco-typescript` that has the worker methods needed ([27f2d08](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/27f2d08f6df8a120109810496b81028bf0202240))
+
 ## [1.21.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.21.0...v1.21.1) (2021-08-12)
 
 
