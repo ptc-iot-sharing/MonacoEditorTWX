@@ -567,7 +567,7 @@ function load() {
                     typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
                     this.codeMirror.onEditorFocused(async () => {
                         typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
-                        TypescriptCodeEditor.codeTranslator.generateDataShapeCode();
+                        typescriptCodeEditor.codeTranslator.generateDataShapeCode();
                     });
     
                     typescriptCodeEditor.onEditorTranspileFinished((code) => {

@@ -40,7 +40,6 @@ module.exports = (env, argv) => {
             chunkFilename: '[id].chunk.js',
             chunkLoadingGlobal: `webpackJsonp${packageName}`,
             publicPath: 'auto',
-            libraryTarget: 'window',
             devtoolNamespace: packageName,
         },
         plugins: [

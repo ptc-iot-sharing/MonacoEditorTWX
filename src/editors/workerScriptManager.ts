@@ -25,7 +25,7 @@ export class WorkerScriptManager {
     disposeLib(name: string) {
         if(this.libNames[name]) {
             this.libNames[name][0].dispose();
-            this.libNames[name][0].dispose();
+            this.libNames[name][1].dispose();
         }
     }
 
@@ -34,7 +34,6 @@ export class WorkerScriptManager {
     }
 
     async addRemoteExtraLib(location, name) {
-        // TODO: do we need a polyfill?
         const response = await fetch(location);
         const data = await response.text();
         this.addExtraLib(data, name);
@@ -43,5 +42,11 @@ export class WorkerScriptManager {
     setCompilerOptions(options) {
         this.typescriptDefaults.setCompilerOptions(options);
         this.javascriptDefaults.setCompilerOptions(options);
+    }
+
+    disposeAllLibs() {
+        for (const lib in this.libNames) {
+            this.disposeLib(lib);
+        }
     }
 }

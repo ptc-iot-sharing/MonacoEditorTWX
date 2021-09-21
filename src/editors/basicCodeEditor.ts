@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor';
 import tingle from 'tingle.js';
 
 require("tingle.js/src/tingle.css");
@@ -274,6 +274,36 @@ export class MonacoCodeEditor {
      * Perform global initialization of the monaco json
      */
     public static performGlobalInitialization() {
+        const workerPaths = {
+            'json': 'json.worker.bundle.js',
+            'css': './css.worker.bundle.js',
+            'typescript': 'ts.worker.bundle.js',
+            'javascript': 'ts.worker.bundle.js',
+            'editorWorkerService': 'editor.worker.bundle.js'
+        };
+
+        function stripTrailingSlash(str) {
+            return str.replace(/\/$/, '');
+        };
+
+        (window as any).MonacoEnvironment = {
+            globalAPI: true,
+            getWorkerUrl: function (moduleId, label) {
+                const pathPrefix = typeof __webpack_public_path__ === 'string' ? __webpack_public_path__ : "";
+                const result = (pathPrefix ? stripTrailingSlash(pathPrefix) + '/' : '') + workerPaths[label];
+                if (/^((http:)|(https:)|(file:)|(\/\/))/.test(result)) {
+                    const currentUrl = String(window.location);
+                    const currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
+                    if (result.substring(0, currentOrigin.length) !== currentOrigin) {
+                        const js = '/*' + label + '*/importScripts("' + result + '");';
+                        const blob = new Blob([js], { type: 'application/javascript' });
+                        return URL.createObjectURL(blob);
+                    }
+                }
+                return result;
+            }
+        }
+
         // initialize the json worker with the give schema
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
             schemas: [{
