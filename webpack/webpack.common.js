@@ -106,17 +106,15 @@ module.exports = (env, argv) => {
                     test: /\.tsx?$/,
                     use: 'ts-loader',
                     exclude: /node_modules/,
+                    resourceQuery: { not: [/raw/] },
                 },
                 {
                     test: /\.(png|jp(e*)g|svg|xml|d\.ts|ttf)$/,
-                    use: [
-                        {
-                            loader: 'url-loader',
-                            options: {
-                                limit: 30000,
-                            },
-                        },
-                    ],
+                    type: 'asset',
+                },
+                {
+                    resourceQuery: /raw/,
+                    type: 'asset/source',
                 },
                 {
                     test: /\.css$/,
