@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.0...v1.22.1) (2021-09-21)
+
+
+### Bug Fixes
+
+* Fix issue loading font file from CDN by removing deprecated loaders, and upgrade to webpack 5. ([0ac4b79](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/0ac4b799303abce496319bd4e150eafdef3350a4))
+
 # [1.22.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.21.1...v1.22.0) (2021-09-21)
 
 
