@@ -1,3 +1,11 @@
+## [1.22.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.1...v1.22.2) (2021-09-23)
+
+
+### Bug Fixes
+
+* Update depedencies, including bumping monaco to 0.28.0 ([829e292](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/829e292d6b9dd2850936134cdac9b3e69b1f2fb1))
+* Widget now has an icon in the composer and does not block the display of other widgets ([5f23cd7](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/5f23cd79734e5d2a6e666621671edd38c1b7a025))
+
 ## [1.22.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.0...v1.22.1) (2021-09-21)
 
 
