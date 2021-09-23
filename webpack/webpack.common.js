@@ -117,6 +117,10 @@ module.exports = (env, argv) => {
                     type: 'asset/source',
                 },
                 {
+                    resourceQuery: /inline/,
+                    type: 'asset/inline',
+                },
+                {
                     test: /\.css$/,
                     use: ['style-loader', 'css-loader']
                 }

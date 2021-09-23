@@ -15,8 +15,8 @@
             "es2015.promise"
         ],
         "typeRoots": [
-            "./typings/",
-            "./node_modules/@types/"
+            "./src/@types",
+            "./node_modules/@types"
         ]
     },
     "include": [
