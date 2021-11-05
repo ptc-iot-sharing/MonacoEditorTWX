@@ -1,3 +1,11 @@
+# [1.23.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.2...v1.23.0) (2021-11-05)
+
+
+### Features
+
+* Bump monaco editor to 0.30.0. ([a39cbfa](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a39cbfa98834f249a89867ac5f34ef2a85ebaf78))
+* Inlay hints for types are default enabled can can be configured using `editor.inlayHints` option. Added configuration option to enable `bracketPairColorization`. This is only applied when the editor first loads ([fe4ccb6](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/fe4ccb6036115d8c3af4e1019ca1870b9a583664))
+
 ## [1.22.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.1...v1.22.2) (2021-09-23)
 
 
