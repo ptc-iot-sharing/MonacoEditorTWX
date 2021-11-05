@@ -59,6 +59,10 @@ export class MonacoCodeEditor {
         editorSettings.editor.model = monaco.editor.createModel(instanceSettings.code, instanceSettings.language,
             monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName));
         // create the editor
+        if(editorSettings.editor["bracketPairColorization"]?.enabled) {
+            // colorization needs to not be flattened (https://github.com/microsoft/monaco-editor/blob/main/CHANGELOG.md#0280-22092021)
+            editorSettings.editor["bracketPairColorization.enabled"] = true;
+        }
         this.monacoEditor = monaco.editor.create(container, editorSettings.editor);
         this.initializePreferenceEditor(actionCallbacks.onPreferencesChanged);
         this.initializeDiffEditor();

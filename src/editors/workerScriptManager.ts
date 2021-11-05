@@ -14,6 +14,24 @@ export class WorkerScriptManager {
     constructor(typescriptDefaults: monaco.languages.typescript.LanguageServiceDefaults, javascriptDefaults: monaco.languages.typescript.LanguageServiceDefaults) {
         this.typescriptDefaults = typescriptDefaults;
         this.javascriptDefaults = javascriptDefaults;
+        this.javascriptDefaults.setInlayHintsOptions({
+            includeInlayParameterNameHints: 'all',
+            includeInlayParameterNameHintsWhenArgumentMatchesName: true,
+            includeInlayFunctionParameterTypeHints: true,
+            includeInlayVariableTypeHints: true,
+            includeInlayPropertyDeclarationTypeHints: true,
+            includeInlayFunctionLikeReturnTypeHints: true,
+            includeInlayEnumMemberValueHints: true
+        });
+        this.typescriptDefaults.setInlayHintsOptions({
+            includeInlayParameterNameHints: 'all',
+            includeInlayParameterNameHintsWhenArgumentMatchesName: true,
+            includeInlayFunctionParameterTypeHints: true,
+            includeInlayVariableTypeHints: true,
+            includeInlayPropertyDeclarationTypeHints: true,
+            includeInlayFunctionLikeReturnTypeHints: true,
+            includeInlayEnumMemberValueHints: true
+        });
     }
 
     addExtraLib(code, name): [monaco.IDisposable, monaco.IDisposable] {

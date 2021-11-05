@@ -39,6 +39,11 @@
       "default": 0,
       "description": "Controls the line height. Use 0 to compute the line height from the font size."
     },
+    "editor.bracketPairColorization.enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls whether bracket pair colorization is enabled or not. Editor must be reloaded for the change to apply."
+    },
     "editor.letterSpacing": {
       "type": "number",
       "default": 0,
@@ -749,6 +754,21 @@
       "type": "boolean",
       "default": true,
       "description": "Controls whether the diff editor shows +/- indicators for added/removed changes."
+    },
+    "editor.inlayHints.enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enables the inlay hints in the editor."
+    },
+    "editor.inlayHints.fontSize": {
+      "type": "number",
+      "default": 14,
+      "description": "Controls font size of inlay hints in the editor. A 'default' of 90% of `#editor.fontSize#` is used when the configured value is less than `5` or greater than the editor font size."
+    },
+    "editor.inlayHints.fontFamily": {
+      "type": "string",
+      "default": "Consolas, 'Courier New', monospace",
+      "description":  "Controls font family of inlay hints in the editor. When set to empty, the `#editor.fontFamily#` is used."
     }
   }
 }

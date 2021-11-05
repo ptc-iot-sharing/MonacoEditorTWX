@@ -37,8 +37,12 @@ export const DEFAULT_EDITOR_SETTINGS: {
         theme: "vs",
         fixedOverflowWidgets: true,
         disableLayerHinting: true, // fixes bug in FF
-        snippetSuggestions: "bottom"
-    },
+        snippetSuggestions: "bottom",
+        inlayHints: {
+            enabled: true
+        },
+        "bracketPairColorization.enabled": "false"
+    } as any,
     diffEditor: {},
     thingworx: {
         showGenericServices: false
