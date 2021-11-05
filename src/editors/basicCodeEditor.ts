@@ -413,7 +413,7 @@ export class MonacoCodeEditor {
         this.monacoEditor.addAction({
             id: "viewConfAction",
             label: "View Configuration",
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_BACKTICK],
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Shift | monaco.KeyCode.Backquote],
             run: () => {
                 modal.setContent(`<h2>Config Editor. Use Intellisense or check 
                                     <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
@@ -462,7 +462,7 @@ export class MonacoCodeEditor {
             label: "View Diff",
             contextMenuGroupId: "service",
             contextMenuOrder: 1.4,
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K],
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK],
             keybindingContext: null,
             run: (ed) => {
                 modal.setContent(`<h2>Diff Editor</h2>

@@ -1353,10 +1353,10 @@
   dependencies:
     "@octokit/openapi-types" "^7.3.4"
 
-"@placatus/monaco-typescript@^4.7.0":
-  version "4.7.0"
-  resolved "https://registry.yarnpkg.com/@placatus/monaco-typescript/-/monaco-typescript-4.7.0.tgz#0741987862d45cbe3392b9cc073c04fdc7f0adaf"
-  integrity sha512-3l4VZOmNpvz+VOK+gJrMSqRrjV5gmYaMDave8QpyS7elserN3WBw9PeZGar3XUWiX2jD8soxcw/WUDJ27my4LA==
+"@placatus/monaco-typescript@^4.10.0":
+  version "4.10.0"
+  resolved "https://registry.yarnpkg.com/@placatus/monaco-typescript/-/monaco-typescript-4.10.0.tgz#e88f12c22187938c209471abc133e242e403b736"
+  integrity sha512-RaurpEpwUnrcRO+03eAmoboVwwq8m77YsbJWBeP7+dXGGTJVW2yFpYM6l3RSQ1VbBR7jKGDPO1vsp07lYY3uYA==
 
 "@semantic-release/changelog@^6.0.1":
   version "6.0.1"
@@ -3293,10 +3293,10 @@ elliptic@^6.0.0:
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
 
-emmet-monaco-es@^4.7.2:
-  version "4.7.2"
-  resolved "https://registry.yarnpkg.com/emmet-monaco-es/-/emmet-monaco-es-4.7.2.tgz#c2e571a50142df94ec2b812c0643506b5bddc574"
-  integrity sha512-lpHq003hcz9H5eMbDKhGqNZQ2+kxz6RJVSNlbmlhJYDjD7RFj6scub9U9oykZyU16DDPZTc6b1W3MEQZy0wrmA==
+emmet-monaco-es@^4.7.6:
+  version "4.7.6"
+  resolved "https://registry.yarnpkg.com/emmet-monaco-es/-/emmet-monaco-es-4.7.6.tgz#0a5ca674a32e3dad4c658114bb6f064fa69fbce9"
+  integrity sha512-dxRro/ltyZB3gBWhSzUm+nTcvAVwCXq/YKGG8hUX+2Z9vsoi6/oXz69aPMwLuEB94rSswU3NPzT2KaClu0kr2A==
   dependencies:
     "@emmetio/abbreviation" "^0.7.0"
     "@emmetio/css-abbreviation" "^0.4.0"
@@ -5290,10 +5290,10 @@ mkdirp@^0.5.5:
   dependencies:
     minimist "^1.2.5"
 
-monaco-editor@^0.28.0:
-  version "0.28.0"
-  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.28.0.tgz#eda159cf64d9ad96b60e78525d6f822aa943170c"
-  integrity sha512-Mo0Mn2rZubXqjiy8AUs/0hGnY2y3oc4UPAP2hgVqrMX0E5Np9aCCz+BeHKzkl4D3n6xeR7mB4JuvOumD5kwC/A==
+monaco-editor@^0.30.0:
+  version "0.30.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.30.0.tgz#1c7f9ba1d18c21868ce3a5413ef56351f9df7933"
+  integrity sha512-/k++/ofRmwnwWTpOWYOMGVcqBrqrlt3MP0Mt/cRTQojW7A9fnekcvPQ2iIFA0YSZdPWPN9yYXrYq0xqiUuxT/A==
 
 move-concurrently@^1.0.1:
   version "1.0.1"
@@ -7172,10 +7172,10 @@ typescript@^4.4.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.4.tgz#2cd01a1a1f160704d3101fd5a58ff0f9fcb8030c"
   integrity sha512-DqGhF5IKoBl8WNf8C1gu8q0xZSInh9j1kJJMqT3a94w1JzVaBU4EXOSMrz9yDqMT0xt3selp83fuFMQ0uzv6qA==
 
-typescriptwebpacksupport@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/typescriptwebpacksupport/-/typescriptwebpacksupport-2.1.0.tgz#093583d245fd79e01869a7d93be74fecf35db0aa"
-  integrity sha512-Nir3gx2FnZJnn2nXyaRSaa08gXx7NzGDWXK6yIEVJDsPUwMwj5uhYy8JbAQoGabZDkofSGcvyNzQERzJFxIv2Q==
+typescriptwebpacksupport@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/typescriptwebpacksupport/-/typescriptwebpacksupport-2.1.1.tgz#ccc67e2fdc0f5acf1662c723a2a5f351127f9a3b"
+  integrity sha512-gcj1xQs3wcua8dyoHgF1DbOfNXq79P/OSOMEQwPDmy8bFTduD8EfHr+lACrUhCqCwRx0MJ19FPY/49PCqLuyxA==
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"

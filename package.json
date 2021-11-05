@@ -64,12 +64,12 @@
         "zip-webpack-plugin": "^4.0.1"
     },
     "dependencies": {
-        "@placatus/monaco-typescript": "^4.7.0",
+        "@placatus/monaco-typescript": "^4.10.0",
         "common-tags": "^1.8.0",
-        "emmet-monaco-es": "^4.7.2",
-        "monaco-editor": "^0.28.0",
+        "emmet-monaco-es": "^4.7.6",
+        "monaco-editor": "^0.30.0",
         "tingle.js": "^0.16.0",
-        "typescriptwebpacksupport": "^2.1.0"
+        "typescriptwebpacksupport": "^2.1.1"
     },
     "config": {
         "commitizen": {

@@ -19,7 +19,7 @@ export class ServiceEditor extends MonacoCodeEditor {
         this.monacoEditor.addAction({
             id: "saveCodeAction",
             label: "Save Service",
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
             contextMenuGroupId: "service",
             contextMenuOrder: 1.5,
             run: callbacks.onSave
@@ -39,14 +39,14 @@ export class ServiceEditor extends MonacoCodeEditor {
             label: "Test Service",
             contextMenuGroupId: "service",
             contextMenuOrder: 1.7,
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Y],
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY],
             run: callbacks.onTest
         });
         // action triggered by ctrl+q
         this.monacoEditor.addAction({
             id: "closeCodeAction",
             label: "Close Service",
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_Q],
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyQ],
             contextMenuOrder: 1.8,
             contextMenuGroupId: "service",
             run: callbacks.onClose
