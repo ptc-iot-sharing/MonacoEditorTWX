@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.23.0...v1.23.1) (2022-01-13)
+
+
+### Bug Fixes
+
+* Resolve compatibility issues with ThingWorx 9.3 where autocomplete information is not correctly displayed on services ([9a1d615](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/9a1d61582ddbbfb5acea6c575dbf83c93544c8e9))
+
 # [1.23.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.22.2...v1.23.0) (2021-11-05)
 
 
