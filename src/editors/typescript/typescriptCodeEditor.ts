@@ -186,7 +186,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
     private async getEntitiesInCode(mode) {
         if (this.monacoEditor.getModel()) {
             let worker = mode == Languages.TwxJavascript ?
-                await monaco.languages.typescript.getJavaScriptWorker() : 
+                await monaco.languages.typescript.getJavaScriptWorker() :
                 await monaco.languages.typescript.getTypeScriptWorker();
             let client = await worker(this.monacoEditor.getModel().uri);
             return await (client as any).getPropertiesOrAttributesOf(this.monacoEditor.getModel().uri.toString(), ENTITY_TYPES);
@@ -212,6 +212,13 @@ export class TypescriptCodeEditor extends ServiceEditor {
             allowNonTsExtensions: true,
             noLib: true,
             newLine: monaco.languages.typescript.NewLineKind.LineFeed
+        });
+        // customize the worker to add the methods needed by the script editor as well as CodeHost
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
+        });
+        monaco.languages.typescript.javascriptDefaults.setWorkerOptions({
+            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
         });
         // generate the completion for language snippets
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
