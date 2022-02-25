@@ -62,95 +62,73 @@ function load() {
         EventHelper = EventHelper["EventHelper"];
         EntityServiceBase = EntityServiceBase["EntityServiceBase"];
         HotkeyManager = Container.instance.get(HotkeyManager["HotkeyManager"]);
-    
+
         LoaderHelper.importPlatformCss('/features/details/editor/codemirror-gutter-message.css');
-    
+
         const SUPPORTED_LANG_MODES = [
             'javascript',
             'text/x-sql',
-            'xml', // not available yet
-            'json', // not available yet
+            'xml',
+            'json',
             'css'
         ];
-    
-        /**
-         * An abstract class implementation for code editing.
-         * ---
-         * __Usage:__
-         *   When you create a new code editor, i.e. javascript or json, you have to extends this class.
-         *   It provides most of the necessary editing functions out of the box.
-         *
-         *   ViewModel:
-         *     Just extends the class and call the super() with optional options
-         *
-         *       export class SimpleEditor extends AbstractEditor {
-         *         @bindable readOnly = true;
-         *         @bindable value;
-         *
-         *         constructor() {
-         *             super();
-         *         }
-         *         attached() {
-         *             super.attached();
-         *         }
-         *       }
-         *   Template:
-         *     In your template, you have to provide a textarea for CodeMirror
-         *
-         *       <textarea ref="cmTextarea" value.two-way="value"></textarea>
-         *
-         * @example
-         *   More details please see DefaultEditor or ScriptEditor
-         *
-         * @note
-         *   Because of the limitation of current version of Aurelia, we are not able to provide an inheritance way by using
-         *   Aruelia component(or custom element).
-         *
-         * @class AbstractEditor
-         */
-        class AbstractEditor {
-            TWX_MSG_GUTTER_ID = 'CodeMirror-twxmsg-markers';
-    
-            cursor = {
-                line: 0,
-                col:  0
-            };
-    
-            action = '';
-            element: any;
-            userService: any;
-            eventHelper: any;
-            langMode: any;
-            valueField: string;
-            readOnly: any;
-            codeMirror: MonacoCodeEditor;
-            entityModel: any;
-            searchCursor: any;
-            gutterMsgManager: any;
-            entityService: any;
-            i18n: any;
-            userPreferences: any;
-            cmTextarea: any;
-            theme: any;
-            editorType: EditorType;
-            savedEditorPreferences: any;
-    
-            constructor(element, userService, {eventHelperGroupName=undefined, langMode=undefined, editorOptions=undefined, valueField = 'value'} = {}) {
+
+        // This class is presented as a ES5 class since it has to be extended by other ES5 classes
+        // This is done because typescript does not support setting the compiler target for each individual file
+        var AbstractEditor = /** @class */ (function () {
+            function AbstractEditor(element, userService, _a) {
+                var _this = this;
+                var _b = _a === void 0 ? {} : _a, _c = _b.eventHelperGroupName, eventHelperGroupName = _c === void 0 ? undefined : _c, _d = _b.langMode, langMode = _d === void 0 ? undefined : _d, _e = _b.editorOptions, editorOptions = _e === void 0 ? undefined : _e, _f = _b.valueField, valueField = _f === void 0 ? 'value' : _f;
+                this.TWX_MSG_GUTTER_ID = 'CodeMirror-twxmsg-markers';
+                this.cursor = {
+                    line: 0,
+                    col: 0
+                };
+                this.action = '';
+                this.actionHandler = this.editAction.bind(this);
+                this._saveEditorViewState = (function () {
+                    // wrapped in a try catch because if anything fails, the editor still needs to proceed
+                    try {
+                        var currentEditedModel = void 0;
+                        if (_this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
+                            currentEditedModel = _this.entityModel.subscriptionsModel.edit;
+                        }
+                        else if (_this.editorType == EditorType.SERVICE_EDITOR) {
+                            currentEditedModel = _this.entityModel.servicesModel.editModel;
+                        }
+                        if (currentEditedModel) {
+                            // add the location of the cursor and the rest of the view state
+                            var scriptConfTable = currentEditedModel.serviceImplementation.configurationTables.Script;
+                            // check to see if the field definition was added already
+                            if (!scriptConfTable.dataShape.fieldDefinitions.editorSettings) {
+                                scriptConfTable.dataShape.fieldDefinitions.editorSettings = {
+                                    name: "editorSettings",
+                                    baseType: "JSON"
+                                };
+                            }
+                            scriptConfTable.rows[0].editorSettings = {
+                                viewState: _this.codeMirror.getViewState()
+                            };
+                        }
+                    }
+                    catch (ex) {
+                        console.error("Error occurred while cleaning up monaco.", ex);
+                    }
+                });
                 this.element = element;
                 this.userService = userService;
                 this.eventHelper = new EventHelper(eventHelperGroupName || 'AbstractCodeEditor');
-                this.langMode = _.defaults(langMode, {name: 'javascript', globalVars: true});
+                this.langMode = _.defaults(langMode, { name: 'javascript', globalVars: true });
                 this.valueField = valueField;
                 if (SUPPORTED_LANG_MODES.indexOf(this.langMode.name) === -1) {
-                    throw new Error(`Not supported language mode: ${this.langMode.name || 'unknown'}`);
+                    throw new Error("Not supported language mode: ".concat(this.langMode.name || 'unknown'));
                 }
                 this._init(editorOptions);
-    
             }
-    
+
             //=======================================================================================================
             // == flowing can be used as protected methods in your subclasses =======================================
-            attached() {
+            AbstractEditor.prototype.attached = function() {
                 $(this.element).find('.form-group').append($('<div class="editor-loading"></div>'));
                 this.eventHelper.subscribe(ChannelNames.CODE_SYNTAX_CHECK, this.checkSyntax.bind(this));
                 // when the JS_SYNTAX_CHECKED event is fired, it means we are close to saving
@@ -158,203 +136,201 @@ function load() {
                 this.eventHelper.subscribe(ChannelNames.PREFERENCE_CHANGED, this._preferenceChanged.bind(this));
                 this._initCodeMirrorDebounced();
             }
-    
-            _initCodeMirrorDebounced(): any {
+
+            AbstractEditor.prototype._initCodeMirrorDebounced = function () {
                 throw new Error("Method not implemented.");
             }
-    
-            detached() {
+
+            AbstractEditor.prototype.detached = function() {
                 this._cleanupCodeMirror();
                 this.eventHelper.destroyAll();
                 this.destroy();
             }
-    
-            readOnlyChanged(newVal, oldVal) {
+
+            AbstractEditor.prototype.readOnlyChanged = function(newVal, oldVal) {
                 if (_.isUndefined(oldVal)) {
                     return;
                 }
                 this.readOnly = ObjectUtil.asBoolean(newVal) || false;
                 this._initCodeMirrorDebounced();
             }
-    
-            cursorChanged() {
+
+            AbstractEditor.prototype.cursorChanged = function() {
                 this._setCursor();
             }
-    
-            valueChanged() {
+
+            AbstractEditor.prototype.valueChanged = function() {
                 this.refreshDisplay();
             }
-    
+
             /**
              * Because the editor can initially be rendered inside a hidden div, this flag allows the editor to react when it becomes visible and
              * re-align all styles.
              *
              * @param newval {boolean}
              */
-            visibleChanged(newval) {
+             AbstractEditor.prototype.visibleChanged = function(newval) {
                 if (newval) {
                     this._initCodeMirrorDebounced();
                 }
             }
-    
+
             /**
              * Sometimes when setting the value programatically - codeMirror needs special processing
              * in order to refresh the display. There is a refresh method but it doesn't seem to be functioning.
              */
-            refreshDisplay() {
+             AbstractEditor.prototype.refreshDisplay = function() {
                 if (_.isNil(this._getValue())) {
                     return;
                 }
-    
+
                 if (!this.codeMirror) {
                     this._initCodeMirrorDebounced();
                     return;
                 }
-    
+
                 if (this.codeMirror.getValue() !== this._getValue()) {
                     this.codeMirror.setValue(this._getValue());
                 }
             }
-    
-            actionHandler = this.editAction.bind(this);
-    
-            editAction(newVal) {
+
+            AbstractEditor.prototype.actionHandler = AbstractEditor.prototype.editAction = function (newVal) {
                 if (!newVal) {
                     return;
                 }
-    
+
                 let action = _.isString(newVal) ? newVal : newVal.action;
                 switch (action) {
                     case 'UNDO':
                         this.undo();
                         break;
-    
+
                     case 'REDO':
                         this.redo();
                         break;
-    
+
                     case 'COMMENT':
                         this.codeMirror.commentSelection();
                         break;
-    
+
                     case 'UNCOMMENT':
                         this.codeMirror.uncommentSelection();
                         break;
-    
+
                     case 'INDENT-LEFT':
                         this.indentSelection(false);
                         break;
-    
+
                     case 'INDENT-RIGHT':
                         this.indentSelection(true);
                         break;
-    
+
                     case 'AUTO-FORMAT':
                         this.autoFormatSelection();
                         break;
-    
+
                     case 'FIND':
                         //this.find(newVal.findString);
                         this.find();
                         break;
-    
+
                     case 'REPLACE':
                         //this.replace(newVal.replaceString);
                         this.replace();
                         break;
-    
+
                     //no longer called directly
                     case 'REPLACE-ALL':
                         this.replaceAll(newVal.findString, newVal.replaceString);
                         break;
-    
+
                     case 'FOLD-ALL':
                         this._handleFolding('fold');
                         break;
-    
+
                     case 'UNFOLD-ALL':
                         this._handleFolding('unfold');
                         break;
-    
+
                     case 'CHECK-SYNTAX':
                         this.checkSyntax({closeEditorOnValid: false});
                         break;
-    
+
                     case 'FONT-RESIZE':
                         this.showEditorConfiguration();
                         break;
-    
+
                     case 'LINT':
                         this.setLinting(true);
                         this.lint(this.editorOptions);
                         break;
-    
+
                     case 'NOLINT':
                         this.setLinting(false);
                         this.lint(this.editorOptions);
                         break;
-    
+
                     default :
                         alert(action);
                         break;
                 }
             }
-    
-            showEditorConfiguration(): any {
+
+            AbstractEditor.prototype.showEditorConfiguration = function(): any {
                 if(this.codeMirror) {
                     this.codeMirror.openConfiguration();
                 }
             }
-    
-            editorOptions(editorOptions: any): any {
+
+            AbstractEditor.prototype.editorOptions = function(editorOptions: any): any {
                 throw new Error("Method not implemented.");
             }
-    
-            initialized() {
+
+            AbstractEditor.prototype.initialized = function() {
                 // override if you want this functionality;
             }
-    
-            destroy() {
+
+            AbstractEditor.prototype.destroy = function() {
                 // override if you want this functionality;
             }
-    
-            undo() {
+
+            AbstractEditor.prototype.undo = function() {
                 this.codeMirror.undo();
             }
-    
-            redo() {
+
+            AbstractEditor.prototype.redo = function() {
                 this.codeMirror.redo();
             }
-    
-            commentSelection() {
+
+            AbstractEditor.prototype.commentSelection = function() {
                 this.codeMirror.commentSelection();
             }
-    
-            unCommentSelection() {
+
+            AbstractEditor.prototype.unCommentSelection = function() {
                 this.codeMirror.uncommentSelection();
             }
-    
-            checkSyntax(opts = {}) {
+
+            AbstractEditor.prototype.checkSyntax = function(opts = {}) {
                 console.assert(false, 'checkSyntax invoked by not implemented!');
             }
-    
-            lint(opts = {}) {
+
+            AbstractEditor.prototype.lint = function(opts = {}) {
                 // override if you want this functionality;
             };
-    
-            setLinting(lint) {
+
+            AbstractEditor.prototype.setLinting = function(lint) {
                 // override if you want this functionality;
             }
-    
-            getLinting() {
+
+            AbstractEditor.prototype.getLinting = function() {
                 return false;
             }
-    
-            cursorActivity(cm, event) {
+
+            AbstractEditor.prototype.cursorActivity = function(cm, event) {
                 // override if you want this functionality;
             }
-    
-            keydown(cm, event) {
+
+            AbstractEditor.prototype.keydown = function(cm, event) {
                 // override if you want this functionality;
                 if (_.has(this, 'entityModel.servicesModel.editModel.name')) {
                     this.eventHelper.publish(ChannelNames.ENTITY_DETAIL_CHANGE, {
@@ -365,43 +341,43 @@ function load() {
                     });
                 }
             }
-    
-            blur(cm, event) {
+
+            AbstractEditor.prototype.blur = function(cm, event) {
                 // override if you want this functionality;
             }
-    
-            indentSelection(dir) {
+
+            AbstractEditor.prototype.indentSelection = function(dir) {
                 if(dir) {
                     this.codeMirror.indentSelection();
                 } else {
                     this.codeMirror.outdentSelection();
                 }
             }
-    
-            autoFormatSelection() {
+
+            AbstractEditor.prototype.autoFormatSelection = function() {
                 this.codeMirror.autoFormatSelection();
             }
-    
-            find() {
+
+            AbstractEditor.prototype.find = function() {
                 alert("Use the editor shortcut! CTRL+F");
             }
-    
-            replace() {
+
+            AbstractEditor.prototype.replace = function() {
                 alert("Use the editor shortcut! CTRL+R");
             }
-    
-            replaceAll(findString, replaceString) {
+
+            AbstractEditor.prototype.replaceAll = function(findString, replaceString) {
                 alert("Use the editor shortcut!");
             }
-    
-            insertTextIntoEditor({text, keepSelected = true}) {
+
+            AbstractEditor.prototype.insertTextIntoEditor = function({text, keepSelected = true}) {
                 this.codeMirror.insertText(text, keepSelected);
                 this.codeMirror.focus();
             }
-    
+
             //================================================================================================================
             //== following should be treated as private methods and subject to change without notifiying =====================
-            _init(opts) {
+            AbstractEditor.prototype._init = function(opts) {
                 let container = Container.instance || new Container();
                 this.gutterMsgManager = container.get(CodemirrorGutterMessageManager);
                 this.entityService = container.get(EntityServiceBase);
@@ -409,11 +385,11 @@ function load() {
                 this._setGuttersOption();
                 this._initCodeMirrorDebounced = _.debounce(this._initCodeMirror.bind(this), 150);
             }
-    
-            _setGuttersOption() {
+
+            AbstractEditor.prototype._setGuttersOption = function() {
             }
-    
-            convertHandlerToMonacoLanguage(language: string): string {
+
+            AbstractEditor.prototype.convertHandlerToMonacoLanguage = function(language: string): string {
                 let mapping = {
                     "text/x-sql": 'sql',
                     'javascript': Languages.TwxJavascript,
@@ -425,8 +401,8 @@ function load() {
                 }
                 return mapping[language];
             }
-    
-            async getEntityInformationForMeDefinitions(currentEditedModel) {
+
+            AbstractEditor.prototype.getEntityInformationForMeDefinitions = async function(currentEditedModel) {
                 let serviceDefinition;
                 if (this.editorType == EditorType.SERVICE_EDITOR) {
                     serviceDefinition = currentEditedModel.service;
@@ -459,22 +435,22 @@ function load() {
                     propertyData: this.entityModel.entityType == "Thing" && !currentEditedModel.isNew ? await getThingPropertyValues(this.entityModel.name) : {}
                 }
             }
-    
-            async _initCodeMirror() {
+
+            AbstractEditor.prototype._initCodeMirror = async function() {
                 $(this.element).find('.editor-loading').css('display', 'block');
                 this._cleanupCodeMirror();
                 if (window['TWX'].debug) {
                     console.log('Monaco is starting initialization with options...', );
                 }
-    
+
                 if (!this.cmTextarea || !this.element) {
                     return;
                 }
-    
+
                 let extraSettings: any = {};
-    
+
                 this.userPreferences = await this._getUserPreferences();
-    
+
                 try {
                     this.savedEditorPreferences = await this.userService.getUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY);
                     if(Object.keys(this.savedEditorPreferences).length == 0) {
@@ -484,7 +460,7 @@ function load() {
                     console.warn("Monaco: Failed to load settings from preferences. Using defaults...", e);
                     this.savedEditorPreferences = DEFAULT_EDITOR_SETTINGS;
                 }
-    
+
                 // depending on the context, we might need to change the language mode and decide on the editor type
                 let currentEditedModel;
                 if (this.langMode.name == 'css') {
@@ -524,7 +500,7 @@ function load() {
                         editorClass = MonacoCodeEditor;
                     }
                 }
-    
+
                 let container = this.cmTextarea.parentElement;
                 let modelName;
                 if (this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
@@ -561,7 +537,7 @@ function load() {
                         modelName: modelName,
                         readonly: this.readOnly
                     });
-    
+
                 if (this.codeMirror instanceof TypescriptCodeEditor) {
                     const typescriptCodeEditor = this.codeMirror as TypescriptCodeEditor;
                     typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
@@ -569,7 +545,7 @@ function load() {
                         typescriptCodeEditor.refreshMeDefinitions(await this.getEntityInformationForMeDefinitions(currentEditedModel));
                         typescriptCodeEditor.codeTranslator.generateDataShapeCode();
                     });
-    
+
                     typescriptCodeEditor.onEditorTranspileFinished((code) => {
                         if (code !== this._getValue()) {
                             this._setValue(code);
@@ -584,7 +560,7 @@ function load() {
                         }
                     });
                 }
-    
+
                 this.codeMirror.onEditorContentChange((code) => {
                     if(this.convertHandlerToMonacoLanguage(this.langMode.name) != Languages.TwxTypescript) {
                         if (code !== this._getValue()) {
@@ -611,39 +587,39 @@ function load() {
                 this.initialized();
                 $(this.element).find('.editor-loading').css('display', 'none');
             }
-    
-            _getValue() {
+
+            AbstractEditor.prototype._getValue = function() {
                 return _.get(this, this.valueField);
             }
-    
-            _setValue(newVal) {
+
+            AbstractEditor.prototype._setValue = function(newVal) {
                 _.set(this, this.valueField, newVal);
             }
-    
-            _lintIfConfigured() {
+
+            AbstractEditor.prototype._lintIfConfigured = function() {
                 if (this.getLinting()) {
                     this.lint(this.editorOptions);
                 }
             }
-    
-            _cleanupCodeMirror() {
+
+            AbstractEditor.prototype._cleanupCodeMirror = function() {
                 if (!this.codeMirror) {
                     return;
                 }
                 this.codeMirror.dispose();
-    
+
             }
-    
-            _getSelectedRange() {
+
+            AbstractEditor.prototype._getSelectedRange = function() {
                 // not being used internally
                 return {from: 0, to: 0};
             }
-    
-            _setLine(text, line, originalTextLength) {
+
+            AbstractEditor.prototype._setLine = function(text, line, originalTextLength) {
                 // not being used internally
             }
-    
-            _handleFolding(action) {
+
+            AbstractEditor.prototype._handleFolding = function(action) {
                 if(action == 'fold') {
                     this.codeMirror.foldAll();
                 } else if(action = 'unfold') {
@@ -651,7 +627,7 @@ function load() {
                 }
             }
 
-            _saveEditorViewState = (()  => {
+            AbstractEditor.prototype._saveEditorViewState = (()  => {
                 // wrapped in a try catch because if anything fails, the editor still needs to proceed
                 try {
                     let currentEditedModel;
@@ -680,18 +656,18 @@ function load() {
                     console.error("Error occurred while cleaning up monaco.", ex)
                 }
             });
-    
+
             /**
              * Retrieve user preferences.
              *
              * @returns {Promise}
              * @private
              */
-            _getUserPreferences() {
+             AbstractEditor.prototype._getUserPreferences = function() {
                 return this.userService.getUserPersistentValue(UserSessionInfoKeys.USER_PREFERENCES);
             }
-    
-            _preferenceChanged(data) {
+
+            AbstractEditor.prototype._preferenceChanged = function _preferenceChanged(data) {
                 if (data.name === UserSessionInfoKeys.USER_PREFERENCES) {
                     let compKey = 'value.' + UserPreferenceKeys.SERVICE_EDITOR_THEME;
                     let prefTheme = _.get(data, compKey);
@@ -700,7 +676,7 @@ function load() {
                     }
                 }
             }
-    
+
             /**
              * Called when the editor detects a preference change for theming
              *
@@ -708,18 +684,23 @@ function load() {
              * @param oldVal
              * @private
              */
-            _themeChanged(newVal, oldVal) {
+             AbstractEditor.prototype._themeChanged = function(newVal, oldVal) {
                 if (!newVal || newVal === oldVal) {
                     return;
                 }
                 this._initCodeMirrorDebounced();
             }
-    
-            _setCursor() {
-    
+
+            AbstractEditor.prototype._setCursor = function() {
+
             }
-    
-        }
+
+            AbstractEditor.prototype.hasFocus = function() {
+
+            }
+
+            return AbstractEditor;
+        }());
         exports.AbstractEditor = AbstractEditor;
     }
     );

@@ -370,6 +370,14 @@ export class MonacoCodeEditor {
 
     }
 
+    public hasFocus() {
+        this.monacoEditor.hasTextFocus();
+    }
+
+    public setCursor() {
+        // ignored since it would trigger bad artifacts when editing css
+    }
+
     private initializePreferenceEditor(onPreferencesChanged: (newPreferences: any) => void) {
         const self = this;
 
@@ -419,7 +427,7 @@ export class MonacoCodeEditor {
             label: "View Configuration",
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Shift | monaco.KeyCode.Backquote],
             run: () => {
-                modal.setContent(`<h2>Config Editor. Use Intellisense or check 
+                modal.setContent(`<h2>Config Editor. Use Intellisense or check
                                     <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
                                 <div class="content" style="height: 30vw"/>`);
                 modal.open();

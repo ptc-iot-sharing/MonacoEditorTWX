@@ -6,7 +6,7 @@
         "noImplicitAny": false,
         "module": "esnext",
         "allowSyntheticDefaultImports": true,
-        "target": "es5",
+        "target": "ES2020",
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "lib": [
