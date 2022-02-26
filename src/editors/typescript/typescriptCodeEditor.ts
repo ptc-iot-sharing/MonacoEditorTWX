@@ -10,7 +10,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
     public workerManager: WorkerScriptManager;
     public codeTranslator: ThingworxToTypescriptGenerator;
 
-    private disposables: monaco.IDisposable[] = [];
     private languageSwitchAction: monaco.IDisposable;
 
     javascriptCode: string;
@@ -21,6 +20,9 @@ export class TypescriptCodeEditor extends ServiceEditor {
     constructor(container, initialSettings, actionCallbacks, instanceSettings) {
         super(container, initialSettings, actionCallbacks, instanceSettings);
         this.initialize();
+        this.monacoEditor.updateOptions({
+            glyphMargin: true,
+        });
 
         this.monacoEditor.onDidChangeModelContent((e) => {
             if (this._instanceSettings.language === Languages.TwxTypescript) {
@@ -197,9 +199,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
 
     public dispose() {
         super.dispose();
-        for (const disposable of this.disposables) {
-            disposable.dispose();
-        }
         this.workerManager.disposeAllLibs();
     }
 

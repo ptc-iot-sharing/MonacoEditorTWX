@@ -86,7 +86,6 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
          */
         members: ThingworxTypescriptWidgetClassMember[];
     }
-    debugger;
     /**
      * The primitive type keywords that can be used anywhere.
      */

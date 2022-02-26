@@ -1,35 +1,43 @@
-import * as monaco from 'monaco-editor';
-import tingle from 'tingle.js';
+import * as monaco from "monaco-editor";
+import { FormattingConflicts } from 'monaco-editor/esm/vs/editor/contrib/format/browser/format';
+import tingle from "tingle.js";
+import { Options as PrettierOptions } from "prettier";
+import { MonacoPrettier } from "./prettier";
 
 require("tingle.js/src/tingle.css");
 require("../styles/editorStyle.css");
 
-import { flattenJson, unflattenJson } from '../utilities';
+import { flattenJson, unflattenJson } from "../utilities";
 
 export interface ActionCallbacks {
     onPreferencesChanged: (newPreferences: any) => void;
 }
 
 export interface MonacoEditorSettings {
-    editor: monaco.editor.IStandaloneEditorConstructionOptions,
-    diffEditor: monaco.editor.IDiffEditorConstructionOptions,
-    thingworx: any
+    editor: monaco.editor.IStandaloneEditorConstructionOptions;
+    diffEditor: monaco.editor.IDiffEditorConstructionOptions;
+    thingworx: any;
+    prettier: {
+        enabled: boolean;
+        options: PrettierOptions;
+    };
 }
 
 export interface MonacoInstanceSettings {
-    code: string,
-    language: string,
-    readonly: boolean,
-    modelName: string
+    code: string;
+    language: string;
+    readonly: boolean;
+    modelName: string;
 }
 
 export interface EditorPosition {
-    line: number,
-    ch: number,
+    line: number;
+    ch: number;
 }
 
 export class MonacoCodeEditor {
     private modals = [];
+    disposables: monaco.IDisposable[] = [];
     monacoEditor: monaco.editor.IStandaloneCodeEditor;
     _currentEditorSettings: MonacoEditorSettings;
     _instanceSettings: MonacoInstanceSettings;
@@ -39,8 +47,8 @@ export class MonacoCodeEditor {
             gutterId: "",
             hasGutter: true,
             marked: [],
-            messages: []
-        }
+            messages: [],
+        },
     };
 
     /**
@@ -48,18 +56,27 @@ export class MonacoCodeEditor {
      * @param container HTMLElement where to initialize the new editor
      * @param initialSettings The initial options that the editor should be initialized with
      */
-    constructor(container: HTMLElement, initialSettings: MonacoEditorSettings, actionCallbacks: ActionCallbacks, instanceSettings: MonacoInstanceSettings) {
+    constructor(
+        container: HTMLElement,
+        initialSettings: MonacoEditorSettings,
+        actionCallbacks: ActionCallbacks,
+        instanceSettings: MonacoInstanceSettings
+    ) {
         this._currentEditorSettings = initialSettings;
         this._instanceSettings = instanceSettings;
         // clone the settings and store them
         const editorSettings: MonacoEditorSettings = JSON.parse(JSON.stringify(initialSettings));
+        editorSettings.editor.automaticLayout = true;
         editorSettings.editor.value = instanceSettings.code;
         editorSettings.editor.readOnly = instanceSettings.readonly;
         editorSettings.editor.language = instanceSettings.language;
-        editorSettings.editor.model = monaco.editor.createModel(instanceSettings.code, instanceSettings.language,
-            monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName));
+        editorSettings.editor.model = monaco.editor.createModel(
+            instanceSettings.code,
+            instanceSettings.language,
+            monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName)
+        );
         // create the editor
-        if(editorSettings.editor["bracketPairColorization"]?.enabled) {
+        if (editorSettings.editor["bracketPairColorization"]?.enabled) {
             // colorization needs to not be flattened (https://github.com/microsoft/monaco-editor/blob/main/CHANGELOG.md#0280-22092021)
             editorSettings.editor["bracketPairColorization.enabled"] = true;
         }
@@ -68,6 +85,30 @@ export class MonacoCodeEditor {
         this.initializeDiffEditor();
         this.monacoEditor.layout();
         this.monacoEditor.focus();
+
+        if (this._currentEditorSettings.prettier.enabled) {
+            const monacoPrettier = new MonacoPrettier(() => this._currentEditorSettings.prettier.options);
+            this.disposables.push(
+                monaco.languages.registerDocumentFormattingEditProvider(this._instanceSettings.language, monacoPrettier)
+            );
+            this.disposables.push(
+                monaco.languages.registerDocumentRangeFormattingEditProvider(
+                    this._instanceSettings.language,
+                    monacoPrettier
+                )
+            );
+            // Because of https://github.com/microsoft/vscode/blob/main/src/vs/editor/editor.api.ts#L19-L21
+            // The first formatter is selected, which is the builtin worker one
+            // We must always select the "prettier" formatter, so overwrite it here
+            FormattingConflicts.setFormatterSelector((formatters) => {
+                const prettierFormatter = formatters.find(f => f instanceof MonacoPrettier);
+                if (prettierFormatter) {
+                    return Promise.resolve(prettierFormatter);
+                }
+                // otherwise just select the first one
+                return Promise.resolve(formatters[0])
+            });
+        }
     }
 
     /**
@@ -79,13 +120,15 @@ export class MonacoCodeEditor {
         const op = {
             range: currentSelection,
             text: code,
-            forceMoveMarkers: true
+            forceMoveMarkers: true,
         };
         this.monacoEditor.pushUndoStop();
         this.monacoEditor.executeEdits("insertSnippet", [op]);
         if (keepSelection) {
             // Highlight the code after inserting it
-            this.monacoEditor.setSelection(monaco.Selection.fromPositions(currentSelection.getStartPosition(), this.monacoEditor.getPosition()));
+            this.monacoEditor.setSelection(
+                monaco.Selection.fromPositions(currentSelection.getStartPosition(), this.monacoEditor.getPosition())
+            );
         }
         this.monacoEditor.pushUndoStop();
     }
@@ -98,11 +141,11 @@ export class MonacoCodeEditor {
     }
 
     public undo() {
-        this.monacoEditor.trigger('external', 'undo', undefined);
+        this.monacoEditor.trigger("external", "undo", undefined);
     }
 
     public redo() {
-        this.monacoEditor.trigger('external', 'redo', undefined);
+        this.monacoEditor.trigger("external", "redo", undefined);
     }
 
     /**
@@ -166,7 +209,7 @@ export class MonacoCodeEditor {
      */
     public setReadOnlyStatus(readOnly: boolean) {
         this.monacoEditor.updateOptions({
-            readOnly: readOnly
+            readOnly: readOnly,
         });
     }
 
@@ -183,6 +226,9 @@ export class MonacoCodeEditor {
     public dispose() {
         if (this.monacoEditor.getModel()) {
             this.monacoEditor.getModel().dispose();
+        }
+        for (const disposable of this.disposables) {
+            disposable.dispose();
         }
         for (const modal of this.modals) {
             modal.destroy();
@@ -210,8 +256,8 @@ export class MonacoCodeEditor {
      */
     public scrollCodeTo(lineNumber: number, column: number) {
         const position = {
-            lineNumber: (lineNumber || 0),
-            column: (column || 0)
+            lineNumber: lineNumber || 0,
+            column: column || 0,
         };
         this.monacoEditor.revealPositionInCenter(position);
         this.monacoEditor.setPosition(position);
@@ -235,7 +281,11 @@ export class MonacoCodeEditor {
     public changeLanguage(language: string, code: string) {
         if (this._instanceSettings.language != language) {
             this.monacoEditor.getModel().dispose();
-            let model = monaco.editor.createModel(code, language, monaco.Uri.parse("twx://privateModel/" + this._instanceSettings.modelName));
+            let model = monaco.editor.createModel(
+                code,
+                language,
+                monaco.Uri.parse("twx://privateModel/" + this._instanceSettings.modelName)
+            );
             this.monacoEditor.setModel(model);
             this._instanceSettings.language = language;
         }
@@ -246,7 +296,7 @@ export class MonacoCodeEditor {
      */
     public onEditorContentChange(callback: (code: string) => void) {
         this.monacoEditor.onDidChangeModelContent(() => {
-            callback(this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF))
+            callback(this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF));
         });
     }
 
@@ -279,53 +329,66 @@ export class MonacoCodeEditor {
      */
     public static performGlobalInitialization() {
         const workerPaths = {
-            'json': 'json.worker.bundle.js',
-            'css': './css.worker.bundle.js',
-            'typescript': 'ts.worker.bundle.js',
-            'javascript': 'ts.worker.bundle.js',
-            'editorWorkerService': 'editor.worker.bundle.js'
+            json: "json.worker.bundle.js",
+            css: "./css.worker.bundle.js",
+            typescript: "ts.worker.bundle.js",
+            javascript: "ts.worker.bundle.js",
+            editorWorkerService: "editor.worker.bundle.js",
         };
 
         function stripTrailingSlash(str) {
-            return str.replace(/\/$/, '');
-        };
+            return str.replace(/\/$/, "");
+        }
 
         (window as any).MonacoEnvironment = {
             globalAPI: true,
             getWorkerUrl: function (moduleId, label) {
-                const pathPrefix = typeof __webpack_public_path__ === 'string' ? __webpack_public_path__ : "";
-                const result = (pathPrefix ? stripTrailingSlash(pathPrefix) + '/' : '') + workerPaths[label];
+                const pathPrefix = typeof __webpack_public_path__ === "string" ? __webpack_public_path__ : "";
+                const result = (pathPrefix ? stripTrailingSlash(pathPrefix) + "/" : "") + workerPaths[label];
                 if (/^((http:)|(https:)|(file:)|(\/\/))/.test(result)) {
                     const currentUrl = String(window.location);
-                    const currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
+                    const currentOrigin = currentUrl.substr(
+                        0,
+                        currentUrl.length -
+                            window.location.hash.length -
+                            window.location.search.length -
+                            window.location.pathname.length
+                    );
                     if (result.substring(0, currentOrigin.length) !== currentOrigin) {
-                        const js = '/*' + label + '*/importScripts("' + result + '");';
-                        const blob = new Blob([js], { type: 'application/javascript' });
+                        const js = "/*" + label + '*/importScripts("' + result + '");';
+                        const blob = new Blob([js], { type: "application/javascript" });
                         return URL.createObjectURL(blob);
                     }
                 }
                 return result;
-            }
-        }
+            },
+        };
 
         // initialize the json worker with the give schema
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-            schemas: [{
-                uri: "http://monaco-editor/schema.json",
-                schema: require("../configs/confSchema.json"),
-                fileMatch: ["*"]
-            }],
+            schemas: [
+                {
+                    uri: "http://monaco-editor/schema.json",
+                    schema: require("../configs/confSchema.json"),
+                    fileMatch: ["*"],
+                },
+            ],
             allowComments: false,
-            validate: true
+            validate: true,
         });
     }
 
     /**
      * markText - creates an text decoration at the given position
      */
-    public markText(from: EditorPosition, to: EditorPosition, options: {
-        className: string, __annotation: { severity: string, message: any }
-    }) {
+    public markText(
+        from: EditorPosition,
+        to: EditorPosition,
+        options: {
+            className: string;
+            __annotation: { severity: string; message: any };
+        }
+    ) {
         if (from.ch + to.ch + from.line + to.line == 0) {
             from.line = from.ch = to.line = 1;
             to.ch = 1000;
@@ -336,39 +399,38 @@ export class MonacoCodeEditor {
             to.line++;
             to.ch++;
         }
-        const decorations = this.monacoEditor.deltaDecorations([], [
-            {
-                range: new monaco.Range(from.line, from.ch, to.line, to.ch),
-                options: {
-                    className: options.className,
-                    isWholeLine: from.line == to.line && to.ch == 1000,
-                    glyphMarginClassName: 'CodeMirror-twxmsg-marker-' + options.__annotation.severity,
-                    overviewRuler: <any>{
-                        color: 'red'
+        const decorations = this.monacoEditor.deltaDecorations(
+            [],
+            [
+                {
+                    range: new monaco.Range(from.line, from.ch, to.line, to.ch),
+                    options: {
+                        className: options.className,
+                        isWholeLine: from.line == to.line && to.ch == 1000,
+                        glyphMarginClassName: "CodeMirror-twxmsg-marker-" + options.__annotation.severity,
+                        overviewRuler: <any>{
+                            color: "red",
+                        },
+                        hoverMessage: [
+                            {
+                                value: options.__annotation.message,
+                            },
+                        ],
+                        glyphMarginHoverMessage: {
+                            value: options.__annotation.message,
+                        },
                     },
-                    hoverMessage: [
-                        {
-                            value: options.__annotation.message
-                        }
-                    ],
-                    glyphMarginHoverMessage: {
-                        value: options.__annotation.message
-                    }
-                }
-            }
-        ]);
+                },
+            ]
+        );
         return {
-            clear: () => this.monacoEditor.deltaDecorations(decorations, [])
-        }
+            clear: () => this.monacoEditor.deltaDecorations(decorations, []),
+        };
     }
 
-    public clearGutter() {
+    public clearGutter() {}
 
-    }
-
-    public setGutterMarker() {
-
-    }
+    public setGutterMarker() {}
 
     public hasFocus() {
         this.monacoEditor.hasTextFocus();
@@ -383,7 +445,7 @@ export class MonacoCodeEditor {
 
         let confEditor: monaco.editor.IStandaloneCodeEditor;
         let modal = new tingle.modal({
-            cssClass: ['tingle-popup-container'],
+            cssClass: ["tingle-popup-container"],
             onOpen: function () {
                 // clone the editor settings to be used for the config editor
                 let editorSettings = JSON.parse(JSON.stringify(self._currentEditorSettings.editor));
@@ -393,7 +455,10 @@ export class MonacoCodeEditor {
                 editorSettings.language = "json";
                 const contentElement = this.modalBoxContent.getElementsByClassName("content")[0];
                 confEditor = monaco.editor.create(contentElement, editorSettings);
-                contentElement.onkeydown = contentElement.onkeypress = contentElement.onkeyup = ((e) => e.stopPropagation());
+                contentElement.onkeydown =
+                    contentElement.onkeypress =
+                    contentElement.onkeyup =
+                        (e) => e.stopPropagation();
                 confEditor.focus();
                 // whenever the model changes, we need to also update the current editor, as well as other editors
                 confEditor.onDidChangeModelContent((e) => {
@@ -402,7 +467,10 @@ export class MonacoCodeEditor {
                         const expandedOptions = unflattenJson(JSON.parse(confEditor.getModel().getValue()));
                         confEditor.updateOptions(expandedOptions.editor);
                         // theme has to be updated separately
-                        if (expandedOptions.editor && self._currentEditorSettings.editor.theme != expandedOptions.editor.theme) {
+                        if (
+                            expandedOptions.editor &&
+                            self._currentEditorSettings.editor.theme != expandedOptions.editor.theme
+                        ) {
                             monaco.editor.setTheme(expandedOptions.editor.theme);
                         }
                         self.monacoEditor.updateOptions(expandedOptions.editor);
@@ -417,7 +485,7 @@ export class MonacoCodeEditor {
                 // propagate the preference changed to the parent for storage, etc
                 onPreferencesChanged(self._currentEditorSettings);
                 confEditor.dispose();
-            }
+            },
         });
         this.modals.push(modal);
         // action triggered by CTRL+~
@@ -431,7 +499,7 @@ export class MonacoCodeEditor {
                                     <a href='https://code.visualstudio.com/docs/getstarted/settings#_default-settings'>here</a> for available options.</h2>
                                 <div class="content" style="height: 30vw"/>`);
                 modal.open();
-            }
+            },
         });
     }
 
@@ -444,26 +512,36 @@ export class MonacoCodeEditor {
         let diffEditor: monaco.editor.IStandaloneDiffEditor;
 
         let modal = new tingle.modal({
-            cssClass: ['tingle-popup-container'],
+            cssClass: ["tingle-popup-container"],
             onOpen: function () {
-                let originalModel = monaco.editor.createModel(self._instanceSettings.code, self._instanceSettings.language);
+                let originalModel = monaco.editor.createModel(
+                    self._instanceSettings.code,
+                    self._instanceSettings.language
+                );
                 let modifiedModel = self.monacoEditor.getModel();
 
-                const editorSettings = Object.assign({}, self._currentEditorSettings.editor, self._currentEditorSettings.diffEditor);
+                const editorSettings = Object.assign(
+                    {},
+                    self._currentEditorSettings.editor,
+                    self._currentEditorSettings.diffEditor
+                );
                 // create the diff editor
                 const contentElement = this.modalBoxContent.getElementsByClassName("content")[0];
                 diffEditor = monaco.editor.createDiffEditor(contentElement, editorSettings);
-                contentElement.onkeydown = contentElement.onkeypress = contentElement.onkeyup = ((e) => e.stopPropagation());
+                contentElement.onkeydown =
+                    contentElement.onkeypress =
+                    contentElement.onkeyup =
+                        (e) => e.stopPropagation();
 
                 diffEditor.setModel({
                     original: originalModel,
-                    modified: modifiedModel
+                    modified: modifiedModel,
                 });
                 diffEditor.focus();
             },
             onClose: function () {
                 diffEditor.dispose();
-            }
+            },
         });
         this.modals.push(modal);
         // action triggered by CTRL+K
@@ -480,7 +558,7 @@ export class MonacoCodeEditor {
                 modal.setContent(`<h2>Diff Editor</h2>
                             <div class="content" style="height: 30vw"/>`);
                 modal.open();
-            }
+            },
         });
     }
 }

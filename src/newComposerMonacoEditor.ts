@@ -447,14 +447,16 @@ function load() {
                     return;
                 }
 
-                let extraSettings: any = {};
-
                 this.userPreferences = await this._getUserPreferences();
 
                 try {
-                    this.savedEditorPreferences = await this.userService.getUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY);
-                    if(Object.keys(this.savedEditorPreferences).length == 0) {
+                    const editorPreferences = await this.userService.getUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY);
+                    if(Object.keys(editorPreferences).length == 0) {
                         throw "No saved preferences exist";
+                    }
+                    this.savedEditorPreferences = {
+                        ...DEFAULT_EDITOR_SETTINGS,
+                        ...editorPreferences,
                     }
                 } catch (e) {
                     console.warn("Monaco: Failed to load settings from preferences. Using defaults...", e);
@@ -483,7 +485,6 @@ function load() {
                 // decide on the editor class to use based on the language
                 let editorClass;
                 if (this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
-                    extraSettings.glyphMargin = true;
                     if (this.langMode.name == 'javascript') {
                         editorClass = TypescriptCodeEditor;
                         if (currentEditedModel.serviceImplementation.configurationTables.Script.rows.length == 2) {
@@ -515,28 +516,35 @@ function load() {
                 // empty out the existing DOM stuff
                 container.innerHTML = "";
                 // create a new editor
-                this.codeMirror = new editorClass(container,
+                this.codeMirror = new editorClass(
+                    container,
                     {
-                        editor: Object.assign({}, this.savedEditorPreferences.editor, { automaticLayout: true }, extraSettings)
-                    }, {
+                        ...this.savedEditorPreferences,
+                    },
+                    {
                         onClose: () => {
                             HotkeyManager._subscribers["SERVICE_CANCEL"].callback.call();
                         },
                         onSave: () => {
                             HotkeyManager._subscribers["SERVICE_SAVE"].callback.call();
-                        }, onDone: () => {
+                        },
+                        onDone: () => {
                             HotkeyManager._subscribers["SERVICE_DONE"].callback.call();
-                        }, onTest: () => {
+                        },
+                        onTest: () => {
                             HotkeyManager._subscribers["SERVICE_EXECUTE"].callback.call();
-                        }, onPreferencesChanged: (preferences) => {
+                        },
+                        onPreferencesChanged: (preferences) => {
                             this.userService.setUserPersistentValue(MONACO_EDITOR_SETTINGS_KEY, preferences);
-                        }
-                    }, {
+                        },
+                    },
+                    {
                         code: this._getValue(),
                         language: this.convertHandlerToMonacoLanguage(this.langMode.name),
                         modelName: modelName,
-                        readonly: this.readOnly
-                    });
+                        readonly: this.readOnly,
+                    }
+                );
 
                 if (this.codeMirror instanceof TypescriptCodeEditor) {
                     const typescriptCodeEditor = this.codeMirror as TypescriptCodeEditor;

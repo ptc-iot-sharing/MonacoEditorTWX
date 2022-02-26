@@ -64,8 +64,10 @@
         "zip-webpack-plugin": "^4.0.1"
     },
     "dependencies": {
+        "@types/prettier": "^2.4.4",
         "common-tags": "^1.8.2",
         "monaco-editor": "^0.32.1",
+        "prettier": "^2.5.1",
         "tingle.js": "^0.16.0",
         "typescriptwebpacksupport": "^2.1.1"
     },
