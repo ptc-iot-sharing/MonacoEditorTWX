@@ -65,7 +65,6 @@
     },
     "dependencies": {
         "common-tags": "^1.8.2",
-        "emmet-monaco-es": "^5.0.2",
         "monaco-editor": "^0.32.1",
         "tingle.js": "^0.16.0",
         "typescriptwebpacksupport": "^2.1.1"
