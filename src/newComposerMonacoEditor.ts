@@ -513,9 +513,9 @@ function load() {
                 } else {
                     modelName =  Math.random().toString(36).substring(7);
                 }
-                // empty out the existing DOM stuff
-                container.innerHTML = "";
-                // create a new editor
+                // Hide the existing text area. Don't completely wipe it because it gets reused in the subscription editor
+                this.cmTextarea.style.display = 'none';
+                // Create a new editor, using the class inferred from the language id
                 this.codeMirror = new editorClass(
                     container,
                     {
