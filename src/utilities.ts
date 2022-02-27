@@ -6,55 +6,6 @@ const MIME_APPLICATION_JSON = "application/json";
 const MIME_TEXT_XML = "text/xml";
 
 /**
- *  Converts a nested json into a flat json. This is used for utilities reasons in order to present the configuration dialogue
- */
-export function flattenJson(data) {
-    var result = {};
-    function recurse(cur, prop) {
-        if (Object(cur) !== cur) {
-            result[prop] = cur;
-        } else if (Array.isArray(cur)) {
-            for (var i = 0, l = cur.length; i < l; i++)
-                recurse(cur[i], prop + "[" + i + "]");
-            if (l == 0)
-                result[prop] = [];
-        } else {
-            var isEmpty = true;
-            for (var p in cur) {
-                isEmpty = false;
-                recurse(cur[p], prop ? prop + "." + p : p);
-            }
-            if (isEmpty && prop)
-                result[prop] = {};
-        }
-    }
-    recurse(data, "");
-    return result;
-};
-
-/**
- *  Converts a flat json into a nested json. This is used for utilities reasons in order to present the configuration dialogue
- */
-export function unflattenJson(data) {
-    "use strict";
-    if (Object(data) !== data || Array.isArray(data))
-        return data;
-    var regex = /\.?([^.\[\]]+)|\[(\d+)\]/g,
-        resultholder = {};
-    for (var p in data) {
-        var cur = resultholder,
-            prop = "",
-            m;
-        while (m = regex.exec(p)) {
-            cur = cur[prop] || (cur[prop] = (m[2] ? [] : {}));
-            prop = m[2] || m[1];
-        }
-        cur[prop] = data[p];
-    }
-    return resultholder[""] || resultholder;
-};
-
-/**
  * Gets the metadata of all the datashapes in the system. Uses the export of all datashapes
  */
 export async function getDataShapeDefinitions(): Promise<DataShape[]> {
@@ -86,7 +37,7 @@ export async function getDataShapeDefinitions(): Promise<DataShape[]> {
 
 /**
  * Searches for entities in the platform using the spotlight search an returns a new promise with the metadata
- * @param  {string} entityType Thingworx Entity Type. 
+ * @param  {string} entityType Thingworx Entity Type.
  * @param  {string} searchTerm The entity to search for. Only the prefix can be specified.
  */
 export async function spotlightSearch(entityType, searchTerm): Promise<any> {

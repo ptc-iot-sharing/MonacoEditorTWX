@@ -6,7 +6,7 @@ import type { MonacoEditorSettings } from './editors/basicCodeEditor';
 export const DISALLOWED_ENTITY_CHARS = /^[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g;
 
 export const MONACO_EDITOR_SETTINGS_KEY = "MONACO_EDITOR_SETTINGS";
-
+export const MONACO_EDITOR_CONFIGURATION_MODEL = "twx://configuration_model.json"
 /**
  * List of all the collections in thingworx
  */
@@ -31,13 +31,12 @@ export const DEFAULT_EDITOR_SETTINGS: MonacoEditorSettings = {
         formatOnPaste: true,
         scrollBeyondLastLine: true,
         theme: "vs",
-        fixedOverflowWidgets: true,
         disableLayerHinting: true, // fixes bug in FF
         snippetSuggestions: "bottom",
         inlayHints: {
             enabled: true
         },
-        "bracketPairColorization.enabled": "false"
+        "bracketPairColorization.enabled": true
     } as any,
     diffEditor: {},
     thingworx: {
@@ -49,7 +48,6 @@ export const DEFAULT_EDITOR_SETTINGS: MonacoEditorSettings = {
             printWidth: 100,
         }
     }
-
 }
 
 export enum Languages {

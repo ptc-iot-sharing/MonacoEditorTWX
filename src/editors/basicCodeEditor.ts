@@ -1,13 +1,12 @@
 import * as monaco from "monaco-editor";
-import { FormattingConflicts } from 'monaco-editor/esm/vs/editor/contrib/format/browser/format';
+import { FormattingConflicts } from "monaco-editor/esm/vs/editor/contrib/format/browser/format";
 import tingle from "tingle.js";
 import { Options as PrettierOptions } from "prettier";
 import { MonacoPrettier } from "./prettier";
+import { MONACO_EDITOR_CONFIGURATION_MODEL } from "../constants";
 
 require("tingle.js/src/tingle.css");
 require("../styles/editorStyle.css");
-
-import { flattenJson, unflattenJson } from "../utilities";
 
 export interface ActionCallbacks {
     onPreferencesChanged: (newPreferences: any) => void;
@@ -75,11 +74,6 @@ export class MonacoCodeEditor {
             instanceSettings.language,
             monaco.Uri.parse("twx://privateModel/" + instanceSettings.modelName)
         );
-        // create the editor
-        if (editorSettings.editor["bracketPairColorization"]?.enabled) {
-            // colorization needs to not be flattened (https://github.com/microsoft/monaco-editor/blob/main/CHANGELOG.md#0280-22092021)
-            editorSettings.editor["bracketPairColorization.enabled"] = true;
-        }
         this.monacoEditor = monaco.editor.create(container, editorSettings.editor);
         this.initializePreferenceEditor(actionCallbacks.onPreferencesChanged);
         this.initializeDiffEditor();
@@ -101,12 +95,12 @@ export class MonacoCodeEditor {
             // The first formatter is selected, which is the builtin worker one
             // We must always select the "prettier" formatter, so overwrite it here
             FormattingConflicts.setFormatterSelector((formatters) => {
-                const prettierFormatter = formatters.find(f => f instanceof MonacoPrettier);
+                const prettierFormatter = formatters.find((f) => f instanceof MonacoPrettier);
                 if (prettierFormatter) {
                     return Promise.resolve(prettierFormatter);
                 }
                 // otherwise just select the first one
-                return Promise.resolve(formatters[0])
+                return Promise.resolve(formatters[0]);
             });
         }
     }
@@ -364,13 +358,13 @@ export class MonacoCodeEditor {
             },
         };
 
-        // initialize the json worker with the give schema
+        // Apply the editor configuration json schema
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
             schemas: [
                 {
                     uri: "http://monaco-editor/schema.json",
                     schema: require("../configs/confSchema.json"),
-                    fileMatch: ["*"],
+                    fileMatch: [MONACO_EDITOR_CONFIGURATION_MODEL],
                 },
             ],
             allowComments: false,
@@ -444,17 +438,22 @@ export class MonacoCodeEditor {
         const self = this;
 
         let confEditor: monaco.editor.IStandaloneCodeEditor;
+        let settingsModel: monaco.editor.ITextModel;
         let modal = new tingle.modal({
             cssClass: ["tingle-popup-container"],
             onOpen: function () {
-                // clone the editor settings to be used for the config editor
-                let editorSettings = JSON.parse(JSON.stringify(self._currentEditorSettings.editor));
-                // set the initial text to be the current config
-                editorSettings.value = JSON.stringify(flattenJson(self._currentEditorSettings), null, "\t");
-                // set the language as json
-                editorSettings.language = "json";
+                settingsModel = monaco.editor.createModel(
+                    JSON.stringify(self._currentEditorSettings, undefined, 4),
+                    "json",
+                    monaco.Uri.parse(MONACO_EDITOR_CONFIGURATION_MODEL)
+                );
+
                 const contentElement = this.modalBoxContent.getElementsByClassName("content")[0];
-                confEditor = monaco.editor.create(contentElement, editorSettings);
+                // The settings of the configuration editor are inherited from the current editor
+                confEditor = monaco.editor.create(contentElement, {
+                    ...self._currentEditorSettings.editor,
+                    model: settingsModel,
+                });
                 contentElement.onkeydown =
                     contentElement.onkeypress =
                     contentElement.onkeyup =
@@ -464,7 +463,7 @@ export class MonacoCodeEditor {
                 confEditor.onDidChangeModelContent((e) => {
                     try {
                         // if the json is valid, then set it on this editor as well as the editor behind
-                        const expandedOptions = unflattenJson(JSON.parse(confEditor.getModel().getValue()));
+                        const expandedOptions = JSON.parse(confEditor.getModel().getValue());
                         confEditor.updateOptions(expandedOptions.editor);
                         // theme has to be updated separately
                         if (
@@ -485,6 +484,7 @@ export class MonacoCodeEditor {
                 // propagate the preference changed to the parent for storage, etc
                 onPreferencesChanged(self._currentEditorSettings);
                 confEditor.dispose();
+                settingsModel.dispose();
             },
         });
         this.modals.push(modal);
