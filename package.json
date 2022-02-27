@@ -1,7 +1,7 @@
 {
     "name": "@placatus/twx-monaco-editor",
     "packageName": "MonacoScriptEditor",
-    "version": "1.23.1",
+    "version": "1.24.0",
     "description": "Replaces the out of the box code editor in the old composer with a new one.",
     "author": "placatus@iqnox.com",
     "minimumThingWorxVersion": "6.0.0",

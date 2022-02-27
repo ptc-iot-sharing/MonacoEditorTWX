@@ -1,3 +1,20 @@
+# [1.24.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.23.1...v1.24.0) (2022-02-27)
+
+
+### Bug Fixes
+
+* Drop emmet related code, since it wasn't working even before. Will be added back once upstream is fixed ([42820cb](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/42820cb846ae6764564e0e44ff1bf72be566bd85))
+* Resolve issue where reopeing a subscribtion editor, or re-executing a service that returns a JSON would lead to a white screen. Fix [#34](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/34) ([849dfdb](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/849dfdb1a71c76be5a3a243c4f22b92b993bb22b))
+
+
+### Features
+
+* Code can be formatted using prettier instead of the default formatter. Formatting options can be configured through the config screen. ([90fd73d](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/90fd73d481fe757acc194746babc3e0acaaad286))
+* Package editor as ES2020. ([4e861f4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/4e861f4c855bd826c719fbb091099a334a291cee))
+* The configuration editor now displays all configuration using their nested format. Add configuration options for `prettier`, and document all configuration in schemas. Set the schema to apply only to the configuration editor model, and not other JSON models. ([73aaac7](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/73aaac7d0efe0c918275de3afab2bfb61181f553))
+* Update `monaco-editor` to 0.32.1 ([79f1a3a](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/79f1a3a551a7754a5799b897106b98702e0fa44a))
+* Use a custom typescript worker rather than using a custom `monaco-typescript` package. ([5eeb7a4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/5eeb7a42c741fec157c4b45d7e516c4c9dd063c9))
+
 ## [1.23.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.23.0...v1.23.1) (2022-01-13)
 
 
