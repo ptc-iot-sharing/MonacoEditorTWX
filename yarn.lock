@@ -2795,13 +2795,13 @@ crypto-browserify@^3.11.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
-css-loader@^6.6.0:
-  version "6.6.0"
-  resolved "https://registry.npmjs.org/css-loader/-/css-loader-6.6.0.tgz"
-  integrity sha512-FK7H2lisOixPT406s5gZM1S3l8GrfhEBT3ZiL2UX1Ng1XWs0y2GPllz/OTyvbaHe12VgQrIXIzuEGVlbUhodqg==
+css-loader@^6.7.1:
+  version "6.7.1"
+  resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-6.7.1.tgz#e98106f154f6e1baf3fc3bc455cb9981c1d5fd2e"
+  integrity sha512-yB5CNFa14MbPJcomwNh3wLThtkZgcNyI2bNMRt8iE5Z8Vwl7f8vQXFAzn2HDOJvtDq2NTZBUGMSUNNyrv3/+cw==
   dependencies:
     icss-utils "^5.1.0"
-    postcss "^8.4.5"
+    postcss "^8.4.7"
     postcss-modules-extract-imports "^3.0.0"
     postcss-modules-local-by-default "^4.0.0"
     postcss-modules-scope "^3.0.0"
@@ -3145,10 +3145,18 @@ enhanced-resolve@^4.5.0:
     memory-fs "^0.5.0"
     tapable "^1.0.0"
 
-enhanced-resolve@^5.0.0, enhanced-resolve@^5.8.3:
+enhanced-resolve@^5.0.0:
   version "5.9.1"
   resolved "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.9.1.tgz"
   integrity sha512-jdyZMwCQ5Oj4c5+BTnkxPgDZO/BJzh/ADDmKebayyzNwjVX1AFCeGkOfxNx0mHi2+8BKC5VxUYiw3TIvoT7vhw==
+  dependencies:
+    graceful-fs "^4.2.4"
+    tapable "^2.2.0"
+
+enhanced-resolve@^5.9.2:
+  version "5.9.2"
+  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.9.2.tgz#0224dcd6a43389ebfb2d55efee517e5466772dd9"
+  integrity sha512-GIm3fQfwLJ8YZx2smuHpBKkXC1yOk+OBEmKckVyL0i/ea8mqDEykK3ld5dgH1QYPNyT/lIllxV2LULnxCHaHkA==
   dependencies:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
@@ -4910,10 +4918,10 @@ mkdirp@^0.5.1, mkdirp@^0.5.3, mkdirp@^0.5.5:
   dependencies:
     minimist "^1.2.5"
 
-monaco-editor@^0.32.1:
-  version "0.32.1"
-  resolved "https://registry.npmjs.org/monaco-editor/-/monaco-editor-0.32.1.tgz"
-  integrity sha512-LUt2wsUvQmEi2tfTOK+tjAPvt7eQ+K5C4rZPr6SeuyzjAuAHrIvlUloTcOiGjZW3fn3a/jFQCONrEJbNOaCqbA==
+monaco-editor@^0.33.0:
+  version "0.33.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.33.0.tgz#842e244f3750a2482f8a29c676b5684e75ff34af"
+  integrity sha512-VcRWPSLIUEgQJQIE0pVT8FcGBIgFoxz7jtqctE+IiCxWugD0DwgyQBcZBhdSrdMC84eumoqMZsGl2GTreOzwqw==
 
 move-concurrently@^1.0.1:
   version "1.0.1"
@@ -5467,10 +5475,10 @@ postcss-value-parser@^4.1.0, postcss-value-parser@^4.2.0:
   resolved "https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz"
   integrity sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==
 
-postcss@^8.4.5:
-  version "8.4.7"
-  resolved "https://registry.npmjs.org/postcss/-/postcss-8.4.7.tgz"
-  integrity sha512-L9Ye3r6hkkCeOETQX6iOaWZgjp3LL6Lpqm6EtgbKrgqGGteRMNb9vzBfRL96YOSu8o7x3MfIH9Mo5cPJFGrW6A==
+postcss@^8.4.7:
+  version "8.4.8"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.4.8.tgz#dad963a76e82c081a0657d3a2f3602ce10c2e032"
+  integrity sha512-2tXEqGxrjvAO6U+CJzDL2Fk2kPHTv1jQsYkSoMeOis2SsYaXRO2COxTdQp99cYvif9JTXaAk9lYGc3VhJt7JPQ==
   dependencies:
     nanoid "^3.3.1"
     picocolors "^1.0.0"
@@ -6571,10 +6579,10 @@ tr46@~0.0.3:
   resolved "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz"
   integrity sha1-gYT9NH2snNwYWZLzpmIuFLnZq2o=
 
-ts-loader@^9.2.6:
-  version "9.2.6"
-  resolved "https://registry.npmjs.org/ts-loader/-/ts-loader-9.2.6.tgz"
-  integrity sha512-QMTC4UFzHmu9wU2VHZEmWWE9cUajjfcdcws+Gh7FhiO+Dy0RnR1bNz0YCHqhI0yRowCE9arVnNxYHqELOy9Hjw==
+ts-loader@^9.2.8:
+  version "9.2.8"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-9.2.8.tgz#e89aa32fa829c5cad0a1d023d6b3adecd51d5a48"
+  integrity sha512-gxSak7IHUuRtwKf3FIPSW1VpZcqF9+MBrHOvBp9cjHh+525SjtCIJKVGjRKIAfxBwDGDGCFF00rTfzB1quxdSw==
   dependencies:
     chalk "^4.1.0"
     enhanced-resolve "^5.0.0"
@@ -6635,10 +6643,15 @@ typedarray@^0.0.6:
   resolved "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@^4.4.3, typescript@^4.5.5:
+typescript@^4.4.3:
   version "4.5.5"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.5.5.tgz"
   integrity sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==
+
+typescript@^4.6.2:
+  version "4.6.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.6.2.tgz#fe12d2727b708f4eef40f51598b3398baa9611d4"
+  integrity sha512-HM/hFigTBHZhLXshn9sN37H085+hQGeJHJ/X7LpBWLID/fbc2acUMfU+lGD98X81sKP+pFa9f0DZmCwB9GnbAg==
 
 typescriptwebpacksupport@^2.1.1:
   version "2.1.1"
@@ -6975,10 +6988,10 @@ webpack@^4.29.5:
     watchpack "^1.7.4"
     webpack-sources "^1.4.1"
 
-webpack@^5.69.1:
-  version "5.69.1"
-  resolved "https://registry.npmjs.org/webpack/-/webpack-5.69.1.tgz"
-  integrity sha512-+VyvOSJXZMT2V5vLzOnDuMz5GxEqLk7hKWQ56YxPW/PQRUuKimPqmEIJOx8jHYeyo65pKbapbW464mvsKbaj4A==
+webpack@^5.70.0:
+  version "5.70.0"
+  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.70.0.tgz#3461e6287a72b5e6e2f4872700bc8de0d7500e6d"
+  integrity sha512-ZMWWy8CeuTTjCxbeaQI21xSswseF2oNOwc70QSKNePvmxE7XW36i7vpBMYZFAUHPwQiEbNGCEYIOOlyRbdGmxw==
   dependencies:
     "@types/eslint-scope" "^3.7.3"
     "@types/estree" "^0.0.51"
@@ -6989,7 +7002,7 @@ webpack@^5.69.1:
     acorn-import-assertions "^1.7.6"
     browserslist "^4.14.5"
     chrome-trace-event "^1.0.2"
-    enhanced-resolve "^5.8.3"
+    enhanced-resolve "^5.9.2"
     es-module-lexer "^0.9.0"
     eslint-scope "5.1.1"
     events "^3.2.0"
