@@ -212,13 +212,6 @@ export class TypescriptCodeEditor extends ServiceEditor {
             noLib: true,
             newLine: monaco.languages.typescript.NewLineKind.LineFeed
         });
-        // customize the worker to add the methods needed by the script editor as well as CodeHost
-        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
-            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
-        });
-        monaco.languages.typescript.javascriptDefaults.setWorkerOptions({
-            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
-        });
         // generate the completion for language snippets
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
             provideCompletionItems: function (model, position) {

@@ -370,6 +370,14 @@ export class MonacoCodeEditor {
             allowComments: false,
             validate: true,
         });
+
+        // Customize the typescript worker to add the methods needed by the script editor as well as CodeHost
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
+        });
+        monaco.languages.typescript.javascriptDefaults.setWorkerOptions({
+            customWorkerPath: __webpack_public_path__ + "tsCustomWorker.bundle.js",
+        });
     }
 
     /**
