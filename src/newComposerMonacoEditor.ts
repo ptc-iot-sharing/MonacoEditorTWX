@@ -593,6 +593,7 @@ function load() {
                 }
 
                 this.initialized();
+                CommonUtil.fireCustomEvent(this.element, "initialized", {});
                 $(this.element).find('.editor-loading').css('display', 'none');
             }
 
