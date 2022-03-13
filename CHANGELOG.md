@@ -1,3 +1,13 @@
+## [1.24.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.0...v1.24.1) (2022-03-13)
+
+
+### Bug Fixes
+
+* Resolve issue where JSON/XML editors would not display correctly if opened quickly ([719ba1e](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/719ba1e482dc9fbf69b3c486ab7cd3c079de5422))
+* Specify the custom typescript worker on initial initialization, to get around issues with the CodeHost not loading correctly ([a13934f](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a13934faf721f1162d9f14dea0bf65fef01bcf4a))
+* Update monaco-editor to 0.33.0 ([e7abaec](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/e7abaecb06f8cdcdfe961e97e665be8216af8592))
+* Update snippets to use `let` instead of `var` ([3e00849](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/3e00849c31600b16a007adf71c5750b159f81f56))
+
 # [1.24.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.23.1...v1.24.0) (2022-02-27)
 
 
