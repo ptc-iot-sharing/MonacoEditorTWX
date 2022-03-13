@@ -2,8 +2,8 @@
     "Infotable for loop": {
         "prefix": "infofor",
         "body": [
-            "for (var ${1:i} = 0; ${1:i} < ${2:infotable}.rows.length; ${1:i}++) {",
-            "\tvar ${3:row} = ${2:infotable}.rows[${1:i}];",
+            "for (let ${1:i} = 0; ${1:i} < ${2:infotable}.rows.length; ${1:i}++) {",
+            "\tlet ${3:row} = ${2:infotable}.rows[${1:i}];",
             "\t$0",
             "}"
         ],
@@ -12,8 +12,8 @@
     "Iterate infotable datashape fields": {
         "prefix": "infofields",
         "body": [
-            "var ${2:dataShape} = ${1:infotable}.dataShape.fields;",
-            "for (var ${3:fieldName} in ${2:dataShape}) {",
+            "let ${2:dataShape} = ${1:infotable}.dataShape.fields;",
+            "for (let ${3:fieldName} in ${2:dataShape}) {",
             "\tlogger.warn('field name is ' + ${2:dataShape}[${3:fieldName}].name);",
             "\tlogger.warn('field basetype is ' + ${2:dataShape}[${3:fieldName}].baseType);",
             "\t$0",
@@ -24,7 +24,7 @@
     "Logger Prefix Declare": {
         "prefix": "lpd",
         "body": [
-            "const loggerPrefix = me.name + '::1:serviceName:: ';"
+            "const LOG_PREFIX = me.name + '::${1:serviceName}:: ';"
         ],
         "description": "Logger debug"
     },
@@ -59,14 +59,14 @@
     "Create Infotable": {
         "prefix": "crinfo",
         "body": [
-            "var ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValues();\n$0"
+            "let ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValues();\n$0"
         ],
         "description": "Create infotable"
     },
     "Create Infotable with Values": {
         "prefix": "crinfoval",
         "body": [
-            "var ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValuesWithData({",
+            "let ${1:result} = DataShapes[\"${2:DataShapeName}\"].CreateValuesWithData({",
             "\tvalues: {",
             "\t\t$0",
             "\t}",

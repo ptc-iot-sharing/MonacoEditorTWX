@@ -92,7 +92,7 @@
 	"Throw Exception": {
 		"prefix": "throw",
 		"body": [
-			"throw \"$1\";",
+			"throw new Error(\"$1\");",
 			"$0"
 		],
 		"description": "Throw Exception"
@@ -102,7 +102,7 @@
 		"body": [
 			"for (let ${1:index} = 0; ${1:index} < ${2:array}.length; ${1:index}++) {",
 			"\tconst ${3:element} = ${2:array}[${1:index}];",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"}"
 		],
 		"description": "For Loop"
@@ -111,7 +111,7 @@
 		"prefix": "foreach =>",
 		"body": [
 			"${1:array}.forEach(${2:element} => {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"});"
 		],
 		"description": "For-Each Loop using =>"
@@ -120,9 +120,9 @@
 		"prefix": "forin",
 		"body": [
 			"for (const ${1:key} in ${2:object}) {",
-			"\tif (${2:object}.hasOwnProperty(${1:key})) {",
+			"\tif (Object.prototype.hasOwnProperty.call(${2:object}, ${1:key})) {",
 			"\t\tconst ${3:element} = ${2:object}[${1:key}];",
-			"\t\t$0",
+			"\t\t$TM_SELECTED_TEXT$0",
 			"\t}",
 			"}"
 		],
@@ -132,7 +132,7 @@
 		"prefix": "forof",
 		"body": [
 			"for (const ${1:iterator} of ${2:object}) {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"}"
 		],
 		"description": "For-Of Loop"
@@ -141,7 +141,7 @@
 		"prefix": "function",
 		"body": [
 			"function ${1:name}(${2:params}:${3:type}) {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"}"
 		],
 		"description": "Function Statement"
@@ -150,7 +150,7 @@
 		"prefix": "if",
 		"body": [
 			"if (${1:condition}) {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"}"
 		],
 		"description": "If Statement"
@@ -159,7 +159,7 @@
 		"prefix": "ifelse",
 		"body": [
 			"if (${1:condition}) {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"} else {",
 			"\t",
 			"}"
@@ -191,7 +191,7 @@
 		"prefix": "while",
 		"body": [
 			"while (${1:condition}) {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"}"
 		],
 		"description": "While Statement"
@@ -200,7 +200,7 @@
 		"prefix": "dowhile",
 		"body": [
 			"do {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"} while (${1:condition});"
 		],
 		"description": "Do-While Statement"
@@ -209,7 +209,7 @@
 		"prefix": "trycatch",
 		"body": [
 			"try {",
-			"\t$0",
+			"\t$TM_SELECTED_TEXT$0",
 			"} catch (${1:error}) {",
 			"\t",
 			"}"
@@ -217,14 +217,14 @@
 		"description": "Try-Catch Statement"
 	},
 	"Region Start": {
-		"prefix": "region",
+		"prefix": "#region",
 		"body": [
 			"//#region $0"
 		],
 		"description": "Folding Region Start"
 	},
 	"Region End": {
-		"prefix": "endregion",
+		"prefix": "#endregion",
 		"body": [
 			"//#endregion"
 		],
