@@ -307,7 +307,8 @@ export class MonacoCodeEditor {
      * Gets the current text in the monaco editor
      */
     public getValue(): string {
-        return this.monacoEditor.getModel().getValue(monaco.editor.EndOfLinePreference.LF);
+        // This may get called when no model is initialized. In that case, return an empty string
+        return this.monacoEditor.getModel()?.getValue(monaco.editor.EndOfLinePreference.LF) || "";
     }
 
     /**
