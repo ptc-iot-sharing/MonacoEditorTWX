@@ -29,6 +29,7 @@ export const DEFAULT_EDITOR_SETTINGS: MonacoEditorSettings = {
         fontLigatures: true,
         mouseWheelZoom: true,
         formatOnPaste: true,
+        fixedOverflowWidgets: true,
         scrollBeyondLastLine: true,
         theme: "vs",
         disableLayerHinting: true, // fixes bug in FF
