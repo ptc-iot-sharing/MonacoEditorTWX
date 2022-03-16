@@ -1,3 +1,11 @@
+## [1.24.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.1...v1.24.2) (2022-03-16)
+
+
+### Bug Fixes
+
+* JSON service output is not correctly displayed after multiple executions. Fix [#37](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/37) ([94cc92b](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/94cc92ba3d382178d660f3e806f6f961ec779402))
+* Set the editor property `fixedOverflowWidgets` to true so hints appear on top of composer elements ([579b604](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/579b60485f3e91d2d871be53d57247952f5813ed))
+
 ## [1.24.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.0...v1.24.1) (2022-03-13)
 
 
