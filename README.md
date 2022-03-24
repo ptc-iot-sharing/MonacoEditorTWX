@@ -9,13 +9,13 @@ This project offers compatibility with both the **Old Composer** and the **New C
 Setting up Monaco Editor for ThingWorx requires creating a browser user script that will "inject" the editor into all ThingWorx Composer environments. This installation option requires no extension import into the ThingWorx server, and will always use the latest version of the editor.
 
 1. Install a browser addon for creating userscripts. Depending on your browser of choice, you can use:
-   *  For Chrome  [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
-   *  For Firefox [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
-   *  For Safari [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
+   *  For Chrome/Edge or other Chromium based browsers: [TamperMonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) 
+   *  For Firefox: [TamperMonkey](https://addons.mozilla.org/ro/firefox/addon/tampermonkey/)
+   *  For Safari: [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887?mt=12)
 
 If your company policy disallows the use of browser extensions, please the refer to the [Alternative installation options](#alternative-installation-options).
 
-2. Navigate to https://greasyfork.org/en/scripts/389994-thingworx-load-monaco-editor and click the Install button. Then confirm the installation.
+2. Install the _user script_: navigate to https://greasyfork.org/en/scripts/389994-thingworx-load-monaco-editor and click the Install button. Then confirm the installation.
 3. Monaco editor is now enabled for **ALL** ThingWorx environments you navigate to. To disable it, just disable the userscript from the addon dashboard.
 
 Notes:
@@ -26,10 +26,12 @@ Notes:
 
 ### Removing
 
-To disable the editor, just disable the user script in the addon settings.
+To disable the editor, just disable the _user script_ in the addon settings.
 To remove the extension, just delete it using the Extension Management in Thingworx.
 
 ### Upgrading
+
+The user script linked above will automatically attept to use the latest released version. This means that you don't have to do anything to update. However, you can edit the _user script_ to force a particular version.
 
 After installing a new version of the widget, make sure you clear the browser cache. [Here](https://en.wikipedia.org/wiki/Wikipedia:Bypass_your_cache#Cache_clearing_and_disabling) is an example of how to do that.
 
