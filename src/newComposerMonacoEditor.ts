@@ -87,7 +87,6 @@ function load() {
                 this.action = '';
                 this.actionHandler = this.editAction.bind(this);
                 this._saveEditorViewState = (function () {
-                    // wrapped in a try catch because if anything fails, the editor still needs to proceed
                     try {
                         var currentEditedModel = void 0;
                         if (_this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
@@ -97,18 +96,8 @@ function load() {
                             currentEditedModel = _this.entityModel.servicesModel.editModel;
                         }
                         if (currentEditedModel) {
-                            // add the location of the cursor and the rest of the view state
-                            var scriptConfTable = currentEditedModel.serviceImplementation.configurationTables.Script;
-                            // check to see if the field definition was added already
-                            if (!scriptConfTable.dataShape.fieldDefinitions.editorSettings) {
-                                scriptConfTable.dataShape.fieldDefinitions.editorSettings = {
-                                    name: "editorSettings",
-                                    baseType: "JSON"
-                                };
-                            }
-                            scriptConfTable.rows[0].editorSettings = {
-                                viewState: _this.codeMirror.getViewState()
-                            };
+                            localStorage.setItem(`${this.entityModel.entityType}_${this.entityModel.name}_${currentEditedModel.serviceImplementation.name}_ViewState`,  
+                                JSON.stringify(_this.codeMirror.getViewState()));
                         }
                     }
                     catch (ex) {
@@ -586,10 +575,8 @@ function load() {
                 this.codeMirror.focus();
                 // restore view state on startup
                 if(this.editorType == EditorType.SERVICE_EDITOR || this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
-                    let editorSettings = currentEditedModel.serviceImplementation.configurationTables.Script.rows[0].editorSettings;
-                    if(editorSettings && editorSettings.viewState) {
-                        this.codeMirror.setViewState(editorSettings.viewState);
-                    }
+                    let _state = localStorage.getItem(`${this.entityModel.entityType}_${this.entityModel.name}_${currentEditedModel.serviceImplementation.name}_ViewState`);
+                    this.codeMirror.setViewState(JSON.parse(_state));
                 }
 
                 this.initialized();
@@ -647,18 +634,8 @@ function load() {
                         currentEditedModel = this.entityModel.servicesModel.editModel
                     }
                     if (currentEditedModel) {
-                        // add the location of the cursor and the rest of the view state
-                        let scriptConfTable = currentEditedModel.serviceImplementation.configurationTables.Script;
-                        // check to see if the field definition was added already
-                        if (!scriptConfTable.dataShape.fieldDefinitions.editorSettings) {
-                            scriptConfTable.dataShape.fieldDefinitions.editorSettings = {
-                                name: "editorSettings",
-                                baseType: "JSON"
-                            }
-                        }
-                        scriptConfTable.rows[0].editorSettings = {
-                            viewState: this.codeMirror.getViewState()
-                        };
+                        localStorage.setItem(`${this.entityModel.entityType}_${this.entityModel.name}_${currentEditedModel.serviceImplementation.name}_ViewState`, 
+                            JSON.stringify(this.codeMirror.getViewState()));
                     }
 
                 } catch (ex) {
