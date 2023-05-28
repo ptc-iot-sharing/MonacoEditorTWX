@@ -642,12 +642,14 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
              * @param node      The node in which to search.
              * @return          `true` if the decorator was found, `false` otherwise.
              */
-            const hasDecoratorNamed = (name: string, node: ts.Node): boolean => {
-                if (!node.decorators) return false;
+            const hasDecoratorNamed = (name: string, node: ts.HasDecorators): boolean => {
+                const decorators = ts.getDecorators(node);
+
+                if (!decorators) return false;
 
                 // Getting the decorator name depends on whether the decorator is applied directly or via a
                 // decorator factory
-                for (const decorator of node.decorators) {
+                for (const decorator of decorators) {
                     if (decorator.expression.kind == ts.SyntaxKind.CallExpression) {
                         const callExpression = decorator.expression as ts.CallExpression;
                         if (callExpression.expression.getText() == name) {
@@ -690,11 +692,12 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
              */
             const argumentsOfDecoratorNamed = (
                 name: string,
-                node: ts.Node
+                node: ts.HasDecorators
             ): ts.NodeArray<ts.Expression> | undefined => {
-                if (!node.decorators) return;
+                const decorators = ts.getDecorators(node);
+                if (!decorators) return;
 
-                for (const decorator of node.decorators) {
+                for (const decorator of decorators) {
                     if (decorator.expression.kind == ts.SyntaxKind.CallExpression) {
                         const callExpression = decorator.expression as ts.CallExpression;
                         if (callExpression.expression.getText() == name) {
@@ -711,7 +714,7 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
              * @param node      The node in which to search.
              * @return          The text of the literal argument, or `undefined` if the decorator does not exist.
              */
-            const literalArgumentOfDecoratorNamed = (name: string, node: ts.Node): string | undefined => {
+            const literalArgumentOfDecoratorNamed = (name: string, node: ts.HasDecorators): string | undefined => {
                 if (!hasDecoratorNamed(name, node)) return;
 
                 const args = argumentsOfDecoratorNamed(name, node);
@@ -788,7 +791,7 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
                             | ts.PropertyDeclaration
                             | ts.GetAccessorDeclaration
                             | ts.SetAccessorDeclaration;
-                        if (hasDecoratorNamed("property", node)) {
+                        if (hasDecoratorNamed("property", propertyNode)) {
                             // If the node is marked as a property, add it as a member
 
                             // Non-identifier property names cannot map to composer properties
@@ -868,7 +871,7 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
                                     break;
                             }
 
-                            const propertyAspects = argumentsOfDecoratorNamed("property", node);
+                            const propertyAspects = argumentsOfDecoratorNamed("property", propertyNode);
 
                             if (propertyAspects?.length) {
                                 for (const aspect of propertyAspects) {
@@ -917,7 +920,7 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
                                 aspects,
                                 kind: ThingworxTypescriptWidgetClassMemberKind.Property,
                             } as ThingworxTypescriptWidgetProperty);
-                        } else if (hasDecoratorNamed("event", node) || hasDecoratorNamed("twevent", node)) {
+                        } else if (hasDecoratorNamed("event", propertyNode) || hasDecoratorNamed("twevent", propertyNode)) {
                             // If this property is marked as an event add it to the class
 
                             // Non-identifier property names cannot map to composer properties
@@ -945,11 +948,11 @@ const worker: import("./types").CustomTSWebWorkerFactory = (TypeScriptWorker, ts
                     case ts.SyntaxKind.MethodDeclaration:
                         // Only properties declared directly on the current class are relevant
                         if (node.parent != currentClass || !classDefinition) break;
+                        const methodNode = node as ts.MethodDeclaration;
 
                         // Only service methods are relevant
-                        if (!hasDecoratorNamed("service", node)) break;
+                        if (!hasDecoratorNamed("service", methodNode)) break;
 
-                        const methodNode = node as ts.MethodDeclaration;
                         const nameNode = methodNode.name;
 
                         // Only identifier names can map to composer services

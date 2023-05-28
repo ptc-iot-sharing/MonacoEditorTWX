@@ -16,8 +16,8 @@ declare class logger {
      */
     static info(message: string)
 }
-/** 
- * The name of the currently logged in user. 
+/**
+ * The name of the currently logged in user.
  * Make this statically equal to System so completions on Users[principal] work.
  **/
 declare const principal = "System";
@@ -84,7 +84,7 @@ declare namespace twx {
         ascending: boolean;
     }
     export interface DataShape {
-        fieldDefinitions: FieldDefinition;
+        fields: FieldDefinition;
     }
     /**
      * This is a native java value collection
