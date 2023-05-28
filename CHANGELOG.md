@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.2...v1.25.0) (2023-05-28)
+
+
+### Features
+
+* Update monaco to 0.38.0 ([1d2487f](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/1d2487fa02f36be5a108f8f04497d5808e2e7320))
+
 ## [1.24.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.1...v1.24.2) (2022-03-16)
 
 
