@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.0...v1.25.1) (2023-08-22)
+
+
+### Bug Fixes
+
+* Update dependencies, update monaco to 0.39.0. Improve upload to thingworx ([91dcf52](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/91dcf52afa15300cef2d4edf52c11b6d98c1b20f))
+
 # [1.25.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.24.2...v1.25.0) (2023-05-28)
 
 
