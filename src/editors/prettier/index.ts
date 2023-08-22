@@ -1,5 +1,5 @@
 import { CancellationToken, editor, languages, Range } from "monaco-editor";
-import type { Options as PrettierOptions, SupportLanguage as PrettierSupportLanguage } from "prettier";
+import type { Plugin, Options as PrettierOptions, SupportLanguage as PrettierSupportLanguage } from "prettier";
 
 /**
  * Uses prettier to format code in monaco by using DocumentRangeFormattingEditProvider
@@ -65,23 +65,29 @@ export class MonacoPrettier
     private async format(text: string, options: FormattingOptions): Promise<string | undefined> {
         const prettierInstance = await import("prettier/standalone");
 
-        const languages = (await prettierInstance.getSupportInfo()).languages;
-
         const prettierOptions = this.getPrettierOptions(this._optionsProvider(), options);
-        // Get the parser and plugin to handle this document
-        const parser = this.getParserFromLanguageId(languages, options.languageId);
-        let plugin;
+        const plugins: Plugin[] = [];
+        let parser: string;
         // Get the plugin used based on the parser
-        switch (parser) {
-            case "babel":
+        switch (options.languageId) {
             case "json":
-                plugin = await import("prettier/plugins/babel");
+                plugins.push((await import("prettier/plugins/estree")).default);
+                parser = 'json';
                 break;
             case "typescript":
-                plugin = await import("prettier/plugins/typescript");
+                plugins.push((await import("prettier/plugins/estree")).default);
+                plugins.push((await import("prettier/plugins/typescript")).default);
+                parser = 'typescript';
+                break;
+            case "javascript":
+                plugins.push((await import("prettier/plugins/estree")).default);
+                plugins.push((await import("prettier/plugins/babel")).default);
+                parser = 'babel';
                 break;
             case "css":
-                plugin = await import("prettier/plugins/postcss");
+                plugins.push((await import("prettier/plugins/postcss")).default);
+                parser = 'css';
+                break;
             default:
                 throw `Cannot format file with language ${options.languageId}`;
         }
@@ -90,7 +96,7 @@ export class MonacoPrettier
             const formattedText = prettierInstance.format(text, {
                 ...prettierOptions,
                 parser: parser,
-                plugins: [plugin],
+                plugins: plugins,
             });
 
             return formattedText;
@@ -123,22 +129,6 @@ export class MonacoPrettier
         }
 
         return options;
-    }
-
-    /**
-     * Retrieves the parser used for a particular language id
-     */
-    private getParserFromLanguageId(languages: PrettierSupportLanguage[], languageId: string): string | undefined {
-        const language = languages.find(
-            (lang) =>
-                lang &&
-                lang.extensions &&
-                Array.isArray(lang.vscodeLanguageIds) &&
-                lang.vscodeLanguageIds.includes(languageId)
-        );
-        if (language && language.parsers?.length > 0) {
-            return language.parsers[0];
-        }
     }
 }
 
