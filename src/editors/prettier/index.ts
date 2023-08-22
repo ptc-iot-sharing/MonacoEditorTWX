@@ -63,9 +63,9 @@ export class MonacoPrettier
      * @returns {string} formatted text
      */
     private async format(text: string, options: FormattingOptions): Promise<string | undefined> {
-        const prettierInstance = await import("prettier");
+        const prettierInstance = await import("prettier/standalone");
 
-        const languages = prettierInstance.getSupportInfo().languages;
+        const languages = (await prettierInstance.getSupportInfo()).languages;
 
         const prettierOptions = this.getPrettierOptions(this._optionsProvider(), options);
         // Get the parser and plugin to handle this document
@@ -75,13 +75,13 @@ export class MonacoPrettier
         switch (parser) {
             case "babel":
             case "json":
-                plugin = await import("prettier/parser-babel");
+                plugin = await import("prettier/plugins/babel");
                 break;
             case "typescript":
-                plugin = await import("prettier/parser-babel");
+                plugin = await import("prettier/plugins/typescript");
                 break;
             case "css":
-                plugin = await import("prettier/parser-postcss");
+                plugin = await import("prettier/plugins/postcss");
             default:
                 throw `Cannot format file with language ${options.languageId}`;
         }

@@ -1,4 +1,5 @@
-const xml2js = require('xml2js');
+import * as xml2js from 'xml2js';
+import { Compiler, WebpackPluginInstance, sources } from 'webpack';
 
 const XML_FILE_TEMPLATE = `
 <?xml version="1.0" encoding="UTF-8"?><Entities>
@@ -10,15 +11,30 @@ const XML_FILE_TEMPLATE = `
     <UIResources/>
   </Widget>
 </Widgets>
-</Entities>
-`;
+</Entities>`;
 
-class WidgetMetadataGenerator {
-    constructor(options) {
+interface Options {
+    packageName: string;
+    packageJson: {
+        description: string;
+        author: string;
+        minimumThingWorxVersion: string;
+        version: string;
+        autoUpdate: string;
+    };
+}
+
+/**
+ * Webpack plugin that generates the XML file representing the ThingWorx widget metadata
+ * This build out the XML file based on data in parameters
+ */
+export class WidgetMetadataGenerator implements WebpackPluginInstance {
+    options: Options;
+    constructor(options: Options) {
         this.options = options;
     }
 
-    apply(compiler) {
+    apply(compiler: Compiler) {
         compiler.hooks.compilation.tap('ModuleSourceUrlUpdaterPlugin', (compilation) => {
             compilation.hooks.additionalAssets.tap('WidgetMetadataGeneratorPlugin', () => {
                 const options = this.options;
@@ -75,14 +91,9 @@ class WidgetMetadataGenerator {
                     const xml = new xml2js.Builder().buildObject(result);
 
                     // insert the metadata xml as a file asset
-                    compilation.assets['../../metadata.xml'] = {
-                        source: () => xml,
-                        size: () => xml.length,
-                    };
+                    compilation.emitAsset('../../metadata.xml', new sources.RawSource(xml));
                 });
             });
         });
     }
 }
-
-module.exports = WidgetMetadataGenerator;

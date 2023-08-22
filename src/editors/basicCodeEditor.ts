@@ -322,7 +322,7 @@ export class MonacoCodeEditor {
     /**
      * Perform global initialization of the monaco json
      */
-    public static performGlobalInitialization() {
+    public static async performGlobalInitialization() {
         const workerPaths = {
             json: "json.worker.bundle.js",
             css: "./css.worker.bundle.js",
@@ -364,7 +364,7 @@ export class MonacoCodeEditor {
             schemas: [
                 {
                     uri: "http://monaco-editor/schema.json",
-                    schema: require("../configs/confSchema.json"),
+                    schema: (await import("../configs/confSchema.json")).default,
                     fileMatch: [MONACO_EDITOR_CONFIGURATION_MODEL],
                 },
             ],

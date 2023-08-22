@@ -202,7 +202,7 @@ export class TypescriptCodeEditor extends ServiceEditor {
         this.workerManager.disposeAllLibs();
     }
 
-    private initialize() {
+    private async initialize() {
         this.workerManager = new WorkerScriptManager(monaco.languages.typescript.typescriptDefaults,
             monaco.languages.typescript.javascriptDefaults);
         // set the compiler options
@@ -212,36 +212,37 @@ export class TypescriptCodeEditor extends ServiceEditor {
             noLib: true,
             newLine: monaco.languages.typescript.NewLineKind.LineFeed
         });
+        this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // generate the completion for language snippets
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
-            provideCompletionItems: function (model, position) {
+            provideCompletionItems: async function (model, position) {
                 const wordUntil = model.getWordUntilPosition(position);
                 const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
-                return loadSnippets(require("../../configs/javascriptSnippets.json"), defaultRange);
+                return loadSnippets((await import("../../configs/javascriptSnippets.json")).default, defaultRange);
             }
         }));
 
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
-            provideCompletionItems: function (model, position) {
+            provideCompletionItems: async  function (model, position) {
                 const wordUntil = model.getWordUntilPosition(position);
                 const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
-                return loadSnippets(require("../../configs/typescriptSnippets.json"), defaultRange);
+                return loadSnippets((await import("../../configs/typescriptSnippets.json")).default, defaultRange);
             }
         }));
 
         // generate the completion for twx snippets
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, {
-            provideCompletionItems: function (model, position) {
+            provideCompletionItems: async function (model, position) {
                 const wordUntil = model.getWordUntilPosition(position);
                 const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
-                return loadSnippets(require("../../configs/thingworxJavascriptSnippets.json"), defaultRange);
+                return loadSnippets((await import("../../configs/thingworxJavascriptSnippets.json")).default, defaultRange);
             }
         }));
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, {
-            provideCompletionItems: function (model, position) {
+            provideCompletionItems: async function (model, position) {
                 const wordUntil = model.getWordUntilPosition(position);
                 const defaultRange = new monaco.Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
-                return loadSnippets(require("../../configs/thingworxTypescriptSnippets.json"), defaultRange);
+                return loadSnippets((await import("../../configs/thingworxTypescriptSnippets.json")).default, defaultRange);
             }
         }));
         // generate the regex that matches the autocomplete for the entity collection for element access
@@ -304,13 +305,12 @@ export class TypescriptCodeEditor extends ServiceEditor {
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxJavascript, completionProvider));
         this.disposables.push(monaco.languages.registerCompletionItemProvider(Languages.TwxTypescript, completionProvider));
         // register the rhino es5 library
-        this.workerManager.addExtraLib(require("../../configs/lib.rhino.es5.d.ts?raw"), "lib.rhino.es5.d.ts");
+        this.workerManager.addExtraLib((await import("../../configs/lib.rhino.es5.d.ts?raw")).default, "lib.rhino.es5.d.ts");
         // register the thingworx base types and the logger class
-        this.workerManager.addExtraLib(require("../../configs/declarations/ThingworxBaseTypes.d.ts?raw"), "ThingworxBaseTypes.d.ts");
+        this.workerManager.addExtraLib((await import("../../configs/declarations/ThingworxBaseTypes.d.ts?raw")).default, "ThingworxBaseTypes.d.ts");
         // register the thingworx datashape library
-        this.workerManager.addExtraLib(require("../../configs/declarations/ThingworxDataShape.d.ts?raw"), "ThingworxDataShape.d.ts");
+        this.workerManager.addExtraLib((await import("../../configs/declarations/ThingworxDataShape.d.ts?raw")).default, "ThingworxDataShape.d.ts");
 
-        this.codeTranslator = new ThingworxToTypescriptGenerator(this.workerManager);
         // register the thingworx generic thing
         this.codeTranslator.generateGenericThingDefinition();
         // we regenerate all the datashape definitions when a new editor loads
