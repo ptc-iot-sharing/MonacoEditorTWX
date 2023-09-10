@@ -1,7 +1,6 @@
 import * as path from "path";
 import { mergeWithCustomize, customizeObject } from "webpack-merge";
 
-const EncodingPlugin = require("webpack-encoding-plugin");
 import { createConfig } from "./script/webpack.common";
 
 module.exports = (env, argv) =>

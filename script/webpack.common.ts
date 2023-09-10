@@ -102,6 +102,7 @@ export function createConfig(env, argv): WebpackConfiguration {
                     // Match js, jsx, ts & tsx files
                     test: /\.[jt]sx?$/,
                     loader: "esbuild-loader",
+                    resourceQuery: { not: [/raw/] },
                 },
                 {
                     test: /\.scss$/,
