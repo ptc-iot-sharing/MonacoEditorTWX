@@ -1,3 +1,10 @@
+## [1.25.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.1...v1.25.2) (2023-08-22)
+
+
+### Bug Fixes
+
+* resolve prettier (format document) no longer working ([a5b5394](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/a5b539417b876f7484132cf0ed1b90a11ac5ac1a))
+
 ## [1.25.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.0...v1.25.1) (2023-08-22)
 
 
