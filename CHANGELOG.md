@@ -1,3 +1,10 @@
+## [1.25.3](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.2...v1.25.3) (2023-09-10)
+
+
+### Bug Fixes
+
+* autocompletion for all thingworx types not working. This was due to the ThingWorx type definitions being incorrectly imported ([1c8c822](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/1c8c822741384eaafad6a1204ff7ad40307eb0a7))
+
 ## [1.25.2](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.1...v1.25.2) (2023-08-22)
 
 
