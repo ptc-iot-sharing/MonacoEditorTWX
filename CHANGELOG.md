@@ -1,3 +1,10 @@
+## [1.25.5](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.4...v1.25.5) (2023-11-13)
+
+
+### Bug Fixes
+
+* if prettier config was missing the editor would not be initialized ([aa72a5e](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/aa72a5e789e64e4f342ffd0f8659e8dce2b1c2cc))
+
 ## [1.25.4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.3...v1.25.4) (2023-09-13)
 
 
