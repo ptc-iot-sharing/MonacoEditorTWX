@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.6...v1.26.0) (2023-11-13)
+
+
+### Features
+
+* enable remote json schema requests for json objects. See https://json-schema.org/understanding-json-schema/reference/schema ([03bfbf4](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/03bfbf49c4afeeaac0234f633266d9959f684eff))
+
 ## [1.25.6](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.5...v1.25.6) (2023-11-13)
 
 
