@@ -1,3 +1,10 @@
+## [1.25.6](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.5...v1.25.6) (2023-11-13)
+
+
+### Bug Fixes
+
+* **pipeline:** resolve issue where the production release was not attached to the release ([7efef88](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/7efef88fe61a295add1f31a347bb4272036928c3))
+
 ## [1.25.5](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.4...v1.25.5) (2023-11-13)
 
 
