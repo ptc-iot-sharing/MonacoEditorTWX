@@ -28,7 +28,7 @@
             {
                 "assets": [
                     {
-                        "path": "dist/*-min-*.zip",
+                        "path": "dist/*-prod-*.zip",
                         "label": "Minified version"
                     },
                     {
