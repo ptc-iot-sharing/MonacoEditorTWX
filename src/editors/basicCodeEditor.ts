@@ -370,6 +370,7 @@ export class MonacoCodeEditor {
             ],
             allowComments: false,
             validate: true,
+            enableSchemaRequest: true,
         });
 
         // Customize the typescript worker to add the methods needed by the script editor as well as CodeHost
