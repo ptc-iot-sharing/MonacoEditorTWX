@@ -80,7 +80,7 @@ export class MonacoCodeEditor {
         this.monacoEditor.layout();
         this.monacoEditor.focus();
 
-        if (this._currentEditorSettings.prettier.enabled) {
+        if (this._currentEditorSettings.prettier?.enabled) {
             const monacoPrettier = new MonacoPrettier(() => this._currentEditorSettings.prettier.options);
             this.disposables.push(
                 monaco.languages.registerDocumentFormattingEditProvider(this._instanceSettings.language, monacoPrettier)
