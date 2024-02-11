@@ -407,7 +407,13 @@ function load() {
                 if (this.editorType == EditorType.SERVICE_EDITOR) {
                     serviceDefinition = currentEditedModel.service;
                 } else if (this.editorType == EditorType.SUBSCRIPTION_EDITOR) {
-                    let subscriptionFields: any[] = currentEditedModel.fieldsModel.all;
+                    let subscriptionFields: any[];
+                    // on ThingWorx 9.5, the data is coming from a different field, `selectedEvent`
+                    if(currentEditedModel.fieldsModel) {
+                        subscriptionFields = currentEditedModel.fieldsModel.all;
+                    } else {
+                        subscriptionFields = currentEditedModel.selectedEvent.fieldsModel.all;
+                    }
                     serviceDefinition = {
                         parameterDefinitions: subscriptionFields.reduce(function (map, obj) {
                             map[obj.name] = obj;
@@ -417,8 +423,9 @@ function load() {
                     // now also fill out the datashape for the eventData param.
                     if(serviceDefinition.parameterDefinitions["eventData"]) {
                         const eventName = currentEditedModel.eventName;
+                        const allEvents = currentEditedModel.eventsModel ? currentEditedModel.eventsModel.all : currentEditedModel.selectedEvent.eventsModel.all
                         // iterate through the event definitions
-                        for(const event of currentEditedModel.eventsModel.all) {
+                        for(const event of allEvents) {
                             if(event.name == eventName) {
                                 serviceDefinition.parameterDefinitions["eventData"].aspects = {
                                     dataShape: event.event.dataShape
