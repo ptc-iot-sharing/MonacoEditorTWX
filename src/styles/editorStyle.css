@@ -23,6 +23,6 @@
 .monaco-editor .find-widget .monaco-findInput .input {
     opacity: 1;   
 }
-.monaco-editor .editor-widget .monaco-icon-label a.label-name {
+.monaco-editor .monaco-icon-label a.label-name {
     text-decoration: unset;
 }
