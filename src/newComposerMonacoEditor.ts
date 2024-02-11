@@ -393,7 +393,7 @@ function load() {
                 let mapping = {
                     "text/x-sql": 'sql',
                     'javascript': Languages.TwxJavascript,
-                    'twxTypescript': Languages.TwxTypescript,
+                    'typescript': Languages.TwxTypescript,
                     'xml': 'xml',
                     'css': 'css',
                     'expressionJs': 'javascript',
@@ -564,7 +564,7 @@ function load() {
                     typescriptCodeEditor.onEditorTranspileFinished((code) => {
                         if (code !== this._getValue()) {
                             this._setValue(code);
-                            //this._lintIfConfigured();
+                            // this._lintIfConfigured();
                             CommonUtil.fireChangeEvent(this.element, code);
                         }
                     });
