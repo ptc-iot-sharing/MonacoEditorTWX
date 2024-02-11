@@ -480,10 +480,10 @@ function load() {
                 } else if (this.langMode.name == "javascript" && this.langMode.json) {
                     this.langMode.name = "json";
                     this.editorType = EditorType.GENERIC_EDITOR;
-                } else if (this.entityModel && this.entityModel.current3rdNav.startsWith("subscriptions")) {
+                } else if (this.entityModel && this.entityModel.current3rdNav?.startsWith("subscriptions")) {
                     this.editorType = EditorType.SUBSCRIPTION_EDITOR;
                     currentEditedModel = this.entityModel.subscriptionsModel.edit;
-                } else if (this.entityModel && this.entityModel.current3rdNav.startsWith("services")) {
+                } else if (this.entityModel && this.entityModel.current3rdNav?.startsWith("services")) {
                     this.editorType = EditorType.SERVICE_EDITOR;
                     currentEditedModel = this.entityModel.servicesModel.editModel;
                 } else {
