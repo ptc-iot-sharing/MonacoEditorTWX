@@ -1,3 +1,14 @@
+## [1.26.1](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.26.0...v1.26.1) (2024-02-11)
+
+
+### Bug Fixes
+
+* completions showing as underline ([5ced477](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/5ced4779e8a3ada9a31a002ef0975f4cf43d1a5e))
+* Editing of subscriptions on 9.5 fails. Fix [#56](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/56) ([2d8d4e5](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/2d8d4e57ce2c35d36a9fe3bb1d43e72d5326345d))
+* expressions not being editable. Fix [#42](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/42) ([f76bcaf](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/f76bcafd4db7c43bd6b38f6dd2afc727fa17a24e))
+* prevent more text showing as underlined with it shouldn't ([4d7a8b7](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/4d7a8b7bed11ad157daf81712aacdab7036ec53d))
+* typescript services not being saved and generally not working. Fix [#55](https://github.com/ptc-iot-sharing/MonacoEditorTWX/issues/55) ([54c7854](https://github.com/ptc-iot-sharing/MonacoEditorTWX/commit/54c7854a8e87d8b31abe3240ff638eaf82d6bf2e))
+
 # [1.26.0](https://github.com/ptc-iot-sharing/MonacoEditorTWX/compare/v1.25.6...v1.26.0) (2023-11-13)
 
 
